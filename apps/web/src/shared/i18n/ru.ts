@@ -270,6 +270,7 @@ export const ru: DeepRecord = {
     error: 'Ошибка',
     save: 'Сохранить',
     cancel: 'Отмена',
+    delete: 'Удалить',
   },
 };
 

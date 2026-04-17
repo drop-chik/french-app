@@ -4,6 +4,7 @@ import { Send, Plus, MessageSquare, AlertCircle, ChevronDown, Trash2 } from 'luc
 import { conversationApi, type ConversationSession, type ChatMessage, type Correction } from '../../features/conversation/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
+import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import styles from './ConversationPage.module.css';
 
 // Topic value stays in French (sent to GPT) — only the label is translated
@@ -30,6 +31,7 @@ export function ConversationPage() {
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [showTopicPicker, setShowTopicPicker] = useState(false);
   const [customTopic, setCustomTopic] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -154,14 +156,26 @@ export function ConversationPage() {
 
   const handleDeleteSession = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!window.confirm(t.conversation.deleteConfirm)) return;
-    deleteSessionMutation.mutate(id);
+    setDeleteConfirmId(id);
   };
 
   const sessions = sessionsData?.sessions ?? [];
 
   return (
     <div className={styles.layout}>
+      {deleteConfirmId && (
+        <ConfirmDialog
+          title={t.conversation.deleteConfirm}
+          confirmLabel={t.common.delete ?? 'Удалить'}
+          cancelLabel={t.profile.cancel}
+          loading={deleteSessionMutation.isPending}
+          onConfirm={() => {
+            deleteSessionMutation.mutate(deleteConfirmId);
+            setDeleteConfirmId(null);
+          }}
+          onCancel={() => setDeleteConfirmId(null)}
+        />
+      )}
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>

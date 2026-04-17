@@ -269,5 +269,6 @@ export const en: Translations = {
     error: 'Error',
     save: 'Save',
     cancel: 'Cancel',
+    delete: 'Delete',
   },
 };
