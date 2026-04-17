@@ -8,6 +8,20 @@
       "when": 1776341129983,
       "tag": "0000_optimal_nicolaos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776460036033,
+      "tag": "0001_add_user_profile_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776460036034,
+      "tag": "0002_add_multilingual_fields",
+      "breakpoints": true
     }
   ]
 }
