@@ -1,4 +1,4 @@
-import type { LanguageLevel } from './user';
+import type { LanguageLevel } from './user.js';
 
 export type ExerciseType = 'fill_blank' | 'multiple_choice' | 'reorder' | 'translate';
 

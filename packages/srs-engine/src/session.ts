@@ -4,8 +4,8 @@
  * - All cards that are due for review
  */
 
-import { isDueForReview } from './sm2';
-import type { SRSCard } from './sm2';
+import { isDueForReview } from './sm2.js';
+import type { SRSCard } from './sm2.js';
 
 export interface StudyItem<T> {
   data: T;

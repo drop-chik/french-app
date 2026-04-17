@@ -1,2 +1,2 @@
-export * from './sm2';
-export * from './session';
+export * from './sm2.js';
+export * from './session.js';

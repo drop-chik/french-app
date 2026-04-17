@@ -1,4 +1,4 @@
-import type { LanguageLevel } from './user';
+import type { LanguageLevel } from './user.js';
 
 export interface Word {
   id: string;

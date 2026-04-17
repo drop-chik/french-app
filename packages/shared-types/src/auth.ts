@@ -15,7 +15,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string;
-    level: import('./user').LanguageLevel;
+    level: import('./user.js').LanguageLevel;
     placementTestDone: boolean;
   };
 }
