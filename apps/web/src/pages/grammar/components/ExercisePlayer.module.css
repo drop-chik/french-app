@@ -1,0 +1,206 @@
+.player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Progress */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--color-brand);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-normal);
+}
+
+.progressText {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* Question */
+.question {
+  padding: var(--space-4) var(--space-5);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.questionText {
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+  line-height: var(--leading-relaxed);
+}
+
+/* Multiple choice */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.option {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  font-family: inherit;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.option:hover:not(:disabled) {
+  border-color: var(--color-brand);
+  background-color: var(--color-brand-light);
+}
+
+.optionSelected {
+  border-color: var(--color-brand);
+  background-color: var(--color-brand-light);
+}
+
+.optionCorrect {
+  border-color: var(--color-success) !important;
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success) !important;
+}
+
+.optionWrong {
+  border-color: var(--color-error) !important;
+  background-color: var(--color-error-light, rgba(239,68,68,0.1)) !important;
+  color: var(--color-error) !important;
+}
+
+/* Fill blank */
+.fillBlanks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fillInput {
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.fillInput:focus {
+  outline: none;
+  border-color: var(--color-brand);
+}
+
+.inputCorrect {
+  border-color: var(--color-success) !important;
+  background-color: var(--color-success-light) !important;
+}
+
+.inputWrong {
+  border-color: var(--color-error) !important;
+  background-color: var(--color-error-light, rgba(239,68,68,0.1)) !important;
+}
+
+/* Feedback */
+.feedback {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.feedbackCorrect {
+  background-color: var(--color-success-light);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.feedbackWrong {
+  background-color: var(--color-error-light, rgba(239,68,68,0.1));
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
+}
+
+.feedbackHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-semibold);
+}
+
+.feedbackAnswer {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+
+.feedbackExplanation {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.checkBtn {
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  font-family: inherit;
+  font-weight: var(--font-semibold);
+  transition: opacity var(--transition-fast);
+}
+
+.checkBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.checkBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.nextBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  font-family: inherit;
+  font-weight: var(--font-semibold);
+  transition: opacity var(--transition-fast);
+}
+
+.nextBtn:hover {
+  opacity: 0.9;
+}

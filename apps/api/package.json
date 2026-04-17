@@ -1,0 +1,45 @@
+{
+  "name": "@french-app/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/db/seed/index.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^10.0.2",
+    "@fastify/jwt": "^9.0.3",
+    "@fastify/swagger": "^9.4.0",
+    "@fastify/swagger-ui": "^5.2.1",
+    "@french-app/shared-types": "workspace:*",
+    "@french-app/srs-engine": "workspace:*",
+    "bcrypt": "^5.1.1",
+    "bullmq": "^5.38.0",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.39.1",
+    "fastify": "^5.2.1",
+    "fastify-plugin": "^5.1.0",
+    "ioredis": "^5.4.2",
+    "jsonwebtoken": "^9.0.3",
+    "openai": "^4.77.0",
+    "pg": "^8.13.1",
+    "pino-pretty": "^13.1.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.726.1",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.30.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,56 @@
+import 'dotenv/config';
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import dbPlugin from './plugins/db.js';
+import authPlugin from './plugins/auth.js';
+import authRoutes from './modules/auth/auth.routes.js';
+import wordsRoutes from './modules/words/words.routes.js';
+import imageRoutes from './modules/ai-images/image.routes.js';
+import grammarRoutes from './modules/grammar/grammar.routes.js';
+import placementRoutes from './modules/placement/placement.routes.js';
+import listeningRoutes from './modules/listening/listening.routes.js';
+import conversationRoutes from './modules/conversation/conversation.routes.js';
+import profileRoutes from './modules/profile/profile.routes.js';
+
+const isDev = process.env['NODE_ENV'] !== 'production';
+
+const fastify = Fastify({
+  logger: isDev
+    ? { level: 'info', transport: { target: 'pino-pretty', options: { colorize: true } } }
+    : { level: 'warn' },
+  bodyLimit: 2 * 1024 * 1024, // 2MB — для base64 аватарок
+});
+
+// CORS
+await fastify.register(cors, {
+  origin: process.env['FRONTEND_URL'] ?? 'http://localhost:5173',
+  credentials: true,
+});
+
+// Plugins
+await fastify.register(dbPlugin);
+await fastify.register(authPlugin);
+
+// Routes
+await fastify.register(authRoutes, { prefix: '/auth' });
+await fastify.register(wordsRoutes, { prefix: '/words' });
+await fastify.register(imageRoutes, { prefix: '/images' });
+await fastify.register(grammarRoutes, { prefix: '/grammar' });
+await fastify.register(placementRoutes, { prefix: '/placement' });
+await fastify.register(listeningRoutes, { prefix: '/listening' });
+await fastify.register(conversationRoutes, { prefix: '/conversation' });
+await fastify.register(profileRoutes, { prefix: '/profile' });
+
+// Health check
+fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+
+const port = parseInt(process.env['PORT'] ?? '3001', 10);
+const host = '0.0.0.0';
+
+try {
+  await fastify.listen({ port, host });
+  console.log(`API running on http://localhost:${port}`);
+} catch (err) {
+  fastify.log.error(err);
+  process.exit(1);
+}

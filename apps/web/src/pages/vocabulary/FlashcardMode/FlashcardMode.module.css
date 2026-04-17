@@ -1,0 +1,224 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) 0;
+  min-height: 70vh;
+}
+
+/* Progress */
+.progressBar {
+  width: 100%;
+  max-width: 480px;
+  height: 4px;
+  background-color: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--color-brand);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
+}
+
+.counter {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* Card wrapper — perspective container */
+.cardWrapper {
+  width: 100%;
+  max-width: 480px;
+  height: 320px;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Card face shared */
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg);
+}
+
+.front {
+  /* default front */
+}
+
+.back {
+  transform: rotateY(180deg);
+  background-color: var(--color-bg-secondary);
+}
+
+/* Illustration */
+.illustration {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.illustrationPlaceholder {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.illustrationEmoji {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+/* Front text */
+.word {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.category {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.audioBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast);
+}
+
+.audioBtn:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.flipHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  position: absolute;
+  bottom: var(--space-4);
+}
+
+/* Back text */
+.translation {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.example {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.exampleFr {
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  font-style: italic;
+}
+
+.exampleRu {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.stats {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  position: absolute;
+  bottom: var(--space-4);
+}
+
+/* Grade buttons */
+.grades {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 480px;
+}
+
+.gradeBtn {
+  flex: 1;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  font-family: inherit;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.gradeBtn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.gradeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.grade_error {
+  background-color: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.grade_warning {
+  background-color: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.grade_success {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
+
+/* Keyboard hint */
+.keyboardHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}

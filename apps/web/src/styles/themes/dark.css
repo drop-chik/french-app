@@ -1,0 +1,50 @@
+/* Dark theme */
+[data-theme='dark'] {
+  /* Backgrounds */
+  --color-bg: #111111;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-tertiary: #222222;
+  --color-surface: #1a1a1a;
+  --color-surface-raised: #222222;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  /* Text */
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a8a8a8;
+  --color-text-tertiary: #666666;
+  --color-text-disabled: #444444;
+  --color-text-inverse: #111111;
+
+  /* Borders */
+  --color-border: #2a2a2a;
+  --color-border-strong: #3a3a3a;
+
+  /* Brand */
+  --color-brand: #3b82f6;
+  --color-brand-hover: #60a5fa;
+  --color-brand-light: #1e3a5f;
+  --color-brand-text: #93c5fd;
+
+  /* Accent */
+  --color-accent: #f87171;
+  --color-accent-hover: #fca5a5;
+  --color-accent-light: #3b1515;
+
+  /* Semantic */
+  --color-success: #4ade80;
+  --color-success-light: #14290e;
+  --color-warning: #fbbf24;
+  --color-warning-light: #2d1e0a;
+  --color-error: #f87171;
+  --color-error-light: #3b1515;
+
+  /* Card word image (line art) — invert for dark */
+  --color-illustration: #f5f5f5;
+  --filter-illustration: invert(1);
+
+  /* Progress levels */
+  --color-level-a1: #a78bfa;
+  --color-level-a2: #60a5fa;
+  --color-level-b1: #34d399;
+  --color-level-b2: #fbbf24;
+}
