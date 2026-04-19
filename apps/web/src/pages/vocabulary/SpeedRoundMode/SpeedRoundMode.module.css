@@ -1,11 +1,10 @@
 .container {
-  max-width: 480px;
+  max-width: 420px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   align-items: center;
-  min-height: 500px;
 }
 
 /* Countdown */
@@ -14,7 +13,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  min-height: 400px;
   gap: var(--space-6);
   width: 100%;
 }
@@ -24,6 +23,7 @@
   font-weight: var(--font-bold);
   color: var(--color-brand);
   line-height: 1;
+  display: block;
 }
 
 .countdownHint {
@@ -56,7 +56,7 @@
 .timerText {
   font-size: var(--text-lg);
   font-weight: var(--font-bold);
-  min-width: 40px;
+  min-width: 44px;
   text-align: right;
   transition: color 0.5s;
 }
@@ -79,56 +79,53 @@
   color: var(--color-text-tertiary);
 }
 
-/* Labels */
-.labels {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 var(--space-4);
-  pointer-events: none;
-}
-
-.labelNo {
-  color: var(--color-error);
-  font-weight: var(--font-semibold);
-  font-size: var(--text-sm);
-}
-
-.labelYes {
-  color: var(--color-success);
-  font-weight: var(--font-semibold);
-  font-size: var(--text-sm);
-}
-
-/* Card area */
+/* ── Card stack ── */
 .cardArea {
   width: 100%;
-  height: 220px;
+  height: 240px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
 }
 
 .card {
+  position: absolute;
   width: 100%;
-  max-width: 360px;
+  height: 220px;
   background-color: var(--color-surface);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-2xl);
-  padding: var(--space-6);
+  padding: var(--space-6) var(--space-6) var(--space-4);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--space-3);
+  box-shadow: var(--shadow-lg);
   cursor: grab;
   user-select: none;
-  position: absolute;
-  box-shadow: var(--shadow-md);
+  touch-action: none;
+  overflow: hidden;
 }
 
 .card:active {
   cursor: grabbing;
+}
+
+/* следующая карточка под текущей — чуть меньше и ниже */
+.cardNext {
+  cursor: default;
+  z-index: 0;
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border);
+  /* слегка приглушена */
+  filter: brightness(0.97);
+}
+
+/* текущая карточка всегда поверх */
+.card:not(.cardNext) {
+  z-index: 1;
 }
 
 .cardFrench {
@@ -136,6 +133,7 @@
   font-weight: var(--font-bold);
   color: var(--color-text-primary);
   text-align: center;
+  line-height: 1.2;
 }
 
 .cardTranslation {
@@ -144,27 +142,77 @@
   text-align: center;
 }
 
-/* Buttons */
+.swipeHint {
+  position: absolute;
+  bottom: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.05em;
+}
+
+/* ── Swipe overlays ── */
+.swipeOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: calc(var(--radius-2xl) - 2px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.swipeOverlayNo {
+  background: rgba(239, 68, 68, 0.18);
+  border: 3px solid rgba(239, 68, 68, 0.6);
+}
+
+.swipeOverlayYes {
+  background: rgba(34, 197, 94, 0.18);
+  border: 3px solid rgba(34, 197, 94, 0.6);
+}
+
+.swipeLabel {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.swipeOverlayNo .swipeLabel { color: var(--color-error); }
+.swipeOverlayYes .swipeLabel { color: var(--color-success); }
+
+.swipeLabelText {
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.swipeOverlayNo .swipeLabelText { color: var(--color-error); }
+.swipeOverlayYes .swipeLabelText { color: var(--color-success); }
+
+/* ── Buttons ── */
 .buttons {
   display: flex;
   gap: var(--space-4);
   width: 100%;
-  justify-content: center;
 }
 
 .btn {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-8);
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-xl);
   border: 2px solid;
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
   font-family: inherit;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  min-width: 120px;
+  transition: transform 0.1s, box-shadow 0.1s, opacity 0.1s;
+  min-height: 72px;
 }
 
 .btn span {
@@ -181,13 +229,18 @@
   font-family: inherit;
 }
 
-.btn:hover {
-  transform: scale(1.05);
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.btn:active {
-  transform: scale(0.97);
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .btnNo {
@@ -210,11 +263,10 @@
   gap: var(--space-4);
   padding: var(--space-10) var(--space-4);
   text-align: center;
+  width: 100%;
 }
 
-.resultEmoji {
-  font-size: 64px;
-}
+.resultEmoji { font-size: 64px; }
 
 .resultTitle {
   font-size: var(--text-2xl);
@@ -246,32 +298,11 @@
   transition: opacity var(--transition-fast);
 }
 
-.doneBtn:hover {
-  opacity: 0.9;
-}
+.doneBtn:hover { opacity: 0.9; }
 
+/* Mobile */
 @media (max-width: 768px) {
-  .container {
-    min-height: unset;
-    gap: var(--space-3);
-  }
-
-  .cardFrench {
-    font-size: var(--text-xl);
-  }
-
-  .btn {
-    flex: 1;
-    min-width: unset;
-    padding: var(--space-3) var(--space-4);
-    font-size: var(--text-xl);
-  }
-
-  .btn kbd {
-    display: none;
-  }
-
-  .countdownNumber {
-    font-size: 72px;
-  }
+  .cardFrench { font-size: var(--text-xl); }
+  .btn kbd { display: none; }
+  .countdownNumber { font-size: 72px; }
 }
