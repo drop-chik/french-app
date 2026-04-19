@@ -216,7 +216,7 @@ export const ru: DeepRecord = {
   },
   dictionary: {
     title: 'Словарь',
-    wordsCount: '{n} слов всего',
+    wordsCount: '{n} слов в работе',
     searchPlaceholder: 'Найти слово...',
     filterAll: 'Все',
     loading: 'Загрузка...',

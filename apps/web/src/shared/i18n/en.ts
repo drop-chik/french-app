@@ -215,7 +215,7 @@ export const en: Translations = {
   },
   dictionary: {
     title: 'Dictionary',
-    wordsCount: '{n} words total',
+    wordsCount: '{n} words in progress',
     searchPlaceholder: 'Search words...',
     filterAll: 'All',
     loading: 'Loading...',

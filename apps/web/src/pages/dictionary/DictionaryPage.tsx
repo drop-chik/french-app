@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, ChevronDown, ChevronUp, X, BookOpen, RefreshCw, Star, Sparkles } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, X, BookOpen, RefreshCw, Star } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
@@ -26,13 +26,12 @@ interface DictWord {
 
 const SECTION_PREVIEW = 8;
 
-const STATUS_ORDER = ['review', 'learning', 'new', 'mastered'] as const;
+const STATUS_ORDER = ['learning', 'review', 'mastered'] as const;
 
 const STATUS_META = {
-  review:   { icon: RefreshCw,  colorClass: 'review'   },
-  learning: { icon: BookOpen,   colorClass: 'learning' },
-  new:      { icon: Sparkles,   colorClass: 'new'      },
-  mastered: { icon: Star,       colorClass: 'mastered' },
+  learning: { icon: BookOpen,  colorClass: 'learning' },
+  review:   { icon: RefreshCw, colorClass: 'review'   },
+  mastered: { icon: Star,      colorClass: 'mastered' },
 } as const;
 
 function daysUntilReview(nextReview: string): number {
@@ -161,7 +160,7 @@ export function DictionaryPage() {
 
   // Stats per status
   const counts = useMemo(() => {
-    const c: Record<typeof STATUS_ORDER[number], number> = { new: 0, learning: 0, review: 0, mastered: 0 };
+    const c: Record<typeof STATUS_ORDER[number], number> = { learning: 0, review: 0, mastered: 0 };
     for (const w of words) {
       const key = w.status as typeof STATUS_ORDER[number];
       if (key in c) c[key]++;
@@ -171,7 +170,7 @@ export function DictionaryPage() {
 
   // Grouped
   const grouped = useMemo(() => {
-    const g: Record<typeof STATUS_ORDER[number], DictWord[]> = { new: [], learning: [], review: [], mastered: [] };
+    const g: Record<typeof STATUS_ORDER[number], DictWord[]> = { learning: [], review: [], mastered: [] };
     for (const w of words) {
       const key = w.status as typeof STATUS_ORDER[number];
       if (key in g) g[key].push(w);
@@ -194,9 +193,8 @@ export function DictionaryPage() {
   }, [search, words]);
 
   const STAT_CARDS = [
-    { status: 'review',   colorClass: 'review',   icon: RefreshCw },
     { status: 'learning', colorClass: 'learning', icon: BookOpen  },
-    { status: 'new',      colorClass: 'new',      icon: Sparkles  },
+    { status: 'review',   colorClass: 'review',   icon: RefreshCw },
     { status: 'mastered', colorClass: 'mastered', icon: Star      },
   ] as const;
 
@@ -205,7 +203,7 @@ export function DictionaryPage() {
       {/* Header */}
       <div className={styles.header}>
         <h1 className={styles.title}>{t.dictionary.title}</h1>
-        <p className={styles.subtitle}>{t.dictionary.wordsCount.replace('{n}', String(words.length))}</p>
+        <p className={styles.subtitle}>{t.dictionary.wordsCount.replace('{n}', String(counts.learning + counts.review + counts.mastered))}</p>
       </div>
 
       {/* Stat cards */}
@@ -265,7 +263,7 @@ export function DictionaryPage() {
                   status={status}
                   words={grouped[status] ?? []}
                   t={t}
-                  defaultOpen={status === 'review' || status === 'learning'}
+                  defaultOpen={status === 'learning' || status === 'review'}
                 />
               ))}
             </div>
