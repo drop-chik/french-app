@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Send, Plus, MessageSquare, AlertCircle, ChevronDown, Trash2 } from 'lucide-react';
+import { Send, Plus, MessageSquare, AlertCircle, ChevronDown, Trash2, Menu } from 'lucide-react';
 import { conversationApi, type ConversationSession, type ChatMessage, type Correction } from '../../features/conversation/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
@@ -32,6 +32,7 @@ export function ConversationPage() {
   const [showTopicPicker, setShowTopicPicker] = useState(false);
   const [customTopic, setCustomTopic] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -158,6 +159,7 @@ export function ConversationPage() {
   const startNewSession = (topic: string) => {
     const level = user?.level ?? 'A1';
     createSessionMutation.mutate({ topic, level });
+    setSidebarOpen(false);
   };
 
   const handleDeleteSession = (e: React.MouseEvent, id: string) => {
@@ -166,6 +168,7 @@ export function ConversationPage() {
   };
 
   const sessions = sessionsData?.sessions ?? [];
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
 
   return (
     <div className={styles.layout}>
@@ -181,8 +184,14 @@ export function ConversationPage() {
           onCancel={() => setDeleteConfirmId(null)}
         />
       )}
+
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarHeader}>
           <span className={styles.sidebarTitle}>{t.conversation.sidebarTitle}</span>
           <button
@@ -205,7 +214,7 @@ export function ConversationPage() {
             <div
               key={s.id}
               className={`${styles.sessionItem} ${activeSessionId === s.id ? styles.sessionActive : ''}`}
-              onClick={() => setActiveSessionId(s.id)}
+              onClick={() => { setActiveSessionId(s.id); setSidebarOpen(false); }}
             >
               <MessageSquare size={14} className={styles.sessionIcon} />
               <span className={styles.sessionTopic}>{s.topic}</span>
@@ -223,6 +232,19 @@ export function ConversationPage() {
 
       {/* Main chat */}
       <main className={styles.chat}>
+        {/* Mobile header */}
+        <div className={styles.mobileHeader}>
+          <button className={styles.mobileMenuBtn} onClick={() => setSidebarOpen(true)}>
+            <Menu size={18} />
+          </button>
+          <span className={styles.mobileTitle}>
+            {activeSession ? activeSession.topic : t.conversation.sidebarTitle}
+          </span>
+          <button className={styles.mobileNewBtn} onClick={() => { setShowTopicPicker(true); setSidebarOpen(false); }}>
+            <Plus size={18} />
+          </button>
+        </div>
+
         {!activeSessionId && !showTopicPicker && (
           <div className={styles.emptyState}>
             <MessageSquare size={48} className={styles.emptyIcon} />

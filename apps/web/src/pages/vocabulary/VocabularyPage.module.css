@@ -70,3 +70,29 @@
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
 }
+
+@media (max-width: 768px) {
+  .title {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-1);
+  }
+
+  .subtitle {
+    margin-bottom: var(--space-5);
+  }
+
+  .modes {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .modeCard {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 400px) {
+  .modes {
+    grid-template-columns: 1fr;
+  }
+}

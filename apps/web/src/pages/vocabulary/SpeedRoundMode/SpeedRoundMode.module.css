@@ -249,3 +249,29 @@
 .doneBtn:hover {
   opacity: 0.9;
 }
+
+@media (max-width: 768px) {
+  .container {
+    min-height: unset;
+    gap: var(--space-3);
+  }
+
+  .cardFrench {
+    font-size: var(--text-xl);
+  }
+
+  .btn {
+    flex: 1;
+    min-width: unset;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-xl);
+  }
+
+  .btn kbd {
+    display: none;
+  }
+
+  .countdownNumber {
+    font-size: 72px;
+  }
+}

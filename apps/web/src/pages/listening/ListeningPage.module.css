@@ -46,6 +46,7 @@
   width: 100%;
   cursor: pointer;
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  min-height: 56px;
 }
 
 .card:hover {
@@ -70,12 +71,16 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .cardTitle {
   font-size: var(--text-base);
   font-weight: var(--font-medium);
   color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cardMeta {
@@ -94,4 +99,20 @@
   color: var(--color-brand);
   border-radius: var(--radius-full);
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: var(--text-2xl);
+  }
+
+  .card {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .cardIcon {
+    width: 36px;
+    height: 36px;
+  }
 }

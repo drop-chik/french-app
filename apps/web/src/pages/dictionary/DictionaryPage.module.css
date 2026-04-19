@@ -28,6 +28,7 @@
   color: var(--color-text-primary);
   font-size: var(--text-base);
   font-family: inherit;
+  min-height: 44px;
 }
 
 .search:focus { outline: none; border-color: var(--color-brand); }
@@ -43,6 +44,7 @@
   font-size: var(--text-sm);
   font-family: inherit;
   transition: background-color var(--transition-fast), color var(--transition-fast);
+  min-height: 36px;
 }
 
 .filter:hover { background-color: var(--color-bg-secondary); }
@@ -70,12 +72,12 @@
 
 .card:hover { border-color: var(--color-border-strong); }
 
-.cardMain { display: flex; align-items: baseline; gap: var(--space-3); }
+.cardMain { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
 
 .french { font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--color-text-primary); }
 .translation { font-size: var(--text-base); color: var(--color-text-secondary); }
 
-.cardMeta { display: flex; align-items: center; gap: var(--space-3); }
+.cardMeta { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 
 .status {
   font-size: var(--text-xs);
@@ -92,3 +94,17 @@
 .level { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-left: auto; }
 
 .example { font-size: var(--text-sm); color: var(--color-text-secondary); font-style: italic; }
+
+@media (max-width: 768px) {
+  .title {
+    font-size: var(--text-2xl);
+  }
+
+  .search {
+    font-size: 16px; /* prevent iOS zoom */
+  }
+
+  .card {
+    padding: var(--space-3);
+  }
+}

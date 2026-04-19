@@ -44,12 +44,6 @@
   gap: var(--space-3);
 }
 
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 .card {
   min-height: 80px;
   padding: var(--space-3) var(--space-2);
@@ -96,4 +90,21 @@
   border-color: var(--color-error) !important;
   background-color: var(--color-error-light, rgba(239,68,68,0.12)) !important;
   color: var(--color-error) !important;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+
+  .card {
+    min-height: 64px;
+    font-size: var(--text-xs);
+    padding: var(--space-2) var(--space-2);
+  }
+
+  .hint {
+    display: none;
+  }
 }

@@ -22,6 +22,7 @@
   cursor: pointer;
   padding: 0;
   transition: color var(--transition-fast);
+  min-height: 44px;
 }
 
 .backButton:hover {
@@ -72,12 +73,12 @@
   align-items: center;
   gap: var(--space-3);
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
 }
 
 .playButton {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-full);
   background-color: var(--color-brand);
   color: white;
@@ -118,6 +119,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .progressInput {
@@ -158,6 +160,7 @@
   padding: var(--space-2) var(--space-3);
   transition: border-color var(--transition-fast), color var(--transition-fast);
   align-self: flex-start;
+  min-height: 44px;
 }
 
 .transcriptToggle:hover {
@@ -217,7 +220,7 @@
 }
 
 .option {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
   background-color: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -226,6 +229,7 @@
   color: var(--color-text-primary);
   cursor: pointer;
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  min-height: 44px;
 }
 
 .option:hover {
@@ -252,6 +256,7 @@
   cursor: pointer;
   transition: opacity var(--transition-fast);
   align-self: flex-start;
+  min-height: 44px;
 }
 
 .submitButton:disabled {
@@ -345,6 +350,7 @@
 .resultActions {
   display: flex;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .retryButton {
@@ -357,6 +363,7 @@
   font-weight: var(--font-semibold);
   cursor: pointer;
   transition: opacity var(--transition-fast);
+  min-height: 44px;
 }
 
 .retryButton:hover { opacity: 0.85; }
@@ -371,8 +378,43 @@
   font-weight: var(--font-medium);
   cursor: pointer;
   transition: border-color var(--transition-fast);
+  min-height: 44px;
 }
 
 .backListButton:hover {
   border-color: var(--color-brand);
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: var(--text-xl);
+  }
+
+  .player {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .playerIcon {
+    display: none;
+  }
+
+  .options {
+    grid-template-columns: 1fr;
+  }
+
+  .submitButton {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .resultActions {
+    flex-direction: column;
+  }
+
+  .retryButton,
+  .backListButton {
+    width: 100%;
+    text-align: center;
+  }
 }

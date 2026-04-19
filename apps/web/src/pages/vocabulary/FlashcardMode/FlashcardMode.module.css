@@ -222,3 +222,47 @@ kbd {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
+
+@media (max-width: 768px) {
+  .container {
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+    min-height: unset;
+  }
+
+  .cardWrapper {
+    height: 260px;
+  }
+
+  .face {
+    padding: var(--space-5);
+    gap: var(--space-3);
+  }
+
+  .word {
+    font-size: var(--text-2xl);
+  }
+
+  .translation {
+    font-size: var(--text-xl);
+  }
+
+  .illustration,
+  .illustrationPlaceholder {
+    width: 72px;
+    height: 72px;
+  }
+
+  .illustrationEmoji {
+    font-size: 3rem;
+  }
+
+  .gradeBtn {
+    padding: var(--space-3) var(--space-2);
+    font-size: var(--text-xs);
+  }
+
+  .keyboardHint {
+    display: none;
+  }
+}
