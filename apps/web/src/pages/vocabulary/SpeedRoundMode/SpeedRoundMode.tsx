@@ -21,8 +21,14 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<SessionResult[]>([]);
   const [correctCount, setCorrectCount] = useState(0);
-  const [exit, setExit] = useState<'left' | 'right' | null>(null);
+  const [swipeDir, setSwipeDir] = useState<'left' | 'right' | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-150, 150], [-15, 15]);
+  const opacity = useTransform(x, [-150, -75, 0, 75, 150], [0.5, 1, 1, 1, 0.5]);
+  const knowOpacity = useTransform(x, [0, 75], [0, 1]);
+  const dontKnowOpacity = useTransform(x, [-75, 0], [1, 0]);
 
   const shuffled = useRef([...words].sort(() => Math.random() - 0.5));
   const current = shuffled.current[index % shuffled.current.length];
@@ -52,11 +58,17 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
       wordsApi.recordAnswer(current.id, grade).catch(console.error);
       setResults((r) => [...r, { wordId: current.id, grade }]);
       if (know) setCorrectCount((c) => c + 1);
-      setExit(know ? 'right' : 'left');
-      setTimeout(() => { setExit(null); setIndex((i) => i + 1); }, 250);
+      setSwipeDir(know ? 'right' : 'left');
+      x.set(0);
+      setIndex((i) => i + 1);
     },
-    [phase, current],
+    [phase, current, x],
   );
+
+  // сброс направления свайпа после смены карточки
+  useEffect(() => {
+    setSwipeDir(null);
+  }, [index]);
 
   useEffect(() => {
     if (phase !== 'playing') return;
@@ -67,12 +79,6 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, handleAnswer]);
-
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-150, 150], [-15, 15]);
-  const opacity = useTransform(x, [-150, -75, 0, 75, 150], [0.5, 1, 1, 1, 0.5]);
-  const knowOpacity = useTransform(x, [0, 75], [0, 1]);
-  const dontKnowOpacity = useTransform(x, [-75, 0], [1, 0]);
 
   function handleDragEnd(_: unknown, info: { offset: { x: number } }) {
     if (Math.abs(info.offset.x) > 80) handleAnswer(info.offset.x > 0);
@@ -154,25 +160,28 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
       </div>
 
       <div className={styles.cardArea}>
-        <AnimatePresence mode="wait">
-          {exit === null && (
-            <motion.div
-              key={`${current.id}-${index}`}
-              className={styles.card}
-              style={{ x, rotate, opacity }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.7}
-              onDragEnd={handleDragEnd}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: exit === 'right' ? 200 : -200, rotate: exit === 'right' ? 20 : -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <p className={styles.cardFrench}>{current.french}</p>
-              <p className={styles.cardTranslation}>{current.translation}</p>
-            </motion.div>
-          )}
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={index}
+            className={styles.card}
+            style={{ x, rotate, opacity }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.5}
+            onDragEnd={handleDragEnd}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{
+              opacity: 0,
+              x: swipeDir === 'right' ? 250 : swipeDir === 'left' ? -250 : 0,
+              rotate: swipeDir === 'right' ? 20 : swipeDir === 'left' ? -20 : 0,
+              transition: { duration: 0.18 },
+            }}
+            transition={{ duration: 0.15 }}
+          >
+            <p className={styles.cardFrench}>{current.french}</p>
+            <p className={styles.cardTranslation}>{current.translation}</p>
+          </motion.div>
         </AnimatePresence>
       </div>
 
