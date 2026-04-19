@@ -19,10 +19,11 @@ async function doRefresh(): Promise<string> {
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const makeRequest = async (token: string | null) => {
+    const hasBody = options.body !== undefined && options.body !== null;
     return fetch(`${BASE}${path}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
