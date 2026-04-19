@@ -1,50 +1,50 @@
 /* Light theme */
 [data-theme='light'] {
   /* Backgrounds */
-  --color-bg: #ffffff;
-  --color-bg-secondary: #f8f8f6;
-  --color-bg-tertiary: #f0f0ec;
+  --color-bg: #f5f5f0;
+  --color-bg-secondary: #eeede8;
+  --color-bg-tertiary: #e4e3dd;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
-  --color-overlay: rgba(0, 0, 0, 0.4);
+  --color-overlay: rgba(0, 0, 0, 0.45);
 
-  /* Text */
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #4a4a4a;
-  --color-text-tertiary: #888888;
-  --color-text-disabled: #bbbbbb;
+  /* Text — усиленный контраст */
+  --color-text-primary: #111111;
+  --color-text-secondary: #3a3a3a;
+  --color-text-tertiary: #6b6b6b;
+  --color-text-disabled: #aaaaaa;
   --color-text-inverse: #ffffff;
 
-  /* Borders */
-  --color-border: #e8e8e4;
-  --color-border-strong: #c8c8c4;
+  /* Borders — более заметные */
+  --color-border: #d8d7d0;
+  --color-border-strong: #b0afaa;
 
   /* Brand (French blue) */
-  --color-brand: #2563eb;
-  --color-brand-hover: #1d4ed8;
-  --color-brand-light: #eff6ff;
-  --color-brand-text: #1e40af;
+  --color-brand: #1d4ed8;
+  --color-brand-hover: #1e40af;
+  --color-brand-light: #dbeafe;
+  --color-brand-text: #1e3a8a;
 
   /* Accent (French red) */
   --color-accent: #dc2626;
   --color-accent-hover: #b91c1c;
-  --color-accent-light: #fef2f2;
+  --color-accent-light: #fee2e2;
 
   /* Semantic */
-  --color-success: #16a34a;
-  --color-success-light: #f0fdf4;
-  --color-warning: #d97706;
-  --color-warning-light: #fffbeb;
+  --color-success: #15803d;
+  --color-success-light: #dcfce7;
+  --color-warning: #b45309;
+  --color-warning-light: #fef3c7;
   --color-error: #dc2626;
-  --color-error-light: #fef2f2;
+  --color-error-light: #fee2e2;
 
   /* Card word image (line art) */
-  --color-illustration: #1a1a1a;
+  --color-illustration: #111111;
   --filter-illustration: none;
 
   /* Progress levels */
-  --color-level-a1: #7c3aed;
-  --color-level-a2: #2563eb;
-  --color-level-b1: #059669;
-  --color-level-b2: #d97706;
+  --color-level-a1: #6d28d9;
+  --color-level-a2: #1d4ed8;
+  --color-level-b1: #047857;
+  --color-level-b2: #b45309;
 }

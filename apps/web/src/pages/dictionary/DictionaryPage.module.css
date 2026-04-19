@@ -284,31 +284,56 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: var(--space-4);
+  padding: 0;
 }
 
 @media (min-width: 600px) {
   .modalOverlay {
     align-items: center;
+    padding: var(--space-4);
   }
 }
 
 .modal {
   background: var(--color-surface);
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   width: 100%;
   max-width: 560px;
-  max-height: 80vh;
+  /* на мобиле занимает 90% высоты экрана */
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+@media (min-width: 600px) {
+  .modal {
+    border-radius: var(--radius-2xl);
+    max-height: 80vh;
+  }
+}
+
+/* drag handle на мобиле */
+.modal::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+  margin: var(--space-3) auto var(--space-1);
+  flex-shrink: 0;
+}
+
+@media (min-width: 600px) {
+  .modal::before { display: none; }
 }
 
 .modalHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-5) var(--space-4);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -327,13 +352,17 @@
   align-items: center;
   border-radius: var(--radius-md);
   transition: color var(--transition-fast);
+  min-width: 32px;
+  min-height: 32px;
+  justify-content: center;
 }
 .modalClose:hover { color: var(--color-text-primary); }
 
 .modalBody {
   overflow-y: auto;
   flex: 1;
-  padding-bottom: var(--space-2);
+  padding-bottom: env(safe-area-inset-bottom, var(--space-4));
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Mobile ── */
