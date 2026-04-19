@@ -59,8 +59,12 @@ export function ConversationPage() {
   });
 
   const deleteSessionMutation = useMutation({
-    mutationFn: (id: string) => conversationApi.deleteSession(id),
-    onSuccess: (_, deletedId) => {
+    mutationFn: (id: string) => {
+      console.log('[delete] mutationFn called, id=', id);
+      return conversationApi.deleteSession(id);
+    },
+    onSuccess: (data, deletedId) => {
+      console.log('[delete] onSuccess called, data=', data, 'deletedId=', deletedId);
       // Optimistically remove from list immediately
       queryClient.setQueryData(
         ['conversation-sessions'],
@@ -74,8 +78,11 @@ export function ConversationPage() {
       setDeleteConfirmId(null);
     },
     onError: (err) => {
-      console.error('Delete session error:', err);
+      console.error('[delete] onError called:', err);
       setDeleteConfirmId(null);
+    },
+    onSettled: (data, err, id) => {
+      console.log('[delete] onSettled called, data=', data, 'err=', err, 'id=', id);
     },
   });
 
