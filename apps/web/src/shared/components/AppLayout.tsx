@@ -6,6 +6,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../i18n';
 import { profileApi } from '../../features/profile/api';
+import { FoxLogo } from '../../pages/landing/FoxMascot';
 import styles from './AppLayout.module.css';
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -33,6 +34,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
+          <FoxLogo size={28} />
           <span className={styles.logoText}>FR</span>
         </div>
 

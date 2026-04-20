@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './app/routes/__root'
+import { Route as LoginRouteImport } from './app/routes/login'
 import { Route as AuthRouteImport } from './app/routes/_auth'
 import { Route as IndexRouteImport } from './app/routes/index'
 import { Route as AuthVocabularyRouteImport } from './app/routes/_auth.vocabulary'
@@ -21,6 +22,11 @@ import { Route as AuthConversationRouteImport } from './app/routes/_auth.convers
 import { Route as AuthListeningIdRouteImport } from './app/routes/_auth.listening.$id'
 import { Route as AuthGrammarSlugRouteImport } from './app/routes/_auth.grammar.$slug'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -78,6 +84,7 @@ const AuthGrammarSlugRoute = AuthGrammarSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/conversation': typeof AuthConversationRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
@@ -90,6 +97,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/conversation': typeof AuthConversationRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
+  '/login': typeof LoginRoute
   '/_auth/conversation': typeof AuthConversationRoute
   '/_auth/dictionary': typeof AuthDictionaryRoute
   '/_auth/grammar': typeof AuthGrammarRouteWithChildren
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/conversation'
     | '/dictionary'
     | '/grammar'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/conversation'
     | '/dictionary'
     | '/grammar'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_auth'
+    | '/login'
     | '/_auth/conversation'
     | '/_auth/dictionary'
     | '/_auth/grammar'
@@ -157,10 +169,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -290,6 +310,7 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
