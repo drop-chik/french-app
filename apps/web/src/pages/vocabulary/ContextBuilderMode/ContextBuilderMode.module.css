@@ -1,9 +1,11 @@
 .container {
-  max-width: 600px;
+  max-width: 660px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
+  min-height: 70vh;
+  padding: var(--space-6) 0;
 }
 
 .progressBar {
@@ -92,7 +94,7 @@
 /* Token styles */
 .tokenArranged,
 .tokenAvailable {
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-lg);
   font-size: var(--text-base);
   font-family: inherit;

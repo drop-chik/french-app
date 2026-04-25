@@ -1,11 +1,13 @@
 .page {
-  max-width: 520px;
+  max-width: 580px;
   width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-5);
+  min-height: 70vh;
+  padding: var(--space-4) 0;
 }
 
 .progressBar {
@@ -116,11 +118,11 @@
 }
 
 .option {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-5);
   background-color: var(--color-bg);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-lg);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   color: var(--color-text-primary);
   cursor: pointer;
   text-align: center;

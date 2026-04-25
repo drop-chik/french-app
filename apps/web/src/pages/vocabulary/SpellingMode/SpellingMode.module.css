@@ -3,9 +3,11 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-6);
-  max-width: 480px;
+  max-width: 540px;
+  width: 100%;
   margin: 0 auto;
-  padding: var(--space-4) 0;
+  padding: var(--space-6) 0;
+  min-height: 70vh;
 }
 
 .progressBar {
@@ -39,7 +41,7 @@
 .prompt { font-size: var(--text-sm); color: var(--color-text-tertiary); }
 
 .translation {
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl);
   font-weight: var(--font-bold);
   color: var(--color-text-primary);
 }
@@ -85,12 +87,12 @@
 }
 
 .input {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background-color: var(--color-bg);
   color: var(--color-text-primary);
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   font-family: inherit;
   text-align: center;
   transition: border-color var(--transition-fast);
@@ -102,7 +104,8 @@
 }
 
 .submitBtn {
-  padding: var(--space-3);
+  padding: var(--space-4);
+  font-size: var(--text-base);
   background-color: var(--color-brand);
   color: #fff;
   border: none;

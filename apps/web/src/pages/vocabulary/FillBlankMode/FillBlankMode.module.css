@@ -1,9 +1,11 @@
 .container {
-  max-width: 560px;
+  max-width: 620px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
+  min-height: 70vh;
+  padding: var(--space-6) 0;
 }
 
 .loading {
@@ -49,7 +51,7 @@
 }
 
 .sentence {
-  font-size: var(--text-xl);
+  font-size: var(--text-2xl);
   font-weight: var(--font-medium);
   color: var(--color-text-primary);
   text-align: center;

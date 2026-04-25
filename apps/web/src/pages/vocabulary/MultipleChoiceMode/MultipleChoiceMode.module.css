@@ -3,9 +3,11 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-6);
-  max-width: 480px;
+  max-width: 560px;
+  width: 100%;
   margin: 0 auto;
-  padding: var(--space-4) 0;
+  padding: var(--space-6) 0;
+  min-height: 70vh;
 }
 
 .loading {
@@ -35,11 +37,12 @@
 
 .question {
   text-align: center;
-  padding: var(--space-8);
+  padding: var(--space-10) var(--space-8);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-2xl);
   width: 100%;
+  box-shadow: var(--shadow-lg);
 }
 
 .prompt {
@@ -69,12 +72,12 @@
 }
 
 .option {
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-5) var(--space-6);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   background-color: var(--color-surface);
   color: var(--color-text-primary);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   font-weight: var(--font-medium);
   font-family: inherit;
   text-align: left;
