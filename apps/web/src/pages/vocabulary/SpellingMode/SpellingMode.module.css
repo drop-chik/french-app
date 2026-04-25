@@ -160,3 +160,33 @@
 }
 
 .nextBtn:hover { background-color: var(--color-brand-hover); }
+
+@media (max-width: 768px) {
+  .container {
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+  }
+
+  .card {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .translation {
+    font-size: var(--text-xl);
+  }
+
+  .hint {
+    font-size: var(--text-lg);
+  }
+
+  .submitBtn,
+  .nextBtn {
+    width: 100%;
+    padding: var(--space-3);
+  }
+
+  .correct,
+  .wrong {
+    padding: var(--space-3);
+  }
+}

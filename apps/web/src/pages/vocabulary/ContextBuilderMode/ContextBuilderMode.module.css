@@ -241,6 +241,10 @@
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: var(--space-2) 0;
+  }
+
   .card {
     padding: var(--space-4);
   }
@@ -249,11 +253,16 @@
   .tokenAvailable {
     font-size: var(--text-sm);
     padding: var(--space-2) var(--space-3);
-    min-height: 36px;
+    min-height: 40px;
   }
 
   .actions {
     justify-content: stretch;
+  }
+
+  .retryBtn {
+    flex: 1;
+    justify-content: center;
   }
 
   .checkBtn,

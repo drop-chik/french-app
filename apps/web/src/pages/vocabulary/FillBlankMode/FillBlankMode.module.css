@@ -153,3 +153,30 @@
 .nextBtn:hover {
   opacity: 0.9;
 }
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-2) 0;
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  .sentence {
+    font-size: var(--text-base);
+  }
+
+  .options {
+    grid-template-columns: 1fr;
+  }
+
+  .option {
+    padding: var(--space-3) var(--space-3);
+  }
+
+  .nextBtn {
+    width: 100%;
+    padding: var(--space-3);
+  }
+}
