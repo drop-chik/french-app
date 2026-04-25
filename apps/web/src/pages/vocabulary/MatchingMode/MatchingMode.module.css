@@ -42,7 +42,7 @@
 /* Card grid */
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-3);
 }
 
@@ -66,6 +66,30 @@
   justify-content: center;
 }
 
+/* Face-down card */
+.cardBack {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border);
+  cursor: pointer;
+}
+
+.cardBack:hover {
+  border-color: var(--color-brand);
+  background-color: var(--color-brand-light);
+}
+
+.cardBackMark {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-tertiary);
+  user-select: none;
+}
+
+/* Face-up cards */
+.cardText {
+  display: block;
+}
+
 .cardFrench {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
@@ -74,12 +98,6 @@
 .cardTranslation {
   background-color: var(--color-bg-secondary);
   color: var(--color-text-secondary);
-}
-
-.cardSelected {
-  border-color: var(--color-brand);
-  background-color: var(--color-brand-light);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 20%, transparent);
 }
 
 .cardCorrect {
@@ -94,16 +112,33 @@
   color: var(--color-error) !important;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--space-2);
   }
 
   .card {
-    min-height: 64px;
+    min-height: 90px;
+    font-size: var(--text-sm);
+    padding: var(--space-3) var(--space-2);
+  }
+
+  .cardBackMark {
+    font-size: var(--text-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+  }
+
+  .card {
+    min-height: 72px;
     font-size: var(--text-xs);
-    padding: var(--space-2) var(--space-2);
+    padding: var(--space-2);
   }
 
   .hint {

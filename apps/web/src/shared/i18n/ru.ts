@@ -127,7 +127,7 @@ export const ru: DeepRecord = {
   },
   matching: {
     round: 'Раунд',
-    hint: 'Найди пары: слово ↔ перевод',
+    hint: 'Открывай по 2 карточки — ищи пары',
   },
   speedRound: {
     start: 'Старт!',
