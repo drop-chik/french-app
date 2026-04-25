@@ -123,9 +123,6 @@ export function MatchingMode({ words, onComplete }: Props) {
           const isSelected = selected?.id === card.id;
           const isWrong = wrong?.includes(card.id);
           const isCorrect = correct?.includes(card.id);
-          if (isMatched) {
-            return <div key={card.id} className={styles.cardPlaceholder} />;
-          }
           return (
             <motion.button
               key={card.id}
@@ -137,10 +134,11 @@ export function MatchingMode({ words, onComplete }: Props) {
               `}
               onClick={() => handleSelect(card)}
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2 }}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+              animate={{ opacity: isMatched ? 0 : 1, scale: isMatched ? 0.85 : 1 }}
+              transition={{ duration: isMatched ? 0.35 : 0.2 }}
+              whileHover={isMatched ? {} : { scale: 1.03 }}
+              whileTap={isMatched ? {} : { scale: 0.97 }}
+              style={{ pointerEvents: isMatched ? 'none' : 'auto' }}
             >
               {card.text}
             </motion.button>

@@ -442,6 +442,7 @@
 .userMessage {
   align-self: flex-end;
   align-items: flex-end;
+  margin-right: var(--space-3);
 }
 
 .assistantMessage {
