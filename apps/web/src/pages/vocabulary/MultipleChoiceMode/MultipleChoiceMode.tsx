@@ -28,22 +28,24 @@ export function MultipleChoiceMode({ words, onComplete }: Props) {
   useEffect(() => {
     let cancelled = false;
     async function build() {
-      const qs: Question[] = [];
-      for (const word of words) {
-        try {
-          const { distractors } = await wordsApi.getDistractors(word.id);
-          const wrongOptions = distractors.map((d) => d.translation).slice(0, 3);
-          const allOptions = [...wrongOptions, word.translation];
-          for (let i = allOptions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allOptions[i], allOptions[j]] = [allOptions[j]!, allOptions[i]!];
+      // All distractor requests fire in parallel — no sequential waterfall
+      const qs = await Promise.all(
+        words.map(async (word) => {
+          try {
+            const { distractors } = await wordsApi.getDistractors(word.id);
+            const wrongOptions = distractors.map((d) => d.translation).slice(0, 3);
+            const allOptions = [...wrongOptions, word.translation];
+            for (let i = allOptions.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [allOptions[i], allOptions[j]] = [allOptions[j]!, allOptions[i]!];
+            }
+            const correctIndex = allOptions.indexOf(word.translation);
+            return { word, options: allOptions, correctIndex };
+          } catch {
+            return { word, options: [word.translation, '???', '???', '???'], correctIndex: 0 };
           }
-          const correctIndex = allOptions.indexOf(word.translation);
-          qs.push({ word, options: allOptions, correctIndex });
-        } catch {
-          qs.push({ word, options: [word.translation, '???', '???', '???'], correctIndex: 0 });
-        }
-      }
+        }),
+      );
       if (!cancelled) { setQuestions(qs); setLoading(false); }
     }
     build();
@@ -51,23 +53,23 @@ export function MultipleChoiceMode({ words, onComplete }: Props) {
   }, [words]);
 
   const handleSelect = useCallback(
-    async (optionIndex: number) => {
+    (optionIndex: number) => {
       if (selected !== null) return;
       const q = questions[index];
       if (!q) return;
       setSelected(optionIndex);
       const isCorrect = optionIndex === q.correctIndex;
       wordsApi.recordAnswer(q.word.id, isCorrect ? 5 : 1).catch(console.error);
-      const newResults = [...results, { wordId: q.word.id, grade: isCorrect ? 5 : 1 }];
-      setResults(newResults);
-      setTimeout(() => {
-        if (index + 1 >= questions.length) { onComplete(newResults); return; }
-        setSelected(null);
-        setIndex((i) => i + 1);
-      }, 1000);
+      setResults((r) => [...r, { wordId: q.word.id, grade: isCorrect ? 5 : 1 }]);
     },
-    [selected, questions, index, results, onComplete],
+    [selected, questions, index],
   );
+
+  const advance = useCallback(() => {
+    if (index + 1 >= questions.length) { onComplete(results); return; }
+    setSelected(null);
+    setIndex((i) => i + 1);
+  }, [index, questions.length, results, onComplete]);
 
   if (loading) return <div className={styles.loading}>{t.multipleChoice.loading}</div>;
 
@@ -118,6 +120,18 @@ export function MultipleChoiceMode({ words, onComplete }: Props) {
           );
         })}
       </div>
+
+      {selected !== null && (
+        <motion.button
+          className={styles.nextBtn}
+          onClick={advance}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          {index + 1 < questions.length ? t.multipleChoice.next : t.multipleChoice.finish}
+        </motion.button>
+      )}
     </div>
   );
 }

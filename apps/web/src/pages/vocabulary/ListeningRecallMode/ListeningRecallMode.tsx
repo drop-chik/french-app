@@ -45,13 +45,24 @@ export function ListeningRecallMode({ words, onComplete }: Props) {
     [],
   );
 
-  // Load TTS audio for current word
+  // Load audio for current word — use cached audioUrl if available, else generate TTS
   const loadAudio = useCallback(async (word: WordData) => {
     if (audioRef.current) {
       audioRef.current.pause();
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
     }
-    setAudioUrl(null);
+    // Revoke previous blob URL only (not regular https:// URLs)
+    setAudioUrl((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+
+    if (word.audioUrl) {
+      // Word already has a cached audio URL — use it directly, no TTS needed
+      setAudioUrl(word.audioUrl);
+      return;
+    }
+
+    // No cached audio — generate via TTS
     setLoadingAudio(true);
     try {
       const blob = await listeningApi.generateTTS(word.french);

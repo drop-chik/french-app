@@ -21,15 +21,24 @@
 .logo {
   display: flex;
   align-items: center;
+  gap: var(--space-2);
   margin-bottom: var(--space-8);
   padding: 0 var(--space-2);
 }
 
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.35));
+  flex-shrink: 0;
+}
+
 .logoText {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-bold);
+  font-size: var(--text-lg);
+  font-weight: 800;
   color: var(--color-brand);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.025em;
 }
 
 /* Nav */

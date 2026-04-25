@@ -65,6 +65,8 @@ export const profileApi = {
 
   getCharts: () => apiRequest<ChartsData>('/profile/charts'),
 
+  getStreak: () => apiRequest<{ streak: number }>('/profile/streak'),
+
   logout: () =>
     apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST' }).catch(() => {
       // Ignore server errors on logout — we clear auth regardless

@@ -5,18 +5,19 @@ import { conversationApi, type ConversationSession, type ChatMessage, type Corre
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
+import foxIcon from '../landing/fox-icon.png';
 import styles from './ConversationPage.module.css';
 
 // Topic value stays in French (sent to GPT) — only the label is translated
 const TOPICS = [
-  { key: 'intro', value: 'Se présenter — introductions and greetings' },
-  { key: 'cafe', value: 'Au café et au restaurant — at the café and restaurant' },
-  { key: 'travel', value: 'Les voyages — travel and transport' },
-  { key: 'work', value: 'Le travail — professions and work' },
-  { key: 'family', value: 'La famille — family and relationships' },
-  { key: 'hobbies', value: 'Les loisirs — hobbies and free time' },
-  { key: 'weather', value: 'La météo — weather and nature' },
-  { key: 'shopping', value: 'Les courses — shops and shopping' },
+  { key: 'intro',    value: 'Se présenter — introductions and greetings',              emoji: '👋' },
+  { key: 'cafe',     value: 'Au café et au restaurant — at the café and restaurant',   emoji: '☕' },
+  { key: 'travel',   value: 'Les voyages — travel and transport',                      emoji: '✈️' },
+  { key: 'work',     value: 'Le travail — professions and work',                       emoji: '💼' },
+  { key: 'family',   value: 'La famille — family and relationships',                   emoji: '🏡' },
+  { key: 'hobbies',  value: 'Les loisirs — hobbies and free time',                    emoji: '🎸' },
+  { key: 'weather',  value: 'La météo — weather and nature',                          emoji: '🌤️' },
+  { key: 'shopping', value: 'Les courses — shops and shopping',                       emoji: '🛍️' },
 ];
 
 export function ConversationPage() {
@@ -79,14 +80,12 @@ export function ConversationPage() {
     },
   });
 
-  // Sync local messages from server
   useEffect(() => {
     if (sessionData?.session?.messages) {
       setLocalMessages(sessionData.session.messages);
     }
   }, [sessionData]);
 
-  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [localMessages, streamingText]);
@@ -99,7 +98,6 @@ export function ConversationPage() {
     setIsStreaming(true);
     setStreamingText('');
 
-    // Optimistic: add user message
     const userMsg: ChatMessage = {
       role: 'user',
       content: userText,
@@ -117,7 +115,6 @@ export function ConversationPage() {
         setStreamingText(rawStream);
       },
       () => {
-        // Done — parse and add assistant message
         try {
           const parsed: { message: string; corrections: Correction[] } = JSON.parse(rawStream);
           const assistantMsg: ChatMessage = {
@@ -169,6 +166,7 @@ export function ConversationPage() {
 
   const sessions = sessionsData?.sessions ?? [];
   const activeSession = sessions.find((s) => s.id === activeSessionId);
+  const userMessageCount = localMessages.filter((m) => m.role === 'user').length;
 
   return (
     <div className={styles.layout}>
@@ -178,14 +176,11 @@ export function ConversationPage() {
           confirmLabel={t.common.delete ?? 'Удалить'}
           cancelLabel={t.profile.cancel}
           loading={deleteSessionMutation.isPending}
-          onConfirm={() => {
-            deleteSessionMutation.mutate(deleteConfirmId);
-          }}
+          onConfirm={() => { deleteSessionMutation.mutate(deleteConfirmId); }}
           onCancel={() => setDeleteConfirmId(null)}
         />
       )}
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
       )}
@@ -245,9 +240,12 @@ export function ConversationPage() {
           </button>
         </div>
 
+        {/* ── Idea 1: Premium empty state ── */}
         {!activeSessionId && !showTopicPicker && (
           <div className={styles.emptyState}>
-            <MessageSquare size={48} className={styles.emptyIcon} />
+            <div className={styles.emptyGlow}>
+              <img src={foxIcon} className={styles.emptyFox} alt="AI Tutor" />
+            </div>
             <h2 className={styles.emptyTitle}>{t.conversation.emptyTitle}</h2>
             <p className={styles.emptySubtitle}>{t.conversation.emptySubtitle}</p>
             <button className={styles.startButton} onClick={() => setShowTopicPicker(true)}>
@@ -256,6 +254,7 @@ export function ConversationPage() {
           </div>
         )}
 
+        {/* ── Idea 2: Topic picker with emojis ── */}
         {showTopicPicker && (
           <div className={styles.topicPicker}>
             <h2 className={styles.topicTitle}>{t.conversation.pickTopic}</h2>
@@ -267,7 +266,13 @@ export function ConversationPage() {
                   onClick={() => startNewSession(topic.value)}
                   disabled={createSessionMutation.isPending}
                 >
-                  {t.conversation.topics[topic.key as keyof typeof t.conversation.topics]}
+                  <span className={styles.topicEmoji}>{topic.emoji}</span>
+                  <span className={styles.topicName}>
+                    {t.conversation.topics[topic.key as keyof typeof t.conversation.topics]}
+                  </span>
+                  <span className={styles.topicDesc}>
+                    {t.conversation.topicsDesc[topic.key as keyof typeof t.conversation.topicsDesc]}
+                  </span>
                 </button>
               ))}
             </div>
@@ -296,6 +301,24 @@ export function ConversationPage() {
 
         {activeSessionId && !showTopicPicker && (
           <>
+            {/* ── Idea 4: Chat header with topic ── */}
+            {activeSession && (
+              <div className={styles.chatHeader}>
+                <div className={styles.chatHeaderAvatar}>
+                  <img src={foxIcon} alt="AI" />
+                </div>
+                <div className={styles.chatHeaderInfo}>
+                  <span className={styles.chatHeaderName}>{t.conversation.aiTutor}</span>
+                  <span className={styles.chatHeaderTopic}>{activeSession.topic}</span>
+                </div>
+                {userMessageCount > 0 && (
+                  <span className={styles.chatHeaderCount}>
+                    {userMessageCount} {lang === 'ru' ? 'реплик' : 'turns'}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className={styles.messages}>
               {localMessages.length === 0 && (
                 <div className={styles.chatHint}>{t.conversation.chatHint}</div>
@@ -311,19 +334,32 @@ export function ConversationPage() {
                 </div>
               ))}
 
-              {/* Streaming assistant */}
+              {/* ── Idea 5: Streaming — fox + animated indicator ── */}
               {isStreaming && streamingText && (
                 <div className={`${styles.message} ${styles.assistantMessage}`}>
-                  <StreamingBubble rawText={streamingText} />
+                  <div className={styles.assistantRow}>
+                    <div className={styles.foxAvatarWrap}>
+                      <img src={foxIcon} alt="AI" />
+                    </div>
+                    <StreamingBubble rawText={streamingText} />
+                  </div>
                 </div>
               )}
 
               {isStreaming && !streamingText && (
                 <div className={`${styles.message} ${styles.assistantMessage}`}>
-                  <div className={styles.bubble}>
-                    <span className={styles.typingDots}>
-                      <span /><span /><span />
-                    </span>
+                  <div className={styles.assistantRow}>
+                    <div className={styles.foxAvatarWrap}>
+                      <img src={foxIcon} alt="AI" />
+                    </div>
+                    <div className={styles.bubble}>
+                      <span className={styles.typingIndicator}>
+                        <span className={styles.typingDot} />
+                        <span className={styles.typingDot} />
+                        <span className={styles.typingDot} />
+                        <span className={styles.typingLabel}>{t.conversation.aiTyping}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -343,7 +379,7 @@ export function ConversationPage() {
                 disabled={isStreaming}
               />
               <button
-                className={styles.sendButton}
+                className={`${styles.sendButton} ${isStreaming ? styles.sendButtonStreaming : ''}`}
                 onClick={handleSend}
                 disabled={!input.trim() || isStreaming}
               >
@@ -357,6 +393,7 @@ export function ConversationPage() {
   );
 }
 
+// ── Idea 3: Assistant bubble with fox avatar ──
 function AssistantBubble({ msg, lang }: { msg: ChatMessage; lang: string }) {
   const { t } = useI18n();
   const [showCorrections, setShowCorrections] = useState(false);
@@ -368,32 +405,38 @@ function AssistantBubble({ msg, lang }: { msg: ChatMessage; lang: string }) {
     : t.conversation.correctionsPlural.replace('{n}', String(count));
 
   return (
-    <div>
-      <div className={styles.bubble}>{msg.content}</div>
-      {count > 0 && (
-        <div className={styles.corrections}>
-          <button
-            className={styles.correctionsToggle}
-            onClick={() => setShowCorrections(!showCorrections)}
-          >
-            <AlertCircle size={12} />
-            {corrLabel}
-            <ChevronDown size={12} className={showCorrections ? styles.chevronUp : ''} />
-          </button>
-          {showCorrections && (
-            <div className={styles.correctionList}>
-              {corrections.map((c, i) => (
-                <div key={i} className={styles.correctionItem}>
-                  <span className={styles.correctionWrong}>{c.original}</span>
-                  <span className={styles.correctionArrow}>→</span>
-                  <span className={styles.correctionRight}>{c.corrected}</span>
-                  <span className={styles.correctionNote}>{c.explanation}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+    <div className={styles.assistantRow}>
+      <div className={styles.foxAvatarWrap}>
+        <img src={foxIcon} alt="AI Tutor" />
+      </div>
+      <div className={styles.assistantContent}>
+        <span className={styles.assistantName}>{t.conversation.aiTutor}</span>
+        <div className={styles.bubble}>{msg.content}</div>
+        {count > 0 && (
+          <div className={styles.corrections}>
+            <button
+              className={styles.correctionsToggle}
+              onClick={() => setShowCorrections(!showCorrections)}
+            >
+              <AlertCircle size={12} />
+              {corrLabel}
+              <ChevronDown size={12} className={showCorrections ? styles.chevronUp : ''} />
+            </button>
+            {showCorrections && (
+              <div className={styles.correctionList}>
+                {corrections.map((c, i) => (
+                  <div key={i} className={styles.correctionItem}>
+                    <span className={styles.correctionWrong}>{c.original}</span>
+                    <span className={styles.correctionArrow}>→</span>
+                    <span className={styles.correctionRight}>{c.corrected}</span>
+                    <span className={styles.correctionNote}>{c.explanation}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -32,26 +32,27 @@ export function FillBlankMode({ words, onComplete }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     async function build() {
-      setLoading(true);
-      const qs: Question[] = [];
-      for (const word of words) {
-        const parsed = makeSentence(word);
-        const sentence = parsed?.sentence ?? `___ — ${word.translation}`;
-        const answer = parsed?.answer ?? word.french;
-        let distractors: string[] = [];
-        try {
-          const res = await wordsApi.getDistractors(word.id);
-          distractors = res.distractors.map((d) => d.french);
-        } catch {
-          distractors = words.filter((w) => w.id !== word.id).slice(0, 3).map((w) => w.french);
-        }
-        qs.push({ word, sentence, options: shuffle([answer, ...distractors.slice(0, 3)]), correctOption: answer });
-      }
-      setQuestions(qs);
-      setLoading(false);
+      const qs = await Promise.all(
+        words.map(async (word) => {
+          const parsed = makeSentence(word);
+          const sentence = parsed?.sentence ?? `___ — ${word.translation}`;
+          const answer = parsed?.answer ?? word.french;
+          let distractors: string[] = [];
+          try {
+            const res = await wordsApi.getDistractors(word.id);
+            distractors = res.distractors.map((d) => d.french);
+          } catch {
+            distractors = words.filter((w) => w.id !== word.id).slice(0, 3).map((w) => w.french);
+          }
+          return { word, sentence, options: shuffle([answer, ...distractors.slice(0, 3)]), correctOption: answer };
+        }),
+      );
+      if (!cancelled) { setQuestions(qs); setLoading(false); }
     }
     build();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

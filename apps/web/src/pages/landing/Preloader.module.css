@@ -1,0 +1,106 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #080c1a 0%, #1a2d6b 40%, #3b1f80 70%, #080c1a 100%);
+  overflow: hidden;
+  will-change: opacity;
+}
+
+/* Two static orbs — no JS animation, GPU-friendly */
+.orb1 {
+  position: absolute;
+  top: -15%;
+  right: -8%;
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, transparent 65%);
+  filter: blur(40px);
+  pointer-events: none;
+  will-change: transform;
+  animation: orb1 9s ease-in-out infinite alternate;
+}
+
+.orb2 {
+  position: absolute;
+  bottom: -20%;
+  left: -8%;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.4) 0%, transparent 65%);
+  filter: blur(40px);
+  pointer-events: none;
+  will-change: transform;
+  animation: orb2 11s ease-in-out infinite alternate;
+}
+
+@keyframes orb1 {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(40px, 30px); }
+}
+@keyframes orb2 {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(-35px, -40px); }
+}
+
+/* Content */
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+  will-change: transform, opacity;
+}
+
+.fox {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 24px rgba(249, 115, 22, 0.5));
+}
+
+.wordRow {
+  display: flex;
+  align-items: baseline;
+}
+
+.letter {
+  font-size: 3.2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #fff;
+  display: inline-block;
+  line-height: 1;
+  will-change: transform, opacity, filter;
+}
+
+.subtitle {
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.progressTrack {
+  width: 180px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #2563eb, #7c3aed, #f97316);
+  transform-origin: left;
+  will-change: transform;
+}

@@ -41,10 +41,19 @@ export function SpellingMode({ words, onComplete }: Props) {
     const fuzzy = normalize(value.trim()) === normalize(current.french);
     const isCorrect = exact || fuzzy;
     setState(isCorrect ? 'correct' : 'wrong');
-    const grade = exact ? 5 : fuzzy ? 4 : 1;
+    let grade: number;
+    if (!isCorrect) {
+      grade = 1;
+    } else if (hint === 0) {
+      grade = exact ? 5 : 4;
+    } else if (hint >= current.french.length) {
+      grade = 2;
+    } else {
+      grade = 3;
+    }
     wordsApi.recordAnswer(current.id, grade).catch(console.error);
     setResults((r) => [...r, { wordId: current.id, grade }]);
-  }, [current, state, value]);
+  }, [current, state, value, hint]);
 
   const advance = useCallback(() => {
     if (!current) return;

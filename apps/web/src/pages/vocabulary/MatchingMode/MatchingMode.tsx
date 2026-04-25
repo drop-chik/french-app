@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type { WordData } from '../../../features/words/api';
 import { wordsApi } from '../../../features/words/api';
 import { useI18n } from '../../../shared/i18n';
@@ -47,6 +47,8 @@ export function MatchingMode({ words, onComplete }: Props) {
   const [wrong, setWrong] = useState<[string, string] | null>(null);
   const [correct, setCorrect] = useState<[string, string] | null>(null);
   const [results, setResults] = useState<SessionResult[]>([]);
+  // Track wrong attempts per wordId to give honest SRS grade
+  const [wrongCounts, setWrongCounts] = useState<Record<string, number>>({});
 
   const totalRounds = Math.ceil(words.length / BATCH);
   const roundWords = words.slice(roundIndex * BATCH, (roundIndex + 1) * BATCH);
@@ -57,6 +59,7 @@ export function MatchingMode({ words, onComplete }: Props) {
     setSelected(null);
     setWrong(null);
     setCorrect(null);
+    setWrongCounts({});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundIndex]);
 
@@ -71,8 +74,11 @@ export function MatchingMode({ words, onComplete }: Props) {
       if (isMatch) {
         setCorrect([selected.id, card.id]);
         const newMatched = new Set([...matched, card.wordId]);
-        wordsApi.recordAnswer(card.wordId, 5).catch(console.error);
-        const newResults = [...results, { wordId: card.wordId, grade: 5 }];
+        // Grade 5 if matched without any prior mistakes, grade 3 if had mistakes
+        const hadErrors = (wrongCounts[card.wordId] ?? 0) > 0;
+        const grade = hadErrors ? 3 : 5;
+        wordsApi.recordAnswer(card.wordId, grade).catch(console.error);
+        const newResults = [...results, { wordId: card.wordId, grade }];
         setResults(newResults);
         setTimeout(() => {
           setMatched(newMatched);
@@ -86,19 +92,17 @@ export function MatchingMode({ words, onComplete }: Props) {
           }
         }, 600);
       } else {
+        // Wrong match — only visual feedback, no SRS recording
         setWrong([selected.id, card.id]);
-        wordsApi.recordAnswer(selected.wordId, 1).catch(console.error);
-        wordsApi.recordAnswer(card.wordId, 1).catch(console.error);
-        const newResults = [
-          ...results,
-          { wordId: selected.wordId, grade: 1 },
-          { wordId: card.wordId, grade: 1 },
-        ];
-        setResults(newResults);
+        setWrongCounts((prev) => ({
+          ...prev,
+          [selected.wordId]: (prev[selected.wordId] ?? 0) + 1,
+          [card.wordId]: (prev[card.wordId] ?? 0) + 1,
+        }));
         setTimeout(() => { setWrong(null); setSelected(null); }, 800);
       }
     },
-    [matched, selected, wrong, correct, results, roundWords.length, roundIndex, totalRounds, onComplete],
+    [matched, selected, wrong, correct, results, wrongCounts, roundWords.length, roundIndex, totalRounds, onComplete],
   );
 
   const progress = ((roundIndex * BATCH + matched.size) / words.length) * 100;
@@ -114,36 +118,34 @@ export function MatchingMode({ words, onComplete }: Props) {
       </div>
 
       <div className={styles.grid}>
-        <AnimatePresence>
-          {cards.map((card) => {
-            const isMatched = matched.has(card.wordId);
-            const isSelected = selected?.id === card.id;
-            const isWrong = wrong?.includes(card.id);
-            const isCorrect = correct?.includes(card.id);
-            if (isMatched) return null;
-            return (
-              <motion.button
-                key={card.id}
-                className={`${styles.card}
-                  ${isSelected ? styles.cardSelected : ''}
-                  ${isWrong ? styles.cardWrong : ''}
-                  ${isCorrect ? styles.cardCorrect : ''}
-                  ${card.type === 'french' ? styles.cardFrench : styles.cardTranslation}
-                `}
-                onClick={() => handleSelect(card)}
-                layout
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                transition={{ duration: 0.2 }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                {card.text}
-              </motion.button>
-            );
-          })}
-        </AnimatePresence>
+        {cards.map((card) => {
+          const isMatched = matched.has(card.wordId);
+          const isSelected = selected?.id === card.id;
+          const isWrong = wrong?.includes(card.id);
+          const isCorrect = correct?.includes(card.id);
+          if (isMatched) {
+            return <div key={card.id} className={styles.cardPlaceholder} />;
+          }
+          return (
+            <motion.button
+              key={card.id}
+              className={`${styles.card}
+                ${isSelected ? styles.cardSelected : ''}
+                ${isWrong ? styles.cardWrong : ''}
+                ${isCorrect ? styles.cardCorrect : ''}
+                ${card.type === 'french' ? styles.cardFrench : styles.cardTranslation}
+              `}
+              onClick={() => handleSelect(card)}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              {card.text}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );

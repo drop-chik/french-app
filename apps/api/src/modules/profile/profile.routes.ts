@@ -6,6 +6,7 @@ import {
   updateAvatar,
   getStats,
   getCharts,
+  getStreak,
 } from './profile.service.js';
 
 const profileRoutes: FastifyPluginAsync = async (fastify) => {
@@ -91,6 +92,13 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     const { userId } = request.user;
     const charts = await getCharts(fastify.db, userId);
     reply.send(charts);
+  });
+
+  // GET /profile/streak — consecutive days streak
+  fastify.get('/streak', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { userId } = request.user;
+    const streak = await getStreak(fastify.db, userId);
+    reply.send({ streak });
   });
 };
 

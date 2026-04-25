@@ -102,3 +102,19 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.nextBtn {
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-8);
+  background-color: var(--color-brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.nextBtn:hover { opacity: 0.85; }

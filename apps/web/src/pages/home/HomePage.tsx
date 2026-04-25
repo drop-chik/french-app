@@ -4,6 +4,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../shared/hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
 import { authApi } from '../../features/auth/api';
+import foxIcon from '../landing/fox-icon.png';
 import styles from './HomePage.module.css';
 
 type Mode = 'login' | 'register';
@@ -51,7 +52,7 @@ export function HomePage() {
 
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.logo}>FR</div>
+          <img src={foxIcon} className={styles.logo} alt="FrenchUp" />
           <h1 className={styles.title}>FrenchUp</h1>
           <p className={styles.subtitle}>Учи французский с умом</p>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, useMotionValue, useTransform, useAnimation } from 'framer-motion';
 import type { WordData } from '../../../features/words/api';
 import { wordsApi } from '../../../features/words/api';
@@ -11,9 +11,32 @@ interface Props {
   onComplete: (results: SessionResult[]) => void;
 }
 
+interface Question {
+  word: WordData;
+  leftOption: string;
+  rightOption: string;
+  correctSide: 'left' | 'right';
+}
+
 const DURATION = 60;
 const SWIPE_THRESHOLD = 90;
 const FLY_DISTANCE = 400;
+
+function buildQuestions(words: WordData[]): Question[] {
+  return words.map((word) => {
+    const pool = words.filter((w) => w.id !== word.id);
+    const distractor = pool[Math.floor(Math.random() * pool.length)];
+    const correctTrans = word.translation;
+    const wrongTrans = distractor?.translation ?? '— — —';
+    const correctSide = Math.random() < 0.5 ? 'left' : 'right';
+    return {
+      word,
+      leftOption: correctSide === 'left' ? correctTrans : wrongTrans,
+      rightOption: correctSide === 'right' ? correctTrans : wrongTrans,
+      correctSide,
+    };
+  });
+}
 
 export function SpeedRoundMode({ words, onComplete }: Props) {
   const { t } = useI18n();
@@ -26,31 +49,28 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
   const [isAnimating, setIsAnimating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const shuffled = useRef([...words].sort(() => Math.random() - 0.5));
+  const questions = useMemo(() => buildQuestions([...words].sort(() => Math.random() - 0.5)), [words]);
 
-  // motion values для текущей карточки
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-18, 18]);
   const cardOpacity = useTransform(x, [-200, -100, 0, 100, 200], [0.6, 1, 1, 1, 0.6]);
 
-  // оверлеи — цветной фон при свайпе
-  const noOverlayOpacity = useTransform(x, [-SWIPE_THRESHOLD, 0], [1, 0]);
-  const yesOverlayOpacity = useTransform(x, [0, SWIPE_THRESHOLD], [0, 1]);
+  const leftOverlayOpacity = useTransform(x, [-SWIPE_THRESHOLD, 0], [1, 0]);
+  const rightOverlayOpacity = useTransform(x, [0, SWIPE_THRESHOLD], [0, 1]);
 
   const controls = useAnimation();
 
-  const current = shuffled.current[index % shuffled.current.length];
-  const next = shuffled.current[(index + 1) % shuffled.current.length];
+  const current = questions[index];
+  const next = questions[index + 1];
 
-  // масштаб следующей карточки — растёт по мере свайпа текущей
   const nextScale = useTransform(x, [-200, -SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD, 200], [1, 1, 0.94, 1, 1]);
   const nextY = useTransform(x, [-200, -SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD, 200], [0, 0, 10, 0, 0]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
     if (countdown === 0) { setPhase('playing'); return; }
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
   }, [phase, countdown]);
 
   useEffect(() => {
@@ -64,12 +84,12 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
     return () => clearInterval(timerRef.current!);
   }, [phase]);
 
-  const flyOut = useCallback(async (know: boolean) => {
+  const flyOut = useCallback(async (side: 'left' | 'right') => {
     if (isAnimating || phase !== 'playing' || !current) return;
     setIsAnimating(true);
 
-    const targetX = know ? FLY_DISTANCE : -FLY_DISTANCE;
-    const targetRotate = know ? 25 : -25;
+    const targetX = side === 'right' ? FLY_DISTANCE : -FLY_DISTANCE;
+    const targetRotate = side === 'right' ? 25 : -25;
 
     await controls.start({
       x: targetX,
@@ -78,24 +98,30 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
       transition: { duration: 0.25, ease: 'easeOut' },
     });
 
-    const grade = know ? 4 : 1;
-    wordsApi.recordAnswer(current.id, grade).catch(console.error);
-    setResults((r) => [...r, { wordId: current.id, grade }]);
-    if (know) setCorrectCount((c) => c + 1);
+    const isCorrect = side === current.correctSide;
+    const grade = isCorrect ? 5 : 1;
+    wordsApi.recordAnswer(current.word.id, grade).catch(console.error);
+    setResults((r) => [...r, { wordId: current.word.id, grade }]);
+    if (isCorrect) setCorrectCount((c) => c + 1);
 
-    // сброс позиции до перехода к следующей
     x.set(0);
     await controls.set({ x: 0, rotate: 0, opacity: 1 });
 
-    setIndex((i) => i + 1);
+    const nextIndex = index + 1;
+    if (nextIndex >= questions.length) {
+      clearInterval(timerRef.current!);
+      setPhase('done');
+    } else {
+      setIndex(nextIndex);
+    }
     setIsAnimating(false);
-  }, [isAnimating, phase, current, controls, x]);
+  }, [isAnimating, phase, current, controls, x, index, questions.length]);
 
   useEffect(() => {
     if (phase !== 'playing') return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowRight' || e.key === 'k') flyOut(true);
-      if (e.key === 'ArrowLeft' || e.key === 'j') flyOut(false);
+      if (e.key === 'ArrowRight' || e.key === 'k') flyOut('right');
+      if (e.key === 'ArrowLeft' || e.key === 'j') flyOut('left');
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -104,16 +130,14 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
   async function handleDragEnd(_: unknown, info: { offset: { x: number }; velocity: { x: number } }) {
     const offset = info.offset.x;
     const velocity = info.velocity.x;
-
     if (Math.abs(offset) > SWIPE_THRESHOLD || Math.abs(velocity) > 500) {
-      await flyOut(offset > 0 || velocity > 0);
+      await flyOut(offset > 0 || velocity > 0 ? 'right' : 'left');
     } else {
-      // snap back
       controls.start({ x: 0, rotate: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } });
     }
   }
 
-  // ───── Phases ─────
+  // ── Phases ──
 
   if (phase === 'countdown') {
     return (
@@ -129,7 +153,7 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
           >
             {countdown === 0 ? t.speedRound.start : countdown}
           </motion.span>
-          <p className={styles.countdownHint}>{t.speedRound.hintArrows}</p>
+          <p className={styles.countdownHint}>{t.speedRound.chooseTranslation}</p>
         </div>
       </div>
     );
@@ -164,6 +188,10 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
   const timerPct = (timeLeft / DURATION) * 100;
   const timerColor = timeLeft > 20 ? 'var(--color-brand)' : timeLeft > 10 ? 'var(--color-warning)' : 'var(--color-error)';
 
+  // Determine overlay correctness for color
+  const leftIsCorrect = current.correctSide === 'left';
+  const rightIsCorrect = current.correctSide === 'right';
+
   return (
     <div className={styles.container}>
       <div className={styles.timerRow}>
@@ -179,19 +207,20 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
       </div>
 
       <div className={styles.cardArea}>
-        {/* Следующая карточка — лежит снизу */}
         {next && (
           <motion.div
             key={`next-${index}`}
             className={`${styles.card} ${styles.cardNext}`}
             style={{ scale: nextScale, y: nextY }}
           >
-            <p className={styles.cardFrench}>{next.french}</p>
-            <p className={styles.cardTranslation}>{next.translation}</p>
+            <p className={styles.cardFrench}>{next.word.french}</p>
+            <div className={styles.optionsRow}>
+              <span className={styles.optionChip}>{next.leftOption}</span>
+              <span className={styles.optionChip}>{next.rightOption}</span>
+            </div>
           </motion.div>
         )}
 
-        {/* Текущая карточка — сверху, можно свайпать */}
         <motion.div
           key={`card-${index}`}
           className={styles.card}
@@ -204,44 +233,47 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
           onDragEnd={handleDragEnd}
           whileTap={{ cursor: 'grabbing' }}
         >
-          {/* Оверлей «НЕ ЗНАЮ» (красный, слева) */}
+          {/* Левый оверлей */}
           <motion.div
-            className={`${styles.swipeOverlay} ${styles.swipeOverlayNo}`}
-            style={{ opacity: noOverlayOpacity }}
+            className={`${styles.swipeOverlay} ${leftIsCorrect ? styles.swipeOverlayCorrect : styles.swipeOverlayWrong}`}
+            style={{ opacity: leftOverlayOpacity }}
           >
-            <span className={styles.swipeLabel}>✗</span>
-            <span className={styles.swipeLabelText}>{t.speedRound.dontKnow}</span>
+            <span className={styles.swipeOptionText}>{current.leftOption}</span>
           </motion.div>
 
-          {/* Оверлей «ЗНАЮ» (зелёный, справа) */}
+          {/* Правый оверлей */}
           <motion.div
-            className={`${styles.swipeOverlay} ${styles.swipeOverlayYes}`}
-            style={{ opacity: yesOverlayOpacity }}
+            className={`${styles.swipeOverlay} ${rightIsCorrect ? styles.swipeOverlayCorrect : styles.swipeOverlayWrong}`}
+            style={{ opacity: rightOverlayOpacity }}
           >
-            <span className={styles.swipeLabel}>✓</span>
-            <span className={styles.swipeLabelText}>{t.speedRound.know}</span>
+            <span className={styles.swipeOptionText}>{current.rightOption}</span>
           </motion.div>
 
-          <p className={styles.cardFrench}>{current.french}</p>
-          <p className={styles.cardTranslation}>{current.translation}</p>
-          <p className={styles.swipeHint}>← свайп →</p>
+          <p className={styles.cardFrench}>{current.word.french}</p>
+          <div className={styles.optionsRow}>
+            <span className={styles.optionChip}>{current.leftOption}</span>
+            <span className={styles.optionChip}>{current.rightOption}</span>
+          </div>
+          <p className={styles.swipeHint}>{t.speedRound.hintSwipe}</p>
         </motion.div>
       </div>
 
       <div className={styles.buttons}>
         <button
-          className={`${styles.btn} ${styles.btnNo}`}
-          onClick={() => flyOut(false)}
+          className={`${styles.btn} ${styles.btnLeft}`}
+          onClick={() => flyOut('left')}
           disabled={isAnimating}
         >
-          ✗<span>{t.speedRound.dontKnow}</span><kbd>←</kbd>
+          <span className={styles.btnOption}>{current.leftOption}</span>
+          <kbd>←</kbd>
         </button>
         <button
-          className={`${styles.btn} ${styles.btnYes}`}
-          onClick={() => flyOut(true)}
+          className={`${styles.btn} ${styles.btnRight}`}
+          onClick={() => flyOut('right')}
           disabled={isAnimating}
         >
-          ✓<span>{t.speedRound.know}</span><kbd>→</kbd>
+          <span className={styles.btnOption}>{current.rightOption}</span>
+          <kbd>→</kbd>
         </button>
       </div>
     </div>

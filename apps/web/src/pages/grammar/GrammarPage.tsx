@@ -30,16 +30,25 @@ export function GrammarPage() {
   }, {});
 
   const completedCount = topics.filter((topic) => topic.status === 'completed').length;
+  const progressPct = topics.length > 0 ? Math.round((completedCount / topics.length) * 100) : 0;
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>{t.grammar.title}</h1>
-        <p className={styles.subtitle}>
-          {isLoading
-            ? t.common.loading
-            : `${completedCount} ${t.grammar.topicsCompleted.replace('{total}', String(topics.length))}`}
-        </p>
+        {!isLoading && topics.length > 0 && (
+          <div className={styles.progressBlock}>
+            <div className={styles.progressMeta}>
+              <span className={styles.progressText}>
+                {completedCount} {t.grammar.topicsCompleted.replace('{total}', String(topics.length))}
+              </span>
+              <span className={styles.progressPct}>{progressPct}%</span>
+            </div>
+            <div className={styles.progressTrack}>
+              <div className={styles.progressFill} style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+        )}
       </div>
 
       {isLoading && <p className={styles.loading}>{t.grammar.loading}</p>}

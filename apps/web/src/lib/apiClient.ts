@@ -45,7 +45,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     } catch {
       // Refresh failed — clear auth and redirect to login
       useAuthStore.getState().clearAuth();
-      window.location.href = '/';
+      window.location.href = '/login';
       throw new Error('Session expired');
     }
   }

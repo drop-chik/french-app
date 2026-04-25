@@ -160,6 +160,49 @@ export async function getStats(db: DB, userId: string) {
   };
 }
 
+// Daily streak: consecutive days with at least one word reviewed
+export async function getStreak(db: DB, userId: string): Promise<number> {
+  const rows = await db
+    .select({ day: sql<string>`to_char(DATE(${wordProgress.lastReviewed}), 'YYYY-MM-DD')` })
+    .from(wordProgress)
+    .where(and(eq(wordProgress.userId, userId), sql`${wordProgress.lastReviewed} IS NOT NULL`))
+    .groupBy(sql`DATE(${wordProgress.lastReviewed})`)
+    .orderBy(sql`DATE(${wordProgress.lastReviewed}) DESC`);
+
+  const dates = rows.map((r) => r.day).filter(Boolean);
+  if (dates.length === 0) return 0;
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+  // Streak is alive only if user has studied today or yesterday
+  if (dates[0] !== todayStr && dates[0] !== yesterdayStr) return 0;
+
+  let streak = 0;
+  let prevDate: Date | null = null;
+
+  for (const dateStr of dates) {
+    const d = new Date(dateStr + 'T00:00:00Z');
+    if (prevDate === null) {
+      streak = 1;
+      prevDate = d;
+    } else {
+      const diffDays = Math.round((prevDate.getTime() - d.getTime()) / 86_400_000);
+      if (diffDays === 1) {
+        streak++;
+        prevDate = d;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return streak;
+}
+
 // Charts data: last 30 days of activity
 export async function getCharts(db: DB, userId: string) {
   const since = new Date();
