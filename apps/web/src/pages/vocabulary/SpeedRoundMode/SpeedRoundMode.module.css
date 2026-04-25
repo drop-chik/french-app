@@ -175,24 +175,17 @@
   padding: var(--space-6);
 }
 
-.swipeOverlayCorrect {
-  background: rgba(34, 197, 94, 0.18);
-  border: 3px solid rgba(34, 197, 94, 0.6);
-}
-
-.swipeOverlayWrong {
-  background: rgba(239, 68, 68, 0.18);
-  border: 3px solid rgba(239, 68, 68, 0.6);
+.swipeOverlay {
+  background: rgba(249, 115, 22, 0.14);
+  border: 3px solid rgba(249, 115, 22, 0.55);
 }
 
 .swipeOptionText {
   font-size: var(--text-lg);
   font-weight: var(--font-bold);
   text-align: center;
+  color: var(--color-brand);
 }
-
-.swipeOverlayCorrect .swipeOptionText { color: var(--color-success); }
-.swipeOverlayWrong .swipeOptionText   { color: var(--color-error); }
 
 /* ── Action buttons ── */
 .buttons {

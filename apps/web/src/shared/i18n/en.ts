@@ -126,7 +126,7 @@ export const en: Translations = {
   },
   matching: {
     round: 'Round',
-    hint: 'Flip 2 cards at a time — find the pairs',
+    hint: 'Match: word ↔ translation',
   },
   speedRound: {
     start: 'Go!',

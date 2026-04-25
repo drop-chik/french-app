@@ -188,10 +188,6 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
   const timerPct = (timeLeft / DURATION) * 100;
   const timerColor = timeLeft > 20 ? 'var(--color-brand)' : timeLeft > 10 ? 'var(--color-warning)' : 'var(--color-error)';
 
-  // Determine overlay correctness for color
-  const leftIsCorrect = current.correctSide === 'left';
-  const rightIsCorrect = current.correctSide === 'right';
-
   return (
     <div className={styles.container}>
       <div className={styles.timerRow}>
@@ -233,17 +229,16 @@ export function SpeedRoundMode({ words, onComplete }: Props) {
           onDragEnd={handleDragEnd}
           whileTap={{ cursor: 'grabbing' }}
         >
-          {/* Левый оверлей */}
+          {/* Оверлеи нейтральные — цвет одинаковый, не раскрывает правильный ответ */}
           <motion.div
-            className={`${styles.swipeOverlay} ${leftIsCorrect ? styles.swipeOverlayCorrect : styles.swipeOverlayWrong}`}
+            className={styles.swipeOverlay}
             style={{ opacity: leftOverlayOpacity }}
           >
             <span className={styles.swipeOptionText}>{current.leftOption}</span>
           </motion.div>
 
-          {/* Правый оверлей */}
           <motion.div
-            className={`${styles.swipeOverlay} ${rightIsCorrect ? styles.swipeOverlayCorrect : styles.swipeOverlayWrong}`}
+            className={styles.swipeOverlay}
             style={{ opacity: rightOverlayOpacity }}
           >
             <span className={styles.swipeOptionText}>{current.rightOption}</span>
