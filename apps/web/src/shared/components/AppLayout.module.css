@@ -146,9 +146,26 @@
   text-overflow: ellipsis;
 }
 
+.userMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .userLevel {
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
+}
+
+.streakMini {
+  font-size: var(--text-xs);
+  color: var(--color-brand);
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+}
+
+.streakMiniDone {
+  color: var(--color-success);
 }
 
 .themeToggle {

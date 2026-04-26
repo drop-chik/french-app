@@ -20,7 +20,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
     staleTime: Infinity,
     enabled: !!user,
   });
+  const { data: streakData } = useQuery({
+    queryKey: ['streak'],
+    queryFn: profileApi.getStreak,
+    staleTime: 10 * 60 * 1000,
+    enabled: !!user,
+  });
   const avatarUrl = profileData?.avatarUrl ?? null;
+  const streak = streakData?.streak ?? 0;
+  const todayCompleted = streakData?.todayCompleted ?? false;
 
   const NAV_ITEMS = [
     { to: '/vocabulary', label: t.nav.words, icon: BookOpen },
@@ -67,7 +75,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className={styles.userDetails}>
               <span className={styles.userName}>{user?.name}</span>
-              <span className={styles.userLevel}>{user?.level}</span>
+              <div className={styles.userMeta}>
+                <span className={styles.userLevel}>{user?.level}</span>
+                {streak > 0 && (
+                  <span className={`${styles.streakMini} ${todayCompleted ? styles.streakMiniDone : ''}`}>
+                    🔥 {streak}
+                  </span>
+                )}
+              </div>
             </div>
             <UserCircle size={16} className={styles.profileIcon} />
           </Link>

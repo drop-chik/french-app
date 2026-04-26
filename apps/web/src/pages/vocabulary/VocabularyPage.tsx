@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { Play } from 'lucide-react';
+import { Play, CheckCircle } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
 import { useI18n } from '../../shared/i18n';
@@ -153,26 +153,11 @@ export function VocabularyPage() {
       {/* Header */}
       <div className={styles.header}>
         <h1 className={styles.title}>{t.vocabulary.title}</h1>
-        {streak > 0 && (
-          <div className={styles.streak}>
-            <span className={styles.streakFire}>🔥</span>
-            <span className={styles.streakText}>{streak} {t.vocabulary.streakLabel}</span>
-          </div>
-        )}
       </div>
-
-      {/* Streak banner — shown only when streak > 0 */}
-      {streak > 0 && !isLoading && (
-        <div className={`${styles.streakBanner} ${todayCompleted ? styles.streakBannerDone : styles.streakBannerWarn}`}>
-          {todayCompleted
-            ? t.vocabulary.streakDone
-            : t.vocabulary.streakAtRisk.replace('{n}', String(streak))}
-        </div>
-      )}
 
       {/* Stats bar */}
       {!isLoading && !error && (
-        <div className={styles.statsBar}>
+        <div className={`${styles.statsBar} ${todayCompleted ? styles.statsBarDone : ''}`}>
           <div className={styles.statPill}>
             <span className={styles.statValue}>{dueCount}</span>
             <span className={styles.statLabel}>{t.vocabulary.dueCount}</span>
@@ -187,6 +172,17 @@ export function VocabularyPage() {
             <span className={`${styles.statValue} ${styles.statValueGreen}`}>{masteredTotal}</span>
             <span className={styles.statLabel}>{t.vocabulary.masteredCount}</span>
           </div>
+          {streak > 0 && (
+            <>
+              <div className={styles.statDivider} />
+              <div className={styles.statPill}>
+                <span className={`${styles.statValue} ${todayCompleted ? styles.statValueStreakDone : styles.statValueStreak}`}>
+                  🔥 {streak}
+                </span>
+                <span className={styles.statLabel}>{t.vocabulary.streakLabel}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -195,10 +191,20 @@ export function VocabularyPage() {
 
       {/* CTA — primary action */}
       {!isLoading && !error && sessionWords.length > 0 && (
-        <button className={styles.startBtn} onClick={() => setActiveMode('smart')}>
-          <Play size={18} className={styles.startBtnIcon} />
+        <button
+          className={`${styles.startBtn} ${todayCompleted && !statusFilter ? styles.startBtnDone : ''}`}
+          onClick={() => setActiveMode('smart')}
+        >
+          {todayCompleted && !statusFilter
+            ? <CheckCircle size={18} className={styles.startBtnIcon} />
+            : <Play size={18} className={styles.startBtnIcon} />
+          }
           <span>
-            {statusFilter ? t.dictionary.status[statusFilter as keyof typeof t.dictionary.status] ?? t.vocabulary.startSession : t.vocabulary.startSession}
+            {statusFilter
+              ? t.dictionary.status[statusFilter as keyof typeof t.dictionary.status] ?? t.vocabulary.startSession
+              : todayCompleted
+              ? t.vocabulary.practiceMore
+              : t.vocabulary.startSession}
             <span className={styles.startBtnMeta}>
               {sessionWords.length} {lang === 'ru' ? 'слов' : 'words'} · ~{estimatedMin} {lang === 'ru' ? 'мин' : 'min'}
             </span>

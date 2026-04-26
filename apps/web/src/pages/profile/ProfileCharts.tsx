@@ -17,8 +17,16 @@ export function ProfileCharts() {
   const { activity, statusBreakdown, weekly } = data;
   const hasActivity = activity.some((d) => d.reviewed > 0);
 
+  const activeDays = activity.filter((d) => d.reviewed > 0).length;
+
   return (
     <div className={styles.charts}>
+      {/* Activity heatmap */}
+      <div className={styles.chartCard}>
+        <h3 className={styles.chartTitle}>{t.profile.chartHeatmap}</h3>
+        <ActivityHeatmap activity={activity} activeDays={activeDays} t={t} />
+      </div>
+
       {/* Activity bar chart */}
       <div className={styles.chartCard}>
         <h3 className={styles.chartTitle}>{t.profile.chartActivity}</h3>
@@ -44,6 +52,36 @@ export function ProfileCharts() {
         <h3 className={styles.chartTitle}>{t.profile.chartWords}</h3>
         <WordDonut breakdown={statusBreakdown} t={t} />
       </div>
+    </div>
+  );
+}
+
+// ---- Activity heatmap (30 days calendar grid) ----
+function ActivityHeatmap({ activity, activeDays, t }: { activity: { date: string; reviewed: number }[]; activeDays: number; t: any }) {
+  function getColor(reviewed: number): string {
+    if (reviewed === 0) return 'var(--color-bg-tertiary)';
+    if (reviewed <= 5) return 'rgba(249,115,22,0.3)';
+    if (reviewed <= 20) return 'rgba(249,115,22,0.65)';
+    return 'var(--color-brand)';
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className={styles.heatmapWrapper}>
+      <div className={styles.heatmapGrid}>
+        {activity.map((d) => (
+          <div
+            key={d.date}
+            className={`${styles.heatmapCell} ${d.date === today ? styles.heatmapCellToday : ''}`}
+            style={{ background: getColor(d.reviewed) }}
+            title={`${d.date}: ${d.reviewed} ${t.profile.heatmapWords ?? 'слов'}`}
+          />
+        ))}
+      </div>
+      <p className={styles.heatmapMeta}>
+        {t.profile.heatmapActive?.replace('{n}', String(activeDays)) ?? `Активных дней: ${activeDays} из 30`}
+      </p>
     </div>
   );
 }

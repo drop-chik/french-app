@@ -42,50 +42,12 @@
   color: var(--color-text-primary);
 }
 
-.streak {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  padding: var(--space-1) var(--space-3);
-}
-
-.streakFire {
-  font-size: var(--text-base);
-  line-height: 1;
-}
-
-.streakText {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
-}
-
-/* Streak banner */
-.streakBanner {
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-lg);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  text-align: center;
-  border-left: 4px solid;
-}
-
-.streakBannerWarn {
-  background-color: rgba(249, 115, 22, 0.08);
-  border-color: var(--color-brand);
-  color: var(--color-brand);
-}
-
-.streakBannerDone {
-  background-color: var(--color-success-light);
-  border-color: var(--color-success);
-  color: var(--color-success);
-}
 
 /* Stats bar */
+.statsBarDone {
+  border-color: var(--color-success);
+}
+
 .statsBar {
   display: flex;
   align-items: center;
@@ -112,6 +74,14 @@
 }
 
 .statValueGreen {
+  color: var(--color-success);
+}
+
+.statValueStreak {
+  color: var(--color-brand);
+}
+
+.statValueStreakDone {
   color: var(--color-success);
 }
 
@@ -155,6 +125,11 @@
 .startBtn:active {
   transform: translateY(0);
   opacity: 1;
+}
+
+.startBtnDone {
+  background: linear-gradient(135deg, var(--color-success) 0%, #16a34a 100%);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.25);
 }
 
 .startBtnIcon {
