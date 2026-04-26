@@ -1,0 +1,173 @@
+import type { ExerciseSeed } from './grammar-exercises-a1.js';
+
+export const grammarExercisesA1Extra: ExerciseSeed[] = [
+  // === futur-proche ===
+  {
+    topicSlug: 'futur-proche',
+    type: 'fill_blank',
+    question: { text: 'Demain, nous ___ (aller) visiter le musée.', blanks: 1 },
+    answer: { values: ['allons'] },
+    explanation: 'nous + aller → allons. Futur proche: allons + infinitif visiter.',
+    explanationEn: 'nous + aller → allons. Futur proche: allons + infinitive visiter.',
+  },
+  {
+    topicSlug: 'futur-proche',
+    type: 'multiple_choice',
+    question: { text: 'Elle ___ partir à 8 heures demain matin.', options: ['va', 'vais', 'vont', 'allez'] },
+    answer: { correct: 'va' },
+    explanation: 'elle → va (3-е лицо ед.ч. глагола aller).',
+    explanationEn: 'elle → va (3rd person singular of aller).',
+  },
+  {
+    topicSlug: 'futur-proche',
+    type: 'fill_blank',
+    question: { text: 'Je ne ___ pas sortir ce soir, il pleut.', blanks: 1 },
+    answer: { values: ['vais'] },
+    explanation: 'Отрицание futur proche: je ne vais pas + infinitif. Форма je → vais.',
+    explanationEn: 'Negative futur proche: je ne vais pas + infinitive. Form for je → vais.',
+  },
+  {
+    topicSlug: 'futur-proche',
+    type: 'translate',
+    question: { text: 'Они собираются приготовить ужин.' },
+    answer: { text: 'Ils vont préparer le dîner.' },
+    explanation: 'ils vont + infinitif préparer. Le dîner = ужин.',
+    explanationEn: 'ils vont + infinitive préparer. Le dîner = dinner.',
+  },
+
+  // === contractions ===
+  {
+    topicSlug: 'contractions',
+    type: 'multiple_choice',
+    question: { text: 'Je vais ___ cinéma ce soir.', options: ['au', 'à le', 'du', 'de le'] },
+    answer: { correct: 'au' },
+    explanation: 'à + le = au. Нельзя сказать «à le cinéma».',
+    explanationEn: 'à + le = au. You cannot say «à le cinéma».',
+  },
+  {
+    topicSlug: 'contractions',
+    type: 'fill_blank',
+    question: { text: 'Elle revient ___ marché avec des légumes.', blanks: 1 },
+    answer: { values: ['du'] },
+    explanation: 'de + le marché = du marché. marché — мужской род.',
+    explanationEn: 'de + le marché = du marché. marché is masculine.',
+  },
+  {
+    topicSlug: 'contractions',
+    type: 'multiple_choice',
+    question: { text: 'Le professeur parle ___ étudiants.', options: ['aux', 'à les', 'des', 'au'] },
+    answer: { correct: 'aux' },
+    explanation: 'à + les étudiants = aux étudiants. Множественное число → aux.',
+    explanationEn: 'à + les étudiants = aux étudiants. Plural → aux.',
+  },
+  {
+    topicSlug: 'contractions',
+    type: 'fill_blank',
+    question: { text: 'Il vient ___ bibliothèque à pied.', blanks: 1 },
+    answer: { values: ['de la'] },
+    explanation: 'bibliothèque — женский род. de + la = de la (без слияния).',
+    explanationEn: 'bibliothèque is feminine. de + la = de la (no contraction needed).',
+  },
+
+  // === verbes-irreguliers ===
+  {
+    topicSlug: 'verbes-irreguliers',
+    type: 'fill_blank',
+    question: { text: 'Qu\'est-ce qu\'il ___ (faire) le week-end ?', blanks: 1 },
+    answer: { values: ['fait'] },
+    explanation: 'il → fait (3-е лицо ед.ч. глагола faire).',
+    explanationEn: 'il → fait (3rd person singular of faire).',
+  },
+  {
+    topicSlug: 'verbes-irreguliers',
+    type: 'multiple_choice',
+    question: { text: 'Nous ___ venir à votre fête avec plaisir.', options: ['pouvons', 'peuvent', 'peux', 'pouvez'] },
+    answer: { correct: 'pouvons' },
+    explanation: 'nous + pouvoir → pouvons.',
+    explanationEn: 'nous + pouvoir → pouvons.',
+  },
+  {
+    topicSlug: 'verbes-irreguliers',
+    type: 'fill_blank',
+    question: { text: 'Vous ___ (vouloir) du café ou du thé ?', blanks: 1 },
+    answer: { values: ['voulez'] },
+    explanation: 'vous + vouloir → voulez.',
+    explanationEn: 'vous + vouloir → voulez.',
+  },
+  {
+    topicSlug: 'verbes-irreguliers',
+    type: 'multiple_choice',
+    question: { text: 'Ils ___ le bus numéro 12 chaque matin.', options: ['prennent', 'prend', 'prenez', 'prenons'] },
+    answer: { correct: 'prennent' },
+    explanation: 'ils + prendre → prennent (двойное n!).',
+    explanationEn: 'ils + prendre → prennent (double n!).',
+  },
+
+  // === cest-il-est ===
+  {
+    topicSlug: 'cest-il-est',
+    type: 'multiple_choice',
+    question: { text: '___ un très bon restaurant, je le recommande.', options: ['C\'est', 'Il est', 'Elle est', 'Ce sont'] },
+    answer: { correct: 'C\'est' },
+    explanation: 'C\'est + артикль (un) + существительное (restaurant). Именно эту конструкцию используем для представления.',
+    explanationEn: 'C\'est + article (un) + noun (restaurant). This is the structure used for identification.',
+  },
+  {
+    topicSlug: 'cest-il-est',
+    type: 'multiple_choice',
+    question: { text: 'Mon frère est musicien. ___ très talentueux.', options: ['Il est', 'C\'est', 'Elle est', 'Ce sont'] },
+    answer: { correct: 'Il est' },
+    explanation: 'Il est + прилагательное (без артикля) для описания конкретного человека.',
+    explanationEn: 'Il est + adjective (no article) to describe a specific person.',
+  },
+  {
+    topicSlug: 'cest-il-est',
+    type: 'fill_blank',
+    question: { text: '___ difficile de parler sans accent.', blanks: 1 },
+    answer: { values: ['C\'est'] },
+    explanation: 'C\'est + прилагательное = общая оценка ситуации или явления.',
+    explanationEn: 'C\'est + adjective = general assessment of a situation or phenomenon.',
+  },
+  {
+    topicSlug: 'cest-il-est',
+    type: 'multiple_choice',
+    question: { text: 'Qui est cette femme ? — ___ ma professeure de danse.', options: ['C\'est', 'Il est', 'Elle est', 'Ce sont'] },
+    answer: { correct: 'C\'est' },
+    explanation: 'C\'est + притяжательное прилагательное (ma) + существительное. Для представления / называния человека.',
+    explanationEn: 'C\'est + possessive adjective (ma) + noun. Used to identify / introduce a person.',
+  },
+
+  // === mots-interrogatifs ===
+  {
+    topicSlug: 'mots-interrogatifs',
+    type: 'multiple_choice',
+    question: { text: '___ est-ce que tu habites ? — J\'habite à Lyon.', options: ['Où', 'Quand', 'Comment', 'Pourquoi'] },
+    answer: { correct: 'Où' },
+    explanation: 'Où = где / куда. Ответ о месте жительства подтверждает это.',
+    explanationEn: 'Où = where. The answer about place of residence confirms this.',
+  },
+  {
+    topicSlug: 'mots-interrogatifs',
+    type: 'fill_blank',
+    question: { text: '___ de personnes y a-t-il dans ta famille ?', blanks: 1 },
+    answer: { values: ['Combien'] },
+    explanation: 'Combien de + существительное = сколько. Вопрос о количестве.',
+    explanationEn: 'Combien de + noun = how many. A question about quantity.',
+  },
+  {
+    topicSlug: 'mots-interrogatifs',
+    type: 'multiple_choice',
+    question: { text: '___ tu es en retard ? — Parce que le bus était en retard.', options: ['Pourquoi', 'Comment', 'Quand', 'Où'] },
+    answer: { correct: 'Pourquoi' },
+    explanation: 'Pourquoi = почему. Ответ начинается с parce que (потому что).',
+    explanationEn: 'Pourquoi = why. The answer starts with parce que (because).',
+  },
+  {
+    topicSlug: 'mots-interrogatifs',
+    type: 'translate',
+    question: { text: 'Какой твой любимый фильм?' },
+    answer: { text: 'Quel est ton film préféré ?' },
+    explanation: 'Quel (какой) + est + ton (твой) + film préféré (любимый фильм). Quel согласуется с м.р. film.',
+    explanationEn: 'Quel (which/what) + est + ton (your) + film préféré (favourite film). Quel agrees with masculine film.',
+  },
+];

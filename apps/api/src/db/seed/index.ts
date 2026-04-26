@@ -6,9 +6,13 @@ import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
 import { wordsA2 } from './words-a2.js';
 import { grammarTopicsA1 } from './grammar-a1.js';
+import { grammarTopicsA1Extra } from './grammar-a1-extra.js';
 import { grammarTopicsA2 } from './grammar-a2.js';
+import { grammarTopicsA2Extra } from './grammar-a2-extra.js';
 import { grammarExercisesA1 } from './grammar-exercises-a1.js';
+import { grammarExercisesA1Extra } from './grammar-exercises-a1-extra.js';
 import { grammarExercisesA2 } from './grammar-exercises-a2.js';
+import { grammarExercisesA2Extra } from './grammar-exercises-a2-extra.js';
 import { listeningExercisesA1 } from './listening-a1.js';
 
 type WordInput = {
@@ -134,12 +138,12 @@ async function seed() {
 
   // ===== Grammar Topics =====
   console.log('\nSeeding grammar topics A1...');
-  await seedGrammarTopics(grammarTopicsA1, 'A1');
-  console.log(`Grammar topics A1 done! Total: ${grammarTopicsA1.length}`);
+  await seedGrammarTopics([...grammarTopicsA1, ...grammarTopicsA1Extra], 'A1');
+  console.log(`Grammar topics A1 done! Total: ${grammarTopicsA1.length + grammarTopicsA1Extra.length}`);
 
   console.log('\nSeeding grammar topics A2...');
-  await seedGrammarTopics(grammarTopicsA2, 'A2');
-  console.log(`Grammar topics A2 done! Total: ${grammarTopicsA2.length}`);
+  await seedGrammarTopics([...grammarTopicsA2, ...grammarTopicsA2Extra], 'A2');
+  console.log(`Grammar topics A2 done! Total: ${grammarTopicsA2.length + grammarTopicsA2Extra.length}`);
 
   // ===== Grammar Exercises =====
   console.log('\nSeeding grammar exercises...');
@@ -147,7 +151,9 @@ async function seed() {
   const slugToId = new Map(topicRows.map((r) => [r.slug, r.id]));
 
   await seedGrammarExercises(grammarExercisesA1, slugToId, 'A1 exercises');
+  await seedGrammarExercises(grammarExercisesA1Extra, slugToId, 'A1 extra exercises');
   await seedGrammarExercises(grammarExercisesA2, slugToId, 'A2 exercises');
+  await seedGrammarExercises(grammarExercisesA2Extra, slugToId, 'A2 extra exercises');
 
   // ===== Listening Exercises =====
   console.log('\nSeeding listening exercises A1...');
