@@ -7,6 +7,11 @@ export interface WordData {
   translation: string;
   level: string;
   category: string;
+  partOfSpeech: string;
+  gender: string | null;
+  frequencyRank: number | null;
+  grammarTag: string | null;
+  isActive: boolean;
   exampleFr: string | null;
   exampleRu: string | null;
   audioUrl: string | null;
@@ -36,8 +41,8 @@ export const wordsApi = {
       body: JSON.stringify({ grade }),
     }),
 
-  getDictionary: () =>
-    apiRequest<{ words: unknown[] }>(`/words/dictionary?lang=${getLang()}`),
+  getDictionary: (offset = 0, limit = 200) =>
+    apiRequest<{ words: unknown[] }>(`/words/dictionary?lang=${getLang()}&offset=${offset}&limit=${limit}`),
 
   getDistractors: (wordId: string) =>
     apiRequest<{ distractors: WordData[] }>(`/words/${wordId}/distractors?lang=${getLang()}`),

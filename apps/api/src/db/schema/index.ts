@@ -14,7 +14,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 // Enums
-export const languageLevelEnum = pgEnum('language_level', ['A1', 'A2', 'B1', 'B2']);
+export const languageLevelEnum = pgEnum('language_level', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
 export const wordStatusEnum = pgEnum('word_status', ['new', 'learning', 'review', 'mastered']);
 export const grammarTopicStatusEnum = pgEnum('grammar_topic_status', [
   'locked',
@@ -67,13 +67,15 @@ export const words = pgTable(
     level: languageLevelEnum('level').notNull(),
     category: varchar('category', { length: 100 }).notNull(),
     // Part of speech: verb / noun / adjective / adverb / preposition / conjunction / number / pronoun / expression
-    partOfSpeech: varchar('part_of_speech', { length: 20 }),
+    partOfSpeech: varchar('part_of_speech', { length: 20 }).default('noun').notNull(),
     // Grammatical gender for nouns: 'm' or 'f' (null for non-nouns or ambiguous l' words)
     gender: varchar('gender', { length: 1 }),
     // Approximate rank in French frequency corpus (1 = most common). Lower → easier/more important.
     frequencyRank: integer('frequency_rank'),
     // Slug of the grammar topic this word illustrates (links word ↔ grammar)
     grammarTag: varchar('grammar_tag', { length: 100 }),
+    // Soft-delete: set false to hide word from sessions without losing progress data
+    isActive: boolean('is_active').default(true).notNull(),
     exampleFr: text('example_fr'),
     exampleRu: text('example_ru'),
     translationEn: varchar('translation_en', { length: 255 }),
@@ -84,9 +86,11 @@ export const words = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [
+    unique('uq_words_french').on(t.french),
     index('idx_words_level_category').on(t.level, t.category),
     index('idx_words_level_pos').on(t.level, t.partOfSpeech),
     index('idx_words_frequency').on(t.level, t.frequencyRank),
+    index('idx_words_active').on(t.isActive, t.level, t.frequencyRank),
   ],
 );
 

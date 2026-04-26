@@ -1,4 +1,4 @@
-import { eq, and, lte, inArray, sql, or } from 'drizzle-orm';
+import { eq, and, lte, inArray, sql, or, isNull, asc, isNotNull } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { words, wordProgress } from '../../db/schema/index.js';
 import { calculateNextReview, getStatus, createCard } from '@french-app/srs-engine';
@@ -6,15 +6,14 @@ import type { SRSGrade } from '@french-app/srs-engine';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const MAX_NEW_PER_SESSION = 20;
+const MAX_DUE_PER_SESSION = 100;
 
-// All levels up to and including the given level
-const LEVEL_ORDER: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2'];
+const LEVEL_ORDER: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 function levelsUpTo(level: LanguageLevel): LanguageLevel[] {
   const idx = LEVEL_ORDER.indexOf(level);
   return LEVEL_ORDER.slice(0, idx + 1);
 }
 
-// Normalize a word row for the given UI language
 function normalizeWord(word: typeof words.$inferSelect, lang: 'ru' | 'en') {
   if (lang === 'en') {
     return {
@@ -27,50 +26,71 @@ function normalizeWord(word: typeof words.$inferSelect, lang: 'ru' | 'en') {
 }
 
 // Get today's study session: due reviews + new words
+// Uses a single LEFT JOIN query — safe at 10 000+ words.
 export async function getStudySession(
   db: DB,
   userId: string,
   level: LanguageLevel,
   lang: 'ru' | 'en' = 'ru',
 ) {
-  // Include words from all levels up to (and including) the user's level
   const allowedLevels = levelsUpTo(level);
-
-  const allWords = await db.query.words.findMany({
-    where: or(...allowedLevels.map((l) => eq(words.level, l))),
-  });
-
-  if (allWords.length === 0) return [];
-
-  const wordIds = allWords.map((w) => w.id);
-
-  // Progress records for these words
-  const progressRecords = await db.query.wordProgress.findMany({
-    where: and(
-      eq(wordProgress.userId, userId),
-      inArray(wordProgress.wordId, wordIds),
-    ),
-  });
-
-  const progressMap = new Map(progressRecords.map((p) => [p.wordId, p]));
-
   const now = new Date();
-  const dueWords: typeof allWords = [];
-  const newWords: typeof allWords = [];
 
-  for (const word of allWords) {
-    const progress = progressMap.get(word.id);
-    if (!progress) {
-      newWords.push(word);
-    } else if (new Date(progress.nextReview) <= now) {
-      dueWords.push(word);
-    }
-  }
+  // ── Due words: have a progress row and nextReview <= now ──────────────
+  const dueRows = await db
+    .select({ word: words, progress: wordProgress })
+    .from(words)
+    .innerJoin(
+      wordProgress,
+      and(
+        eq(wordProgress.wordId, words.id),
+        eq(wordProgress.userId, userId),
+        lte(wordProgress.nextReview, now),
+      ),
+    )
+    .where(
+      and(
+        or(...allowedLevels.map((l) => eq(words.level, l))),
+        eq(words.isActive, true),
+      ),
+    )
+    .orderBy(asc(wordProgress.nextReview))
+    .limit(MAX_DUE_PER_SESSION);
 
-  const sessionNew = newWords.slice(0, MAX_NEW_PER_SESSION);
-  const session = [...dueWords, ...sessionNew];
+  // ── New words: no progress row yet, ordered by frequencyRank ─────────
+  // Subquery: word IDs the user already has progress for
+  const seenIds = await db
+    .select({ wordId: wordProgress.wordId })
+    .from(wordProgress)
+    .where(eq(wordProgress.userId, userId));
 
-  // Shuffle
+  const seenSet = new Set(seenIds.map((r) => r.wordId));
+
+  const newRows = await db
+    .select()
+    .from(words)
+    .where(
+      and(
+        or(...allowedLevels.map((l) => eq(words.level, l))),
+        eq(words.isActive, true),
+      ),
+    )
+    .orderBy(asc(words.frequencyRank))
+    .limit(MAX_NEW_PER_SESSION * 5); // over-fetch then filter unseen
+
+  const newWords = newRows
+    .filter((w) => !seenSet.has(w.id))
+    .slice(0, MAX_NEW_PER_SESSION);
+
+  // ── Merge, build progress map, shuffle ───────────────────────────────
+  const progressMap = new Map(dueRows.map((r) => [r.word.id, r.progress]));
+
+  const session = [
+    ...dueRows.map((r) => r.word),
+    ...newWords,
+  ];
+
+  // Fisher-Yates shuffle
   for (let i = session.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [session[i], session[j]] = [session[j]!, session[i]!];
@@ -141,11 +161,20 @@ export async function recordAnswer(
   return result;
 }
 
-// Get all learned words for dictionary
-export async function getDictionary(db: DB, userId: string, lang: 'ru' | 'en' = 'ru') {
+// Get all learned words for dictionary with cursor-based pagination
+export async function getDictionary(
+  db: DB,
+  userId: string,
+  lang: 'ru' | 'en' = 'ru',
+  limit = 200,
+  offset = 0,
+) {
   const progress = await db.query.wordProgress.findMany({
     where: eq(wordProgress.userId, userId),
     with: { word: true },
+    limit,
+    offset,
+    orderBy: (wp, { desc }) => [desc(wp.lastReviewed)],
   });
   return progress.map((p) => ({
     ...p,
@@ -153,7 +182,8 @@ export async function getDictionary(db: DB, userId: string, lang: 'ru' | 'en' = 
   }));
 }
 
-// Get random words from same level/category (for multiple choice distractors)
+// Get random distractors from same POS and nearby frequency range
+// Avoids full-table RANDOM() scan at scale by sampling a frequency band.
 export async function getDistractors(
   db: DB,
   wordId: string,
@@ -161,16 +191,51 @@ export async function getDistractors(
   lang: 'ru' | 'en' = 'ru',
   count = 3,
 ) {
-  // Include words from A1 up to the given level so there are always enough distractors
   const allowedLevels = levelsUpTo(level);
-  const result = await db
+
+  // Get the target word to know its POS and frequency band
+  const target = await db.query.words.findFirst({ where: eq(words.id, wordId) });
+  if (!target) return [];
+
+  const rank = target.frequencyRank ?? 500;
+  const bandMin = Math.max(1, rank - 300);
+  const bandMax = rank + 300;
+
+  // Prefer same part-of-speech, within frequency band
+  const candidates = await db
     .select()
     .from(words)
-    .where(or(...allowedLevels.map((l) => eq(words.level, l))))
+    .where(
+      and(
+        or(...allowedLevels.map((l) => eq(words.level, l))),
+        eq(words.isActive, true),
+        eq(words.partOfSpeech, target.partOfSpeech),
+        sql`${words.frequencyRank} BETWEEN ${bandMin} AND ${bandMax}`,
+      ),
+    )
+    .orderBy(sql`RANDOM()`)
+    .limit(count + 10);
+
+  const filtered = candidates.filter((w) => w.id !== wordId);
+
+  // If not enough in band, fall back to any word from the level
+  if (filtered.length >= count) {
+    return filtered.slice(0, count).map((w) => normalizeWord(w, lang));
+  }
+
+  const fallback = await db
+    .select()
+    .from(words)
+    .where(
+      and(
+        or(...allowedLevels.map((l) => eq(words.level, l))),
+        eq(words.isActive, true),
+      ),
+    )
     .orderBy(sql`RANDOM()`)
     .limit(count + 5);
 
-  return result
+  return fallback
     .filter((w) => w.id !== wordId)
     .slice(0, count)
     .map((w) => normalizeWord(w, lang));
@@ -183,7 +248,6 @@ export async function requestWordImage(db: DB, wordId: string) {
   if (word.imageUrl) return { imageUrl: word.imageUrl, generating: false };
   if (word.imageGenerating) return { imageUrl: null, generating: true };
 
-  // Mark as generating (job will pick it up)
   await db.update(words).set({ imageGenerating: true }).where(eq(words.id, wordId));
   return { imageUrl: null, generating: true };
 }

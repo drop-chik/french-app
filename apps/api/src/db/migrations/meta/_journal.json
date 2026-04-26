@@ -36,6 +36,13 @@
       "when": 1777223233385,
       "tag": "0004_cold_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777227076732,
+      "tag": "0005_marvelous_kitty_pryde",
+      "breakpoints": true
     }
   ]
 }

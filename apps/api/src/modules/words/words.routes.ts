@@ -59,15 +59,17 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // GET /words/dictionary — all learned words
+  // GET /words/dictionary — learned words with pagination (?offset=0&limit=200)
   fastify.get(
     '/dictionary',
     { preHandler: [fastify.authenticate] },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
-      const dict = await getDictionary(fastify.db, request.user.userId, lang);
-      reply.send({ words: dict });
+      const offset = Math.max(0, parseInt(String(query.offset ?? '0'), 10) || 0);
+      const limit = Math.min(500, Math.max(1, parseInt(String(query.limit ?? '200'), 10) || 200));
+      const dict = await getDictionary(fastify.db, request.user.userId, lang, limit, offset);
+      reply.send({ words: dict, offset, limit });
     },
   );
 
