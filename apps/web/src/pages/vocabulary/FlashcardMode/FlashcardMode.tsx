@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2 } from 'lucide-react';
 import type { WordData } from '../../../features/words/api';
 import { wordsApi } from '../../../features/words/api';
+import { listeningApi } from '../../../features/listening/api';
 import { useI18n } from '../../../shared/i18n';
 import styles from './FlashcardMode.module.css';
 
@@ -23,6 +24,7 @@ export function FlashcardMode({ words, onComplete }: Props) {
   const [results, setResults] = useState<SessionResult[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [loadingAudio, setLoadingAudio] = useState(false);
 
   const GRADES = [
     { value: 1, label: t.flashcard.grades.bad, color: 'error' },
@@ -36,11 +38,26 @@ export function FlashcardMode({ words, onComplete }: Props) {
     if (!isAnimating) setFlipped((f) => !f);
   }, [isAnimating]);
 
-  const playAudio = useCallback((e: React.MouseEvent) => {
+  const playAudio = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!current?.audioUrl) return;
-    new Audio(current.audioUrl).play().catch(() => null);
-  }, [current]);
+    if (!current || loadingAudio) return;
+    if (current.audioUrl) {
+      new Audio(current.audioUrl).play().catch(() => null);
+      return;
+    }
+    setLoadingAudio(true);
+    try {
+      const blob = await listeningApi.generateTTS(current.french);
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play().catch(() => null);
+      audio.onended = () => URL.revokeObjectURL(url);
+    } catch {
+      // silent
+    } finally {
+      setLoadingAudio(false);
+    }
+  }, [current, loadingAudio]);
 
   const handleGrade = useCallback(
     async (grade: number) => {
@@ -106,11 +123,14 @@ export function FlashcardMode({ words, onComplete }: Props) {
             )}
             <div className={styles.word}>{current.french}</div>
             <div className={styles.category}>{categoryLabel}</div>
-            {current.audioUrl && (
-              <button className={styles.audioBtn} onClick={playAudio} aria-label={t.spelling.listen}>
-                <Volume2 size={18} />
-              </button>
-            )}
+            <button
+              className={styles.audioBtn}
+              onClick={playAudio}
+              aria-label={t.spelling.listen}
+              disabled={loadingAudio}
+            >
+              <Volume2 size={18} />
+            </button>
             <div className={styles.flipHint}>{t.flashcard.flipHint}</div>
           </div>
 

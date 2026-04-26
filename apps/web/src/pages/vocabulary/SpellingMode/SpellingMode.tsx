@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2 } from 'lucide-react';
 import type { WordData } from '../../../features/words/api';
 import { wordsApi } from '../../../features/words/api';
+import { listeningApi } from '../../../features/listening/api';
 import { useI18n } from '../../../shared/i18n';
 import type { SessionResult } from '../FlashcardMode/FlashcardMode';
 import styles from './SpellingMode.module.css';
@@ -21,13 +22,29 @@ export function SpellingMode({ words, onComplete }: Props) {
   const [state, setState] = useState<State>('input');
   const [hint, setHint] = useState(0);
   const [results, setResults] = useState<SessionResult[]>([]);
+  const [loadingAudio, setLoadingAudio] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const current = words[index];
 
-  const playAudio = useCallback(() => {
-    if (!current?.audioUrl) return;
-    new Audio(current.audioUrl).play().catch(() => null);
-  }, [current]);
+  const playAudio = useCallback(async () => {
+    if (!current || loadingAudio) return;
+    if (current.audioUrl) {
+      new Audio(current.audioUrl).play().catch(() => null);
+      return;
+    }
+    setLoadingAudio(true);
+    try {
+      const blob = await listeningApi.generateTTS(current.french);
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play().catch(() => null);
+      audio.onended = () => URL.revokeObjectURL(url);
+    } catch {
+      // silent
+    } finally {
+      setLoadingAudio(false);
+    }
+  }, [current, loadingAudio]);
 
   const showHint = useCallback(() => {
     if (!current) return;
@@ -80,11 +97,9 @@ export function SpellingMode({ words, onComplete }: Props) {
           {current.exampleRu && <p className={styles.example}>{current.exampleRu}</p>}
 
           <div className={styles.audioRow}>
-            {current.audioUrl && (
-              <button className={styles.audioBtn} onClick={playAudio} type="button">
-                <Volume2 size={16} /> {t.spelling.listen}
-              </button>
-            )}
+            <button className={styles.audioBtn} onClick={playAudio} type="button" disabled={loadingAudio}>
+              <Volume2 size={16} /> {t.spelling.listen}
+            </button>
             {hint < current.french.length && state === 'input' && (
               <button className={styles.hintBtn} onClick={showHint} type="button">
                 {t.spelling.hint} ({hint}/{current.french.length})
