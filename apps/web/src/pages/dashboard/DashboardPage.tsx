@@ -10,18 +10,29 @@ export function DashboardPage() {
   const { t } = useI18n();
   const user = useAuthStore((s) => s.user);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['home'],
     queryFn: profileApi.getHomeData,
     staleTime: 2 * 60 * 1000,
   });
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <div className={styles.page}>
         <div className={styles.skeleton} />
         <div className={styles.skeleton} style={{ height: 200 }} />
         <div className={styles.skeleton} style={{ height: 120 }} />
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorState}>
+          <p className={styles.errorText}>{t.common.error}</p>
+          <p className={styles.errorHint}>Не удалось загрузить данные. Попробуйте обновить страницу.</p>
+        </div>
       </div>
     );
   }
