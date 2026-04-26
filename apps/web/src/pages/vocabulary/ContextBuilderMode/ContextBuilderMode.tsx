@@ -111,26 +111,22 @@ export function ContextBuilderMode({ words, onComplete }: Props) {
             ) : (
               <div className={styles.arrangedTokens}>
                 {arranged.map((token, i) => (
-                  <motion.button key={`arr-${i}-${token}`} className={styles.tokenArranged}
-                    onClick={() => removeToken(token, i)} disabled={checked !== null}
-                    layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}>
+                  <button key={`arr-${i}-${token}`} className={styles.tokenArranged}
+                    onClick={() => removeToken(token, i)} disabled={checked !== null}>
                     {token}
-                  </motion.button>
+                  </button>
                 ))}
               </div>
             )}
           </div>
 
           <div className={styles.availableTokens}>
-            <AnimatePresence>
-              {available.map((token, i) => (
-                <motion.button key={`avail-${i}-${token}`} className={styles.tokenAvailable}
-                  onClick={() => addToken(token, i)} disabled={checked !== null}
-                  layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }}>
-                  {token}
-                </motion.button>
-              ))}
-            </AnimatePresence>
+            {available.map((token, i) => (
+              <button key={`avail-${i}-${token}`} className={styles.tokenAvailable}
+                onClick={() => addToken(token, i)} disabled={checked !== null}>
+                {token}
+              </button>
+            ))}
           </div>
 
           {checked !== null && (
