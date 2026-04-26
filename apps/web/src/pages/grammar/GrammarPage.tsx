@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { CheckCircle, Lock, Circle, BookOpen } from 'lucide-react';
 import { grammarApi, type GrammarTopic, type TopicStatus } from '../../features/grammar/api';
+import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './GrammarPage.module.css';
 
@@ -12,13 +14,17 @@ const STATUS_ICON: Record<TopicStatus, React.ReactNode> = {
   completed: <CheckCircle size={14} />,
 };
 
+const LEVELS = ['A1', 'A2'] as const;
+
 export function GrammarPage() {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const userLevel = useAuthStore((s) => s.user?.level ?? 'A1');
+  const [selectedLevel, setSelectedLevel] = useState<string>(userLevel);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['grammar-topics', 'A1', lang],
-    queryFn: () => grammarApi.getTopics('A1'),
+    queryKey: ['grammar-topics', selectedLevel, lang],
+    queryFn: () => grammarApi.getTopics(selectedLevel),
   });
 
   const topics = data?.topics ?? [];
@@ -35,7 +41,20 @@ export function GrammarPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>{t.grammar.title}</h1>
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>{t.grammar.title}</h1>
+          <div className={styles.levelTabs}>
+            {LEVELS.map((lvl) => (
+              <button
+                key={lvl}
+                className={`${styles.levelTab} ${selectedLevel === lvl ? styles.levelTabActive : ''}`}
+                onClick={() => setSelectedLevel(lvl)}
+              >
+                {lvl}
+              </button>
+            ))}
+          </div>
+        </div>
         {!isLoading && topics.length > 0 && (
           <div className={styles.progressBlock}>
             <div className={styles.progressMeta}>

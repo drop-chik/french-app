@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { db } from '../index.js';
 import { words, grammarTopics, grammarExercises, listeningExercises } from '../schema/index.js';
+import { eq, inArray } from 'drizzle-orm';
 import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
 import { wordsA2 } from './words-a2.js';
@@ -86,6 +87,16 @@ async function seedGrammarExercises(
   slugToId: Map<string, string>,
   label: string,
 ) {
+  // Collect all topic IDs that have exercises in this batch
+  const topicIds = [...new Set(
+    exercises.map(ex => slugToId.get(ex.topicSlug)).filter(Boolean) as string[]
+  )];
+
+  // Delete existing exercises for these topics to ensure idempotency
+  if (topicIds.length > 0) {
+    await db.delete(grammarExercises).where(inArray(grammarExercises.topicId, topicIds));
+  }
+
   let inserted = 0;
   for (const ex of exercises) {
     const topicId = slugToId.get(ex.topicSlug);
