@@ -3,74 +3,94 @@ import { db } from '../index.js';
 import { words, grammarTopics, grammarExercises, listeningExercises } from '../schema/index.js';
 import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
+import { wordsA2 } from './words-a2.js';
 import { grammarTopicsA1 } from './grammar-a1.js';
+import { grammarTopicsA2 } from './grammar-a2.js';
 import { grammarExercisesA1 } from './grammar-exercises-a1.js';
+import { grammarExercisesA2 } from './grammar-exercises-a2.js';
 import { listeningExercisesA1 } from './listening-a1.js';
-import { eq } from 'drizzle-orm';
 
-async function seed() {
-  // ===== Words =====
-  console.log('Seeding words A1...');
+type WordInput = {
+  french: string;
+  translation: string;
+  translationEn?: string;
+  category: string;
+  partOfSpeech?: string;
+  gender?: string;
+  frequencyRank?: number;
+  grammarTag?: string;
+  exampleFr?: string | null;
+  exampleRu?: string | null;
+  exampleEn?: string | null;
+};
 
-  const allWords = [...wordsA1, ...wordsA1Extra];
-  const wordRows = allWords.map((w) => ({
+function buildWordRows(items: WordInput[], level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') {
+  return items.map((w) => ({
     french: w.french,
     translation: w.translation,
-    level: 'A1' as const,
+    translationEn: w.translationEn ?? undefined,
+    level,
     category: w.category,
-    partOfSpeech: ((w as Record<string, unknown>)['partOfSpeech'] as string | undefined) ?? undefined,
-    gender: ((w as Record<string, unknown>)['gender'] as string | undefined) ?? undefined,
-    frequencyRank: ((w as Record<string, unknown>)['frequencyRank'] as number | undefined) ?? undefined,
-    grammarTag: ((w as Record<string, unknown>)['grammarTag'] as string | undefined) ?? undefined,
+    partOfSpeech: w.partOfSpeech ?? undefined,
+    gender: w.gender ?? undefined,
+    frequencyRank: w.frequencyRank ?? undefined,
+    grammarTag: w.grammarTag ?? undefined,
     exampleFr: w.exampleFr ?? null,
     exampleRu: w.exampleRu ?? null,
+    exampleEn: w.exampleEn ?? null,
     audioUrl: null,
     imageUrl: null,
     imageGenerating: false,
   }));
+}
 
+async function seedWordsBatch(
+  rows: ReturnType<typeof buildWordRows>,
+  label: string,
+) {
   const BATCH = 50;
   let inserted = 0;
-  for (let i = 0; i < wordRows.length; i += BATCH) {
-    const batch = wordRows.slice(i, i + BATCH);
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const batch = rows.slice(i, i + BATCH);
     await db.insert(words).values(batch).onConflictDoNothing();
     inserted += batch.length;
-    console.log(`  Words: ${inserted}/${wordRows.length}`);
+    console.log(`  ${label}: ${inserted}/${rows.length}`);
   }
-  console.log(`Words done! Total: ${wordRows.length} (A1: ${wordsA1.length} + Extra: ${wordsA1Extra.length})`);
+}
 
-  // ===== Grammar Topics =====
-  console.log('\nSeeding grammar topics A1...');
-
-  for (const topic of grammarTopicsA1) {
+async function seedGrammarTopics(
+  topics: typeof grammarTopicsA1,
+  level: 'A1' | 'A2',
+) {
+  for (const topic of topics) {
     await db
       .insert(grammarTopics)
       .values({
         slug: topic.slug,
         titleRu: topic.titleRu,
+        titleEn: topic.titleEn,
         titleFr: topic.titleFr,
-        level: 'A1' as const,
+        level,
         category: topic.category,
         orderNum: topic.orderNum,
         content: topic.content,
+        contentEn: topic.contentEn ?? null,
       })
       .onConflictDoNothing();
     console.log(`  Topic: ${topic.slug}`);
   }
-  console.log(`Grammar topics done! Total: ${grammarTopicsA1.length}`);
+}
 
-  // ===== Grammar Exercises =====
-  console.log('\nSeeding grammar exercises A1...');
-
-  // Build slug → id map
-  const topicRows = await db.select({ id: grammarTopics.id, slug: grammarTopics.slug }).from(grammarTopics);
-  const slugToId = new Map(topicRows.map((r) => [r.slug, r.id]));
-
-  let exInserted = 0;
-  for (const ex of grammarExercisesA1) {
+async function seedGrammarExercises(
+  exercises: typeof grammarExercisesA1,
+  slugToId: Map<string, string>,
+  label: string,
+) {
+  let inserted = 0;
+  for (const ex of exercises) {
     const topicId = slugToId.get(ex.topicSlug);
     if (!topicId) {
-      console.warn(`  WARNING: topic not found for slug "${ex.topicSlug}", skipping exercise`);
+      console.warn(`  WARNING: topic not found for slug "${ex.topicSlug}", skipping`);
       continue;
     }
     await db
@@ -81,14 +101,45 @@ async function seed() {
         question: ex.question,
         answer: ex.answer,
         explanation: ex.explanation ?? null,
+        explanationEn: ex.explanationEn ?? null,
       });
-    exInserted++;
+    inserted++;
   }
-  console.log(`Grammar exercises done! Total: ${exInserted}`);
+  console.log(`  ${label}: ${inserted} exercises inserted`);
+}
+
+async function seed() {
+  // ===== Words A1 =====
+  console.log('Seeding words A1...');
+  const a1Rows = buildWordRows([...wordsA1, ...wordsA1Extra] as WordInput[], 'A1');
+  await seedWordsBatch(a1Rows, 'A1 words');
+  console.log(`Words A1 done! Total: ${a1Rows.length}`);
+
+  // ===== Words A2 =====
+  console.log('\nSeeding words A2...');
+  const a2Rows = buildWordRows(wordsA2 as WordInput[], 'A2');
+  await seedWordsBatch(a2Rows, 'A2 words');
+  console.log(`Words A2 done! Total: ${a2Rows.length}`);
+
+  // ===== Grammar Topics =====
+  console.log('\nSeeding grammar topics A1...');
+  await seedGrammarTopics(grammarTopicsA1, 'A1');
+  console.log(`Grammar topics A1 done! Total: ${grammarTopicsA1.length}`);
+
+  console.log('\nSeeding grammar topics A2...');
+  await seedGrammarTopics(grammarTopicsA2, 'A2');
+  console.log(`Grammar topics A2 done! Total: ${grammarTopicsA2.length}`);
+
+  // ===== Grammar Exercises =====
+  console.log('\nSeeding grammar exercises...');
+  const topicRows = await db.select({ id: grammarTopics.id, slug: grammarTopics.slug }).from(grammarTopics);
+  const slugToId = new Map(topicRows.map((r) => [r.slug, r.id]));
+
+  await seedGrammarExercises(grammarExercisesA1, slugToId, 'A1 exercises');
+  await seedGrammarExercises(grammarExercisesA2, slugToId, 'A2 exercises');
 
   // ===== Listening Exercises =====
   console.log('\nSeeding listening exercises A1...');
-
   for (const ex of listeningExercisesA1) {
     await db
       .insert(listeningExercises)
@@ -103,7 +154,7 @@ async function seed() {
       .onConflictDoNothing();
     console.log(`  Listening: ${ex.title}`);
   }
-  console.log(`Listening exercises done! Total: ${listeningExercisesA1.length}`);
+  console.log(`Listening done! Total: ${listeningExercisesA1.length}`);
 
   console.log('\nAll seed complete!');
   process.exit(0);
