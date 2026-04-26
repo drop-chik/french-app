@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
-import { eq, count, sql, gte, and } from 'drizzle-orm';
+import { eq, count, sql, gte, and, asc } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
-import { users, wordProgress, grammarProgress, listeningProgress, conversationSessions } from '../../db/schema/index.js';
+import { users, words, wordProgress, grammarTopics, grammarProgress, listeningExercises, listeningProgress, conversationSessions } from '../../db/schema/index.js';
+import type { LanguageLevel } from '@french-app/shared-types';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -284,4 +285,125 @@ export async function getCharts(db: DB, userId: string) {
   }));
 
   return { activity, statusBreakdown: statusMap, weekly };
+}
+
+// Home dashboard: aggregated data for the main page
+export async function getHomeData(db: DB, userId: string, level: LanguageLevel, lang: 'ru' | 'en' = 'ru') {
+  const [streak, wordStats, grammarData, listeningData] = await Promise.all([
+    getStreak(db, userId),
+    _getWordStats(db, userId, level),
+    _getGrammarData(db, userId, level, lang),
+    _getListeningData(db, userId, level),
+  ]);
+
+  const wordPct = wordStats.totalWords > 0 ? wordStats.masteredWords / wordStats.totalWords : 0;
+  const grammarPct = grammarData.total > 0 ? grammarData.completed / grammarData.total : 0;
+  const listeningPct = listeningData.total > 0 ? listeningData.completed / listeningData.total : 0;
+  const levelPercent = Math.round((wordPct * 0.5 + grammarPct * 0.3 + listeningPct * 0.2) * 100);
+
+  return {
+    streak: streak.streak,
+    todayCompleted: streak.todayCompleted,
+    levelProgress: {
+      level,
+      percent: levelPercent,
+      masteredWords: wordStats.masteredWords,
+      totalWords: wordStats.totalWords,
+      completedGrammar: grammarData.completed,
+      totalGrammar: grammarData.total,
+      completedListening: listeningData.completed,
+      totalListening: listeningData.total,
+    },
+    todayPlan: {
+      wordsDue: wordStats.due,
+      wordsNew: wordStats.newCount,
+      nextGrammar: grammarData.next,
+      nextListening: listeningData.next,
+    },
+  };
+}
+
+async function _getWordStats(db: DB, userId: string, level: LanguageLevel) {
+  const [totalResult] = await db
+    .select({ cnt: count() })
+    .from(words)
+    .where(eq(words.level, level));
+
+  const progressAtLevel = await db
+    .select({ status: wordProgress.status, nextReview: wordProgress.nextReview })
+    .from(wordProgress)
+    .innerJoin(words, eq(wordProgress.wordId, words.id))
+    .where(and(eq(wordProgress.userId, userId), eq(words.level, level)));
+
+  const now = new Date();
+  let mastered = 0;
+  let due = 0;
+  for (const p of progressAtLevel) {
+    if (p.status === 'mastered') mastered++;
+    if (new Date(p.nextReview) <= now) due++;
+  }
+
+  const totalWords = Number(totalResult?.cnt ?? 0);
+  const newCount = Math.max(0, Math.min(totalWords - progressAtLevel.length, 20));
+
+  return { totalWords, masteredWords: mastered, due, newCount };
+}
+
+async function _getGrammarData(db: DB, userId: string, level: LanguageLevel, lang: 'ru' | 'en') {
+  const topics = await db
+    .select({ id: grammarTopics.id, slug: grammarTopics.slug, titleRu: grammarTopics.titleRu, titleEn: grammarTopics.titleEn, orderNum: grammarTopics.orderNum })
+    .from(grammarTopics)
+    .where(eq(grammarTopics.level, level))
+    .orderBy(asc(grammarTopics.orderNum));
+
+  if (topics.length === 0) return { total: 0, completed: 0, next: null };
+
+  const progressRecords = await db
+    .select({ topicId: grammarProgress.topicId, status: grammarProgress.status })
+    .from(grammarProgress)
+    .where(eq(grammarProgress.userId, userId));
+
+  const progressMap = new Map(progressRecords.map((p) => [p.topicId, p.status]));
+
+  let completed = 0;
+  let next: { slug: string; title: string; status: string } | null = null;
+
+  for (let i = 0; i < topics.length; i++) {
+    const topic = topics[i]!;
+    const status = progressMap.get(topic.id) ?? (i === 0 ? 'available' : 'locked');
+    if (status === 'completed') completed++;
+    if (!next && (status === 'in_progress' || status === 'available')) {
+      next = {
+        slug: topic.slug,
+        title: lang === 'en' ? (topic.titleEn ?? topic.titleRu) : topic.titleRu,
+        status,
+      };
+    }
+  }
+
+  return { total: topics.length, completed, next };
+}
+
+async function _getListeningData(db: DB, userId: string, level: LanguageLevel) {
+  const exercises = await db
+    .select({ id: listeningExercises.id, title: listeningExercises.title, durationSec: listeningExercises.durationSec })
+    .from(listeningExercises)
+    .where(eq(listeningExercises.level, level));
+
+  if (exercises.length === 0) return { total: 0, completed: 0, next: null };
+
+  const completedRecords = await db
+    .select({ exerciseId: listeningProgress.exerciseId })
+    .from(listeningProgress)
+    .where(and(eq(listeningProgress.userId, userId), eq(listeningProgress.completed, true)));
+
+  const completedSet = new Set(completedRecords.map((r) => r.exerciseId));
+  const completed = exercises.filter((e) => completedSet.has(e.id)).length;
+  const nextExercise = exercises.find((e) => !completedSet.has(e.id)) ?? null;
+
+  return {
+    total: exercises.length,
+    completed,
+    next: nextExercise ? { id: nextExercise.id, title: nextExercise.title, durationSec: nextExercise.durationSec } : null,
+  };
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle } from 'lucide-react';
+import { Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle, Home } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -31,6 +31,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const todayCompleted = streakData?.todayCompleted ?? false;
 
   const NAV_ITEMS = [
+    { to: '/dashboard', label: t.nav.dashboard, icon: Home },
     { to: '/vocabulary', label: t.nav.words, icon: BookOpen },
     { to: '/grammar', label: t.nav.grammar, icon: LayoutGrid },
     { to: '/listening', label: t.nav.listening, icon: Headphones },

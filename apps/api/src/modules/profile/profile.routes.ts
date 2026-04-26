@@ -7,6 +7,7 @@ import {
   getStats,
   getCharts,
   getStreak,
+  getHomeData,
 } from './profile.service.js';
 
 const profileRoutes: FastifyPluginAsync = async (fastify) => {
@@ -99,6 +100,19 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     const { userId } = request.user;
     const result = await getStreak(fastify.db, userId);
     reply.send(result);
+  });
+
+  // GET /profile/home — aggregated dashboard data
+  fastify.get('/home', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { userId } = request.user;
+    const user = await fastify.db.query.users.findFirst({
+      where: (u, { eq }) => eq(u.id, userId),
+      columns: { level: true, uiLanguage: true },
+    });
+    if (!user) return reply.status(404).send({ error: 'User not found' });
+    const lang = (user.uiLanguage === 'en' ? 'en' : 'ru') as 'ru' | 'en';
+    const data = await getHomeData(fastify.db, userId, user.level, lang);
+    reply.send(data);
   });
 };
 

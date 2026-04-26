@@ -40,6 +40,27 @@ export interface ChartsData {
   weekly: WeeklyAccuracy[];
 }
 
+export interface HomeData {
+  streak: number;
+  todayCompleted: boolean;
+  levelProgress: {
+    level: string;
+    percent: number;
+    masteredWords: number;
+    totalWords: number;
+    completedGrammar: number;
+    totalGrammar: number;
+    completedListening: number;
+    totalListening: number;
+  };
+  todayPlan: {
+    wordsDue: number;
+    wordsNew: number;
+    nextGrammar: { slug: string; title: string; status: string } | null;
+    nextListening: { id: string; title: string; durationSec: number } | null;
+  };
+}
+
 export const profileApi = {
   getProfile: () => apiRequest<UserProfile>('/profile'),
 
@@ -66,6 +87,8 @@ export const profileApi = {
   getCharts: () => apiRequest<ChartsData>('/profile/charts'),
 
   getStreak: () => apiRequest<{ streak: number; todayCompleted: boolean }>('/profile/streak'),
+
+  getHomeData: () => apiRequest<HomeData>('/profile/home'),
 
   logout: () =>
     apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST' }).catch(() => {

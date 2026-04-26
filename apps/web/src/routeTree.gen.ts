@@ -18,6 +18,7 @@ import { Route as AuthPlacementRouteImport } from './app/routes/_auth.placement'
 import { Route as AuthListeningRouteImport } from './app/routes/_auth.listening'
 import { Route as AuthGrammarRouteImport } from './app/routes/_auth.grammar'
 import { Route as AuthDictionaryRouteImport } from './app/routes/_auth.dictionary'
+import { Route as AuthDashboardRouteImport } from './app/routes/_auth.dashboard'
 import { Route as AuthConversationRouteImport } from './app/routes/_auth.conversation'
 import { Route as AuthListeningIdRouteImport } from './app/routes/_auth.listening.$id'
 import { Route as AuthGrammarSlugRouteImport } from './app/routes/_auth.grammar.$slug'
@@ -66,6 +67,11 @@ const AuthDictionaryRoute = AuthDictionaryRouteImport.update({
   path: '/dictionary',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDashboardRoute = AuthDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthConversationRoute = AuthConversationRouteImport.update({
   id: '/conversation',
   path: '/conversation',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/conversation': typeof AuthConversationRoute
+  '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/listening': typeof AuthListeningRouteWithChildren
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/conversation': typeof AuthConversationRoute
+  '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/listening': typeof AuthListeningRouteWithChildren
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
   '/_auth/conversation': typeof AuthConversationRoute
+  '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dictionary': typeof AuthDictionaryRoute
   '/_auth/grammar': typeof AuthGrammarRouteWithChildren
   '/_auth/listening': typeof AuthListeningRouteWithChildren
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/conversation'
+    | '/dashboard'
     | '/dictionary'
     | '/grammar'
     | '/listening'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/conversation'
+    | '/dashboard'
     | '/dictionary'
     | '/grammar'
     | '/listening'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/login'
     | '/_auth/conversation'
+    | '/_auth/dashboard'
     | '/_auth/dictionary'
     | '/_auth/grammar'
     | '/_auth/listening'
@@ -237,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDictionaryRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/dashboard': {
+      id: '/_auth/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthDashboardRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/conversation': {
       id: '/_auth/conversation'
       path: '/conversation'
@@ -287,6 +306,7 @@ const AuthListeningRouteWithChildren = AuthListeningRoute._addFileChildren(
 
 interface AuthRouteChildren {
   AuthConversationRoute: typeof AuthConversationRoute
+  AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDictionaryRoute: typeof AuthDictionaryRoute
   AuthGrammarRoute: typeof AuthGrammarRouteWithChildren
   AuthListeningRoute: typeof AuthListeningRouteWithChildren
@@ -297,6 +317,7 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthConversationRoute: AuthConversationRoute,
+  AuthDashboardRoute: AuthDashboardRoute,
   AuthDictionaryRoute: AuthDictionaryRoute,
   AuthGrammarRoute: AuthGrammarRouteWithChildren,
   AuthListeningRoute: AuthListeningRouteWithChildren,

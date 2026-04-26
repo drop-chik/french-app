@@ -36,7 +36,7 @@ export function HomePage() {
       setAuth(result.accessToken, result.user);
       // New users go to placement test; returning users who already did it go to vocabulary
       const needsPlacement = !result.user.placementTestDone;
-      await navigate({ to: needsPlacement ? '/placement' : '/vocabulary' });
+      await navigate({ to: needsPlacement ? '/placement' : '/dashboard' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
