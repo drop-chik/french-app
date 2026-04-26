@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { Search, ChevronDown, ChevronUp, X, BookOpen, RefreshCw, Star } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { useI18n } from '../../shared/i18n';
@@ -71,9 +72,10 @@ interface SectionProps {
   words: DictWord[];
   t: Translations;
   defaultOpen: boolean;
+  onPractice: (status: string) => void;
 }
 
-function Section({ status, words, t, defaultOpen }: SectionProps) {
+function Section({ status, words, t, defaultOpen, onPractice }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [modalOpen, setModalOpen] = useState(false);
   const meta = STATUS_META[status];
@@ -96,6 +98,14 @@ function Section({ status, words, t, defaultOpen }: SectionProps) {
             </span>
           </div>
           <div className={styles.sectionHeaderRight}>
+            {words.length > 0 && (
+              <button
+                className={styles.practiceBtn}
+                onClick={(e) => { e.stopPropagation(); onPractice(status); }}
+              >
+                {t.dictionary.practiceGroup}
+              </button>
+            )}
             {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
         </button>
@@ -150,6 +160,7 @@ function Section({ status, words, t, defaultOpen }: SectionProps) {
 export function DictionaryPage() {
   const [search, setSearch] = useState('');
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ['dictionary', lang],
@@ -191,6 +202,10 @@ export function DictionaryPage() {
         w.word.translation.toLowerCase().includes(q),
     );
   }, [search, words]);
+
+  function handlePractice(status: string) {
+    navigate({ to: '/vocabulary', search: { filter: status } });
+  }
 
   const STAT_CARDS = [
     { status: 'learning', colorClass: 'learning', icon: BookOpen  },
@@ -264,6 +279,7 @@ export function DictionaryPage() {
                   words={grouped[status] ?? []}
                   t={t}
                   defaultOpen={status === 'learning' || status === 'review'}
+                  onPractice={handlePractice}
                 />
               ))}
             </div>

@@ -5,18 +5,27 @@ import styles from './SessionComplete.module.css';
 
 interface Props {
   results: SessionResult[];
+  streak: number;
   onRestart: () => void;
   onBack: () => void;
 }
 
-export function SessionComplete({ results, onRestart, onBack }: Props) {
+export function SessionComplete({ results, streak, onRestart, onBack }: Props) {
   const { t } = useI18n();
   const correct = results.filter((r) => r.grade >= 3).length;
   const total = results.length;
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  // Words that need more practice (answered incorrectly)
+  const wordsQueued = results.filter((r) => r.grade < 3).length;
 
   const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪';
   const message = pct >= 80 ? t.session.great : pct >= 50 ? t.session.good : t.session.keep;
+
+  const streakText = streak > 1
+    ? t.session.streakContinue.replace('{n}', String(streak))
+    : streak === 1
+    ? t.session.streakFirst
+    : null;
 
   return (
     <motion.div
@@ -49,6 +58,16 @@ export function SessionComplete({ results, onRestart, onBack }: Props) {
           <span className={styles.statValue}>{pct}%</span>
           <span className={styles.statLabel}>{t.session.result}</span>
         </div>
+      </div>
+
+      {/* Streak + words queued row */}
+      <div className={styles.meta}>
+        {streakText && <span className={styles.metaStreak}>{streakText}</span>}
+        {wordsQueued > 0 && (
+          <span className={styles.metaQueued}>
+            {t.session.wordsQueued.replace('{n}', String(wordsQueued))}
+          </span>
+        )}
       </div>
 
       <div className={styles.actions}>

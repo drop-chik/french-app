@@ -65,7 +65,7 @@ export const profileApi = {
 
   getCharts: () => apiRequest<ChartsData>('/profile/charts'),
 
-  getStreak: () => apiRequest<{ streak: number }>('/profile/streak'),
+  getStreak: () => apiRequest<{ streak: number; todayCompleted: boolean }>('/profile/streak'),
 
   logout: () =>
     apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST' }).catch(() => {

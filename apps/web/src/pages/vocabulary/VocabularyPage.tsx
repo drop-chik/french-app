@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Play } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
@@ -46,6 +47,11 @@ export function VocabularyPage() {
   const [activeMode, setActiveMode] = useState<ActiveMode>('menu');
   const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
   const { t, lang } = useI18n();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  // filter=learning|review|mastered comes from Dictionary "Повторить" button
+  const search = useSearch({ strict: false }) as { filter?: string };
+  const statusFilter = search.filter as string | undefined;
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['words-session', lang],
@@ -72,15 +78,25 @@ export function VocabularyPage() {
   const newCount = words.filter((w) => !w.progress || w.progress.status === 'new').length;
   const masteredTotal = statsData?.words.mastered ?? 0;
   const streak = streakData?.streak ?? 0;
-  const estimatedMin = Math.max(5, Math.ceil(words.length * 0.6));
+  const todayCompleted = streakData?.todayCompleted ?? false;
+
+  // If coming from Dictionary with a status filter, only show those words
+  const sessionWords = statusFilter
+    ? words.filter((w) => w.progress?.status === statusFilter)
+    : words;
+
+  const estimatedMin = Math.max(5, Math.ceil(sessionWords.length * 0.6));
 
   function handleComplete(results: SessionResult[]) {
     setSessionResults(results);
     setActiveMode('complete');
+    queryClient.invalidateQueries({ queryKey: ['streak'] });
   }
 
   function handleRestart() {
     refetch();
+    // Clear filter when restarting from complete screen
+    if (statusFilter) navigate({ to: '/vocabulary' });
     setActiveMode('menu');
   }
 
@@ -94,39 +110,40 @@ export function VocabularyPage() {
   }
 
   // — режимы —
-  if (activeMode === 'smart' && words.length > 0) {
-    return withBack(<SmartSessionMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'smart' && sessionWords.length > 0) {
+    return withBack(<SmartSessionMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'flashcard' && words.length > 0) {
-    return withBack(<FlashcardMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'flashcard' && sessionWords.length > 0) {
+    return withBack(<FlashcardMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'multiple-choice' && words.length > 0) {
-    return withBack(<MultipleChoiceMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'multiple-choice' && sessionWords.length > 0) {
+    return withBack(<MultipleChoiceMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'spelling' && words.length > 0) {
-    return withBack(<SpellingMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'spelling' && sessionWords.length > 0) {
+    return withBack(<SpellingMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'matching' && words.length > 0) {
-    return withBack(<MatchingMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'matching' && sessionWords.length > 0) {
+    return withBack(<MatchingMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'fill-blank' && words.length > 0) {
-    return withBack(<FillBlankMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'fill-blank' && sessionWords.length > 0) {
+    return withBack(<FillBlankMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'speed-round' && words.length > 0) {
-    return withBack(<SpeedRoundMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'speed-round' && sessionWords.length > 0) {
+    return withBack(<SpeedRoundMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'context-builder' && words.length > 0) {
-    return withBack(<ContextBuilderMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'context-builder' && sessionWords.length > 0) {
+    return withBack(<ContextBuilderMode words={sessionWords} onComplete={handleComplete} />);
   }
-  if (activeMode === 'listening-recall' && words.length > 0) {
-    return withBack(<ListeningRecallMode words={words} onComplete={handleComplete} />);
+  if (activeMode === 'listening-recall' && sessionWords.length > 0) {
+    return withBack(<ListeningRecallMode words={sessionWords} onComplete={handleComplete} />);
   }
   if (activeMode === 'complete') {
     return (
       <SessionComplete
         results={sessionResults}
+        streak={streak}
         onRestart={handleRestart}
-        onBack={() => setActiveMode('menu')}
+        onBack={() => { setActiveMode('menu'); if (statusFilter) navigate({ to: '/vocabulary' }); }}
       />
     );
   }
@@ -143,6 +160,15 @@ export function VocabularyPage() {
           </div>
         )}
       </div>
+
+      {/* Streak banner — shown only when streak > 0 */}
+      {streak > 0 && !isLoading && (
+        <div className={`${styles.streakBanner} ${todayCompleted ? styles.streakBannerDone : styles.streakBannerWarn}`}>
+          {todayCompleted
+            ? t.vocabulary.streakDone
+            : t.vocabulary.streakAtRisk.replace('{n}', String(streak))}
+        </div>
+      )}
 
       {/* Stats bar */}
       {!isLoading && !error && (
@@ -168,20 +194,24 @@ export function VocabularyPage() {
       {error && <p className={styles.error}>{t.vocabulary.errorLoad}</p>}
 
       {/* CTA — primary action */}
-      {!isLoading && !error && words.length > 0 && (
+      {!isLoading && !error && sessionWords.length > 0 && (
         <button className={styles.startBtn} onClick={() => setActiveMode('smart')}>
           <Play size={18} className={styles.startBtnIcon} />
           <span>
-            {t.vocabulary.startSession}
+            {statusFilter ? t.dictionary.status[statusFilter as keyof typeof t.dictionary.status] ?? t.vocabulary.startSession : t.vocabulary.startSession}
             <span className={styles.startBtnMeta}>
-              {words.length} {lang === 'ru' ? 'слов' : 'words'} · ~{estimatedMin} {lang === 'ru' ? 'мин' : 'min'}
+              {sessionWords.length} {lang === 'ru' ? 'слов' : 'words'} · ~{estimatedMin} {lang === 'ru' ? 'мин' : 'min'}
             </span>
           </span>
         </button>
       )}
 
-      {!isLoading && !error && words.length === 0 && (
+      {!isLoading && !error && sessionWords.length === 0 && words.length === 0 && (
         <div className={styles.allDoneBanner}>{t.vocabulary.allDone}</div>
+      )}
+
+      {!isLoading && !error && sessionWords.length === 0 && words.length > 0 && statusFilter && (
+        <div className={styles.allDoneBanner}>{lang === 'ru' ? 'Нет слов в этой группе' : 'No words in this group'}</div>
       )}
 
       {/* Divider */}

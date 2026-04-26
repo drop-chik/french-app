@@ -63,6 +63,25 @@
   background-color: var(--color-border);
 }
 
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.metaStreak {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-brand);
+}
+
+.metaQueued {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
 .actions {
   display: flex;
   gap: var(--space-3);

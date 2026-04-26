@@ -94,11 +94,11 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     reply.send(charts);
   });
 
-  // GET /profile/streak — consecutive days streak
+  // GET /profile/streak — consecutive days streak + whether user studied today
   fastify.get('/streak', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const { userId } = request.user;
-    const streak = await getStreak(fastify.db, userId);
-    reply.send({ streak });
+    const result = await getStreak(fastify.db, userId);
+    reply.send(result);
   });
 };
 

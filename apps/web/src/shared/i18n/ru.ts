@@ -72,6 +72,8 @@ export const ru: DeepRecord = {
     newCount: 'новых',
     masteredCount: 'выучено',
     streakLabel: 'дн. подряд',
+    streakAtRisk: 'Стрик {n} дн. — позанимайся сегодня, чтобы не прервать!',
+    streakDone: 'Занятие выполнено — стрик продолжается!',
     practiceLabel: '— или тренируй отдельно —',
     back: '← Назад',
     smartPhase: 'Этап {phase} из {total}',
@@ -118,6 +120,9 @@ export const ru: DeepRecord = {
     result: 'результат',
     again: 'Ещё раз',
     toModes: 'К режимам',
+    streakContinue: '🔥 Стрик: {n} дн. подряд — приходи завтра!',
+    streakFirst: '🔥 Отличное начало — первое занятие!',
+    wordsQueued: 'Отправлено на повтор: {n} сл.',
   },
   multipleChoice: {
     loading: 'Загружаем вопросы...',
@@ -261,6 +266,7 @@ export const ru: DeepRecord = {
     reviewTomorrow: 'Завтра',
     noWords: 'Нет слов в этой группе',
     modalClose: 'Закрыть',
+    practiceGroup: 'Повторить',
     status: {
       new: 'Новые',
       learning: 'Учатся',

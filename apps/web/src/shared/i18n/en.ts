@@ -71,6 +71,8 @@ export const en: Translations = {
     newCount: 'new',
     masteredCount: 'mastered',
     streakLabel: 'day streak',
+    streakAtRisk: 'Streak {n} d. — study today to keep it going!',
+    streakDone: 'Session done — streak continues!',
     practiceLabel: '— or practice a specific skill —',
     back: '← Back',
     smartPhase: 'Phase {phase} of {total}',
@@ -117,6 +119,9 @@ export const en: Translations = {
     result: 'score',
     again: 'Again',
     toModes: 'Back to modes',
+    streakContinue: '🔥 Streak: {n} days in a row — come back tomorrow!',
+    streakFirst: '🔥 Great start — first session done!',
+    wordsQueued: 'Sent for review: {n} w.',
   },
   multipleChoice: {
     loading: 'Loading questions...',
@@ -260,6 +265,7 @@ export const en: Translations = {
     reviewTomorrow: 'Tomorrow',
     noWords: 'No words in this group',
     modalClose: 'Close',
+    practiceGroup: 'Practice',
     status: {
       new: 'New',
       learning: 'Learning',

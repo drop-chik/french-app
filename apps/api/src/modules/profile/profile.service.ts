@@ -161,7 +161,7 @@ export async function getStats(db: DB, userId: string) {
 }
 
 // Daily streak: consecutive days with at least one word reviewed
-export async function getStreak(db: DB, userId: string): Promise<number> {
+export async function getStreak(db: DB, userId: string): Promise<{ streak: number; todayCompleted: boolean }> {
   const rows = await db
     .select({ day: sql<string>`to_char(DATE(${wordProgress.lastReviewed}), 'YYYY-MM-DD')` })
     .from(wordProgress)
@@ -170,7 +170,7 @@ export async function getStreak(db: DB, userId: string): Promise<number> {
     .orderBy(sql`DATE(${wordProgress.lastReviewed}) DESC`);
 
   const dates = rows.map((r) => r.day).filter(Boolean);
-  if (dates.length === 0) return 0;
+  if (dates.length === 0) return { streak: 0, todayCompleted: false };
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
@@ -178,8 +178,10 @@ export async function getStreak(db: DB, userId: string): Promise<number> {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
+  const todayCompleted = dates[0] === todayStr;
+
   // Streak is alive only if user has studied today or yesterday
-  if (dates[0] !== todayStr && dates[0] !== yesterdayStr) return 0;
+  if (dates[0] !== todayStr && dates[0] !== yesterdayStr) return { streak: 0, todayCompleted: false };
 
   let streak = 0;
   let prevDate: Date | null = null;
@@ -200,7 +202,7 @@ export async function getStreak(db: DB, userId: string): Promise<number> {
     }
   }
 
-  return streak;
+  return { streak, todayCompleted };
 }
 
 // Charts data: last 30 days of activity

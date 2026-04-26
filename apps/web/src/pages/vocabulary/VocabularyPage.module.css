@@ -63,6 +63,28 @@
   color: var(--color-text-primary);
 }
 
+/* Streak banner */
+.streakBanner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  text-align: center;
+  border-left: 4px solid;
+}
+
+.streakBannerWarn {
+  background-color: rgba(249, 115, 22, 0.08);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.streakBannerDone {
+  background-color: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
 /* Stats bar */
 .statsBar {
   display: flex;
