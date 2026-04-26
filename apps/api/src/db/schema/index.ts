@@ -66,6 +66,14 @@ export const words = pgTable(
     translation: varchar('translation', { length: 255 }).notNull(),
     level: languageLevelEnum('level').notNull(),
     category: varchar('category', { length: 100 }).notNull(),
+    // Part of speech: verb / noun / adjective / adverb / preposition / conjunction / number / pronoun / expression
+    partOfSpeech: varchar('part_of_speech', { length: 20 }),
+    // Grammatical gender for nouns: 'm' or 'f' (null for non-nouns or ambiguous l' words)
+    gender: varchar('gender', { length: 1 }),
+    // Approximate rank in French frequency corpus (1 = most common). Lower → easier/more important.
+    frequencyRank: integer('frequency_rank'),
+    // Slug of the grammar topic this word illustrates (links word ↔ grammar)
+    grammarTag: varchar('grammar_tag', { length: 100 }),
     exampleFr: text('example_fr'),
     exampleRu: text('example_ru'),
     translationEn: varchar('translation_en', { length: 255 }),
@@ -75,7 +83,11 @@ export const words = pgTable(
     imageGenerating: boolean('image_generating').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  (t) => [index('idx_words_level_category').on(t.level, t.category)],
+  (t) => [
+    index('idx_words_level_category').on(t.level, t.category),
+    index('idx_words_level_pos').on(t.level, t.partOfSpeech),
+    index('idx_words_frequency').on(t.level, t.frequencyRank),
+  ],
 );
 
 // Word learning progress per user (SRS data)

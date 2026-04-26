@@ -185,9 +185,11 @@ export function FlashcardMode({ words, onComplete }: Props) {
 
 function getCategoryEmoji(category: string): string {
   const map: Record<string, string> = {
-    verbs_basic: '🏃', family: '👨‍👩‍👧', food: '🍎', house: '🏠',
+    verbs: '🏃', family: '👨‍👩‍👧', food: '🍎', house: '🏠',
     transport: '🚌', body: '💪', clothes: '👕', colors: '🎨',
-    numbers: '🔢', time: '⏰', nature: '🌿', adjectives: '✨', basics: '💬',
+    numbers: '🔢', time: '⏰', nature: '🌿', adjectives: '✨',
+    description: '✨', basics: '💬', prepositions: '🔗',
+    shopping: '🛒', professions: '💼', school: '📐', leisure: '🎮',
   };
   return map[category] ?? '📚';
 }

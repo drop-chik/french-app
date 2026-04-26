@@ -1,6 +1,10 @@
 import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { db } from './db/index.js';
 import dbPlugin from './plugins/db.js';
 import authPlugin from './plugins/auth.js';
 import authRoutes from './modules/auth/auth.routes.js';
@@ -11,6 +15,12 @@ import placementRoutes from './modules/placement/placement.routes.js';
 import listeningRoutes from './modules/listening/listening.routes.js';
 import conversationRoutes from './modules/conversation/conversation.routes.js';
 import profileRoutes from './modules/profile/profile.routes.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Run pending migrations on every startup (idempotent)
+const migrationsFolder = join(__dirname, '../src/db/migrations');
+await migrate(db, { migrationsFolder });
 
 const isDev = process.env['NODE_ENV'] !== 'production';
 
