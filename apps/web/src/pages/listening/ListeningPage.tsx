@@ -1,17 +1,21 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { CheckCircle, Circle, Headphones, Clock } from 'lucide-react';
+import { Headphones, Clock } from 'lucide-react';
 import { listeningApi } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './ListeningPage.module.css';
 
+const LEVELS = ['A1', 'A2'] as const;
+
 export function ListeningPage() {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const [selectedLevel, setSelectedLevel] = useState<'A1' | 'A2'>('A1');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['listening-exercises', 'A1', lang],
-    queryFn: () => listeningApi.getExercises('A1'),
+    queryKey: ['listening-exercises', selectedLevel, lang],
+    queryFn: () => listeningApi.getExercises(selectedLevel),
   });
 
   const exercises = data?.exercises ?? [];
@@ -19,7 +23,20 @@ export function ListeningPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>{t.listening.title}</h1>
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>{t.listening.title}</h1>
+          <div className={styles.levelTabs}>
+            {LEVELS.map((lvl) => (
+              <button
+                key={lvl}
+                className={`${styles.levelTab} ${selectedLevel === lvl ? styles.levelTabActive : ''}`}
+                onClick={() => setSelectedLevel(lvl)}
+              >
+                {lvl}
+              </button>
+            ))}
+          </div>
+        </div>
         <p className={styles.subtitle}>{t.listening.subtitle}</p>
       </div>
 

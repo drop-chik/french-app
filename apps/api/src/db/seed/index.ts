@@ -16,6 +16,8 @@ import { grammarExercisesA1Extra } from './grammar-exercises-a1-extra.js';
 import { grammarExercisesA2 } from './grammar-exercises-a2.js';
 import { grammarExercisesA2Extra } from './grammar-exercises-a2-extra.js';
 import { listeningExercisesA1 } from './listening-a1.js';
+import { listeningExercisesA1Extra } from './listening-a1-extra.js';
+import { listeningExercisesA2 } from './listening-a2.js';
 
 type WordInput = {
   french: string;
@@ -159,7 +161,7 @@ async function seed() {
 
   // ===== Listening Exercises =====
   console.log('\nSeeding listening exercises A1...');
-  for (const ex of listeningExercisesA1) {
+  for (const ex of [...listeningExercisesA1, ...listeningExercisesA1Extra]) {
     await db
       .insert(listeningExercises)
       .values({
@@ -171,9 +173,26 @@ async function seed() {
         durationSec: ex.durationSec,
       })
       .onConflictDoNothing();
-    console.log(`  Listening: ${ex.title}`);
+    console.log(`  Listening A1: ${ex.title}`);
   }
-  console.log(`Listening done! Total: ${listeningExercisesA1.length}`);
+  console.log(`Listening A1 done! Total: ${listeningExercisesA1.length + listeningExercisesA1Extra.length}`);
+
+  console.log('\nSeeding listening exercises A2...');
+  for (const ex of listeningExercisesA2) {
+    await db
+      .insert(listeningExercises)
+      .values({
+        title: ex.title,
+        level: 'A2' as const,
+        audioUrl: '',
+        transcript: ex.transcript,
+        questions: ex.questions,
+        durationSec: ex.durationSec,
+      })
+      .onConflictDoNothing();
+    console.log(`  Listening A2: ${ex.title}`);
+  }
+  console.log(`Listening A2 done! Total: ${listeningExercisesA2.length}`);
 
   console.log('\nAll seed complete!');
   process.exit(0);
