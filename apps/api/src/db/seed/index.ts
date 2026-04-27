@@ -5,6 +5,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
 import { wordsA2 } from './words-a2.js';
+import { wordsA2Extra } from './words-a2-extra.js';
 import { grammarTopicsA1 } from './grammar-a1.js';
 import { grammarTopicsA1Extra } from './grammar-a1-extra.js';
 import { grammarTopicsA2 } from './grammar-a2.js';
@@ -132,7 +133,7 @@ async function seed() {
 
   // ===== Words A2 =====
   console.log('\nSeeding words A2...');
-  const a2Rows = buildWordRows(wordsA2 as WordInput[], 'A2');
+  const a2Rows = buildWordRows([...wordsA2, ...wordsA2Extra] as WordInput[], 'A2');
   await seedWordsBatch(a2Rows, 'A2 words');
   console.log(`Words A2 done! Total: ${a2Rows.length}`);
 
