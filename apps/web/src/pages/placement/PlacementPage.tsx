@@ -26,6 +26,7 @@ export function PlacementPage() {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [chosen, setChosen] = useState<string | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [resultLevel, setResultLevel] = useState<string | null>(null);
 
   const { data } = useQuery({
@@ -51,7 +52,7 @@ export function PlacementPage() {
   });
 
   function handleChoose(option: string) {
-    if (chosen || !currentQ) return;
+    if (chosen || !currentQ || isBlocked) return;
     setChosen(option);
     const newAnswers = { ...answers, [currentQ.id]: option };
     setAnswers(newAnswers);
@@ -60,8 +61,11 @@ export function PlacementPage() {
       if (current + 1 >= questions.length) {
         submitMutation.mutate(newAnswers);
       } else {
+        setIsBlocked(true);
         setCurrent((c) => c + 1);
         setChosen(null);
+        // Absorb ghost clicks: mobile browsers fire synthetic click ~300ms after touch
+        setTimeout(() => setIsBlocked(false), 400);
       }
     }, 500);
   }
@@ -172,7 +176,7 @@ export function PlacementPage() {
                     key={opt}
                     className={`${styles.option} ${isChosen ? styles.optionChosen : ''}`}
                     onClick={() => handleChoose(opt)}
-                    disabled={!!chosen}
+                    disabled={!!chosen || isBlocked}
                   >
                     {opt}
                   </button>
