@@ -47,6 +47,8 @@ export const listeningApi = {
       body: JSON.stringify({ answers }),
     }),
 
+  // Used by vocabulary modes (FlashcardMode, SpellingMode, ListeningRecallMode)
+  // to play a single word on demand. Exercises use pre-cached R2 URLs instead.
   generateTTS: (text: string) =>
     apiRequestBlob('/listening/tts', {
       method: 'POST',

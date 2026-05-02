@@ -1,19 +1,22 @@
 import { eq, and } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { listeningExercises, listeningProgress } from '../../db/schema/index.js';
+import { ensureAudio } from '../../services/audio.service.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
-// Get all exercises for a level
+// Get all exercises for a level — audioData excluded (large binary)
 export async function getExercises(db: DB, level: LanguageLevel) {
   return db.query.listeningExercises.findMany({
     where: eq(listeningExercises.level, level),
+    columns: { audioData: false },
   });
 }
 
-// Get single exercise (without correct answers in questions)
+// Get single exercise (without correct answers; audioData not loaded)
 export async function getExercise(db: DB, userId: string, exerciseId: string) {
   const exercise = await db.query.listeningExercises.findFirst({
     where: eq(listeningExercises.id, exerciseId),
+    columns: { audioData: false },
   });
   if (!exercise) return null;
 
@@ -24,7 +27,9 @@ export async function getExercise(db: DB, userId: string, exerciseId: string) {
     ),
   });
 
-  // Strip correct answers from questions for client
+  // Ensure audio is in DB; first access triggers TTS generation (~2-3s, once only).
+  const audioUrl = await ensureAudio(db, exerciseId, exercise.transcript, exercise.audioUrl);
+
   const questions = (exercise.questions as Array<{
     id: string;
     text: string;
@@ -36,7 +41,7 @@ export async function getExercise(db: DB, userId: string, exerciseId: string) {
     id: exercise.id,
     title: exercise.title,
     level: exercise.level,
-    audioUrl: exercise.audioUrl,
+    audioUrl,
     transcript: exercise.transcript,
     durationSec: exercise.durationSec,
     questions,
@@ -55,6 +60,7 @@ export async function submitAnswers(
 ) {
   const exercise = await db.query.listeningExercises.findFirst({
     where: eq(listeningExercises.id, exerciseId),
+    columns: { audioData: false },
   });
   if (!exercise) throw new Error('Exercise not found');
 
@@ -77,7 +83,6 @@ export async function submitAnswers(
   const score = Math.round((correct / questions.length) * 100);
   const completed = score >= 50;
 
-  // Upsert progress
   const existing = await db.query.listeningProgress.findFirst({
     where: and(
       eq(listeningProgress.userId, userId),

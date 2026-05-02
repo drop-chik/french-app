@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Play, Pause, Volume2, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react';
@@ -26,8 +26,6 @@ export function ListeningExercisePage({ id }: Props) {
 
   // Audio state
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -48,29 +46,12 @@ export function ListeningExercisePage({ id }: Props) {
     },
   });
 
-  const loadAudio = useCallback(async () => {
-    if (!exercise?.transcript || audioUrl) return;
-    setIsLoadingAudio(true);
-    try {
-      const blob = await listeningApi.generateTTS(exercise.transcript);
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-    } catch (err) {
-      console.error('TTS failed:', err);
-    } finally {
-      setIsLoadingAudio(false);
-    }
-  }, [exercise?.transcript, audioUrl]);
-
+  // Wire up audio element whenever the exercise URL changes
   useEffect(() => {
-    if (exercise) {
-      loadAudio();
-    }
-  }, [exercise, loadAudio]);
+    const url = exercise?.audioUrl;
+    if (!url) return;
 
-  useEffect(() => {
-    if (!audioUrl) return;
-    const audio = new Audio(audioUrl);
+    const audio = new Audio(url);
     audioRef.current = audio;
 
     audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
@@ -79,9 +60,8 @@ export function ListeningExercisePage({ id }: Props) {
 
     return () => {
       audio.pause();
-      URL.revokeObjectURL(audioUrl);
     };
-  }, [audioUrl]);
+  }, [exercise?.audioUrl]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -183,6 +163,8 @@ export function ListeningExercisePage({ id }: Props) {
     );
   }
 
+  const hasAudio = !!exercise.audioUrl;
+
   return (
     <div className={styles.page}>
       <button className={styles.backButton} onClick={() => navigate({ to: '/listening' })}>
@@ -204,15 +186,9 @@ export function ListeningExercisePage({ id }: Props) {
           <button
             className={styles.playButton}
             onClick={togglePlay}
-            disabled={!audioUrl || isLoadingAudio}
+            disabled={!hasAudio}
           >
-            {isLoadingAudio ? (
-              <span className={styles.loadingDot} />
-            ) : isPlaying ? (
-              <Pause size={20} />
-            ) : (
-              <Play size={20} />
-            )}
+            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </button>
           <div className={styles.progressBar}>
             <input
@@ -223,7 +199,7 @@ export function ListeningExercisePage({ id }: Props) {
               value={currentTime}
               onChange={handleSeek}
               className={styles.progressInput}
-              disabled={!audioUrl}
+              disabled={!hasAudio}
             />
             <div className={styles.progressTimes}>
               <span>{formatTime(currentTime)}</span>
@@ -231,9 +207,6 @@ export function ListeningExercisePage({ id }: Props) {
             </div>
           </div>
         </div>
-        {isLoadingAudio && (
-          <span className={styles.loadingText}>{t.listening.generatingAudio}</span>
-        )}
       </div>
 
       {/* Transcript Toggle */}

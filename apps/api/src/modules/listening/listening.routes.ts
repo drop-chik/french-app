@@ -1,7 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import { getExercises, getExercise, submitAnswers } from './listening.service.js';
 import { generateTTS } from './tts.service.js';
+import { listeningExercises } from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const submitSchema = z.object({
@@ -32,6 +34,29 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  // GET /listening/exercises/:id/audio — public, no auth (UUID is unguessable)
+  // Serves the pre-generated MP3 from the database with browser-level caching.
+  fastify.get<{ Params: { id: string } }>(
+    '/exercises/:id/audio',
+    async (request, reply) => {
+      const row = await fastify.db.query.listeningExercises.findFirst({
+        where: eq(listeningExercises.id, request.params.id),
+        columns: { audioData: true },
+      });
+
+      if (!row?.audioData) {
+        return reply.status(404).send({ error: 'Audio not found' });
+      }
+
+      reply
+        .header('Content-Type', 'audio/mpeg')
+        .header('Content-Length', row.audioData.length)
+        .header('Cache-Control', 'public, max-age=31536000, immutable')
+        .header('Accept-Ranges', 'bytes')
+        .send(row.audioData);
+    },
+  );
+
   // POST /listening/exercises/:id/submit
   fastify.post<{ Params: { id: string } }>(
     '/exercises/:id/submit',
@@ -50,7 +75,7 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // POST /listening/tts — generate TTS for a text snippet (streaming MP3)
+  // POST /listening/tts — on-demand TTS for vocabulary modes (single words)
   fastify.post(
     '/tts',
     { preHandler: [fastify.authenticate] },
