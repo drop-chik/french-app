@@ -4,20 +4,34 @@ import { listeningExercises, listeningProgress } from '../../db/schema/index.js'
 import { ensureAudio } from '../../services/audio.service.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
-// Get all exercises for a level — audioData excluded (large binary)
+// Explicit column selection — never loads audio_data (large binary)
+const exerciseCols = {
+  id: listeningExercises.id,
+  title: listeningExercises.title,
+  level: listeningExercises.level,
+  audioUrl: listeningExercises.audioUrl,
+  transcript: listeningExercises.transcript,
+  questions: listeningExercises.questions,
+  durationSec: listeningExercises.durationSec,
+};
+
+// Get all exercises for a level
 export async function getExercises(db: DB, level: LanguageLevel) {
-  return db.query.listeningExercises.findMany({
-    where: eq(listeningExercises.level, level),
-    columns: { audioData: false },
-  });
+  return db
+    .select(exerciseCols)
+    .from(listeningExercises)
+    .where(eq(listeningExercises.level, level));
 }
 
-// Get single exercise (without correct answers; audioData not loaded)
+// Get single exercise (without correct answers; audio_data not loaded)
 export async function getExercise(db: DB, userId: string, exerciseId: string) {
-  const exercise = await db.query.listeningExercises.findFirst({
-    where: eq(listeningExercises.id, exerciseId),
-    columns: { audioData: false },
-  });
+  const rows = await db
+    .select(exerciseCols)
+    .from(listeningExercises)
+    .where(eq(listeningExercises.id, exerciseId))
+    .limit(1);
+
+  const exercise = rows[0];
   if (!exercise) return null;
 
   const progress = await db.query.listeningProgress.findFirst({
@@ -27,8 +41,14 @@ export async function getExercise(db: DB, userId: string, exerciseId: string) {
     ),
   });
 
-  // Ensure audio is in DB; first access triggers TTS generation (~2-3s, once only).
-  const audioUrl = await ensureAudio(db, exerciseId, exercise.transcript, exercise.audioUrl);
+  // Ensure audio is in DB; on first access this generates TTS and uploads (~2-3s, once only).
+  // Wrapped in try-catch so a pending migration or transient error doesn't break the page.
+  let audioUrl = '';
+  try {
+    audioUrl = await ensureAudio(db, exerciseId, exercise.transcript, exercise.audioUrl);
+  } catch (err) {
+    console.error('[audio] ensureAudio failed, serving without audio:', err);
+  }
 
   const questions = (exercise.questions as Array<{
     id: string;
@@ -58,10 +78,13 @@ export async function submitAnswers(
   exerciseId: string,
   answers: Record<string, string>,
 ) {
-  const exercise = await db.query.listeningExercises.findFirst({
-    where: eq(listeningExercises.id, exerciseId),
-    columns: { audioData: false },
-  });
+  const rows = await db
+    .select(exerciseCols)
+    .from(listeningExercises)
+    .where(eq(listeningExercises.id, exerciseId))
+    .limit(1);
+
+  const exercise = rows[0];
   if (!exercise) throw new Error('Exercise not found');
 
   const questions = exercise.questions as Array<{
