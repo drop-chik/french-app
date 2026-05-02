@@ -652,6 +652,8 @@ export function LandingPage() {
           </div>
           <div className={styles.footerLinks}>
             <a href="/login" className={styles.footerLink}>{t.landing.nav.login}</a>
+            <a href="/terms" className={styles.footerLink}>Условия использования</a>
+            <a href="/privacy" className={styles.footerLink}>Конфиденциальность</a>
           </div>
         </div>
       </footer>

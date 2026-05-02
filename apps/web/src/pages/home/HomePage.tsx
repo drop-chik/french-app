@@ -14,6 +14,7 @@ export function HomePage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -115,9 +116,35 @@ export function HomePage() {
             />
           </div>
 
+          {mode === 'register' && (
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                required
+              />
+              <span>
+                Я принимаю{' '}
+                <a href="/terms" target="_blank" rel="noreferrer" className={styles.checkboxLink}>
+                  условия использования
+                </a>{' '}
+                и{' '}
+                <a href="/privacy" target="_blank" rel="noreferrer" className={styles.checkboxLink}>
+                  политику конфиденциальности
+                </a>
+              </span>
+            </label>
+          )}
+
           {error && <p className={styles.error}>{error}</p>}
 
-          <button className={styles.submitBtn} type="submit" disabled={loading}>
+          <button
+            className={styles.submitBtn}
+            type="submit"
+            disabled={loading || (mode === 'register' && !agreed)}
+          >
             {loading ? 'Загрузка...' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}
           </button>
         </form>
