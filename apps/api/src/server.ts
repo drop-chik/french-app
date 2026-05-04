@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { sql } from 'drizzle-orm';
 import { db } from './db/index.js';
 import dbPlugin from './plugins/db.js';
 import authPlugin from './plugins/auth.js';
@@ -21,6 +22,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Run pending migrations on every startup (idempotent)
 const migrationsFolder = join(__dirname, '../src/db/migrations');
 await migrate(db, { migrationsFolder });
+
+// Safety net: ensure audio_data column exists regardless of migrator state
+await db.execute(sql`ALTER TABLE listening_exercises ADD COLUMN IF NOT EXISTS audio_data bytea`);
 
 const isDev = process.env['NODE_ENV'] !== 'production';
 
