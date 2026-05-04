@@ -6,6 +6,33 @@ import { listeningApi } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './ListeningExercisePage.module.css';
 
+function ExerciseSkeleton() {
+  return (
+    <div className={styles.page}>
+      <div className={`${styles.skeletonBlock} ${styles.skeletonButton}`} />
+      <div className={styles.header}>
+        <div className={`${styles.skeletonBlock} ${styles.skeletonTitle}`} />
+        <div className={`${styles.skeletonBlock} ${styles.skeletonBadge}`} />
+      </div>
+      <div className={`${styles.skeletonBlock} ${styles.skeletonPlayer}`} />
+      <div className={`${styles.skeletonBlock} ${styles.skeletonButton}`} style={{ width: 140 }} />
+      <div className={styles.questions}>
+        <div className={`${styles.skeletonBlock} ${styles.skeletonLine}`} style={{ width: '40%' }} />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className={styles.skeletonCard}>
+            <div className={`${styles.skeletonBlock} ${styles.skeletonLine}`} style={{ width: `${65 + i * 10}%` }} />
+            <div className={styles.skeletonOptions}>
+              {[0, 1, 2, 3].map((j) => (
+                <div key={j} className={`${styles.skeletonBlock} ${styles.skeletonOption}`} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   id: string;
 }
@@ -107,7 +134,7 @@ export function ListeningExercisePage({ id }: Props) {
     setShowTranscript(false);
   };
 
-  if (isLoading) return <div className={styles.loading}>{t.listening.loadingExercise}</div>;
+  if (isLoading) return <ExerciseSkeleton />;
   if (error || !exercise) return <div className={styles.loading}>{t.listening.notFound}</div>;
 
   if (phase === 'result' && submitResult) {

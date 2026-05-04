@@ -41,13 +41,12 @@ export async function getExercise(db: DB, userId: string, exerciseId: string) {
     ),
   });
 
-  // Ensure audio is in DB; on first access this generates TTS and uploads (~2-3s, once only).
-  // Wrapped in try-catch so a pending migration or transient error doesn't break the page.
-  let audioUrl = '';
-  try {
-    audioUrl = await ensureAudio(db, exerciseId, exercise.transcript, exercise.audioUrl);
-  } catch (err) {
-    console.error('[audio] ensureAudio failed, serving without audio:', err);
+  // Return cached URL immediately; if audio not yet generated, trigger background TTS (non-blocking).
+  const audioUrl = exercise.audioUrl ? `/api${exercise.audioUrl}` : '';
+  if (!exercise.audioUrl) {
+    ensureAudio(db, exerciseId, exercise.transcript, '').catch((err) =>
+      console.error('[audio] background generation failed:', err),
+    );
   }
 
   const questions = (exercise.questions as Array<{
