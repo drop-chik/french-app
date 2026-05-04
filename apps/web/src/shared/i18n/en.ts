@@ -321,6 +321,9 @@ export const en: Translations = {
       prepositions: 'Prepositions',
       adverbs: 'Adverbs',
       vocabulary: 'Vocabulary',
+      temps: 'Tenses',
+      pronoms: 'Pronouns',
+      syntaxe: 'Syntax',
     },
     status: {
       locked: 'Locked',

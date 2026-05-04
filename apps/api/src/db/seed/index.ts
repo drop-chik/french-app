@@ -11,10 +11,12 @@ import { grammarTopicsA1 } from './grammar-a1.js';
 import { grammarTopicsA1Extra } from './grammar-a1-extra.js';
 import { grammarTopicsA2 } from './grammar-a2.js';
 import { grammarTopicsA2Extra } from './grammar-a2-extra.js';
+import { grammarTopicsB1 } from './grammar-b1.js';
 import { grammarExercisesA1 } from './grammar-exercises-a1.js';
 import { grammarExercisesA1Extra } from './grammar-exercises-a1-extra.js';
 import { grammarExercisesA2 } from './grammar-exercises-a2.js';
 import { grammarExercisesA2Extra } from './grammar-exercises-a2-extra.js';
+import { grammarExercisesB1 } from './grammar-exercises-b1.js';
 import { listeningExercisesA1 } from './listening-a1.js';
 import { listeningExercisesA1Extra } from './listening-a1-extra.js';
 import { listeningExercisesA2 } from './listening-a2.js';
@@ -69,7 +71,7 @@ async function seedWordsBatch(
 
 async function seedGrammarTopics(
   topics: typeof grammarTopicsA1,
-  level: 'A1' | 'A2',
+  level: 'A1' | 'A2' | 'B1',
 ) {
   for (const topic of topics) {
     await db
@@ -158,6 +160,17 @@ async function seed() {
   await seedGrammarExercises(grammarExercisesA1Extra, slugToId, 'A1 extra exercises');
   await seedGrammarExercises(grammarExercisesA2, slugToId, 'A2 exercises');
   await seedGrammarExercises(grammarExercisesA2Extra, slugToId, 'A2 extra exercises');
+
+  console.log('\nSeeding grammar topics B1...');
+  await seedGrammarTopics(grammarTopicsB1, 'B1');
+  console.log(`Grammar topics B1 done! Total: ${grammarTopicsB1.length}`);
+
+  // Refresh slugToId to include B1 topics
+  const topicRowsB1 = await db.select({ id: grammarTopics.id, slug: grammarTopics.slug }).from(grammarTopics);
+  const slugToIdB1 = new Map(topicRowsB1.map((r) => [r.slug, r.id]));
+
+  console.log('\nSeeding grammar exercises B1...');
+  await seedGrammarExercises(grammarExercisesB1, slugToIdB1, 'B1 exercises');
 
   // ===== Listening Exercises =====
   console.log('\nSeeding listening exercises A1...');

@@ -322,6 +322,9 @@ export const ru: DeepRecord = {
       prepositions: 'Предлоги',
       adverbs: 'Наречия',
       vocabulary: 'Лексика',
+      temps: 'Времена',
+      pronoms: 'Местоимения',
+      syntaxe: 'Синтаксис',
     },
     status: {
       locked: 'Заблокировано',
