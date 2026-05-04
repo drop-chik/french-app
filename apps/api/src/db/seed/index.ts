@@ -20,6 +20,7 @@ import { grammarExercisesB1 } from './grammar-exercises-b1.js';
 import { listeningExercisesA1 } from './listening-a1.js';
 import { listeningExercisesA1Extra } from './listening-a1-extra.js';
 import { listeningExercisesA2 } from './listening-a2.js';
+import { listeningExercisesB1 } from './listening-b1.js';
 
 type WordInput = {
   french: string;
@@ -206,6 +207,23 @@ async function seed() {
     console.log(`  Listening A2: ${ex.title}`);
   }
   console.log(`Listening A2 done! Total: ${listeningExercisesA2.length}`);
+
+  console.log('\nSeeding listening exercises B1...');
+  for (const ex of listeningExercisesB1) {
+    await db
+      .insert(listeningExercises)
+      .values({
+        title: ex.title,
+        level: 'B1' as const,
+        audioUrl: '',
+        transcript: ex.transcript,
+        questions: ex.questions,
+        durationSec: ex.durationSec,
+      })
+      .onConflictDoNothing();
+    console.log(`  Listening B1: ${ex.title}`);
+  }
+  console.log(`Listening B1 done! Total: ${listeningExercisesB1.length}`);
 
   console.log('\nAll seed complete!');
   process.exit(0);
