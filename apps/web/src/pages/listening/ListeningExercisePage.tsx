@@ -56,6 +56,8 @@ export function ListeningExercisePage({ id }: Props) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [audioReady, setAudioReady] = useState(false);
+  const retryRef = useRef(0);
   const [showTranscript, setShowTranscript] = useState(false);
 
   // Exercise state
@@ -73,22 +75,44 @@ export function ListeningExercisePage({ id }: Props) {
     },
   });
 
-  // Wire up audio element whenever the exercise URL changes
+  // Audio URL is always deterministic — load immediately, retry if not ready yet (background TTS).
   useEffect(() => {
-    const url = exercise?.audioUrl;
-    if (!url) return;
+    if (!exercise) return;
 
-    const audio = new Audio(url);
-    audioRef.current = audio;
+    retryRef.current = 0;
+    setAudioReady(false);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
 
-    audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
-    audio.addEventListener('durationchange', () => setDuration(audio.duration));
-    audio.addEventListener('ended', () => setIsPlaying(false));
+    const url = `/api/listening/exercises/${exercise.id}/audio`;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let destroyed = false;
+
+    const mount = () => {
+      if (destroyed) return;
+      const a = new Audio(url);
+      audioRef.current = a;
+      a.addEventListener('canplaythrough', () => { if (!destroyed) setAudioReady(true); });
+      a.addEventListener('error', () => {
+        if (!destroyed && retryRef.current < 5) {
+          retryRef.current++;
+          retryTimer = setTimeout(mount, 3000);
+        }
+      });
+      a.addEventListener('timeupdate', () => { if (!destroyed) setCurrentTime(a.currentTime); });
+      a.addEventListener('durationchange', () => { if (!destroyed) setDuration(a.duration); });
+      a.addEventListener('ended', () => { if (!destroyed) setIsPlaying(false); });
+    };
+
+    mount();
 
     return () => {
-      audio.pause();
+      destroyed = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      audioRef.current?.pause();
     };
-  }, [exercise?.audioUrl]);
+  }, [exercise?.id]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -190,7 +214,7 @@ export function ListeningExercisePage({ id }: Props) {
     );
   }
 
-  const hasAudio = !!exercise.audioUrl;
+  const hasAudio = audioReady;
 
   return (
     <div className={styles.page}>
@@ -215,7 +239,7 @@ export function ListeningExercisePage({ id }: Props) {
             onClick={togglePlay}
             disabled={!hasAudio}
           >
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            {!hasAudio ? <div className={styles.loadingDot} /> : isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </button>
           <div className={styles.progressBar}>
             <input
