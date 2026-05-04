@@ -1,9 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
 import { getExercises, getExercise, submitAnswers } from './listening.service.js';
 import { generateTTS } from './tts.service.js';
-import { listeningExercises } from '../../db/schema/index.js';
+import { getAudioData } from '../../services/audio.service.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const submitSchema = z.object({
@@ -35,25 +34,22 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // GET /listening/exercises/:id/audio — public, no auth (UUID is unguessable)
-  // Serves the pre-generated MP3 from the database with browser-level caching.
+  // Serves pre-generated MP3 from audio_data bytea column (raw SQL, not in schema).
   fastify.get<{ Params: { id: string } }>(
     '/exercises/:id/audio',
     async (request, reply) => {
-      const row = await fastify.db.query.listeningExercises.findFirst({
-        where: eq(listeningExercises.id, request.params.id),
-        columns: { audioData: true },
-      });
+      const audioData = await getAudioData(fastify.db, request.params.id);
 
-      if (!row?.audioData) {
+      if (!audioData) {
         return reply.status(404).send({ error: 'Audio not found' });
       }
 
       reply
         .header('Content-Type', 'audio/mpeg')
-        .header('Content-Length', row.audioData.length)
+        .header('Content-Length', audioData.length)
         .header('Cache-Control', 'public, max-age=31536000, immutable')
         .header('Accept-Ranges', 'bytes')
-        .send(row.audioData);
+        .send(audioData);
     },
   );
 

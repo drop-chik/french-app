@@ -11,12 +11,7 @@ import {
   jsonb,
   index,
   unique,
-  customType,
 } from 'drizzle-orm/pg-core';
-
-const bytea = customType<{ data: Buffer; driverData: Buffer }>({
-  dataType() { return 'bytea'; },
-});
 
 // Enums
 export const languageLevelEnum = pgEnum('language_level', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
@@ -179,12 +174,13 @@ export const grammarProgress = pgTable(
 );
 
 // Listening exercises
+// NOTE: audio_data bytea column exists in DB but is managed via raw SQL
+// (not in Drizzle schema to avoid accidental SELECT of large binary data)
 export const listeningExercises = pgTable('listening_exercises', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: varchar('title', { length: 255 }).notNull(),
   level: languageLevelEnum('level').notNull(),
   audioUrl: varchar('audio_url', { length: 500 }).notNull(),
-  audioData: bytea('audio_data'),
   transcript: text('transcript').notNull(),
   questions: jsonb('questions').notNull(),
   durationSec: integer('duration_sec').notNull(),
