@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { db } from '../index.js';
-import { words, grammarTopics, grammarExercises, listeningExercises } from '../schema/index.js';
+import { words, grammarTopics, grammarExercises, listeningExercises, drillSets, drillQuestions } from '../schema/index.js';
 import { eq, inArray } from 'drizzle-orm';
 import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
@@ -21,6 +21,7 @@ import { listeningExercisesA1 } from './listening-a1.js';
 import { listeningExercisesA1Extra } from './listening-a1-extra.js';
 import { listeningExercisesA2 } from './listening-a2.js';
 import { listeningExercisesB1 } from './listening-b1.js';
+import { drillsData } from './drills.js';
 
 type WordInput = {
   french: string;
@@ -224,6 +225,44 @@ async function seed() {
     console.log(`  Listening B1: ${ex.title}`);
   }
   console.log(`Listening B1 done! Total: ${listeningExercisesB1.length}`);
+
+  // ===== Drills =====
+  console.log('\nSeeding drills...');
+  for (const drill of drillsData) {
+    const [insertedDrill] = await db
+      .insert(drillSets)
+      .values({
+        slug: drill.slug,
+        titleRu: drill.titleRu,
+        titleEn: drill.titleEn,
+        descriptionRu: drill.descriptionRu,
+        descriptionEn: drill.descriptionEn,
+        level: drill.level,
+        category: drill.category,
+        difficulty: drill.difficulty,
+        questionCount: drill.questions.length,
+        icon: drill.icon,
+      })
+      .onConflictDoNothing()
+      .returning({ id: drillSets.id });
+
+    if (!insertedDrill) {
+      console.log(`  Drill [skip existing]: ${drill.slug}`);
+      continue;
+    }
+
+    for (const q of drill.questions) {
+      await db.insert(drillQuestions).values({
+        drillSetId: insertedDrill.id,
+        type: q.type,
+        question: q.question,
+        answer: q.answer,
+        explanation: q.explanation ?? null,
+      });
+    }
+    console.log(`  Drill: ${drill.slug} (${drill.questions.length} questions)`);
+  }
+  console.log(`Drills done! Total: ${drillsData.length}`);
 
   console.log('\nAll seed complete!');
   process.exit(0);

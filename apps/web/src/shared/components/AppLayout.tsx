@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle, Home } from 'lucide-react';
+import { Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle, Home, Dumbbell } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -36,6 +36,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { to: '/grammar', label: t.nav.grammar, icon: LayoutGrid },
     { to: '/listening', label: t.nav.listening, icon: Headphones },
     { to: '/conversation', label: t.nav.conversations, icon: MessageCircle },
+    { to: '/drills', label: t.nav.drills, icon: Dumbbell },
     { to: '/dictionary', label: t.nav.dictionary, icon: Book },
   ] as const;
 

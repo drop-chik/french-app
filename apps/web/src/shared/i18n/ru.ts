@@ -8,6 +8,7 @@ export const ru: DeepRecord = {
     grammar: 'Грамматика',
     listening: 'Аудирование',
     conversations: 'Диалоги',
+    drills: 'Тренажёры',
     dictionary: 'Словарь',
     profile: 'Профиль',
   },

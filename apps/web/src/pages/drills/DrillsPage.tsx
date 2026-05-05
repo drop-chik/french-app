@@ -1,0 +1,123 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { Star, Trophy, Play } from 'lucide-react';
+import { drillsApi, type DrillSet } from '../../features/drills/api';
+import { useI18n } from '../../shared/i18n';
+import styles from './DrillsPage.module.css';
+
+const DIFFICULTY_STARS = (n: number) =>
+  Array.from({ length: 3 }, (_, i) => (
+    <Star key={i} size={12} className={i < n ? styles.starFilled : styles.starEmpty} />
+  ));
+
+const CATEGORY_LABELS: Record<string, string> = {
+  verbes: 'Глаголы',
+  articles: 'Артикли',
+  pronoms: 'Местоимения',
+  prepositions: 'Предлоги',
+  adjectifs: 'Прилагательные',
+  grammaire: 'Грамматика',
+  temps: 'Времена',
+  noms: 'Существительные',
+};
+
+function DrillCard({ drill, onClick }: { drill: DrillSet; onClick: () => void }) {
+  const hasPlayed = drill.totalSessions > 0;
+
+  return (
+    <button className={styles.card} onClick={onClick}>
+      <div className={styles.cardTop}>
+        <div className={styles.cardIcon}>
+          <Play size={20} />
+        </div>
+        <div className={styles.cardMeta}>
+          <span className={styles.cardLevel}>{drill.level}</span>
+          <span className={styles.cardCategory}>
+            {CATEGORY_LABELS[drill.category] ?? drill.category}
+          </span>
+        </div>
+      </div>
+
+      <div className={styles.cardBody}>
+        <h3 className={styles.cardTitle}>{drill.title}</h3>
+        <p className={styles.cardDesc}>{drill.description}</p>
+      </div>
+
+      <div className={styles.cardFooter}>
+        <div className={styles.difficulty}>
+          {DIFFICULTY_STARS(drill.difficulty)}
+        </div>
+        {hasPlayed ? (
+          <div className={styles.bestScore}>
+            <Trophy size={12} />
+            <span>{drill.bestScore}%</span>
+          </div>
+        ) : (
+          <span className={styles.notPlayed}>Не пройден</span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+export function DrillsPage() {
+  const navigate = useNavigate();
+  const { lang } = useI18n();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['drills', lang],
+    queryFn: () => drillsApi.getDrills(lang),
+  });
+
+  const drills = data?.drills ?? [];
+
+  const categories = ['all', ...Array.from(new Set(drills.map((d) => d.category)))];
+
+  const filtered =
+    selectedCategory === 'all' ? drills : drills.filter((d) => d.category === selectedCategory);
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Тренажёры</h1>
+        <p className={styles.subtitle}>
+          Отрабатывай проблемные темы — каждый раз новый набор вопросов из пула
+        </p>
+      </div>
+
+      <div className={styles.filters}>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            className={`${styles.filter} ${selectedCategory === cat ? styles.filterActive : ''}`}
+            onClick={() => setSelectedCategory(cat)}
+          >
+            {cat === 'all' ? 'Все' : (CATEGORY_LABELS[cat] ?? cat)}
+          </button>
+        ))}
+      </div>
+
+      {isLoading && (
+        <div className={styles.grid}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={styles.skeleton} />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && (
+        <div className={styles.grid}>
+          {filtered.map((drill) => (
+            <DrillCard
+              key={drill.id}
+              drill={drill}
+              onClick={() => navigate({ to: '/drills/$slug', params: { slug: drill.slug } })}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

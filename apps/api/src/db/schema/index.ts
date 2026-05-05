@@ -217,6 +217,55 @@ export const conversationSessions = pgTable('conversation_sessions', {
   endedAt: timestamp('ended_at'),
 });
 
+// Drill sets (trainers)
+export const drillSets = pgTable('drill_sets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 100 }).unique().notNull(),
+  titleRu: varchar('title_ru', { length: 255 }).notNull(),
+  titleEn: varchar('title_en', { length: 255 }).notNull(),
+  descriptionRu: text('description_ru').notNull(),
+  descriptionEn: text('description_en').notNull(),
+  level: languageLevelEnum('level').notNull(),
+  category: varchar('category', { length: 100 }).notNull(),
+  difficulty: integer('difficulty').notNull(),
+  questionCount: integer('question_count').notNull(),
+  icon: varchar('icon', { length: 50 }).notNull(),
+});
+
+// Drill questions
+export const drillQuestions = pgTable(
+  'drill_questions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    drillSetId: uuid('drill_set_id')
+      .notNull()
+      .references(() => drillSets.id, { onDelete: 'cascade' }),
+    type: exerciseTypeEnum('type').notNull(),
+    question: jsonb('question').notNull(),
+    answer: jsonb('answer').notNull(),
+    explanation: text('explanation'),
+  },
+  (t) => [index('idx_drill_questions_set').on(t.drillSetId)],
+);
+
+// Drill progress per user
+export const drillProgress = pgTable(
+  'drill_progress',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    drillSetId: uuid('drill_set_id')
+      .notNull()
+      .references(() => drillSets.id, { onDelete: 'cascade' }),
+    bestScore: integer('best_score').default(0).notNull(),
+    totalSessions: integer('total_sessions').default(0).notNull(),
+    lastPlayedAt: timestamp('last_played_at'),
+  },
+  (t) => [unique().on(t.userId, t.drillSetId)],
+);
+
 // Placement tests
 export const placementTests = pgTable('placement_tests', {
   id: uuid('id').primaryKey().defaultRandom(),

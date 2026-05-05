@@ -7,6 +7,7 @@ export const en: Translations = {
     grammar: 'Grammar',
     listening: 'Listening',
     conversations: 'Conversations',
+    drills: 'Trainers',
     dictionary: 'Dictionary',
     profile: 'Profile',
   },
