@@ -11,14 +11,18 @@ import { wordsA1Extra } from './words-a1-extra.js';
 import { wordsA2 } from './words-a2.js';
 import { wordsA2Extra } from './words-a2-extra.js';
 import { wordsA2Extra2 } from './words-a2-extra2.js';
+import { wordsA1Extra2 } from './words-a1-extra2.js';
+import { wordsA2Extra3 } from './words-a2-extra3.js';
 
 async function updateEnTranslations() {
   const allWords = [
     ...wordsA1,
     ...wordsA1Extra,
+    ...wordsA1Extra2,
     ...wordsA2,
     ...wordsA2Extra,
     ...wordsA2Extra2,
+    ...wordsA2Extra3,
   ];
   let updated = 0;
   let skipped = 0;
