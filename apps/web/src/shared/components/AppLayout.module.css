@@ -24,6 +24,8 @@
   gap: var(--space-2);
   margin-bottom: var(--space-8);
   padding: 0 var(--space-2);
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .logoIcon {
@@ -71,6 +73,11 @@
 .navLinkActive {
   background-color: var(--color-brand-light);
   color: var(--color-brand-text);
+}
+
+/* Hidden on desktop, shown only on mobile */
+.navLinkMobileOnly {
+  display: none;
 }
 
 /* Footer */
@@ -257,6 +264,14 @@
     padding-top: 0;
     border-top: none;
     padding-left: var(--space-2);
+  }
+
+  .navLinkMobileOnly {
+    display: flex;
+  }
+
+  .userInfo {
+    display: none;
   }
 
   .userDetails {

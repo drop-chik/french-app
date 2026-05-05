@@ -30,29 +30,30 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const todayCompleted = streakData?.todayCompleted ?? false;
 
   const NAV_ITEMS = [
-    { to: '/dashboard', label: t.nav.dashboard, icon: Home },
-    { to: '/vocabulary', label: t.nav.words, icon: BookOpen },
-    { to: '/grammar', label: t.nav.grammar, icon: LayoutGrid },
-    { to: '/listening', label: t.nav.listening, icon: Headphones },
-    { to: '/conversation', label: t.nav.conversations, icon: MessageCircle },
-    { to: '/drills', label: t.nav.drills, icon: Dumbbell },
-    { to: '/dictionary', label: t.nav.dictionary, icon: Book },
+    { to: '/dashboard',    label: t.nav.dashboard,     icon: Home,          mobileOnly: false },
+    { to: '/vocabulary',   label: t.nav.words,          icon: BookOpen,      mobileOnly: false },
+    { to: '/grammar',      label: t.nav.grammar,        icon: LayoutGrid,    mobileOnly: false },
+    { to: '/drills',       label: t.nav.drills,         icon: Dumbbell,      mobileOnly: false },
+    { to: '/listening',    label: t.nav.listening,      icon: Headphones,    mobileOnly: false },
+    { to: '/conversation', label: t.nav.conversations,  icon: MessageCircle, mobileOnly: false },
+    { to: '/dictionary',   label: t.nav.dictionary,     icon: Book,          mobileOnly: false },
+    { to: '/profile',      label: t.nav.profile,        icon: UserCircle,    mobileOnly: true  },
   ] as const;
 
   return (
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
-        <div className={styles.logo}>
+        <Link to="/dashboard" className={styles.logo}>
           <img src={foxIcon} alt="FrenchUp" className={styles.logoIcon} />
           <span className={styles.logoText}>FrenchUp</span>
-        </div>
+        </Link>
 
         <nav className={styles.nav}>
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {NAV_ITEMS.map(({ to, label, icon: Icon, mobileOnly }) => (
             <Link
               key={to}
               to={to}
-              className={styles.navLink}
+              className={`${styles.navLink} ${mobileOnly ? styles.navLinkMobileOnly : ''}`}
               activeProps={{ className: styles.navLinkActive }}
             >
               <Icon size={20} />
