@@ -8,7 +8,9 @@ import { wordsA2 } from './words-a2.js';
 import { wordsA2Extra } from './words-a2-extra.js';
 import { wordsA2Extra2 } from './words-a2-extra2.js';
 import { wordsA1Extra2 } from './words-a1-extra2.js';
+import { wordsA1Extra3 } from './words-a1-extra3.js';
 import { wordsA2Extra3 } from './words-a2-extra3.js';
+import { wordsA2Extra4 } from './words-a2-extra4.js';
 import { grammarTopicsA1 } from './grammar-a1.js';
 import { grammarTopicsA1Extra } from './grammar-a1-extra.js';
 import { grammarTopicsA2 } from './grammar-a2.js';
@@ -142,13 +144,13 @@ async function seedGrammarExercises(
 async function seed() {
   // ===== Words A1 =====
   console.log('Seeding words A1...');
-  const a1Rows = buildWordRows([...wordsA1, ...wordsA1Extra, ...wordsA1Extra2] as WordInput[], 'A1');
+  const a1Rows = buildWordRows([...wordsA1, ...wordsA1Extra, ...wordsA1Extra2, ...wordsA1Extra3] as WordInput[], 'A1');
   await seedWordsBatch(a1Rows, 'A1 words');
   console.log(`Words A1 done! Total: ${a1Rows.length}`);
 
   // ===== Words A2 =====
   console.log('\nSeeding words A2...');
-  const a2Rows = buildWordRows([...wordsA2, ...wordsA2Extra, ...wordsA2Extra2, ...wordsA2Extra3] as WordInput[], 'A2');
+  const a2Rows = buildWordRows([...wordsA2, ...wordsA2Extra, ...wordsA2Extra2, ...wordsA2Extra3, ...wordsA2Extra4] as WordInput[], 'A2');
   await seedWordsBatch(a2Rows, 'A2 words');
   console.log(`Words A2 done! Total: ${a2Rows.length}`);
 
