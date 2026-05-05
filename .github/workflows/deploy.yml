@@ -1,0 +1,34 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Deploy preview to Vercel
+        id: deploy
+        run: |
+          npm install -g vercel
+          DEPLOYMENT_URL=$(vercel --token=${{ secrets.VERCEL_TOKEN }} --yes 2>&1 | tail -1)
+          echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: team_zh4sSpQ249RQ1ai20Qlj8a67
+          VERCEL_PROJECT_ID: prj_rL5fkZ4miFHXahgNm0i0YF6WfU6M
+
+      - name: Promote to production
+        run: |
+          vercel promote ${{ steps.deploy.outputs.url }} --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: team_zh4sSpQ249RQ1ai20Qlj8a67
+          VERCEL_PROJECT_ID: prj_rL5fkZ4miFHXahgNm0i0YF6WfU6M
