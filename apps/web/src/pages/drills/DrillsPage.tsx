@@ -11,18 +11,15 @@ const DIFFICULTY_STARS = (n: number) =>
     <Star key={i} size={12} className={i < n ? styles.starFilled : styles.starEmpty} />
   ));
 
-const CATEGORY_LABELS: Record<string, string> = {
-  verbes: 'Глаголы',
-  articles: 'Артикли',
-  pronoms: 'Местоимения',
-  prepositions: 'Предлоги',
-  adjectifs: 'Прилагательные',
-  grammaire: 'Грамматика',
-  temps: 'Времена',
-  noms: 'Существительные',
-};
-
-function DrillCard({ drill, onClick }: { drill: DrillSet; onClick: () => void }) {
+function DrillCard({
+  drill,
+  onClick,
+  notPlayedLabel,
+}: {
+  drill: DrillSet;
+  onClick: () => void;
+  notPlayedLabel: string;
+}) {
   const hasPlayed = drill.totalSessions > 0;
 
   return (
@@ -33,9 +30,7 @@ function DrillCard({ drill, onClick }: { drill: DrillSet; onClick: () => void })
         </div>
         <div className={styles.cardMeta}>
           <span className={styles.cardLevel}>{drill.level}</span>
-          <span className={styles.cardCategory}>
-            {CATEGORY_LABELS[drill.category] ?? drill.category}
-          </span>
+          <span className={styles.cardCategory}>{drill.category}</span>
         </div>
       </div>
 
@@ -54,7 +49,7 @@ function DrillCard({ drill, onClick }: { drill: DrillSet; onClick: () => void })
             <span>{drill.bestScore}%</span>
           </div>
         ) : (
-          <span className={styles.notPlayed}>Не пройден</span>
+          <span className={styles.notPlayed}>{notPlayedLabel}</span>
         )}
       </div>
     </button>
@@ -63,7 +58,7 @@ function DrillCard({ drill, onClick }: { drill: DrillSet; onClick: () => void })
 
 export function DrillsPage() {
   const navigate = useNavigate();
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const { data, isLoading } = useQuery({
@@ -72,19 +67,18 @@ export function DrillsPage() {
   });
 
   const drills = data?.drills ?? [];
-
   const categories = ['all', ...Array.from(new Set(drills.map((d) => d.category)))];
-
   const filtered =
     selectedCategory === 'all' ? drills : drills.filter((d) => d.category === selectedCategory);
+
+  const getCategoryLabel = (cat: string) =>
+    (t.drills.categories as Record<string, string>)[cat] ?? cat;
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Тренажёры</h1>
-        <p className={styles.subtitle}>
-          Отрабатывай проблемные темы — каждый раз новый набор вопросов из пула
-        </p>
+        <h1 className={styles.title}>{t.drills.title}</h1>
+        <p className={styles.subtitle}>{t.drills.subtitle}</p>
       </div>
 
       <div className={styles.filters}>
@@ -94,7 +88,7 @@ export function DrillsPage() {
             className={`${styles.filter} ${selectedCategory === cat ? styles.filterActive : ''}`}
             onClick={() => setSelectedCategory(cat)}
           >
-            {cat === 'all' ? 'Все' : (CATEGORY_LABELS[cat] ?? cat)}
+            {cat === 'all' ? t.drills.filterAll : getCategoryLabel(cat)}
           </button>
         ))}
       </div>
@@ -113,6 +107,7 @@ export function DrillsPage() {
             <DrillCard
               key={drill.id}
               drill={drill}
+              notPlayedLabel={t.drills.notPlayed}
               onClick={() => navigate({ to: '/drills/$slug', params: { slug: drill.slug } })}
             />
           ))}

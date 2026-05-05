@@ -85,12 +85,12 @@ function QuestionCard({
 export function DrillSessionPage({ slug }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
 
   const { data, isLoading } = useQuery({
     queryKey: ['drill-session', slug, lang],
     queryFn: () => drillsApi.getSession(slug, lang),
-    staleTime: 0, // always fresh (random questions)
+    staleTime: 0,
   });
 
   const drill = data?.drill;
@@ -123,22 +123,26 @@ export function DrillSessionPage({ slug }: Props) {
       })
     : false;
 
-  if (isLoading) return <div className={styles.loading}>Загружаем тренажёр...</div>;
-  if (!drill) return <div className={styles.loading}>Тренажёр не найден</div>;
+  if (isLoading) return <div className={styles.loading}>{t.drills.loading}</div>;
+  if (!drill) return <div className={styles.loading}>{t.drills.notFound}</div>;
 
   if (phase === 'result' && submitResult) {
     const { score, correct, total, results } = submitResult;
+    const resultLabel = String(t.drills.resultCorrect)
+      .replace('{correct}', String(correct))
+      .replace('{total}', String(total));
+
     return (
       <div className={styles.page}>
         <button className={styles.backButton} onClick={() => navigate({ to: '/drills' })}>
-          <ArrowLeft size={16} /> Тренажёры
+          <ArrowLeft size={16} /> {t.drills.back}
         </button>
 
         <div className={styles.resultCard}>
           <div className={styles.resultScore}>
             <Trophy size={32} className={styles.trophyIcon} />
             <span className={styles.resultPercent}>{score}%</span>
-            <span className={styles.resultLabel}>{correct} из {total} правильно</span>
+            <span className={styles.resultLabel}>{resultLabel}</span>
           </div>
 
           <div className={styles.resultAnswers}>
@@ -171,10 +175,10 @@ export function DrillSessionPage({ slug }: Props) {
 
           <div className={styles.resultActions}>
             <button className={styles.retryBtn} onClick={handleRetry}>
-              <RotateCcw size={14} /> Ещё раз (новые вопросы)
+              <RotateCcw size={14} /> {t.drills.retry}
             </button>
             <button className={styles.backBtn} onClick={() => navigate({ to: '/drills' })}>
-              К тренажёрам
+              {t.drills.backToList}
             </button>
           </div>
         </div>
@@ -185,7 +189,7 @@ export function DrillSessionPage({ slug }: Props) {
   return (
     <div className={styles.page}>
       <button className={styles.backButton} onClick={() => navigate({ to: '/drills' })}>
-        <ArrowLeft size={16} /> Тренажёры
+        <ArrowLeft size={16} /> {t.drills.back}
       </button>
 
       <div className={styles.header}>
@@ -195,7 +199,7 @@ export function DrillSessionPage({ slug }: Props) {
       <p className={styles.desc}>{drill.description}</p>
 
       <div className={styles.progress}>
-        {drill.questions.map((q, i) => (
+        {drill.questions.map((q) => (
           <div
             key={q.id}
             className={`${styles.progressDot} ${answers[q.id] !== undefined ? styles.progressDotDone : ''}`}
@@ -221,7 +225,7 @@ export function DrillSessionPage({ slug }: Props) {
         disabled={!allAnswered || submitMutation.isPending}
         onClick={() => submitMutation.mutate(answers)}
       >
-        {submitMutation.isPending ? 'Проверяем...' : 'Проверить ответы'}
+        {submitMutation.isPending ? t.drills.checking : t.drills.submit}
       </button>
     </div>
   );
