@@ -313,7 +313,7 @@ export function ConversationPage() {
                 </div>
                 {userMessageCount > 0 && (
                   <span className={styles.chatHeaderCount}>
-                    {userMessageCount} {lang === 'ru' ? 'реплик' : 'turns'}
+                    {userMessageCount} {t.conversation.turns}
                   </span>
                 )}
               </div>

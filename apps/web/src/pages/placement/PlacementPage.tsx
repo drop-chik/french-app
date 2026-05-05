@@ -4,14 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { placementApi, type PlacementQuestion } from '../../features/placement/api';
 import { useAuthStore } from '../../features/auth/authStore';
+import { useI18n } from '../../shared/i18n';
 import styles from './PlacementPage.module.css';
-
-const LEVEL_DESC: Record<string, string> = {
-  A1: 'Начальный уровень. Мы начнём с самых основ.',
-  A2: 'Базовый уровень. Ты знаешь основы, двигаемся дальше.',
-  B1: 'Средний уровень. Хороший фундамент — идём углубляться.',
-  B2: 'Выше среднего. Ты владеешь языком уверенно.',
-};
 
 type Phase = 'intro' | 'test' | 'result';
 
@@ -21,6 +15,7 @@ export function PlacementPage() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const user = useAuthStore((s) => s.user);
   const accessToken = useAuthStore((s) => s.accessToken);
+  const { t } = useI18n();
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [current, setCurrent] = useState(0);
@@ -43,7 +38,6 @@ export function PlacementPage() {
     onSuccess: (data) => {
       setResultLevel(data.resultLevel);
       setPhase('result');
-      // Update user in store
       if (user && accessToken) {
         setAuth(accessToken, { ...user, level: data.resultLevel, placementTestDone: true });
       }
@@ -64,7 +58,6 @@ export function PlacementPage() {
         setIsBlocked(true);
         setCurrent((c) => c + 1);
         setChosen(null);
-        // Absorb ghost clicks: mobile browsers fire synthetic click ~300ms after touch
         setTimeout(() => setIsBlocked(false), 400);
       }
     }, 500);
@@ -75,8 +68,8 @@ export function PlacementPage() {
   }
 
   const progress = questions.length > 0 ? (current / questions.length) * 100 : 0;
+  const levelDesc = (t.placement.levelDesc as Record<string, string>);
 
-  // Intro screen
   if (phase === 'intro') {
     return (
       <div className={styles.page}>
@@ -86,31 +79,24 @@ export function PlacementPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className={styles.introIcon}>🎯</div>
-          <h1 className={styles.introTitle}>Определим твой уровень</h1>
-          <p className={styles.introText}>
-            Ответь на несколько вопросов, чтобы мы подобрали подходящий
-            контент. Это займёт около 5 минут.
-          </p>
+          <h1 className={styles.introTitle}>{t.placement.title}</h1>
+          <p className={styles.introText}>{t.placement.description}</p>
           <div className={styles.introFeatures}>
-            <span>📝 {'{30}'} вопросов</span>
-            <span>⏱ ~5 минут</span>
-            <span>🎓 Уровни A1–B2</span>
+            <span>📝 {t.placement.questions}</span>
+            <span>⏱ {t.placement.duration}</span>
+            <span>🎓 {t.placement.levels}</span>
           </div>
-          <button
-            className={styles.startBtn}
-            onClick={() => setPhase('test')}
-          >
-            Начать тест
+          <button className={styles.startBtn} onClick={() => setPhase('test')}>
+            {t.placement.startTest}
           </button>
           <button className={styles.skipBtn} onClick={skipTest}>
-            Пропустить (начать с A1)
+            {t.placement.skip}
           </button>
         </motion.div>
       </div>
     );
   }
 
-  // Result screen
   if (phase === 'result' && resultLevel) {
     return (
       <div className={styles.page}>
@@ -120,24 +106,23 @@ export function PlacementPage() {
           animate={{ opacity: 1, scale: 1 }}
         >
           <div className={styles.resultLevel}>{resultLevel}</div>
-          <h2 className={styles.resultTitle}>Твой уровень</h2>
-          <p className={styles.resultDesc}>{LEVEL_DESC[resultLevel]}</p>
+          <h2 className={styles.resultTitle}>{t.placement.yourLevel}</h2>
+          <p className={styles.resultDesc}>{levelDesc[resultLevel] ?? ''}</p>
           <button
             className={styles.continueBtn}
             onClick={() => navigate({ to: '/vocabulary' })}
           >
-            Начать обучение →
+            {t.placement.startLearning}
           </button>
         </motion.div>
       </div>
     );
   }
 
-  // Test screen
   if (!currentQ) {
     return (
       <div className={styles.page}>
-        <p className={styles.loading}>Загрузка вопросов...</p>
+        <p className={styles.loading}>{t.placement.loading}</p>
       </div>
     );
   }
@@ -145,7 +130,6 @@ export function PlacementPage() {
   return (
     <div className={styles.page}>
       <div className={styles.testContainer}>
-        {/* Progress */}
         <div className={styles.progressRow}>
           <div className={styles.progressBar}>
             <div className={styles.progressFill} style={{ width: `${progress}%` }} />
@@ -153,7 +137,6 @@ export function PlacementPage() {
           <span className={styles.progressText}>{current + 1}/{questions.length}</span>
         </div>
 
-        {/* Level badge */}
         <span className={`${styles.levelBadge} ${styles[`badge_${currentQ.level}`]}`}>
           {currentQ.level}
         </span>

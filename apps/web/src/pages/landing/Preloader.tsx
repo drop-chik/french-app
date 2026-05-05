@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import foxIcon from './fox-icon.png';
+import { useI18n } from '../../shared/i18n';
 import styles from './Preloader.module.css';
 
 const LETTERS = 'FrenchUp'.split('');
@@ -10,6 +11,7 @@ interface PreloaderProps {
 }
 
 export function Preloader({ onDone }: PreloaderProps) {
+  const { t } = useI18n();
   const [phase, setPhase] = useState<'in' | 'out'>('in');
   const [show, setShow] = useState(true);
 
@@ -69,7 +71,7 @@ export function Preloader({ onDone }: PreloaderProps) {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.85 }}
             >
-              Учи французский с умом
+              {t.home.subtitle}
             </motion.p>
 
             {/* Progress bar */}

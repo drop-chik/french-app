@@ -97,23 +97,11 @@ const HERO_DOTS = [
   { size: 6, top: '88%', left: '28%',  delay: 1.6 },
 ];
 
-const MARQUEE_ITEMS = [
-  { word: 'Bonjour',          trans: 'Привет' },
-  { word: 'Merci',            trans: 'Спасибо' },
-  { word: 'Au revoir',        trans: 'До свидания' },
-  { word: "S'il vous plaît",  trans: 'Пожалуйста' },
-  { word: 'Amour',            trans: 'Любовь' },
-  { word: 'Liberté',          trans: 'Свобода' },
-  { word: 'Chat',             trans: 'Кошка' },
-  { word: 'Croissant',        trans: 'Круассан' },
-  { word: 'Magnifique',       trans: 'Великолепно' },
-  { word: 'Bonne nuit',       trans: 'Спокойной ночи' },
-];
-
-const DEMO_CARDS = [
-  { fr: 'Bonjour',    en: 'Привет',         emoji: '👋', hint: 'Приветствие' },
-  { fr: 'Merci',      en: 'Спасибо',        emoji: '🙏', hint: 'Благодарность' },
-  { fr: 'Chat',       en: 'Кошка',          emoji: '🐱', hint: 'Животное' },
+const MARQUEE_WORDS = ['Bonjour', 'Merci', 'Au revoir', "S'il vous plaît", 'Amour', 'Liberté', 'Chat', 'Croissant', 'Magnifique', 'Bonne nuit'];
+const DEMO_CARD_DATA = [
+  { fr: 'Bonjour', emoji: '👋' },
+  { fr: 'Merci',   emoji: '🙏' },
+  { fr: 'Chat',    emoji: '🐱' },
 ];
 
 const AI_TEXTS = [
@@ -129,6 +117,11 @@ const AI_TEXTS = [
 export function LandingPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
+
+  const marqueeWords = (t.landing.marqueeWords as string[]);
+  const demoCards = (t.landing.demoCards as Array<{ translation: string; hint: string }>);
+  const MARQUEE_ITEMS = MARQUEE_WORDS.map((word, i) => ({ word, trans: marqueeWords[i] ?? word }));
+  const DEMO_CARDS = DEMO_CARD_DATA.map((d, i) => ({ ...d, en: demoCards[i]?.translation ?? '', hint: demoCards[i]?.hint ?? '' }));
 
   /* Preloader — only on first visit per session */
   const [showPreloader, setShowPreloader] = useState(() => {
@@ -356,10 +349,10 @@ export function LandingPage() {
       <section className={styles.stats}>
         <AnimatedSection className={styles.statsInner}>
           {[
-            { value: 12000, suffix: '+', label: 'слов в базе' },
-            { value: 8,     suffix: '',  label: 'режимов обучения' },
-            { value: 6,     suffix: '',  label: 'уровней CEFR' },
-            { value: 98,    suffix: '%', label: 'довольных учеников' },
+            { value: 12000, suffix: '+', label: t.landing.stats.wordsDb },
+            { value: 8,     suffix: '',  label: t.landing.stats.modes },
+            { value: 6,     suffix: '',  label: t.landing.stats.levels },
+            { value: 98,    suffix: '%', label: t.landing.stats.satisfied },
           ].map((stat, i) => (
             <motion.div key={i} className={styles.statItem} variants={fadeUp} transition={{ duration: 0.5 }}>
               <div className={styles.statValue}><CountUp to={stat.value} suffix={stat.suffix} /></div>
@@ -406,11 +399,11 @@ export function LandingPage() {
                   <div className={styles.flipCardInner}>
                     <div className={styles.flipCardFront}>
                       <div className={styles.flipWord}>Chat</div>
-                      <div className={styles.flipHint}>наведи →</div>
+                      <div className={styles.flipHint}>{t.landing.flipHint}</div>
                     </div>
                     <div className={styles.flipCardBack}>
                       <div className={styles.flipEmoji}>🐱</div>
-                      <div className={styles.flipAnswer}>Кошка</div>
+                      <div className={styles.flipAnswer}>{t.landing.flipAnswer}</div>
                     </div>
                   </div>
                 </div>
@@ -463,11 +456,11 @@ export function LandingPage() {
           <AnimatedSection>
             <motion.div className={styles.demoLabel} variants={fadeIn}>
               <img src={foxIcon} style={{ height: 26 }} alt="" />
-              <span>Попробуй прямо сейчас — без регистрации</span>
+              <span>{t.landing.demo.tryNow}</span>
             </motion.div>
 
             <motion.h2 className={styles.sectionTitle} variants={fadeUp} transition={{ duration: 0.5 }}>
-              Выучи 3 слова за 60 секунд
+              {t.landing.demo.title}
             </motion.h2>
 
             {!demoDone ? (
@@ -491,7 +484,7 @@ export function LandingPage() {
                         <div className={styles.demoFlipFront}>
                           <div className={styles.demoHint}>{card.hint}</div>
                           <div className={styles.demoWord}>{card.fr}</div>
-                          <div className={styles.demoTapHint}>нажми чтобы перевернуть</div>
+                          <div className={styles.demoTapHint}>{t.landing.demo.tapHint}</div>
                         </div>
                         <div className={styles.demoFlipBack}>
                           <div className={styles.demoEmoji}>{card.emoji}</div>
@@ -511,10 +504,10 @@ export function LandingPage() {
                     transition={{ duration: 0.25 }}
                   >
                     <button className={styles.demoBtnWrong} onClick={() => handleDemoAnswer(false)}>
-                      <XCircle size={17} /> Не знал
+                      <XCircle size={17} /> {t.landing.demo.didntKnow}
                     </button>
                     <button className={styles.demoBtnRight} onClick={() => handleDemoAnswer(true)}>
-                      <CheckCircle size={17} /> Знал!
+                      <CheckCircle size={17} /> {t.landing.demo.knew}
                     </button>
                   </motion.div>
                 )}
@@ -527,8 +520,10 @@ export function LandingPage() {
                 transition={{ type: 'spring', bounce: 0.45 }}
               >
                 <div className={styles.demoDoneEmoji}>🎉</div>
-                <h3 className={styles.demoDoneTitle}>Результат: {demoScore.knew} / {DEMO_CARDS.length}</h3>
-                <p className={styles.demoDoneText}>Хочешь учить все 12 000 слов?</p>
+                <h3 className={styles.demoDoneTitle}>
+                  {String(t.landing.demo.result).replace('{knew}', String(demoScore.knew)).replace('{total}', String(DEMO_CARDS.length))}
+                </h3>
+                <p className={styles.demoDoneText}>{t.landing.demo.cta2}</p>
                 <div className={styles.demoDoneActions}>
                   <motion.button
                     className={styles.heroCta}
@@ -536,10 +531,10 @@ export function LandingPage() {
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    Начать бесплатно <ArrowRight size={18} />
+                    {t.landing.demo.startFree} <ArrowRight size={18} />
                   </motion.button>
                   <button className={styles.demoRestart} onClick={resetDemo}>
-                    <RotateCcw size={15} /> Ещё раз
+                    <RotateCcw size={15} /> {t.landing.demo.retry}
                   </button>
                 </div>
               </motion.div>
@@ -652,8 +647,8 @@ export function LandingPage() {
           </div>
           <div className={styles.footerLinks}>
             <a href="/login" className={styles.footerLink}>{t.landing.nav.login}</a>
-            <a href="/terms" className={styles.footerLink}>Условия использования</a>
-            <a href="/privacy" className={styles.footerLink}>Конфиденциальность</a>
+            <a href="/terms" className={styles.footerLink}>{t.landing.footer.terms}</a>
+            <a href="/privacy" className={styles.footerLink}>{t.landing.footer.privacy}</a>
           </div>
         </div>
       </footer>

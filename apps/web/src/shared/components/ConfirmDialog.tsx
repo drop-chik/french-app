@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useI18n } from '../i18n';
 import styles from './ConfirmDialog.module.css';
 
 interface ConfirmDialogProps {
@@ -15,12 +16,13 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = 'OK',
-  cancelLabel = 'Отмена',
+  cancelLabel,
   loading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  // Close on Escape
+  const { t } = useI18n();
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCancel();
@@ -36,7 +38,7 @@ export function ConfirmDialog({
         {message && <p className={styles.message}>{message}</p>}
         <div className={styles.actions}>
           <button className={styles.cancelBtn} onClick={onCancel} disabled={loading}>
-            {cancelLabel}
+            {cancelLabel ?? t.common.cancel}
           </button>
           <button className={styles.confirmBtn} onClick={onConfirm} disabled={loading}>
             {confirmLabel}

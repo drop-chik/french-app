@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CheckCircle, XCircle, ChevronRight } from 'lucide-react';
 import type { GrammarExercise, CheckResult } from '../../../features/grammar/api';
 import { grammarApi } from '../../../features/grammar/api';
+import { useI18n } from '../../../shared/i18n';
 import styles from './ExercisePlayer.module.css';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ExercisePlayer({ exercises, topicSlug, onComplete }: Props) {
+  const { t } = useI18n();
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [fillInputs, setFillInputs] = useState<string[]>([]);
@@ -141,7 +143,7 @@ export function ExercisePlayer({ exercises, topicSlug, onComplete }: Props) {
               value={fillInputs[i] ?? ''}
               onChange={(e) => handleFillChange(i, e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !result && handleCheck()}
-              placeholder={blanksCount > 1 ? `Слово ${i + 1}` : 'Ваш ответ...'}
+              placeholder={blanksCount > 1 ? String(t.grammar.wordPlaceholder).replace('{n}', String(i + 1)) : t.grammar.answerPlaceholder}
               disabled={!!result}
               autoFocus={i === 0}
             />
@@ -158,11 +160,11 @@ export function ExercisePlayer({ exercises, topicSlug, onComplete }: Props) {
             ) : (
               <XCircle size={18} />
             )}
-            <span>{result.correct ? 'Правильно!' : 'Неправильно'}</span>
+            <span>{result.correct ? t.grammar.correct : t.grammar.incorrect}</span>
           </div>
           {!result.correct && (
             <p className={styles.feedbackAnswer}>
-              Правильный ответ: <strong>{String(result.correctAnswer)}</strong>
+              {t.grammar.correctAnswer} <strong>{String(result.correctAnswer)}</strong>
             </p>
           )}
           {result.explanation && (
@@ -183,11 +185,11 @@ export function ExercisePlayer({ exercises, topicSlug, onComplete }: Props) {
               (exercise.type === 'fill_blank' && fillInputs.slice(0, blanksCount).some((v) => !v?.trim()))
             }
           >
-            {checking ? 'Проверка...' : 'Проверить'}
+            {checking ? t.grammar.checking : t.grammar.check}
           </button>
         ) : (
           <button className={styles.nextBtn} onClick={handleNextFinal}>
-            {isLast ? 'Завершить' : 'Далее'}
+            {isLast ? t.grammar.complete : t.grammar.nextExercise}
             <ChevronRight size={16} />
           </button>
         )}

@@ -13,8 +13,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { toggle, isDark } = useTheme();
   const user = useAuthStore((s) => s.user);
   const { t } = useI18n();
-  // staleTime: Infinity — не делать повторных запросов, данные уже загружены на /profile
-  const { data: profileData } = useQuery({
+    const { data: profileData } = useQuery({
     queryKey: ['profile'],
     queryFn: profileApi.getProfile,
     staleTime: Infinity,
@@ -91,7 +90,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <button
             className={styles.themeToggle}
             onClick={toggle}
-            aria-label="Переключить тему"
+            aria-label={t.home.toggleTheme}
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>

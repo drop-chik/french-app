@@ -1,20 +1,22 @@
 import { Link } from '@tanstack/react-router';
 import foxIcon from '../landing/fox-icon.png';
+import { useI18n } from '../../shared/i18n';
 import styles from './LegalPage.module.css';
 
 export function TermsPage() {
+  const { t } = useI18n();
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
-        <Link to="/" className={styles.back}>← На главную</Link>
+        <Link to="/" className={styles.back}>{t.legal.backHome}</Link>
 
         <div className={styles.header}>
           <Link to="/" className={styles.logoRow}>
             <img src={foxIcon} className={styles.logoIcon} alt="FrenchUp" />
             <span className={styles.logoText}>FrenchUp</span>
           </Link>
-          <h1 className={styles.title}>Условия использования</h1>
-          <p className={styles.updated}>Последнее обновление: 2 мая 2026 г.</p>
+          <h1 className={styles.title}>{t.legal.termsTitle}</h1>
+          <p className={styles.updated}>{t.legal.lastUpdated}</p>
         </div>
 
         <div className={styles.content}>
@@ -134,8 +136,8 @@ export function TermsPage() {
         </div>
 
         <div className={styles.footer}>
-          <Link to="/" className={styles.footerLink}>Главная</Link>
-          <a href="/privacy" className={styles.footerLink}>Политика конфиденциальности</a>
+          <Link to="/" className={styles.footerLink}>{t.nav.dashboard}</Link>
+          <a href="/privacy" className={styles.footerLink}>{t.legal.privacyTitle}</a>
         </div>
       </div>
     </div>

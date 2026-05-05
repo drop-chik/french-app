@@ -31,7 +31,7 @@ export function DashboardPage() {
       <div className={styles.page}>
         <div className={styles.errorState}>
           <p className={styles.errorText}>{t.common.error}</p>
-          <p className={styles.errorHint}>Не удалось загрузить данные. Попробуйте обновить страницу.</p>
+          <p className={styles.errorHint}>{t.dashboard.errorHint}</p>
         </div>
       </div>
     );

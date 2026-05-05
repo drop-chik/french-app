@@ -75,12 +75,12 @@ function ActivityHeatmap({ activity, activeDays, t }: { activity: { date: string
             key={d.date}
             className={`${styles.heatmapCell} ${d.date === today ? styles.heatmapCellToday : ''}`}
             style={{ background: getColor(d.reviewed) }}
-            title={`${d.date}: ${d.reviewed} ${t.profile.heatmapWords ?? 'слов'}`}
+            title={`${d.date}: ${d.reviewed} ${t.profile.heatmapWords}`}
           />
         ))}
       </div>
       <p className={styles.heatmapMeta}>
-        {t.profile.heatmapActive?.replace('{n}', String(activeDays)) ?? `Активных дней: ${activeDays} из 30`}
+        {String(t.profile.heatmapActive).replace('{n}', String(activeDays))}
       </p>
     </div>
   );
@@ -261,7 +261,7 @@ function WordDonut({ breakdown, t }: { breakdown: Record<string, number>; t: any
           <path key={s.key} d={arc(s)} fill={STATUS_COLORS[s.key]} className={styles.donutSlice} />
         ))}
         <text x={cx} y={cy - 6} textAnchor="middle" className={styles.donutTotal}>{total}</text>
-        <text x={cx} y={cy + 10} textAnchor="middle" className={styles.donutTotalLabel}>слов</text>
+        <text x={cx} y={cy + 10} textAnchor="middle" className={styles.donutTotalLabel}>{t.profile.heatmapWords}</text>
       </svg>
       <div className={styles.donutLegend}>
         {statuses.map((k) => (

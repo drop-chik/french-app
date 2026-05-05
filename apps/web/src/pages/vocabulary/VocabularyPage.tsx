@@ -206,7 +206,7 @@ export function VocabularyPage() {
               ? t.vocabulary.practiceMore
               : t.vocabulary.startSession}
             <span className={styles.startBtnMeta}>
-              {sessionWords.length} {lang === 'ru' ? 'слов' : 'words'} · ~{estimatedMin} {lang === 'ru' ? 'мин' : 'min'}
+              {sessionWords.length} {t.vocabulary.wordsShort} · ~{estimatedMin} {t.vocabulary.minShort}
             </span>
           </span>
         </button>
@@ -217,7 +217,7 @@ export function VocabularyPage() {
       )}
 
       {!isLoading && !error && sessionWords.length === 0 && words.length > 0 && statusFilter && (
-        <div className={styles.allDoneBanner}>{lang === 'ru' ? 'Нет слов в этой группе' : 'No words in this group'}</div>
+        <div className={styles.allDoneBanner}>{t.dictionary.noWords}</div>
       )}
 
       {/* Divider */}

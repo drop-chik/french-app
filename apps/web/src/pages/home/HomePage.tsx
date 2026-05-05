@@ -4,6 +4,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../shared/hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
 import { authApi } from '../../features/auth/api';
+import { useI18n } from '../../shared/i18n';
 import foxIcon from '../landing/fox-icon.png';
 import styles from './HomePage.module.css';
 
@@ -21,6 +22,7 @@ export function HomePage() {
   const { toggle, isDark } = useTheme();
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,11 +37,10 @@ export function HomePage() {
         result = await authApi.register({ email, password, name });
       }
       setAuth(result.accessToken, result.user);
-      // New users go to placement test; returning users who already did it go to vocabulary
       const needsPlacement = !result.user.placementTestDone;
       await navigate({ to: needsPlacement ? '/placement' : '/dashboard' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка');
+      setError(err instanceof Error ? err.message : t.home.errorDefault);
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,7 @@ export function HomePage() {
 
   return (
     <div className={styles.page}>
-      <button className={styles.themeBtn} onClick={toggle} aria-label="Сменить тему">
+      <button className={styles.themeBtn} onClick={toggle} aria-label={t.home.toggleTheme}>
         {isDark ? <Sun size={20} /> : <Moon size={20} />}
       </button>
 
@@ -55,7 +56,7 @@ export function HomePage() {
         <div className={styles.header}>
           <img src={foxIcon} className={styles.logo} alt="FrenchUp" />
           <h1 className={styles.title}>FrenchUp</h1>
-          <p className={styles.subtitle}>Учи французский с умом</p>
+          <p className={styles.subtitle}>{t.home.subtitle}</p>
         </div>
 
         <div className={styles.tabs}>
@@ -63,27 +64,27 @@ export function HomePage() {
             className={`${styles.tab} ${mode === 'login' ? styles.tabActive : ''}`}
             onClick={() => setMode('login')}
           >
-            Войти
+            {t.home.tabLogin}
           </button>
           <button
             className={`${styles.tab} ${mode === 'register' ? styles.tabActive : ''}`}
             onClick={() => setMode('register')}
           >
-            Регистрация
+            {t.home.tabRegister}
           </button>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {mode === 'register' && (
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="name">Имя</label>
+              <label className={styles.label} htmlFor="name">{t.profile.name}</label>
               <input
                 id="name"
                 className={styles.input}
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ваше имя"
+                placeholder={t.home.namePlaceholder}
                 required
               />
             </div>
@@ -103,14 +104,14 @@ export function HomePage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="password">Пароль</label>
+            <label className={styles.label} htmlFor="password">{t.home.passwordLabel}</label>
             <input
               id="password"
               className={styles.input}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Минимум 8 символов"
+              placeholder={t.home.passwordPlaceholder}
               required
               minLength={8}
             />
@@ -126,13 +127,13 @@ export function HomePage() {
                 required
               />
               <span>
-                Я принимаю{' '}
+                {t.home.agreePrefix}{' '}
                 <a href="/terms" target="_blank" rel="noreferrer" className={styles.checkboxLink}>
-                  условия использования
+                  {t.home.agreeTerms}
                 </a>{' '}
-                и{' '}
+                {t.home.agreeAnd}{' '}
                 <a href="/privacy" target="_blank" rel="noreferrer" className={styles.checkboxLink}>
-                  политику конфиденциальности
+                  {t.home.agreePrivacy}
                 </a>
               </span>
             </label>
@@ -145,7 +146,7 @@ export function HomePage() {
             type="submit"
             disabled={loading || (mode === 'register' && !agreed)}
           >
-            {loading ? 'Загрузка...' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}
+            {loading ? t.common.loading : mode === 'login' ? t.home.login : t.home.register}
           </button>
         </form>
       </div>
