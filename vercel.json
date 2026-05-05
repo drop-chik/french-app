@@ -1,7 +1,7 @@
 {
   "buildCommand": "pnpm --filter web build",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "npm install -g pnpm && pnpm install --frozen-lockfile",
+  "installCommand": "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @french-app/shared-types build && pnpm --filter @french-app/srs-engine build",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://french-app-production.up.railway.app/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
