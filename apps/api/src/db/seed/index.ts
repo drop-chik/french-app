@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { db } from '../index.js';
 import { words, grammarTopics, grammarExercises, listeningExercises, drillSets, drillQuestions } from '../schema/index.js';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
 import { wordsA2 } from './words-a2.js';
@@ -65,7 +65,13 @@ async function seedWordsBatch(
   let inserted = 0;
   for (let i = 0; i < rows.length; i += BATCH) {
     const batch = rows.slice(i, i + BATCH);
-    await db.insert(words).values(batch).onConflictDoNothing();
+    await db.insert(words).values(batch).onConflictDoUpdate({
+      target: words.french,
+      set: {
+        translationEn: sql`excluded.translation_en`,
+        exampleEn: sql`excluded.example_en`,
+      },
+    });
     inserted += batch.length;
     console.log(`  ${label}: ${inserted}/${rows.length}`);
   }
