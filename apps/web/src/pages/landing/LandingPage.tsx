@@ -115,7 +115,7 @@ const AI_TEXTS = [
    MAIN COMPONENT
 ══════════════════════════════════════════ */
 export function LandingPage() {
-  const { t } = useI18n();
+  const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
 
   const marqueeWords = (t.landing.marqueeWords as string[]);
@@ -214,6 +214,9 @@ export function LandingPage() {
             </motion.span>
           </div>
           <div className={styles.navButtons}>
+            <button className={styles.navLang} onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}>
+              {lang === 'ru' ? 'EN' : 'RU'}
+            </button>
             <motion.button className={styles.navLogin} onClick={goLogin} style={{ color: loginColor }}>
               {t.landing.nav.login}
             </motion.button>

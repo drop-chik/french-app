@@ -47,4 +47,8 @@
   --color-level-a2: #60a5fa;
   --color-level-b1: #34d399;
   --color-level-b2: #fbbf24;
+
+  /* Session button gradient */
+  --color-btn-session-end: #f59e0b;
+  --color-btn-session-shadow: rgba(249, 115, 22, 0.3);
 }
