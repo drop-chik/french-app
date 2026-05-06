@@ -166,6 +166,8 @@ export const en: Translations = {
     streakContinue: '🔥 Streak: {n} days in a row — come back tomorrow!',
     streakFirst: '🔥 Great start — first session done!',
     wordsQueued: 'Sent for review: {n} w.',
+    newlyMastered: '{n} w. mastered!',
+    improved: '{n} w. progressed',
   },
   multipleChoice: {
     loading: 'Loading questions...',

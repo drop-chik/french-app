@@ -78,7 +78,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className={styles.userDetails}>
               <span className={styles.userName}>{user?.name}</span>
               <div className={styles.userMeta}>
-                <span className={styles.userLevel}>{user?.level}</span>
+                <span className={styles.userLevel}>{profileData?.level ?? user?.level}</span>
                 {streak > 0 && (
                   <span className={`${styles.streakMini} ${todayCompleted ? styles.streakMiniDone : ''}`}>
                     🔥 {streak}

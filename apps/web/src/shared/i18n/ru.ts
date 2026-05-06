@@ -167,6 +167,8 @@ export const ru: DeepRecord = {
     streakContinue: '🔥 Стрик: {n} дн. подряд — приходи завтра!',
     streakFirst: '🔥 Отличное начало — первое занятие!',
     wordsQueued: 'Отправлено на повтор: {n} сл.',
+    newlyMastered: '{n} сл. освоено!',
+    improved: '{n} сл. продвинулось',
   },
   multipleChoice: {
     loading: 'Загружаем вопросы...',

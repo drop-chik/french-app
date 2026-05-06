@@ -16,8 +16,16 @@ export function SessionComplete({ results, streak, onRestart, onBack, onConversa
   const correct = results.filter((r) => r.grade >= 3).length;
   const total = results.length;
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-  // Words that need more practice (answered incorrectly)
   const wordsQueued = results.filter((r) => r.grade < 3).length;
+
+  // Status transitions
+  const newlyMastered = results.filter((r) => r.prevStatus !== 'mastered' && r.newStatus === 'mastered').length;
+  const improved = results.filter((r) => {
+    const order = ['new', 'learning', 'review', 'mastered'];
+    const prev = order.indexOf(r.prevStatus ?? 'new');
+    const next = order.indexOf(r.newStatus ?? 'new');
+    return next > prev;
+  }).length;
 
   const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪';
   const message = pct >= 80 ? t.session.great : pct >= 50 ? t.session.good : t.session.keep;
@@ -60,6 +68,22 @@ export function SessionComplete({ results, streak, onRestart, onBack, onConversa
           <span className={styles.statLabel}>{t.session.result}</span>
         </div>
       </div>
+
+      {/* Status transitions */}
+      {(newlyMastered > 0 || improved > 0) && (
+        <div className={styles.transitions}>
+          {newlyMastered > 0 && (
+            <span className={styles.transitionMastered}>
+              🏆 {t.session.newlyMastered.replace('{n}', String(newlyMastered))}
+            </span>
+          )}
+          {improved > 0 && (
+            <span className={styles.transitionImproved}>
+              📈 {t.session.improved.replace('{n}', String(improved))}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Streak + words queued row */}
       <div className={styles.meta}>

@@ -63,6 +63,31 @@
   background-color: var(--color-border);
 }
 
+.transitions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.transitionMastered {
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.transitionImproved {
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-brand-light);
+  color: var(--color-brand);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
 .meta {
   display: flex;
   flex-direction: column;

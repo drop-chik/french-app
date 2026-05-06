@@ -15,6 +15,8 @@ interface Props {
 export interface SessionResult {
   wordId: string;
   grade: number;
+  prevStatus?: string;
+  newStatus?: string;
 }
 
 export function FlashcardMode({ words, onComplete }: Props) {

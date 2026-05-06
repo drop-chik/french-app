@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { calculateNextReview, getStatus, createCard } from '@french-app/srs-engine';
+import type { SRSGrade } from '@french-app/srs-engine';
 import { Play, CheckCircle } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
@@ -96,8 +98,24 @@ export function VocabularyPage() {
 
   const estimatedMin = Math.max(5, Math.ceil(sessionWords.length * 0.6));
 
-  function handleComplete(results: SessionResult[]) {
-    setSessionResults(results);
+  function handleComplete(rawResults: SessionResult[]) {
+    const enriched: SessionResult[] = rawResults.map((r) => {
+      const word = sessionWords.find((w) => w.id === r.wordId);
+      if (!word) return r;
+      const prevStatus = word.progress?.status ?? 'new';
+      const card = word.progress
+        ? {
+            easinessFactor: Number(word.progress.easinessFactor),
+            interval: word.progress.interval,
+            repetitions: word.progress.repetitions,
+            nextReview: new Date(word.progress.nextReview),
+          }
+        : createCard();
+      const srsResult = calculateNextReview(card, r.grade as SRSGrade);
+      const newStatus = getStatus(srsResult);
+      return { ...r, prevStatus, newStatus };
+    });
+    setSessionResults(enriched);
     setActiveMode('complete');
     queryClient.invalidateQueries({ queryKey: ['streak'] });
   }
