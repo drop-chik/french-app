@@ -7,7 +7,33 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './PlacementPage.module.css';
 
-type Phase = 'intro' | 'test' | 'result';
+type Phase = 'intro' | 'test' | 'result' | 'onboarding';
+
+const LEVEL_CONTENT: Record<string, { words: number; grammar: number; listening: number }> = {
+  A1: { words: 798,  grammar: 25, listening: 13 },
+  A2: { words: 928,  grammar: 16, listening: 10 },
+  B1: { words: 1196, grammar: 18, listening: 12 },
+  B2: { words: 593,  grammar: 0,  listening: 0  },
+};
+
+function Confetti() {
+  return (
+    <div className={styles.confettiWrap} aria-hidden="true">
+      {Array.from({ length: 22 }, (_, i) => (
+        <span key={i} className={styles.confetti} style={{ '--ci': i } as React.CSSProperties} />
+      ))}
+    </div>
+  );
+}
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+};
+const statItem = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } },
+};
 
 export function PlacementPage() {
   const navigate = useNavigate();
@@ -70,6 +96,7 @@ export function PlacementPage() {
   const progress = questions.length > 0 ? (current / questions.length) * 100 : 0;
   const levelDesc = (t.placement.levelDesc as Record<string, string>);
 
+  /* ── Intro ─────────────────────────────────────────────────────── */
   if (phase === 'intro') {
     return (
       <div className={styles.page}>
@@ -97,20 +124,51 @@ export function PlacementPage() {
     );
   }
 
+  /* ── Result (screen 1) ─────────────────────────────────────────── */
   if (phase === 'result' && resultLevel) {
-    const planItems: Array<{ icon: string; text: string }> = t.placement.planItems as never;
+    const planItems = t.placement.planItems as never as Array<{ icon: string; text: string }>;
     return (
       <div className={styles.page}>
+        <Confetti />
         <motion.div
           className={styles.resultCard}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
         >
-          <div className={styles.resultLevel}>{resultLevel}</div>
-          <h2 className={styles.resultTitle}>{t.placement.yourLevel}</h2>
-          <p className={styles.resultDesc}>{levelDesc[resultLevel] ?? ''}</p>
+          <motion.div
+            className={styles.resultLevel}
+            initial={{ scale: 0.3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 18, delay: 0.1 }}
+          >
+            {resultLevel}
+          </motion.div>
 
-          <div className={styles.planSection}>
+          <motion.h2
+            className={styles.resultTitle}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, delay: 0.25 }}
+          >
+            {t.placement.yourLevel}
+          </motion.h2>
+
+          <motion.p
+            className={styles.resultDesc}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.28, delay: 0.35 }}
+          >
+            {levelDesc[resultLevel] ?? ''}
+          </motion.p>
+
+          <motion.div
+            className={styles.planSection}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, delay: 0.42 }}
+          >
             <p className={styles.planIntro}>{t.placement.planIntro}</p>
             <ul className={styles.planList}>
               {planItems.map((item, i) => (
@@ -120,19 +178,94 @@ export function PlacementPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
-          <button
+          <motion.button
             className={styles.continueBtn}
-            onClick={() => navigate({ to: '/dashboard' })}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, delay: 0.55 }}
+            onClick={() => setPhase('onboarding')}
           >
             {t.placement.goToPlan}
-          </button>
+          </motion.button>
         </motion.div>
       </div>
     );
   }
 
+  /* ── Onboarding (screen 2) ─────────────────────────────────────── */
+  if (phase === 'onboarding' && resultLevel) {
+    const content = LEVEL_CONTENT[resultLevel] ?? { words: 0, grammar: 0, listening: 0 };
+
+    const statRows = [
+      { icon: '📚', value: content.words,     label: t.placement.wordsLabel },
+      ...(content.grammar   > 0 ? [{ icon: '📖', value: content.grammar,   label: t.placement.grammarLabel }]   : []),
+      ...(content.listening > 0 ? [{ icon: '🎧', value: content.listening, label: t.placement.listeningLabel }] : []),
+      { icon: '🤖', value: '∞', label: t.placement.aiLabel },
+    ] as Array<{ icon: string; value: number | string; label: string }>;
+
+    return (
+      <div className={styles.page}>
+        <motion.div
+          className={styles.onboardingCard}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32 }}
+        >
+          <div className={styles.onboardingHeader}>
+            <div className={styles.onboardingLevelPill}>{resultLevel}</div>
+            <h2 className={styles.onboardingTitle}>{t.placement.yourPlan}</h2>
+            <p className={styles.onboardingSubtitle}>
+              {(t.placement.planForLevel as string).replace('{level}', resultLevel)}
+            </p>
+          </div>
+
+          <motion.div className={styles.statsGrid} variants={stagger} initial="hidden" animate="show">
+            {statRows.map((s, i) => (
+              <motion.div key={i} className={styles.statItem} variants={statItem}>
+                <span className={styles.statItemIcon}>{s.icon}</span>
+                <span className={styles.statItemValue}>{String(s.value)}</span>
+                <span className={styles.statItemLabel}>{s.label}</span>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            className={styles.firstStepBox}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.45 }}
+          >
+            <p className={styles.firstStepTitle}>{t.placement.firstStep}</p>
+            <p className={styles.firstStepDesc}>{t.placement.firstStepDesc}</p>
+          </motion.div>
+
+          <motion.div
+            className={styles.onboardingActions}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+          >
+            <button
+              className={styles.continueBtn}
+              onClick={() => navigate({ to: '/vocabulary' })}
+            >
+              {t.placement.startLearning}
+            </button>
+            <button
+              className={styles.skipBtn}
+              onClick={() => navigate({ to: '/dashboard' })}
+            >
+              {t.placement.toDashboard}
+            </button>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  /* ── Loading ───────────────────────────────────────────────────── */
   if (!currentQ) {
     return (
       <div className={styles.page}>
@@ -141,6 +274,7 @@ export function PlacementPage() {
     );
   }
 
+  /* ── Test ──────────────────────────────────────────────────────── */
   return (
     <div className={styles.page}>
       <div className={styles.testContainer}>
