@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { SessionResult } from '../FlashcardMode/FlashcardMode';
 import { useI18n } from '../../../shared/i18n';
@@ -11,6 +12,53 @@ interface Props {
   onConversation?: () => void;
 }
 
+function useCountUp(target: number, duration = 550, delay = 0) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (target === 0) return;
+    const t = setTimeout(() => {
+      const start = Date.now();
+      const tick = () => {
+        const p = Math.min((Date.now() - start) / duration, 1);
+        setCount(Math.round((1 - Math.pow(1 - p, 3)) * target));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, delay);
+    return () => clearTimeout(t);
+  }, [target, duration, delay]);
+  return count;
+}
+
+function Confetti() {
+  return (
+    <div className={styles.confettiWrap} aria-hidden="true">
+      {Array.from({ length: 20 }, (_, i) => (
+        <span key={i} className={styles.confetti} style={{ '--ci': i } as React.CSSProperties} />
+      ))}
+    </div>
+  );
+}
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.4, 0, 0.2, 1] } },
+};
+
+const popVariant = {
+  hidden: { opacity: 0, scale: 0.4 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: { type: 'spring' as const, stiffness: 480, damping: 22, delay: 0.5 },
+  },
+};
+
 export function SessionComplete({ results, streak, onRestart, onBack, onConversation }: Props) {
   const { t } = useI18n();
   const correct = results.filter((r) => r.grade >= 3).length;
@@ -18,7 +66,6 @@ export function SessionComplete({ results, streak, onRestart, onBack, onConversa
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   const wordsQueued = results.filter((r) => r.grade < 3).length;
 
-  // Status transitions
   const newlyMastered = results.filter((r) => r.prevStatus !== 'mastered' && r.newStatus === 'mastered').length;
   const improved = results.filter((r) => {
     const order = ['new', 'learning', 'review', 'mastered'];
@@ -26,6 +73,11 @@ export function SessionComplete({ results, streak, onRestart, onBack, onConversa
     const next = order.indexOf(r.newStatus ?? 'new');
     return next > prev;
   }).length;
+
+  const cTotal   = useCountUp(total,           500, 220);
+  const cCorrect = useCountUp(correct,          500, 310);
+  const cWrong   = useCountUp(total - correct,  500, 400);
+  const cPct     = useCountUp(pct,              550, 220);
 
   const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪';
   const message = pct >= 80 ? t.session.great : pct >= 50 ? t.session.good : t.session.keep;
@@ -41,70 +93,109 @@ export function SessionComplete({ results, streak, onRestart, onBack, onConversa
       className={styles.container}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.28 }}
     >
-      <div className={styles.emoji}>{emoji}</div>
-      <h2 className={styles.title}>{t.session.done}</h2>
-      <p className={styles.message}>{message}</p>
+      {newlyMastered > 0 && <Confetti />}
 
-      <div className={styles.stats}>
-        <div className={styles.stat}>
-          <span className={styles.statValue}>{total}</span>
+      <motion.div
+        className={styles.emoji}
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 520, damping: 18, delay: 0.05 }}
+      >
+        {emoji}
+      </motion.div>
+
+      <motion.h2
+        className={styles.title}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, delay: 0.18 }}
+      >
+        {t.session.done}
+      </motion.h2>
+
+      <motion.p
+        className={styles.message}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.28, delay: 0.25 }}
+      >
+        {message}
+      </motion.p>
+
+      <motion.div className={styles.stats} variants={stagger} initial="hidden" animate="show">
+        <motion.div className={styles.stat} variants={item}>
+          <span className={styles.statValue}>{cTotal}</span>
           <span className={styles.statLabel}>{t.session.words}</span>
-        </div>
-        <div className={styles.statDivider} />
-        <div className={styles.stat}>
-          <span className={`${styles.statValue} ${styles.correct}`}>{correct}</span>
+        </motion.div>
+        <motion.div className={styles.statDivider} variants={item} />
+        <motion.div className={styles.stat} variants={item}>
+          <span className={`${styles.statValue} ${styles.correct}`}>{cCorrect}</span>
           <span className={styles.statLabel}>{t.session.knew}</span>
-        </div>
-        <div className={styles.statDivider} />
-        <div className={styles.stat}>
-          <span className={`${styles.statValue} ${styles.incorrect}`}>{total - correct}</span>
+        </motion.div>
+        <motion.div className={styles.statDivider} variants={item} />
+        <motion.div className={styles.stat} variants={item}>
+          <span className={`${styles.statValue} ${styles.incorrect}`}>{cWrong}</span>
           <span className={styles.statLabel}>{t.session.didntKnow}</span>
-        </div>
-        <div className={styles.statDivider} />
-        <div className={styles.stat}>
-          <span className={styles.statValue}>{pct}%</span>
+        </motion.div>
+        <motion.div className={styles.statDivider} variants={item} />
+        <motion.div className={styles.stat} variants={item}>
+          <span className={styles.statValue}>{cPct}%</span>
           <span className={styles.statLabel}>{t.session.result}</span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      {/* Status transitions */}
       {(newlyMastered > 0 || improved > 0) && (
-        <div className={styles.transitions}>
+        <motion.div className={styles.transitions} variants={stagger} initial="hidden" animate="show">
           {newlyMastered > 0 && (
-            <span className={styles.transitionMastered}>
+            <motion.span className={styles.transitionMastered} variants={popVariant}>
               🏆 {t.session.newlyMastered.replace('{n}', String(newlyMastered))}
-            </span>
+            </motion.span>
           )}
           {improved > 0 && (
-            <span className={styles.transitionImproved}>
+            <motion.span className={styles.transitionImproved} variants={popVariant}>
               📈 {t.session.improved.replace('{n}', String(improved))}
-            </span>
+            </motion.span>
           )}
-        </div>
+        </motion.div>
       )}
 
-      {/* Streak + words queued row */}
-      <div className={styles.meta}>
+      <motion.div
+        className={styles.meta}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.28, delay: 0.65 }}
+      >
         {streakText && <span className={styles.metaStreak}>{streakText}</span>}
         {wordsQueued > 0 && (
           <span className={styles.metaQueued}>
             {t.session.wordsQueued.replace('{n}', String(wordsQueued))}
           </span>
         )}
-      </div>
+      </motion.div>
 
       {onConversation && (
-        <button className={styles.conversationBtn} onClick={onConversation}>
+        <motion.button
+          className={styles.conversationBtn}
+          onClick={onConversation}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, delay: 0.72 }}
+        >
           {t.session.practiceConversation}
-        </button>
+        </motion.button>
       )}
 
-      <div className={styles.actions}>
+      <motion.div
+        className={styles.actions}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, delay: 0.78 }}
+      >
         <button className={styles.restartBtn} onClick={onRestart}>{t.session.again}</button>
         <button className={styles.backBtn} onClick={onBack}>{t.session.toModes}</button>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

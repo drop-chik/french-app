@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+  animation: fadeSlideUp 0.35s ease both;
 }
 
 /* Error state */
@@ -87,6 +88,7 @@
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   white-space: nowrap;
+  animation: streakPulse 2.4s ease-in-out infinite;
 }
 
 .streakBadgeDone {
@@ -181,7 +183,12 @@
   flex-direction: column;
   gap: var(--space-3);
   border-top-width: 3px;
+  animation: fadeSlideUp 0.4s ease both;
 }
+
+.planGrid > *:nth-child(1) { animation-delay: 120ms; }
+.planGrid > *:nth-child(2) { animation-delay: 200ms; }
+.planGrid > *:nth-child(3) { animation-delay: 280ms; }
 
 .cardWords { border-top-color: #3b82f6; }
 .cardGrammar { border-top-color: #8b5cf6; }
@@ -297,14 +304,26 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   text-decoration: none;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  animation: fadeSlideUp 0.4s ease both;
 }
 
 .quickLink:hover {
   background: var(--color-bg-tertiary);
   border-color: var(--color-brand);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   text-decoration: none;
 }
+
+.quickLink:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+}
+
+.quickGrid > *:nth-child(1) { animation-delay: 320ms; }
+.quickGrid > *:nth-child(2) { animation-delay: 390ms; }
+.quickGrid > *:nth-child(3) { animation-delay: 460ms; }
 
 .quickIcon {
   color: var(--color-text-secondary);

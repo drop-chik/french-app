@@ -74,12 +74,10 @@ export function FlashcardMode({ words, onComplete }: Props) {
       }
       setTimeout(() => {
         setFlipped(false);
-        setTimeout(() => {
-          setIndex((i) => i + 1);
-          setImageError(false);
-          setIsAnimating(false);
-        }, 150);
-      }, 100);
+        setIndex((i) => i + 1);
+        setImageError(false);
+        setIsAnimating(false);
+      }, 90);
     },
     [current, index, isAnimating, results, words.length, onComplete],
   );
@@ -96,14 +94,20 @@ export function FlashcardMode({ words, onComplete }: Props) {
       </div>
       <div className={styles.counter}>{index + 1} / {words.length}</div>
 
-      <div
-        className={styles.cardWrapper}
-        onClick={!flipped ? flip : undefined}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') ? flip() : null}
-        aria-label={t.flashcard.flipHint}
-      >
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={index}
+          className={styles.cardWrapper}
+          initial={{ x: 55, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -55, opacity: 0 }}
+          transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+          onClick={!flipped ? flip : undefined}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') ? flip() : null}
+          aria-label={t.flashcard.flipHint}
+        >
         <motion.div
           className={styles.card}
           animate={{ rotateY: flipped ? 180 : 0 }}
@@ -151,7 +155,8 @@ export function FlashcardMode({ words, onComplete }: Props) {
             )}
           </div>
         </motion.div>
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
       <AnimatePresence>
         {flipped && (

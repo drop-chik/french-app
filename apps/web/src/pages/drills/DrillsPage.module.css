@@ -37,7 +37,11 @@
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
   cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.filter:active {
+  transform: scale(0.93);
 }
 
 .filter:hover {
@@ -70,13 +74,34 @@
   border-radius: var(--radius-xl);
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  animation: fadeSlideUp 0.38s ease both;
 }
 
 .card:hover {
   border-color: var(--color-brand);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px var(--color-brand);
+  transform: translateY(-3px);
 }
+
+.card:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Stagger entrance */
+.grid > *:nth-child(1)  { animation-delay: 0ms; }
+.grid > *:nth-child(2)  { animation-delay: 55ms; }
+.grid > *:nth-child(3)  { animation-delay: 110ms; }
+.grid > *:nth-child(4)  { animation-delay: 165ms; }
+.grid > *:nth-child(5)  { animation-delay: 220ms; }
+.grid > *:nth-child(6)  { animation-delay: 275ms; }
+.grid > *:nth-child(7)  { animation-delay: 330ms; }
+.grid > *:nth-child(8)  { animation-delay: 385ms; }
+.grid > *:nth-child(9)  { animation-delay: 440ms; }
+.grid > *:nth-child(10) { animation-delay: 495ms; }
+.grid > *:nth-child(11) { animation-delay: 550ms; }
+.grid > *:nth-child(12) { animation-delay: 605ms; }
 
 .cardTop {
   display: flex;
