@@ -433,6 +433,8 @@ export const ru: DeepRecord = {
       grammaire: 'Грамматика',
       temps: 'Времена',
       noms: 'Существительные',
+      subjonctif: 'Сюбжонктив',
+      syntaxe: 'Синтаксис',
     },
   },
   common: {

@@ -432,6 +432,8 @@ export const en: Translations = {
       grammaire: 'Grammar',
       temps: 'Tenses',
       noms: 'Nouns',
+      subjonctif: 'Subjunctive',
+      syntaxe: 'Syntax',
     },
   },
   common: {
