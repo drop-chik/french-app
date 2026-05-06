@@ -185,6 +185,27 @@
   opacity: 0.9;
 }
 
+.practiceWordsBtn {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: transparent;
+  color: var(--color-brand);
+  border: 1.5px solid var(--color-brand);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  min-height: 44px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.practiceWordsBtn:hover {
+  background-color: var(--color-brand-light);
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: var(--text-xl);

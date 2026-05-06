@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type React from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Play, CheckCircle } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
@@ -65,6 +65,13 @@ export function VocabularyPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const repairMutation = useMutation({
+    mutationFn: profileApi.repairStreak,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
+    },
+  });
+
   const { data: statsData } = useQuery({
     queryKey: ['profile-stats'],
     queryFn: profileApi.getStats,
@@ -79,6 +86,8 @@ export function VocabularyPage() {
   const masteredTotal = statsData?.words.mastered ?? 0;
   const streak = streakData?.streak ?? 0;
   const todayCompleted = streakData?.todayCompleted ?? false;
+  const repairAvailable = streakData?.repairAvailable ?? false;
+  const savedStreak = streakData?.savedStreak ?? 0;
 
   // If coming from Dictionary with a status filter, only show those words
   const sessionWords = statusFilter
@@ -144,6 +153,7 @@ export function VocabularyPage() {
         streak={streak}
         onRestart={handleRestart}
         onBack={() => { setActiveMode('menu'); if (statusFilter) navigate({ to: '/vocabulary' }); }}
+        onConversation={() => navigate({ to: '/conversation' })}
       />
     );
   }
@@ -188,6 +198,32 @@ export function VocabularyPage() {
 
       {isLoading && <p className={styles.loading}>{t.vocabulary.loading}</p>}
       {error && <p className={styles.error}>{t.vocabulary.errorLoad}</p>}
+
+      {/* Streak repair banner */}
+      {repairAvailable && !repairMutation.isSuccess && (
+        <div className={styles.repairBanner}>
+          <div className={styles.repairInfo}>
+            <p className={styles.repairTitle}>{t.vocabulary.streakRepairTitle}</p>
+            <p className={styles.repairDesc}>
+              {t.vocabulary.streakRepairDesc.replace('{n}', String(savedStreak))}
+            </p>
+          </div>
+          <button
+            className={styles.repairBtn}
+            disabled={repairMutation.isPending}
+            onClick={() => repairMutation.mutate()}
+          >
+            {repairMutation.isPending
+              ? t.vocabulary.streakRepairLoading
+              : t.vocabulary.streakRepairBtn}
+          </button>
+        </div>
+      )}
+      {repairMutation.isSuccess && (
+        <div className={styles.allDoneBanner}>
+          {t.vocabulary.streakRepairDone.replace('{n}', String(repairMutation.data?.newStreak ?? savedStreak))}
+        </div>
+      )}
 
       {/* CTA — primary action */}
       {!isLoading && !error && sessionWords.length > 0 && (

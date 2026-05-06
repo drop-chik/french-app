@@ -114,6 +114,11 @@ export const ru: DeepRecord = {
     practiceMore: 'Ещё потренироваться',
     practiceLabel: '— или тренируй отдельно —',
     back: '← Назад',
+    streakRepairTitle: '🛡️ Восстановить стрик?',
+    streakRepairDesc: 'Вчера была пауза, но твой стрик {n} дн. можно восстановить — один раз в 30 дней.',
+    streakRepairBtn: 'Восстановить стрик',
+    streakRepairLoading: 'Восстанавливаем...',
+    streakRepairDone: '🔥 Стрик восстановлен — {n} дн.!',
     smartPhase: 'Этап {phase} из {total}',
     phaseNames: {
       flashcard: 'Знакомство со словами',
@@ -158,6 +163,7 @@ export const ru: DeepRecord = {
     result: 'результат',
     again: 'Ещё раз',
     toModes: 'К режимам',
+    practiceConversation: '🎙️ Практиковать в диалоге',
     streakContinue: '🔥 Стрик: {n} дн. подряд — приходи завтра!',
     streakFirst: '🔥 Отличное начало — первое занятие!',
     wordsQueued: 'Отправлено на повтор: {n} сл.',
@@ -360,6 +366,7 @@ export const ru: DeepRecord = {
     check: 'Проверить',
     complete: 'Завершить',
     nextExercise: 'Далее',
+    practiceWords: '📚 Закрепить слова по теме →',
   },
   home: {
     toggleTheme: 'Сменить тему',
@@ -387,7 +394,14 @@ export const ru: DeepRecord = {
     skip: 'Пропустить (начать с A1)',
     yourLevel: 'Твой уровень',
     startLearning: 'Начать обучение →',
+    goToPlan: 'Посмотреть мой план →',
     loading: 'Загрузка вопросов...',
+    planIntro: 'Что тебя ждёт',
+    planItems: [
+      { icon: '📚', text: 'Слова: умные карточки + 8 режимов повторения' },
+      { icon: '📖', text: 'Грамматика: теория и упражнения по уровню' },
+      { icon: '🎙️', text: 'AI-диалоги: живая практика с преподавателем' },
+    ],
     levelDesc: {
       A1: 'Начальный уровень. Мы начнём с самых основ.',
       A2: 'Базовый уровень. Ты знаешь основы, двигаемся дальше.',

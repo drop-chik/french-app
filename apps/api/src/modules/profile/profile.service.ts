@@ -161,32 +161,9 @@ export async function getStats(db: DB, userId: string) {
   };
 }
 
-// Daily streak: consecutive days with at least one word reviewed
-export async function getStreak(db: DB, userId: string): Promise<{ streak: number; todayCompleted: boolean }> {
-  const rows = await db
-    .select({ day: sql<string>`to_char(DATE(${wordProgress.lastReviewed}), 'YYYY-MM-DD')` })
-    .from(wordProgress)
-    .where(and(eq(wordProgress.userId, userId), sql`${wordProgress.lastReviewed} IS NOT NULL`))
-    .groupBy(sql`DATE(${wordProgress.lastReviewed})`)
-    .orderBy(sql`DATE(${wordProgress.lastReviewed}) DESC`);
-
-  const dates = rows.map((r) => r.day).filter(Boolean);
-  if (dates.length === 0) return { streak: 0, todayCompleted: false };
-
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
-
-  const todayCompleted = dates[0] === todayStr;
-
-  // Streak is alive only if user has studied today or yesterday
-  if (dates[0] !== todayStr && dates[0] !== yesterdayStr) return { streak: 0, todayCompleted: false };
-
+function _calcStreakFromDates(dates: string[]): number {
   let streak = 0;
   let prevDate: Date | null = null;
-
   for (const dateStr of dates) {
     const d = new Date(dateStr + 'T00:00:00Z');
     if (prevDate === null) {
@@ -194,16 +171,112 @@ export async function getStreak(db: DB, userId: string): Promise<{ streak: numbe
       prevDate = d;
     } else {
       const diffDays = Math.round((prevDate.getTime() - d.getTime()) / 86_400_000);
-      if (diffDays === 1) {
-        streak++;
-        prevDate = d;
-      } else {
-        break;
-      }
+      if (diffDays === 1) { streak++; prevDate = d; }
+      else break;
     }
   }
+  return streak;
+}
 
-  return { streak, todayCompleted };
+// Daily streak: consecutive days with at least one word reviewed
+export async function getStreak(db: DB, userId: string): Promise<{
+  streak: number;
+  todayCompleted: boolean;
+  repairAvailable: boolean;
+  savedStreak: number;
+}> {
+  const [user, rows] = await Promise.all([
+    db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { streakRepairUsedAt: true, streakRepairSavedValue: true },
+    }),
+    db
+      .select({ day: sql<string>`to_char(DATE(${wordProgress.lastReviewed}), 'YYYY-MM-DD')` })
+      .from(wordProgress)
+      .where(and(eq(wordProgress.userId, userId), sql`${wordProgress.lastReviewed} IS NOT NULL`))
+      .groupBy(sql`DATE(${wordProgress.lastReviewed})`)
+      .orderBy(sql`DATE(${wordProgress.lastReviewed}) DESC`),
+  ]);
+
+  const dates = rows.map((r) => r.day).filter(Boolean) as string[];
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const twoDaysAgo = new Date(today);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const twoDaysAgoStr = twoDaysAgo.toISOString().slice(0, 10);
+
+  const todayCompleted = dates[0] === todayStr;
+
+  // Repair is "active" if used within last 48 hours → inject yesterday as virtual study day
+  const repairUsedRecently = user?.streakRepairUsedAt
+    ? (Date.now() - user.streakRepairUsedAt.getTime()) < 48 * 3_600_000
+    : false;
+
+  let effectiveDates = dates;
+  if (repairUsedRecently && !dates.includes(yesterdayStr)) {
+    const dateSet = new Set([...dates, yesterdayStr]);
+    effectiveDates = Array.from(dateSet).sort().reverse();
+  }
+
+  const streakAlive =
+    effectiveDates.length > 0 &&
+    (effectiveDates[0] === todayStr || effectiveDates[0] === yesterdayStr);
+
+  const streak = streakAlive ? _calcStreakFromDates(effectiveDates) : 0;
+
+  // Repair available: streak just broke (most recent real date was 2 days ago),
+  // cooldown expired (30 days since last use or never used)
+  const streakJustBroke = dates.length > 0 && dates[0] === twoDaysAgoStr;
+  const cooldownOver =
+    !user?.streakRepairUsedAt ||
+    Date.now() - user.streakRepairUsedAt.getTime() > 30 * 24 * 3_600_000;
+  const repairAvailable = streakJustBroke && cooldownOver && !repairUsedRecently;
+  const savedStreak = repairAvailable ? _calcStreakFromDates(dates) : (user?.streakRepairSavedValue ?? 0);
+
+  return { streak, todayCompleted, repairAvailable, savedStreak };
+}
+
+export async function repairStreak(db: DB, userId: string): Promise<{ ok: boolean; newStreak: number }> {
+  const [user, rows] = await Promise.all([
+    db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { streakRepairUsedAt: true },
+    }),
+    db
+      .select({ day: sql<string>`to_char(DATE(${wordProgress.lastReviewed}), 'YYYY-MM-DD')` })
+      .from(wordProgress)
+      .where(and(eq(wordProgress.userId, userId), sql`${wordProgress.lastReviewed} IS NOT NULL`))
+      .groupBy(sql`DATE(${wordProgress.lastReviewed})`)
+      .orderBy(sql`DATE(${wordProgress.lastReviewed}) DESC`),
+  ]);
+
+  if (!user) throw new Error('USER_NOT_FOUND');
+
+  // 30-day cooldown
+  if (user.streakRepairUsedAt) {
+    const daysSince = (Date.now() - user.streakRepairUsedAt.getTime()) / (24 * 3_600_000);
+    if (daysSince < 30) throw new Error('REPAIR_COOLDOWN');
+  }
+
+  const dates = rows.map((r) => r.day).filter(Boolean) as string[];
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const twoDaysAgoStr = twoDaysAgo.toISOString().slice(0, 10);
+
+  if (!dates[0] || dates[0] !== twoDaysAgoStr) throw new Error('NO_BROKEN_STREAK');
+
+  const savedStreak = _calcStreakFromDates(dates);
+
+  await db
+    .update(users)
+    .set({ streakRepairUsedAt: new Date(), streakRepairSavedValue: savedStreak, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+
+  return { ok: true, newStreak: savedStreak };
 }
 
 // Charts data: last 30 days of activity

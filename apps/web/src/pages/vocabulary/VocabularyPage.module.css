@@ -155,6 +155,59 @@
   text-align: center;
 }
 
+/* Streak repair banner */
+.repairBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background-color: var(--color-surface);
+  border: 1.5px solid var(--color-brand);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4) var(--space-5);
+}
+
+.repairInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.repairTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.repairDesc {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.repairBtn {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+  white-space: nowrap;
+}
+
+.repairBtn:hover {
+  opacity: 0.9;
+}
+
+.repairBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* Section divider */
 .divider {
   display: flex;

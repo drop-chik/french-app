@@ -170,6 +170,14 @@ export function GrammarTopicPage({ slug }: { slug: string }) {
               {t.grammar.backToList}
             </button>
           </div>
+          {result.isCompleted && (
+            <button
+              className={styles.practiceWordsBtn}
+              onClick={() => navigate({ to: '/vocabulary' })}
+            >
+              {t.grammar.practiceWords}
+            </button>
+          )}
         </div>
       )}
     </div>

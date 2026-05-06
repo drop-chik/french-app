@@ -117,3 +117,19 @@
 }
 
 .backBtn:hover { background-color: var(--color-bg-secondary); }
+
+.conversationBtn {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  color: var(--color-brand);
+  border: 1.5px solid var(--color-brand);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.conversationBtn:hover { background-color: var(--color-brand-light); }

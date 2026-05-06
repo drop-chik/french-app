@@ -113,6 +113,11 @@ export const en: Translations = {
     practiceMore: 'Practice more',
     practiceLabel: '— or practice a specific skill —',
     back: '← Back',
+    streakRepairTitle: '🛡️ Repair your streak?',
+    streakRepairDesc: 'You missed yesterday, but your {n}-day streak can be restored — once every 30 days.',
+    streakRepairBtn: 'Repair streak',
+    streakRepairLoading: 'Repairing...',
+    streakRepairDone: '🔥 Streak restored — {n} days!',
     smartPhase: 'Phase {phase} of {total}',
     phaseNames: {
       flashcard: 'Introduction',
@@ -157,6 +162,7 @@ export const en: Translations = {
     result: 'score',
     again: 'Again',
     toModes: 'Back to modes',
+    practiceConversation: '🎙️ Practice in conversation',
     streakContinue: '🔥 Streak: {n} days in a row — come back tomorrow!',
     streakFirst: '🔥 Great start — first session done!',
     wordsQueued: 'Sent for review: {n} w.',
@@ -359,6 +365,7 @@ export const en: Translations = {
     check: 'Check',
     complete: 'Finish',
     nextExercise: 'Next',
+    practiceWords: '📚 Practice related vocabulary →',
   },
   home: {
     toggleTheme: 'Toggle theme',
@@ -386,7 +393,14 @@ export const en: Translations = {
     skip: 'Skip (start at A1)',
     yourLevel: 'Your level',
     startLearning: 'Start learning →',
+    goToPlan: 'See my study plan →',
     loading: 'Loading questions...',
+    planIntro: "What's waiting for you",
+    planItems: [
+      { icon: '📚', text: 'Words: smart flashcards + 8 study modes' },
+      { icon: '📖', text: 'Grammar: theory and exercises for your level' },
+      { icon: '🎙️', text: 'AI conversations: live practice with a tutor' },
+    ],
     levelDesc: {
       A1: "Beginner level. We'll start from the very basics.",
       A2: "Elementary level. You know the basics — let's go further.",

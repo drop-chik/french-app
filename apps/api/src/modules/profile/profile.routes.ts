@@ -7,6 +7,7 @@ import {
   getStats,
   getCharts,
   getStreak,
+  repairStreak,
   getHomeData,
 } from './profile.service.js';
 
@@ -100,6 +101,23 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     const { userId } = request.user;
     const result = await getStreak(fastify.db, userId);
     reply.send(result);
+  });
+
+  // POST /profile/streak/repair — use one-time streak repair
+  fastify.post('/streak/repair', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { userId } = request.user;
+    try {
+      const result = await repairStreak(fastify.db, userId);
+      reply.send(result);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'REPAIR_COOLDOWN') {
+        return reply.status(409).send({ error: 'Streak repair already used in last 30 days' });
+      }
+      if (err instanceof Error && err.message === 'NO_BROKEN_STREAK') {
+        return reply.status(400).send({ error: 'No broken streak to repair' });
+      }
+      throw err;
+    }
   });
 
   // GET /profile/home — aggregated dashboard data

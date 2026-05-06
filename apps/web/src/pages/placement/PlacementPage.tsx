@@ -98,6 +98,7 @@ export function PlacementPage() {
   }
 
   if (phase === 'result' && resultLevel) {
+    const planItems: Array<{ icon: string; text: string }> = t.placement.planItems as never;
     return (
       <div className={styles.page}>
         <motion.div
@@ -108,11 +109,24 @@ export function PlacementPage() {
           <div className={styles.resultLevel}>{resultLevel}</div>
           <h2 className={styles.resultTitle}>{t.placement.yourLevel}</h2>
           <p className={styles.resultDesc}>{levelDesc[resultLevel] ?? ''}</p>
+
+          <div className={styles.planSection}>
+            <p className={styles.planIntro}>{t.placement.planIntro}</p>
+            <ul className={styles.planList}>
+              {planItems.map((item, i) => (
+                <li key={i} className={styles.planItem}>
+                  <span className={styles.planIcon}>{item.icon}</span>
+                  <span>{item.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <button
             className={styles.continueBtn}
-            onClick={() => navigate({ to: '/vocabulary' })}
+            onClick={() => navigate({ to: '/dashboard' })}
           >
-            {t.placement.startLearning}
+            {t.placement.goToPlan}
           </button>
         </motion.div>
       </div>

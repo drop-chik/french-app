@@ -8,9 +8,10 @@ interface Props {
   streak: number;
   onRestart: () => void;
   onBack: () => void;
+  onConversation?: () => void;
 }
 
-export function SessionComplete({ results, streak, onRestart, onBack }: Props) {
+export function SessionComplete({ results, streak, onRestart, onBack, onConversation }: Props) {
   const { t } = useI18n();
   const correct = results.filter((r) => r.grade >= 3).length;
   const total = results.length;
@@ -69,6 +70,12 @@ export function SessionComplete({ results, streak, onRestart, onBack }: Props) {
           </span>
         )}
       </div>
+
+      {onConversation && (
+        <button className={styles.conversationBtn} onClick={onConversation}>
+          {t.session.practiceConversation}
+        </button>
+      )}
 
       <div className={styles.actions}>
         <button className={styles.restartBtn} onClick={onRestart}>{t.session.again}</button>
