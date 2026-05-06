@@ -33,6 +33,9 @@ import { wordsB1Extra14 } from './words-b1-extra14.js';
 import { wordsB1Extra15 } from './words-b1-extra15.js';
 import { wordsB1Extra16 } from './words-b1-extra16.js';
 import { wordsB1Extra17 } from './words-b1-extra17.js';
+import { wordsB1Extra18 } from './words-b1-extra18.js';
+import { wordsB1Extra19 } from './words-b1-extra19.js';
+import { wordsB1Extra20 } from './words-b1-extra20.js';
 import { grammarTopicsA1 } from './grammar-a1.js';
 import { grammarTopicsA1Extra } from './grammar-a1-extra.js';
 import { grammarTopicsA2 } from './grammar-a2.js';
@@ -184,6 +187,7 @@ async function seed() {
     ...wordsB1Extra8, ...wordsB1Extra9, ...wordsB1Extra10, ...wordsB1Extra11,
     ...wordsB1Extra12, ...wordsB1Extra13, ...wordsB1Extra14, ...wordsB1Extra15,
     ...wordsB1Extra16, ...wordsB1Extra17,
+    ...wordsB1Extra18, ...wordsB1Extra19, ...wordsB1Extra20,
   ] as WordInput[], 'B1');
   await seedWordsBatch(b1Rows, 'B1 words');
   console.log(`Words B1 done! Total: ${b1Rows.length}`);
