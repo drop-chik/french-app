@@ -56,10 +56,13 @@ function DrillCard({
   );
 }
 
+const LEVELS = ['all', 'A1', 'A2', 'B1', 'B2'] as const;
+
 export function DrillsPage() {
   const navigate = useNavigate();
   const { lang, t } = useI18n();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
 
   const { data, isLoading } = useQuery({
     queryKey: ['drills', lang],
@@ -68,8 +71,11 @@ export function DrillsPage() {
 
   const drills = data?.drills ?? [];
   const categories = ['all', ...Array.from(new Set(drills.map((d) => d.category)))];
-  const filtered =
-    selectedCategory === 'all' ? drills : drills.filter((d) => d.category === selectedCategory);
+  const filtered = drills.filter((d) => {
+    const catOk = selectedCategory === 'all' || d.category === selectedCategory;
+    const lvlOk = selectedLevel === 'all' || d.level === selectedLevel;
+    return catOk && lvlOk;
+  });
 
   const getCategoryLabel = (cat: string) =>
     (t.drills.categories as Record<string, string>)[cat] ?? cat;
@@ -81,16 +87,35 @@ export function DrillsPage() {
         <p className={styles.subtitle}>{t.drills.subtitle}</p>
       </div>
 
-      <div className={styles.filters}>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            className={`${styles.filter} ${selectedCategory === cat ? styles.filterActive : ''}`}
-            onClick={() => setSelectedCategory(cat)}
-          >
-            {cat === 'all' ? t.drills.filterAll : getCategoryLabel(cat)}
-          </button>
-        ))}
+      <div className={styles.filterGroups}>
+        <div className={styles.filterGroupRow}>
+          <span className={styles.filterGroupLabel}>{t.drills.filterCategoryLabel}</span>
+          <div className={styles.filters}>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                className={`${styles.filter} ${selectedCategory === cat ? styles.filterActive : ''}`}
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat === 'all' ? t.drills.filterAll : getCategoryLabel(cat)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.filterGroupRow}>
+          <span className={styles.filterGroupLabel}>{t.drills.filterLevelLabel}</span>
+          <div className={styles.filters}>
+            {LEVELS.map((lvl) => (
+              <button
+                key={lvl}
+                className={`${styles.filter} ${selectedLevel === lvl ? styles.filterActive : ''} ${lvl !== 'all' ? styles.filterLevel : ''}`}
+                onClick={() => setSelectedLevel(lvl)}
+              >
+                {lvl === 'all' ? t.drills.filterAll : lvl}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {isLoading && (

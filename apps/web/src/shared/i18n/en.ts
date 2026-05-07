@@ -425,6 +425,8 @@ export const en: Translations = {
     loading: 'Loading trainer...',
     notFound: 'Trainer not found',
     filterAll: 'All',
+    filterCategoryLabel: 'Category',
+    filterLevelLabel: 'Level',
     notPlayed: 'Not played',
     back: 'Trainers',
     resultCorrect: '{correct} of {total} correct',

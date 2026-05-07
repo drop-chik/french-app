@@ -426,6 +426,8 @@ export const ru: DeepRecord = {
     loading: 'Загружаем тренажёр...',
     notFound: 'Тренажёр не найден',
     filterAll: 'Все',
+    filterCategoryLabel: 'Раздел',
+    filterLevelLabel: 'Уровень',
     notPlayed: 'Не пройден',
     back: 'Тренажёры',
     resultCorrect: '{correct} из {total} правильно',

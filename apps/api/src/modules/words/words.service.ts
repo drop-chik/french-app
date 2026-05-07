@@ -82,19 +82,17 @@ export async function getStudySession(
     .filter((w) => !seenSet.has(w.id))
     .slice(0, MAX_NEW_PER_SESSION);
 
-  // ── Merge, build progress map, shuffle ───────────────────────────────
+  // ── Merge: shuffle due words, keep new words in frequencyRank order ──
   const progressMap = new Map(dueRows.map((r) => [r.word.id, r.progress]));
 
-  const session = [
-    ...dueRows.map((r) => r.word),
-    ...newWords,
-  ];
-
-  // Fisher-Yates shuffle
-  for (let i = session.length - 1; i > 0; i--) {
+  const dueWords = dueRows.map((r) => r.word);
+  for (let i = dueWords.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [session[i], session[j]] = [session[j]!, session[i]!];
+    [dueWords[i], dueWords[j]] = [dueWords[j]!, dueWords[i]!];
   }
+
+  // New words come last, already sorted by frequencyRank ASC (nulls last)
+  const session = [...dueWords, ...newWords];
 
   return session.map((word) => ({
     ...normalizeWord(word, lang),
