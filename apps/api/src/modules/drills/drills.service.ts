@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import OpenAI from 'openai';
 import type { DB } from '../../db/index.js';
@@ -90,18 +90,26 @@ export async function getDrillSession(
   let grammarLink: { slug: string; title: string; status: string } | null = null;
   const grammarSlug = DRILL_GRAMMAR_MAP[set.slug];
   if (grammarSlug) {
-    const topic = await db.query.grammarTopics.findFirst({
-      where: eq(grammarTopics.slug, grammarSlug),
-    });
-    if (topic) {
-      const progress = await db.query.grammarProgress.findFirst({
-        where: (t) => sql`${t.userId} = ${userId} AND ${t.topicId} = ${topic.id}`,
-      });
-      grammarLink = {
-        slug: grammarSlug,
-        title: lang === 'en' ? (topic.titleEn ?? topic.titleRu) : topic.titleRu,
-        status: progress?.status ?? 'not_started',
-      };
+    try {
+      const [topic] = await db
+        .select()
+        .from(grammarTopics)
+        .where(eq(grammarTopics.slug, grammarSlug))
+        .limit(1);
+      if (topic) {
+        const [progress] = await db
+          .select()
+          .from(grammarProgress)
+          .where(and(eq(grammarProgress.userId, userId), eq(grammarProgress.topicId, topic.id)))
+          .limit(1);
+        grammarLink = {
+          slug: grammarSlug,
+          title: lang === 'en' ? (topic.titleEn ?? topic.titleRu) : topic.titleRu,
+          status: progress?.status ?? 'not_started',
+        };
+      }
+    } catch {
+      // grammar link is non-critical — don't break the session if it fails
     }
   }
 
