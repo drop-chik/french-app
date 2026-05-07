@@ -80,6 +80,7 @@ import { listeningExercisesA1 } from './listening-a1.js';
 import { listeningExercisesA1Extra } from './listening-a1-extra.js';
 import { listeningExercisesA2 } from './listening-a2.js';
 import { listeningExercisesB1 } from './listening-b1.js';
+import { listeningExercisesB2 } from './listening-b2.js';
 import { drillsData } from './drills.js';
 import { drillsData2 } from './drills2.js';
 
@@ -333,6 +334,23 @@ async function seed() {
     console.log(`  Listening B1: ${ex.title}`);
   }
   console.log(`Listening B1 done! Total: ${listeningExercisesB1.length}`);
+
+  console.log('\nSeeding listening exercises B2...');
+  for (const ex of listeningExercisesB2) {
+    await db
+      .insert(listeningExercises)
+      .values({
+        title: ex.title,
+        level: 'B2' as const,
+        audioUrl: '',
+        transcript: ex.transcript,
+        questions: ex.questions,
+        durationSec: ex.durationSec,
+      })
+      .onConflictDoNothing();
+    console.log(`  Listening B2: ${ex.title}`);
+  }
+  console.log(`Listening B2 done! Total: ${listeningExercisesB2.length}`);
 
   // ===== Drills =====
   console.log('\nSeeding drills...');

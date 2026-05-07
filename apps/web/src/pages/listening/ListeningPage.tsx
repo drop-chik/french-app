@@ -6,12 +6,12 @@ import { listeningApi } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './ListeningPage.module.css';
 
-const LEVELS = ['A1', 'A2', 'B1'] as const;
+const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
 
 export function ListeningPage() {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
-  const [selectedLevel, setSelectedLevel] = useState<'A1' | 'A2' | 'B1'>('A1');
+  const [selectedLevel, setSelectedLevel] = useState<'A1' | 'A2' | 'B1' | 'B2'>('A1');
 
   const { data, isLoading } = useQuery({
     queryKey: ['listening-exercises', selectedLevel, lang],
