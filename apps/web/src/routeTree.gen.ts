@@ -19,12 +19,12 @@ import { Route as AuthProfileRouteImport } from './app/routes/_auth.profile'
 import { Route as AuthPlacementRouteImport } from './app/routes/_auth.placement'
 import { Route as AuthListeningRouteImport } from './app/routes/_auth.listening'
 import { Route as AuthGrammarRouteImport } from './app/routes/_auth.grammar'
+import { Route as AuthDrillsRouteImport } from './app/routes/_auth.drills'
 import { Route as AuthDictionaryRouteImport } from './app/routes/_auth.dictionary'
 import { Route as AuthDashboardRouteImport } from './app/routes/_auth.dashboard'
 import { Route as AuthConversationRouteImport } from './app/routes/_auth.conversation'
 import { Route as AuthListeningIdRouteImport } from './app/routes/_auth.listening.$id'
 import { Route as AuthGrammarSlugRouteImport } from './app/routes/_auth.grammar.$slug'
-import { Route as AuthDrillsRouteImport } from './app/routes/_auth.drills'
 import { Route as AuthDrillsSlugRouteImport } from './app/routes/_auth.drills.$slug'
 
 const TermsRoute = TermsRouteImport.update({
@@ -76,6 +76,11 @@ const AuthGrammarRoute = AuthGrammarRouteImport.update({
   path: '/grammar',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDrillsRoute = AuthDrillsRouteImport.update({
+  id: '/drills',
+  path: '/drills',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDictionaryRoute = AuthDictionaryRouteImport.update({
   id: '/dictionary',
   path: '/dictionary',
@@ -100,11 +105,6 @@ const AuthGrammarSlugRoute = AuthGrammarSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => AuthGrammarRoute,
-} as any)
-const AuthDrillsRoute = AuthDrillsRouteImport.update({
-  id: '/drills',
-  path: '/drills',
-  getParentRoute: () => AuthRoute,
 } as any)
 const AuthDrillsSlugRoute = AuthDrillsSlugRouteImport.update({
   id: '/$slug',
@@ -306,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthGrammarRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/drills': {
+      id: '/_auth/drills'
+      path: '/drills'
+      fullPath: '/drills'
+      preLoaderRoute: typeof AuthDrillsRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dictionary': {
       id: '/_auth/dictionary'
       path: '/dictionary'
@@ -340,13 +347,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/grammar/$slug'
       preLoaderRoute: typeof AuthGrammarSlugRouteImport
       parentRoute: typeof AuthGrammarRoute
-    }
-    '/_auth/drills': {
-      id: '/_auth/drills'
-      path: '/drills'
-      fullPath: '/drills'
-      preLoaderRoute: typeof AuthDrillsRouteImport
-      parentRoute: typeof AuthRoute
     }
     '/_auth/drills/$slug': {
       id: '/_auth/drills/$slug'
