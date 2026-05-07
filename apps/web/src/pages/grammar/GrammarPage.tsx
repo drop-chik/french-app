@@ -14,7 +14,7 @@ const STATUS_ICON: Record<TopicStatus, React.ReactNode> = {
   completed: <CheckCircle size={14} />,
 };
 
-const LEVELS = ['A1', 'A2', 'B1'] as const;
+const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
 
 export function GrammarPage() {
   const navigate = useNavigate();
