@@ -341,6 +341,11 @@ export function DrillSessionPage({ slug }: Props) {
       </div>
       <p className={styles.desc}>{drill.description}</p>
 
+      {/* DEBUG — remove after fix */}
+      <div style={{ fontSize: 11, color: '#888', padding: '4px 8px', background: '#1a1a1a', borderRadius: 6 }}>
+        DEBUG grammarLink: {JSON.stringify(drill.grammarLink)}
+      </div>
+
       {drill.grammarLink && !isInfinite && (
         <GrammarLinkCard link={drill.grammarLink} />
       )}
