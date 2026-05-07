@@ -4,7 +4,7 @@ export interface DrillSetSeed {
   titleEn: string;
   descriptionRu: string;
   descriptionEn: string;
-  level: 'A1' | 'A2' | 'B1';
+  level: 'A1' | 'A2' | 'B1' | 'B2';
   category: string;
   difficulty: number;
   icon: string;

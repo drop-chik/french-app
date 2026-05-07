@@ -444,6 +444,7 @@ export const ru: DeepRecord = {
       noms: 'Существительные',
       subjonctif: 'Сюбжонктив',
       syntaxe: 'Синтаксис',
+      orthographe: 'Орфография',
     },
   },
   common: {

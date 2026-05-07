@@ -69,6 +69,7 @@ import { listeningExercisesA1Extra } from './listening-a1-extra.js';
 import { listeningExercisesA2 } from './listening-a2.js';
 import { listeningExercisesB1 } from './listening-b1.js';
 import { drillsData } from './drills.js';
+import { drillsData2 } from './drills2.js';
 
 type WordInput = {
   french: string;
@@ -307,7 +308,7 @@ async function seed() {
 
   // ===== Drills =====
   console.log('\nSeeding drills...');
-  for (const drill of drillsData) {
+  for (const drill of [...drillsData, ...drillsData2]) {
     const [insertedDrill] = await db
       .insert(drillSets)
       .values({
@@ -341,7 +342,7 @@ async function seed() {
     }
     console.log(`  Drill: ${drill.slug} (${drill.questions.length} questions)`);
   }
-  console.log(`Drills done! Total: ${drillsData.length}`);
+  console.log(`Drills done! Total: ${drillsData.length + drillsData2.length}`);
 
   console.log('\nAll seed complete!');
   process.exit(0);

@@ -443,6 +443,7 @@ export const en: Translations = {
       noms: 'Nouns',
       subjonctif: 'Subjunctive',
       syntaxe: 'Syntax',
+      orthographe: 'Spelling',
     },
   },
   common: {
