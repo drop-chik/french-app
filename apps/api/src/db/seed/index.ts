@@ -54,6 +54,19 @@ import { wordsB2Extra6 } from './words-b2-extra6.js';
 import { wordsB2Extra7 } from './words-b2-extra7.js';
 import { wordsB2Extra8 } from './words-b2-extra8.js';
 import { wordsB2Extra9 } from './words-b2-extra9.js';
+import { wordsB2Extra10 } from './words-b2-extra10.js';
+import { wordsB2Extra11 } from './words-b2-extra11.js';
+import { wordsB2Extra12 } from './words-b2-extra12.js';
+import { wordsB2Extra13 } from './words-b2-extra13.js';
+import { wordsB2Extra14 } from './words-b2-extra14.js';
+import { wordsB2Extra15 } from './words-b2-extra15.js';
+import { wordsB2Extra16 } from './words-b2-extra16.js';
+import { wordsB2Extra17 } from './words-b2-extra17.js';
+import { wordsB2Extra18 } from './words-b2-extra18.js';
+import { wordsB2Extra19 } from './words-b2-extra19.js';
+import { wordsB2Extra20 } from './words-b2-extra20.js';
+import { wordsB2Extra21 } from './words-b2-extra21.js';
+import { wordsB2Extra22 } from './words-b2-extra22.js';
 import { grammarTopicsA1 } from './grammar-a1.js';
 import { grammarTopicsA1Extra } from './grammar-a1-extra.js';
 import { grammarTopicsA1Extra2 } from './grammar-a1-extra2.js';
@@ -233,6 +246,10 @@ async function seed() {
     ...wordsB2, ...wordsB2Extra, ...wordsB2Extra2, ...wordsB2Extra3,
     ...wordsB2Extra4, ...wordsB2Extra5, ...wordsB2Extra6, ...wordsB2Extra7,
     ...wordsB2Extra8, ...wordsB2Extra9,
+    ...wordsB2Extra10, ...wordsB2Extra11, ...wordsB2Extra12, ...wordsB2Extra13,
+    ...wordsB2Extra14, ...wordsB2Extra15, ...wordsB2Extra16, ...wordsB2Extra17,
+    ...wordsB2Extra18, ...wordsB2Extra19, ...wordsB2Extra20, ...wordsB2Extra21,
+    ...wordsB2Extra22,
   ] as WordInput[], 'B2');
   await seedWordsBatch(b2Rows, 'B2 words');
   console.log(`Words B2 done! Total: ${b2Rows.length}`);
