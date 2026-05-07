@@ -294,6 +294,87 @@
 
 .backBtn:hover { border-color: var(--color-brand); }
 
+/* Grammar link card */
+.grammarCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-warning-light, #fff8e6);
+  border: 1px solid var(--color-warning, #f59e0b);
+  border-radius: var(--radius-xl);
+}
+
+.grammarCardProgress {
+  background-color: var(--color-brand-light);
+  border-color: var(--color-brand);
+}
+
+.grammarCardIcon {
+  color: var(--color-warning, #f59e0b);
+  flex-shrink: 0;
+}
+
+.grammarCardProgress .grammarCardIcon {
+  color: var(--color-brand);
+}
+
+.grammarCardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grammarCardLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.grammarCardTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.grammarCardBtn {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-warning, #f59e0b);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.grammarCardProgress .grammarCardBtn {
+  color: var(--color-brand);
+}
+
+.grammarCardBtn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.grammarCompleted {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.grammarCompletedIcon {
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
 /* Infinite mode */
 .infiniteBadge {
   display: inline-flex;

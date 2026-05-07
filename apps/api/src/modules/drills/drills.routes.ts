@@ -21,7 +21,7 @@ const drillsRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
-      const session = await getDrillSession(fastify.db, request.params.slug, lang);
+      const session = await getDrillSession(fastify.db, request.params.slug, request.user.userId, lang);
       if (!session) return reply.status(404).send({ error: 'Drill not found' });
       reply.send({ drill: session });
     },

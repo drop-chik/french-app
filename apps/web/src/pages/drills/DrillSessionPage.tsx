@@ -1,14 +1,47 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Trophy, Sparkles, Zap } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Trophy, Sparkles, Zap, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { drillsApi, type DrillQuestion, type SubmitResult } from '../../features/drills/api';
+import { drillsApi, type DrillQuestion, type SubmitResult, type GrammarLink } from '../../features/drills/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './DrillSessionPage.module.css';
 
 interface Props { slug: string }
 type Phase = 'playing' | 'result';
+
+function GrammarLinkCard({ link }: { link: GrammarLink }) {
+  const navigate = useNavigate();
+  const { t } = useI18n();
+
+  if (link.status === 'completed') {
+    return (
+      <div className={styles.grammarCompleted}>
+        <CheckCircle size={14} className={styles.grammarCompletedIcon} />
+        <span>{t.drills.grammarLinkCompleted}: <strong>{link.title}</strong></span>
+      </div>
+    );
+  }
+
+  const isInProgress = link.status === 'in_progress';
+  return (
+    <div className={`${styles.grammarCard} ${isInProgress ? styles.grammarCardProgress : ''}`}>
+      <BookOpen size={16} className={styles.grammarCardIcon} />
+      <div className={styles.grammarCardBody}>
+        <span className={styles.grammarCardLabel}>
+          {isInProgress ? t.drills.grammarLinkInProgress : t.drills.grammarLinkNotStarted}
+        </span>
+        <span className={styles.grammarCardTitle}>{link.title}</span>
+      </div>
+      <button
+        className={styles.grammarCardBtn}
+        onClick={() => navigate({ to: '/grammar/$slug', params: { slug: link.slug } })}
+      >
+        {isInProgress ? t.drills.grammarLinkContinueBtn : t.drills.grammarLinkBtn}
+      </button>
+    </div>
+  );
+}
 
 function checkAnswersLocally(
   questions: DrillQuestion[],
@@ -306,6 +339,10 @@ export function DrillSessionPage({ slug }: Props) {
         </div>
       </div>
       <p className={styles.desc}>{drill.description}</p>
+
+      {drill.grammarLink && !isInfinite && (
+        <GrammarLinkCard link={drill.grammarLink} />
+      )}
 
       <div className={styles.progress}>
         {questions.map((q) => (

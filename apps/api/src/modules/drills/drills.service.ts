@@ -2,7 +2,44 @@ import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import OpenAI from 'openai';
 import type { DB } from '../../db/index.js';
-import { drillSets, drillQuestions, drillProgress } from '../../db/schema/index.js';
+import { drillSets, drillQuestions, drillProgress, grammarTopics, grammarProgress } from '../../db/schema/index.js';
+
+// Static mapping: drill slug → grammar topic slug
+const DRILL_GRAMMAR_MAP: Record<string, string> = {
+  // A1
+  'etre-avoir-present':        'verbs-etre-avoir',
+  'mots-interrogatifs':        'questions',
+  'pluriel-noms':              'nouns-plural',
+  'articles-choix':            'articles-definite',
+  'genre-des-noms':            'nouns-gender',
+  'prepositions-lieu':         'prepositions-place',
+  'accord-adjectifs':          'adjectives-agreement',
+  // A2
+  'verbes-groupe-3-present':   'verbs-present-regular',
+  'etre-avoir-passe-compose':  'passe-compose-etre',
+  'passe-compose-vs-imparfait':'imparfait',
+  'pronoms-cod-coi':           'pronoms-cod-coi',
+  'negation-avancee':          'negation-avancee',
+  'verbes-pronominaux':        'verbes-pronominaux',
+  'futur-simple':              'futur-simple',
+  'comparatif-superlatif':     'comparatif-superlatif',
+  // B1
+  'subjonctif-conjugaison':    'subjonctif-present',
+  'pronoms-y-en':              'pronoms-y-en',
+  'accord-participe-passe':    'accord-participe-passe',
+  'conditionnel-conjugaison':  'conditionnel-present',
+  'gerondif':                  'gerondif',
+  'subjonctif-usage':          'verbes-subjonctif-infinitif',
+  'plus-que-parfait':          'plus-que-parfait',
+  'discours-indirect':         'discours-indirect',
+  'voix-passive':              'voix-passive',
+  'pronoms-relatifs-composes': 'pronoms-relatifs-dont-ou',
+  'si-hypothese':              'conditionnel-present',
+  'connecteurs-logiques':      'expression-cause',
+  // B2
+  'subjonctif-passe':          'subjonctif-present',
+  'concordance-temps':         'discours-indirect',
+};
 
 const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
 
@@ -33,7 +70,12 @@ export async function getDrills(db: DB, userId: string, lang: 'ru' | 'en' = 'ru'
   });
 }
 
-export async function getDrillSession(db: DB, slug: string, lang: 'ru' | 'en' = 'ru') {
+export async function getDrillSession(
+  db: DB,
+  slug: string,
+  userId: string,
+  lang: 'ru' | 'en' = 'ru',
+) {
   const set = await db.query.drillSets.findFirst({ where: eq(drillSets.slug, slug) });
   if (!set) return null;
 
@@ -44,6 +86,25 @@ export async function getDrillSession(db: DB, slug: string, lang: 'ru' | 'en' = 
   // Pick 10 random questions
   const shuffled = allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
 
+  // Resolve grammar link
+  let grammarLink: { slug: string; title: string; status: string } | null = null;
+  const grammarSlug = DRILL_GRAMMAR_MAP[set.slug];
+  if (grammarSlug) {
+    const topic = await db.query.grammarTopics.findFirst({
+      where: eq(grammarTopics.slug, grammarSlug),
+    });
+    if (topic) {
+      const progress = await db.query.grammarProgress.findFirst({
+        where: (t) => sql`${t.userId} = ${userId} AND ${t.topicId} = ${topic.id}`,
+      });
+      grammarLink = {
+        slug: grammarSlug,
+        title: lang === 'en' ? (topic.titleEn ?? topic.titleRu) : topic.titleRu,
+        status: progress?.status ?? 'not_started',
+      };
+    }
+  }
+
   return {
     id: set.id,
     slug: set.slug,
@@ -53,6 +114,7 @@ export async function getDrillSession(db: DB, slug: string, lang: 'ru' | 'en' = 
     category: set.category,
     difficulty: set.difficulty,
     icon: set.icon,
+    grammarLink,
     questions: shuffled.map((q) => ({
       id: q.id,
       type: q.type,

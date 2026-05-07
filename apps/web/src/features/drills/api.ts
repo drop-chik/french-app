@@ -23,6 +23,12 @@ export interface DrillQuestion {
   explanation: string | null;
 }
 
+export interface GrammarLink {
+  slug: string;
+  title: string;
+  status: 'not_started' | 'in_progress' | 'completed' | 'locked';
+}
+
 export interface DrillSession {
   id: string;
   slug: string;
@@ -32,6 +38,7 @@ export interface DrillSession {
   category: string;
   difficulty: number;
   icon: string;
+  grammarLink: GrammarLink | null;
   questions: DrillQuestion[];
 }
 
