@@ -64,6 +64,7 @@ import { grammarTopicsB1 } from './grammar-b1.js';
 import { grammarTopicsB1Extra } from './grammar-b1-extra.js';
 import { grammarTopicsB2 } from './grammar-b2.js';
 import { grammarTopicsB2Extra } from './grammar-b2-extra.js';
+import { grammarTopicsB2Extra2 } from './grammar-b2-extra2.js';
 import { grammarExercisesA1 } from './grammar-exercises-a1.js';
 import { grammarExercisesA1Extra } from './grammar-exercises-a1-extra.js';
 import { grammarExercisesA1Extra2 } from './grammar-exercises-a1-extra2.js';
@@ -74,6 +75,7 @@ import { grammarExercisesB1 } from './grammar-exercises-b1.js';
 import { grammarExercisesB1Extra } from './grammar-exercises-b1-extra.js';
 import { grammarExercisesB2 } from './grammar-exercises-b2.js';
 import { grammarExercisesB2Extra } from './grammar-exercises-b2-extra.js';
+import { grammarExercisesB2Extra2 } from './grammar-exercises-b2-extra2.js';
 import { listeningExercisesA1 } from './listening-a1.js';
 import { listeningExercisesA1Extra } from './listening-a1-extra.js';
 import { listeningExercisesA2 } from './listening-a2.js';
@@ -268,8 +270,8 @@ async function seed() {
   await seedGrammarExercises(grammarExercisesB1Extra, slugToIdB1, 'B1 extra exercises');
 
   console.log('\nSeeding grammar topics B2...');
-  await seedGrammarTopics([...grammarTopicsB2, ...grammarTopicsB2Extra], 'B2');
-  console.log(`Grammar topics B2 done! Total: ${grammarTopicsB2.length + grammarTopicsB2Extra.length}`);
+  await seedGrammarTopics([...grammarTopicsB2, ...grammarTopicsB2Extra, ...grammarTopicsB2Extra2], 'B2');
+  console.log(`Grammar topics B2 done! Total: ${grammarTopicsB2.length + grammarTopicsB2Extra.length + grammarTopicsB2Extra2.length}`);
 
   // Refresh slugToId to include B2 topics
   const topicRowsB2 = await db.select({ id: grammarTopics.id, slug: grammarTopics.slug }).from(grammarTopics);
@@ -278,6 +280,7 @@ async function seed() {
   console.log('\nSeeding grammar exercises B2...');
   await seedGrammarExercises(grammarExercisesB2, slugToIdB2, 'B2 exercises');
   await seedGrammarExercises(grammarExercisesB2Extra, slugToIdB2, 'B2 extra exercises');
+  await seedGrammarExercises(grammarExercisesB2Extra2, slugToIdB2, 'B2 extra2 exercises');
 
   // ===== Listening Exercises =====
   console.log('\nSeeding listening exercises A1...');
