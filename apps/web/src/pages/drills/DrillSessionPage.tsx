@@ -157,7 +157,8 @@ export function DrillSessionPage({ slug }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ['drill-session', slug, lang],
     queryFn: () => drillsApi.getSession(slug, lang),
-    staleTime: 0,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 
   const drill = data?.drill;
