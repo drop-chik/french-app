@@ -433,6 +433,11 @@ export const ru: DeepRecord = {
     backToList: 'К тренажёрам',
     checking: 'Проверяем...',
     submit: 'Проверить ответы',
+    infiniteUnlocked: '🔥 100%! Разблокирован бесконечный режим',
+    infiniteBtn: 'Генерировать новые вопросы',
+    generating: 'Генерируем вопросы с помощью AI...',
+    infiniteBadge: '∞ AI-режим',
+    infiniteAgain: 'Ещё 10 вопросов',
     categories: {
       verbes: 'Глаголы',
       articles: 'Артикли',

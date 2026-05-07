@@ -432,6 +432,11 @@ export const en: Translations = {
     backToList: 'Back to trainers',
     checking: 'Checking...',
     submit: 'Check answers',
+    infiniteUnlocked: '🔥 100%! Infinite mode unlocked',
+    infiniteBtn: 'Generate new questions',
+    generating: 'Generating questions with AI...',
+    infiniteBadge: '∞ AI mode',
+    infiniteAgain: '10 more questions',
     categories: {
       verbes: 'Verbs',
       articles: 'Articles',

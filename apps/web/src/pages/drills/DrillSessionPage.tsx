@@ -1,13 +1,48 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Trophy } from 'lucide-react';
-import { drillsApi, type DrillQuestion } from '../../features/drills/api';
+import { ArrowLeft, CheckCircle, XCircle, RotateCcw, Trophy, Sparkles, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { drillsApi, type DrillQuestion, type SubmitResult } from '../../features/drills/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './DrillSessionPage.module.css';
 
 interface Props { slug: string }
 type Phase = 'playing' | 'result';
+
+function checkAnswersLocally(
+  questions: DrillQuestion[],
+  answers: Record<string, unknown>,
+): SubmitResult {
+  let correct = 0;
+  const results: Record<string, { isCorrect: boolean; correctAnswer: unknown }> = {};
+
+  for (const q of questions) {
+    const userAnswer = answers[q.id];
+    const ans = q.answer as Record<string, unknown>;
+    let isCorrect = false;
+
+    if (q.type === 'multiple_choice') {
+      isCorrect =
+        String(userAnswer).trim().toLowerCase() === String(ans['correct']).trim().toLowerCase();
+      results[q.id] = { isCorrect, correctAnswer: ans['correct'] };
+    } else {
+      const values = ans['values'] as string[];
+      const userValues = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
+      isCorrect = values.every(
+        (v, i) =>
+          String(userValues[i] ?? '')
+            .trim()
+            .toLowerCase() === v.trim().toLowerCase(),
+      );
+      results[q.id] = { isCorrect, correctAnswer: values };
+    }
+    if (isCorrect) correct++;
+  }
+
+  const total = questions.length;
+  return { score: Math.round((correct / total) * 100), correct, total, results };
+}
 
 function QuestionCard({
   question,
@@ -23,10 +58,10 @@ function QuestionCard({
   disabled: boolean;
 }) {
   const q = question.question as Record<string, unknown>;
-  const text = q.text as string;
+  const text = q['text'] as string;
 
   if (question.type === 'multiple_choice') {
-    const options = q.options as string[];
+    const options = q['options'] as string[];
     return (
       <div className={styles.questionCard}>
         <p className={styles.questionText}>
@@ -48,8 +83,7 @@ function QuestionCard({
     );
   }
 
-  // fill_blank
-  const blanks = (q.blanks as number) ?? 1;
+  const blanks = (q['blanks'] as number) ?? 1;
   const parts = text.split('___');
   const userValues = (answer as string[] | undefined) ?? Array(blanks).fill('');
 
@@ -94,9 +128,14 @@ export function DrillSessionPage({ slug }: Props) {
   });
 
   const drill = data?.drill;
+
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [phase, setPhase] = useState<Phase>('playing');
-  const [submitResult, setSubmitResult] = useState<Awaited<ReturnType<typeof drillsApi.submit>> | null>(null);
+  const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
+  const [isInfinite, setIsInfinite] = useState(false);
+  const [activeQuestions, setActiveQuestions] = useState<DrillQuestion[] | null>(null);
+
+  const questions = activeQuestions ?? drill?.questions ?? [];
 
   const submitMutation = useMutation({
     mutationFn: (ans: Record<string, unknown>) => drillsApi.submit(slug, ans),
@@ -107,27 +146,52 @@ export function DrillSessionPage({ slug }: Props) {
     },
   });
 
+  const generateMutation = useMutation({
+    mutationFn: () => drillsApi.generateInfinite(slug),
+    onSuccess: (data) => {
+      setActiveQuestions(data.questions);
+      setAnswers({});
+      setPhase('playing');
+      setSubmitResult(null);
+      setIsInfinite(true);
+    },
+  });
+
+  const handleSubmit = () => {
+    if (isInfinite) {
+      const result = checkAnswersLocally(questions, answers);
+      setSubmitResult(result);
+      setPhase('result');
+    } else {
+      submitMutation.mutate(answers);
+    }
+  };
+
   const handleRetry = () => {
     setAnswers({});
     setPhase('playing');
     setSubmitResult(null);
-    queryClient.invalidateQueries({ queryKey: ['drill-session', slug] });
+    if (!isInfinite) {
+      queryClient.invalidateQueries({ queryKey: ['drill-session', slug] });
+    }
   };
 
-  const allAnswered = drill
-    ? drill.questions.every((q) => {
-        const a = answers[q.id];
-        if (q.type === 'multiple_choice') return !!a;
-        const blanks = (q.question as Record<string, unknown>).blanks as number ?? 1;
-        return Array.isArray(a) ? a.length === blanks && a.every((v) => v.trim() !== '') : false;
-      })
-    : false;
+  const allAnswered =
+    questions.length > 0 &&
+    questions.every((q) => {
+      const a = answers[q.id];
+      if (q.type === 'multiple_choice') return !!a;
+      const blanks = ((q.question as Record<string, unknown>)['blanks'] as number) ?? 1;
+      return Array.isArray(a) ? a.length === blanks && a.every((v) => v.trim() !== '') : false;
+    });
 
   if (isLoading) return <div className={styles.loading}>{t.drills.loading}</div>;
   if (!drill) return <div className={styles.loading}>{t.drills.notFound}</div>;
 
+  /* ── Result ─────────────────────────────────────────────────── */
   if (phase === 'result' && submitResult) {
     const { score, correct, total, results } = submitResult;
+    const isPerfect = score === 100;
     const resultLabel = String(t.drills.resultCorrect)
       .replace('{correct}', String(correct))
       .replace('{total}', String(total));
@@ -138,17 +202,51 @@ export function DrillSessionPage({ slug }: Props) {
           <ArrowLeft size={16} /> {t.drills.back}
         </button>
 
-        <div className={styles.resultCard}>
+        <motion.div
+          className={styles.resultCard}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {isInfinite && (
+            <div className={styles.infiniteBadge}>
+              <Zap size={12} /> {t.drills.infiniteBadge}
+            </div>
+          )}
+
           <div className={styles.resultScore}>
             <Trophy size={32} className={styles.trophyIcon} />
             <span className={styles.resultPercent}>{score}%</span>
             <span className={styles.resultLabel}>{resultLabel}</span>
           </div>
 
+          {isPerfect && (
+            <motion.div
+              className={styles.infiniteUnlocked}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 400, damping: 20 }}
+            >
+              <p className={styles.infiniteUnlockedText}>{t.drills.infiniteUnlocked}</p>
+              <button
+                className={styles.infiniteBtn}
+                onClick={() => generateMutation.mutate()}
+                disabled={generateMutation.isPending}
+              >
+                <Sparkles size={16} />
+                {generateMutation.isPending
+                  ? t.drills.generating
+                  : isInfinite
+                    ? t.drills.infiniteAgain
+                    : t.drills.infiniteBtn}
+              </button>
+            </motion.div>
+          )}
+
           <div className={styles.resultAnswers}>
-            {drill.questions.map((q, idx) => {
+            {questions.map((q, idx) => {
               const res = results[q.id];
-              const qText = (q.question as Record<string, unknown>).text as string;
+              const qText = (q.question as Record<string, unknown>)['text'] as string;
               return (
                 <div
                   key={q.id}
@@ -158,10 +256,13 @@ export function DrillSessionPage({ slug }: Props) {
                     {res?.isCorrect ? <CheckCircle size={16} /> : <XCircle size={16} />}
                   </div>
                   <div className={styles.resultItemBody}>
-                    <span className={styles.resultQuestion}>{idx + 1}. {qText}</span>
+                    <span className={styles.resultQuestion}>
+                      {idx + 1}. {qText}
+                    </span>
                     {!res?.isCorrect && (
                       <span className={styles.resultExplanation}>
-                        ✓ {Array.isArray(res?.correctAnswer)
+                        ✓{' '}
+                        {Array.isArray(res?.correctAnswer)
                           ? res.correctAnswer.join(', ')
                           : String(res?.correctAnswer ?? '')}
                         {q.explanation && <> — {q.explanation}</>}
@@ -181,11 +282,12 @@ export function DrillSessionPage({ slug }: Props) {
               {t.drills.backToList}
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
+  /* ── Playing ─────────────────────────────────────────────────── */
   return (
     <div className={styles.page}>
       <button className={styles.backButton} onClick={() => navigate({ to: '/drills' })}>
@@ -194,12 +296,19 @@ export function DrillSessionPage({ slug }: Props) {
 
       <div className={styles.header}>
         <h1 className={styles.title}>{drill.title}</h1>
-        <span className={styles.levelBadge}>{drill.level}</span>
+        <div className={styles.headerMeta}>
+          <span className={styles.levelBadge}>{drill.level}</span>
+          {isInfinite && (
+            <span className={styles.infiniteBadge}>
+              <Zap size={12} /> {t.drills.infiniteBadge}
+            </span>
+          )}
+        </div>
       </div>
       <p className={styles.desc}>{drill.description}</p>
 
       <div className={styles.progress}>
-        {drill.questions.map((q) => (
+        {questions.map((q) => (
           <div
             key={q.id}
             className={`${styles.progressDot} ${answers[q.id] !== undefined ? styles.progressDotDone : ''}`}
@@ -207,23 +316,31 @@ export function DrillSessionPage({ slug }: Props) {
         ))}
       </div>
 
-      <div className={styles.questions}>
-        {drill.questions.map((q, idx) => (
-          <QuestionCard
-            key={q.id}
-            question={q}
-            index={idx}
-            answer={answers[q.id]}
-            onAnswer={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
-            disabled={submitMutation.isPending}
-          />
-        ))}
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={isInfinite ? 'infinite' : 'normal'}
+          className={styles.questions}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          {questions.map((q, idx) => (
+            <QuestionCard
+              key={q.id}
+              question={q}
+              index={idx}
+              answer={answers[q.id]}
+              onAnswer={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+              disabled={submitMutation.isPending}
+            />
+          ))}
+        </motion.div>
+      </AnimatePresence>
 
       <button
         className={styles.submitButton}
         disabled={!allAnswered || submitMutation.isPending}
-        onClick={() => submitMutation.mutate(answers)}
+        onClick={handleSubmit}
       >
         {submitMutation.isPending ? t.drills.checking : t.drills.submit}
       </button>

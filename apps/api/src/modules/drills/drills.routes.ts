@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { getDrills, getDrillSession, submitDrillSession } from './drills.service.js';
+import { getDrills, getDrillSession, submitDrillSession, generateInfiniteQuestions } from './drills.service.js';
 
 function parseLang(query: Record<string, unknown>): 'ru' | 'en' {
   return query.lang === 'en' ? 'en' : 'ru';
@@ -24,6 +24,17 @@ const drillsRoutes: FastifyPluginAsync = async (fastify) => {
       const session = await getDrillSession(fastify.db, request.params.slug, lang);
       if (!session) return reply.status(404).send({ error: 'Drill not found' });
       reply.send({ drill: session });
+    },
+  );
+
+  // POST /drills/:slug/infinite — generate AI questions
+  fastify.post<{ Params: { slug: string } }>(
+    '/:slug/infinite',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const questions = await generateInfiniteQuestions(fastify.db, request.params.slug);
+      if (!questions) return reply.status(404).send({ error: 'Drill not found or generation failed' });
+      reply.send({ questions });
     },
   );
 

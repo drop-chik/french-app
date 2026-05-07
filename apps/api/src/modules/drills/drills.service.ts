@@ -1,6 +1,10 @@
 import { eq, sql } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
+import OpenAI from 'openai';
 import type { DB } from '../../db/index.js';
 import { drillSets, drillQuestions, drillProgress } from '../../db/schema/index.js';
+
+const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
 
 export async function getDrills(db: DB, userId: string, lang: 'ru' | 'en' = 'ru') {
   const sets = await db.query.drillSets.findMany({ orderBy: drillSets.difficulty });
@@ -129,4 +133,98 @@ export async function submitDrillSession(
   }
 
   return { score, correct, total, results };
+}
+
+type GeneratedQuestion = {
+  id: string;
+  type: 'fill_blank' | 'multiple_choice';
+  question: Record<string, unknown>;
+  answer: Record<string, unknown>;
+  explanation: string | null;
+};
+
+export async function generateInfiniteQuestions(
+  db: DB,
+  slug: string,
+): Promise<GeneratedQuestion[] | null> {
+  const set = await db.query.drillSets.findFirst({ where: eq(drillSets.slug, slug) });
+  if (!set) return null;
+
+  const allQuestions = await db.query.drillQuestions.findMany({
+    where: eq(drillQuestions.drillSetId, set.id),
+  });
+
+  // Pick 4 varied examples for the prompt (different types if possible)
+  const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+  const mc = shuffled.filter((q) => q.type === 'multiple_choice').slice(0, 2);
+  const fb = shuffled.filter((q) => q.type === 'fill_blank').slice(0, 2);
+  const examples = [...mc, ...fb].slice(0, 4);
+
+  const examplesJson = JSON.stringify(
+    examples.map((q) => ({
+      type: q.type,
+      question: q.question,
+      answer: q.answer,
+      explanation: q.explanation,
+    })),
+    null,
+    2,
+  );
+
+  const prompt = `You are a French grammar exercise generator. Create 10 new exercises for this drill.
+
+Drill: "${set.titleEn}" (${set.titleRu})
+Level: ${set.level} | Category: ${set.category}
+
+Example questions from this drill (use as format reference — do NOT copy them):
+${examplesJson}
+
+Rules:
+- Generate exactly 10 ORIGINAL questions, not copies of examples
+- Mix "multiple_choice" and "fill_blank" types naturally
+- multiple_choice: question has "text" + "options" (2-4 choices); answer has "correct"
+- fill_blank: question has "text" (with ___ for blank) + "blanks" (count); answer has "values" (array of strings)
+- explanations: short, in French, explain the grammar rule
+- All French must be grammatically CORRECT and appropriate for level ${set.level}
+- Vary the persons (je/tu/il/nous/vous/ils), tenses, and vocabulary
+
+Return ONLY valid JSON: { "questions": [ ... ] }`;
+
+  let content: string | null = null;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.85,
+      max_tokens: 2500,
+    });
+    content = completion.choices[0]?.message?.content ?? null;
+  } catch {
+    return null;
+  }
+
+  if (!content) return null;
+
+  let parsed: { questions?: unknown[] };
+  try {
+    parsed = JSON.parse(content) as { questions?: unknown[] };
+  } catch {
+    return null;
+  }
+
+  if (!Array.isArray(parsed.questions)) return null;
+
+  return parsed.questions.slice(0, 10).map((q) => {
+    const raw = q as Record<string, unknown>;
+    const type =
+      raw['type'] === 'fill_blank' ? ('fill_blank' as const) : ('multiple_choice' as const);
+    return {
+      id: randomUUID(),
+      type,
+      question: (raw['question'] as Record<string, unknown>) ?? {},
+      answer: (raw['answer'] as Record<string, unknown>) ?? {},
+      explanation: typeof raw['explanation'] === 'string' ? raw['explanation'] : null,
+    };
+  });
 }

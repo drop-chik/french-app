@@ -54,4 +54,9 @@ export const drillsApi = {
       method: 'POST',
       body: JSON.stringify({ answers }),
     }),
+
+  generateInfinite: (slug: string) =>
+    apiRequest<{ questions: DrillQuestion[] }>(`/drills/${slug}/infinite`, {
+      method: 'POST',
+    }),
 };

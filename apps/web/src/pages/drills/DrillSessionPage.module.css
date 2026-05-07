@@ -34,6 +34,12 @@
   flex-wrap: wrap;
 }
 
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .title {
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
@@ -287,6 +293,64 @@
 }
 
 .backBtn:hover { border-color: var(--color-brand); }
+
+/* Infinite mode */
+.infiniteBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  background: linear-gradient(135deg, var(--color-brand-light), #f0e6ff);
+  color: var(--color-brand);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  border: 1px solid var(--color-brand);
+}
+
+.infiniteUnlocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  background: linear-gradient(135deg, var(--color-brand-light) 0%, #f0e6ff 100%);
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--color-brand);
+  text-align: center;
+}
+
+.infiniteUnlockedText {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-brand);
+  margin: 0;
+}
+
+.infiniteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  min-height: 44px;
+}
+
+.infiniteBtn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.infiniteBtn:active:not(:disabled) { transform: scale(0.97); }
+.infiniteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 768px) {
   .options { grid-template-columns: 1fr; }
