@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Search, ChevronDown, ChevronUp, X, BookOpen, RefreshCw, Star } from 'lucide-react';
 import { wordsApi, type BrowseWord } from '../../features/words/api';
-import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
 import styles from './DictionaryPage.module.css';
@@ -184,14 +183,20 @@ function Section({ status, words, t, defaultOpen, onPractice }: SectionProps) {
   );
 }
 
+const ALL_LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+
 export function DictionaryPage() {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'mine' | 'all'>('mine');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [browseLevel, setBrowseLevel] = useState<string>('B2');
   const { t, lang } = useI18n();
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const userLevel = user?.level ?? 'B2';
+
+  function handleLevelChange(level: string) {
+    setBrowseLevel(level);
+    setActiveCategory(null);
+  }
 
   // ── "Мои слова" data ──────────────────────────────────────────────────
   const { data: mineData, isLoading: mineLoading } = useQuery({
@@ -223,15 +228,15 @@ export function DictionaryPage() {
 
   // ── "Все слова" data ──────────────────────────────────────────────────
   const { data: categoriesData } = useQuery({
-    queryKey: ['word-categories', userLevel],
-    queryFn: () => wordsApi.getCategories(userLevel),
+    queryKey: ['word-categories', browseLevel],
+    queryFn: () => wordsApi.getCategories(browseLevel),
     enabled: tab === 'all',
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: browseData, isLoading: browseLoading } = useQuery({
-    queryKey: ['browse-words', userLevel, activeCategory, lang],
-    queryFn: () => wordsApi.browse(userLevel, activeCategory),
+    queryKey: ['browse-words', browseLevel, activeCategory, lang],
+    queryFn: () => wordsApi.browse(browseLevel, activeCategory),
     enabled: tab === 'all',
     staleTime: 2 * 60 * 1000,
   });
@@ -303,6 +308,21 @@ export function DictionaryPage() {
           {t.dictionary.tabAll}
         </button>
       </div>
+
+      {/* Level selector (browse tab) */}
+      {tab === 'all' && (
+        <div className={styles.levelSelector}>
+          {ALL_LEVELS.map((lvl) => (
+            <button
+              key={lvl}
+              className={`${styles.levelChip} ${browseLevel === lvl ? styles.levelChipActive ?? '' : ''}`}
+              onClick={() => handleLevelChange(lvl)}
+            >
+              {lvl}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Category chips (browse tab) */}
       {tab === 'all' && categories.length > 0 && (
