@@ -1,6 +1,5 @@
-import type { NewWord } from './index.js';
 
-export const wordsB2Extra: Omit<NewWord, 'id' | 'createdAt'>[] = [
+export const wordsB2Extra = [
   // ── Verbes B2 (suite) ──
   { french: 'abolir', translation: 'отменять, упразднять', translationEn: 'to abolish', level: 'B2', category: 'verbs', partOfSpeech: 'verb', gender: null, frequencyRank: 1400, exampleFr: 'La peine de mort a été abolie en France en 1981.', exampleRu: 'Смертная казнь была отменена во Франции в 1981 году.', exampleEn: 'The death penalty was abolished in France in 1981.' },
   { french: 'abroger', translation: 'аннулировать, отменять (закон)', translationEn: 'to repeal, to abrogate', level: 'B2', category: 'verbs', partOfSpeech: 'verb', gender: null, frequencyRank: 1401, exampleFr: 'Cette loi a été abrogée par le parlement.', exampleRu: 'Этот закон был аннулирован парламентом.', exampleEn: 'This law was repealed by parliament.' },

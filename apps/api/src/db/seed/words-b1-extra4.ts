@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra4: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra4 = [
   // science_b1
   { french: 'la recherche', translation: 'исследование, поиск', translationEn: 'research', category: 'science_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 300, exampleFr: 'La recherche médicale progresse rapidement.', exampleRu: 'Медицинские исследования быстро продвигаются.', exampleEn: 'Medical research is progressing rapidly.' },
   { french: 'l\'expérience', translation: 'эксперимент, опыт', translationEn: 'experiment, experience', category: 'science_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 290, exampleFr: 'Le scientifique a réalisé une expérience en laboratoire.', exampleRu: 'Учёный провёл эксперимент в лаборатoire.', exampleEn: 'The scientist carried out an experiment in the laboratory.' },

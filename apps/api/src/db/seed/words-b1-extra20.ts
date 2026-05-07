@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra20: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra20 = [
   // adverbs_b1
   { french: 'notamment', translation: 'в частности, особенно', translationEn: 'in particular, notably', category: 'adverbs_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 290, exampleFr: 'Il apprécie la cuisine française, notamment la gastronomie.', exampleRu: 'Он ценит французскую кухню, в частности гастрономию.', exampleEn: 'He appreciates French cuisine, notably the gastronomy.' },
   { french: 'globalement', translation: 'в целом, в общем', translationEn: 'overall, broadly speaking', category: 'adverbs_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 360, exampleFr: 'Globalement, les résultats sont satisfaisants.', exampleRu: 'В целом результаты удовлетворительные.', exampleEn: 'Overall, the results are satisfactory.' },

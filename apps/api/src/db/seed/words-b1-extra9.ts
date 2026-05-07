@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra9: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra9 = [
   // travel_advanced
   { french: 'l\'itinéraire', translation: 'маршрут, план путешествия', translationEn: 'itinerary, route', category: 'travel_advanced', partOfSpeech: 'noun', gender: 'm', frequencyRank: 440, exampleFr: 'Notre itinéraire comprend trois villes.', exampleRu: 'Наш маршрут включает три города.', exampleEn: 'Our itinerary includes three cities.' },
   { french: 'le circuit', translation: 'маршрут, экскурсионный тур', translationEn: 'tour, circuit', category: 'travel_advanced', partOfSpeech: 'noun', gender: 'm', frequencyRank: 410, exampleFr: 'Ils ont fait un circuit en Andalousie.', exampleRu: 'Они совершили тур по Андалусии.', exampleEn: 'They did a tour of Andalusia.' },

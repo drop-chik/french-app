@@ -1,6 +1,5 @@
-import type { NewWord } from './index.js';
 
-export const wordsB2: Omit<NewWord, 'id' | 'createdAt'>[] = [
+export const wordsB2 = [
   // ── Verbes de haute fréquence B2 ──
   { french: 'souligner', translation: 'подчёркивать', translationEn: 'to underline, to emphasize', level: 'B2', category: 'verbs', partOfSpeech: 'verb', gender: null, frequencyRank: 1201, exampleFr: 'Il faut souligner l\'importance de ce problème.', exampleRu: 'Нужно подчеркнуть важность этой проблемы.', exampleEn: 'We must underline the importance of this issue.' },
   { french: 'renoncer', translation: 'отказываться', translationEn: 'to give up, to renounce', level: 'B2', category: 'verbs', partOfSpeech: 'verb', gender: null, frequencyRank: 1202, exampleFr: 'Elle a renoncé à son projet.', exampleRu: 'Она отказалась от своего проекта.', exampleEn: 'She gave up her project.' },

@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra19: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra19 = [
   // media_news_b1
   { french: 'le reportage', translation: 'репортаж, очерк', translationEn: 'report, documentary', category: 'media_news_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 390, exampleFr: 'Ce reportage sur la pauvreté a ému les téléspectateurs.', exampleRu: 'Этот репортаж о бедности растрогал зрителей.', exampleEn: 'This report on poverty moved viewers.' },
   { french: 'l\'émission', translation: 'передача, программа', translationEn: 'programme, broadcast', category: 'media_news_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 340, exampleFr: 'Cette émission de radio passe chaque matin à 8h.', exampleRu: 'Эта радиопередача выходит каждое утро в 8 часов.', exampleEn: 'This radio programme airs every morning at 8am.' },

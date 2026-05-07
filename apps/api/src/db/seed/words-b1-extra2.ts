@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra2: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra2 = [
   // economy_b1
   { french: 'le revenu', translation: 'доход', translationEn: 'income, revenue', category: 'economy_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 350, exampleFr: 'Son revenu mensuel est de 2 000 euros.', exampleRu: 'Его ежемесячный доход составляет 2 000 евро.', exampleEn: 'His monthly income is 2,000 euros.' },
   { french: 'la dette', translation: 'долг, задолженность', translationEn: 'debt', category: 'economy_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 360, exampleFr: 'La dette publique a augmenté.', exampleRu: 'Государственный долг вырос.', exampleEn: 'The public debt has increased.' },

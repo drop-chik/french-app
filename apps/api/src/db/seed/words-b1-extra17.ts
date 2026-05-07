@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra17: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra17 = [
   // phrases_b1_extra
   { french: 'avoir tendance à', translation: 'иметь склонность к, иметь тенденцию', translationEn: 'to tend to, to have a tendency to', category: 'phrases_b1_extra', partOfSpeech: 'verb', gender: null, frequencyRank: 340, exampleFr: 'Il a tendance à exagérer.', exampleRu: 'Он склонен преувеличивать.', exampleEn: 'He tends to exaggerate.' },
   { french: 'dans la mesure où', translation: 'поскольку, в той мере, в которой', translationEn: 'insofar as, to the extent that', category: 'phrases_b1_extra', partOfSpeech: 'noun', gender: 'f', frequencyRank: 380, exampleFr: 'Dans la mesure où c\'est possible, je vous aiderai.', exampleRu: 'Поскольку это возможно, я вам помогу.', exampleEn: 'Insofar as it is possible, I will help you.' },

@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra18: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra18 = [
   // relationships_b1
   { french: 'la rupture', translation: 'разрыв, расставание', translationEn: 'breakup, split', category: 'relationships_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 410, exampleFr: 'Leur rupture a été douloureuse pour les deux.', exampleRu: 'Их расставание было болезненным для обоих.', exampleEn: 'Their breakup was painful for both of them.' },
   { french: 'le divorce', translation: 'развод', translationEn: 'divorce', category: 'relationships_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 380, exampleFr: 'Le divorce a été prononcé après six mois de procédure.', exampleRu: 'Развод был оформлен после шести месяцев процедуры.', exampleEn: 'The divorce was granted after six months of proceedings.' },

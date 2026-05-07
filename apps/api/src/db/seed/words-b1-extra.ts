@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra = [
   // connectors_b1
   { french: 'd\'ailleurs', translation: 'кстати, впрочем', translationEn: 'besides, moreover', category: 'connectors_b1', partOfSpeech: 'adverb', gender: null, frequencyRank: 350, exampleFr: 'D\'ailleurs, je voulais vous parler de ce sujet.', exampleRu: 'Кстати, я хотел поговорить с вами на эту тему.', exampleEn: 'Besides, I wanted to talk to you about this subject.' },
   { french: 'quant à', translation: 'что касается', translationEn: 'as for, regarding', category: 'connectors_b1', partOfSpeech: 'expression', gender: null, frequencyRank: 360, exampleFr: 'Quant à moi, je préfère rester ici.', exampleRu: 'Что касается меня, я предпочитаю остаться здесь.', exampleEn: 'As for me, I prefer to stay here.' },

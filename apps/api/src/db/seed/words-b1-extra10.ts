@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra10: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra10 = [
   // communication_b1
   { french: 'le discours', translation: 'речь, выступление', translationEn: 'speech, discourse', category: 'communication_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 340, exampleFr: 'Le président a prononcé un discours à la nation.', exampleRu: 'Президент произнёс речь к нации.', exampleEn: 'The president gave a speech to the nation.' },
   { french: 'l\'argument', translation: 'аргумент, довод', translationEn: 'argument', category: 'communication_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 380, exampleFr: 'Son argument était très convaincant.', exampleRu: 'Его аргумент был очень убедительным.', exampleEn: 'His argument was very convincing.' },

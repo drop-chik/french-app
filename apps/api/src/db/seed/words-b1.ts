@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1 = [
   // verbs_b1
   { french: 'gérer', translation: 'управлять, руководить', translationEn: 'to manage', category: 'verbs_b1', partOfSpeech: 'verb', gender: null, frequencyRank: 320, exampleFr: 'Elle gère une équipe de vingt personnes.', exampleRu: 'Она руководит командой из двадцати человек.', exampleEn: 'She manages a team of twenty people.' },
   { french: 'organiser', translation: 'организовывать', translationEn: 'to organise', category: 'verbs_b1', partOfSpeech: 'verb', gender: null, frequencyRank: 340, exampleFr: 'Il organise une réunion pour demain.', exampleRu: 'Он организует встречу на завтра.', exampleEn: 'He is organising a meeting for tomorrow.' },

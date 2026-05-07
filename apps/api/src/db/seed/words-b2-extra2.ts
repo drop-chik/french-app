@@ -1,6 +1,5 @@
-import type { NewWord } from './index.js';
 
-export const wordsB2Extra2: Omit<NewWord, 'id' | 'createdAt'>[] = [
+export const wordsB2Extra2 = [
   // ── Sciences et recherche ──
   { french: 'l\'expérience', translation: 'опыт, эксперимент', translationEn: 'experiment, experience', level: 'B2', category: 'science', partOfSpeech: 'noun', gender: 'f', frequencyRank: 1600, exampleFr: 'Les scientifiques ont mené une expérience concluante.', exampleRu: 'Учёные провели убедительный эксперимент.', exampleEn: 'The scientists conducted a conclusive experiment.' },
   { french: 'la recherche fondamentale', translation: 'фундаментальная наука', translationEn: 'fundamental research, basic research', level: 'B2', category: 'science', partOfSpeech: 'noun', gender: 'f', frequencyRank: 1601, exampleFr: 'La recherche fondamentale prépare les avancées de demain.', exampleRu: 'Фундаментальная наука готовит прогресс будущего.', exampleEn: 'Fundamental research prepares the advances of tomorrow.' },

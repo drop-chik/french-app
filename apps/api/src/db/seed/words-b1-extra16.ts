@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra16: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra16 = [
   // nouns_b1_extra
   { french: 'l\'aspect', translation: 'аспект, сторона', translationEn: 'aspect, side', category: 'nouns_b1_extra', partOfSpeech: 'noun', gender: 'm', frequencyRank: 310, exampleFr: 'Il faut analyser tous les aspects du problème.', exampleRu: 'Нужно проанализировать все аспекты проблемы.', exampleEn: 'All aspects of the problem must be analysed.' },
   { french: 'le facteur', translation: 'фактор, обстоятельство', translationEn: 'factor', category: 'nouns_b1_extra', partOfSpeech: 'noun', gender: 'm', frequencyRank: 320, exampleFr: 'La motivation est un facteur clé du succès.', exampleRu: 'Мотивация — ключевой фактор успеха.', exampleEn: 'Motivation is a key factor of success.' },

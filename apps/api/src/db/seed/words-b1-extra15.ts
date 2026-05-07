@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra15: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra15 = [
   // verbs_b1_extra
   { french: 'approcher', translation: 'приближаться, подходить', translationEn: 'to approach, to get closer', category: 'verbs_b1_extra', partOfSpeech: 'verb', gender: null, frequencyRank: 340, exampleFr: 'La date limite approche rapidement.', exampleRu: 'Крайний срок быстро приближается.', exampleEn: 'The deadline is approaching rapidly.' },
   { french: 'atteindre', translation: 'достигать, добираться', translationEn: 'to reach, to achieve', category: 'verbs_b1_extra', partOfSpeech: 'verb', gender: null, frequencyRank: 320, exampleFr: 'Il a atteint son objectif en un an.', exampleRu: 'Он достиг своей цели за год.', exampleEn: 'He reached his goal in one year.' },

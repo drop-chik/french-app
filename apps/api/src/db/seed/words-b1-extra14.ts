@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra14: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra14 = [
   // sports_leisure_b1
   { french: 'l\'athlétisme', translation: 'лёгкая атлетика', translationEn: 'athletics', category: 'sports_leisure_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 440, exampleFr: 'Elle pratique l\'athlétisme depuis l\'enfance.', exampleRu: 'Она занимается лёгкой атлетикой с детства.', exampleEn: 'She has practised athletics since childhood.' },
   { french: 'le cyclisme', translation: 'велоспорт, велосипедный спорт', translationEn: 'cycling', category: 'sports_leisure_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 440, exampleFr: 'Le cyclisme est un sport populaire en France.', exampleRu: 'Велоспорт — популярный вид спорта во Франции.', exampleEn: 'Cycling is a popular sport in France.' },

@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra6: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra6 = [
   // society_b1
   { french: 'l\'inégalité', translation: 'неравенство', translationEn: 'inequality', category: 'society_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 390, exampleFr: 'Les inégalités sociales sont un problème majeur.', exampleRu: 'Социальное неравенство — серьёзная проблема.', exampleEn: 'Social inequalities are a major problem.' },
   { french: 'la pauvreté', translation: 'бедность', translationEn: 'poverty', category: 'society_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 380, exampleFr: 'La pauvreté touche des millions de personnes.', exampleRu: 'Бедность затрагивает миллионы людей.', exampleEn: 'Poverty affects millions of people.' },

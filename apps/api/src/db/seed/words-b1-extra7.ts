@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra7: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra7 = [
   // arts_literature
   { french: 'le roman', translation: 'роман (книга)', translationEn: 'novel', category: 'arts_literature', partOfSpeech: 'noun', gender: 'm', frequencyRank: 320, exampleFr: 'Elle a écrit un roman policier.', exampleRu: 'Она написала детективный роман.', exampleEn: 'She wrote a detective novel.' },
   { french: 'le personnage', translation: 'персонаж, герой', translationEn: 'character', category: 'arts_literature', partOfSpeech: 'noun', gender: 'm', frequencyRank: 330, exampleFr: 'Le personnage principal est très attachant.', exampleRu: 'Главный персонаж очень привлекательный.', exampleEn: 'The main character is very endearing.' },

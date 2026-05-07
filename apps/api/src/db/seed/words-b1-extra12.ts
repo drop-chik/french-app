@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra12: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra12 = [
   // food_advanced
   { french: 'la gastronomie', translation: 'гастрономия', translationEn: 'gastronomy', category: 'food_advanced', partOfSpeech: 'noun', gender: 'f', frequencyRank: 430, exampleFr: 'La gastronomie française est reconnue dans le monde entier.', exampleRu: 'Французская гастрономия признана во всём мире.', exampleEn: 'French gastronomy is recognised worldwide.' },
   { french: 'la recette', translation: 'рецепт', translationEn: 'recipe', category: 'food_advanced', partOfSpeech: 'noun', gender: 'f', frequencyRank: 340, exampleFr: 'Il suit la recette de sa grand-mère.', exampleRu: 'Он следует рецепту своей бабушки.', exampleEn: 'He follows his grandmother\'s recipe.' },

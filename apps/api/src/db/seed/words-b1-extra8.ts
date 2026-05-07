@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra8: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra8 = [
   // nature_advanced
   { french: 'la biodiversité', translation: 'биоразнообразие', translationEn: 'biodiversity', category: 'nature_advanced', partOfSpeech: 'noun', gender: 'f', frequencyRank: 430, exampleFr: 'La biodiversité est menacée par la pollution.', exampleRu: 'Биоразнообразие находится под угрозой из-за загрязнения.', exampleEn: 'Biodiversity is threatened by pollution.' },
   { french: 'l\'écosystème', translation: 'экосистема', translationEn: 'ecosystem', category: 'nature_advanced', partOfSpeech: 'noun', gender: 'm', frequencyRank: 440, exampleFr: 'L\'écosystème marin est fragile.', exampleRu: 'Морская экосистема хрупкая.', exampleEn: 'The marine ecosystem is fragile.' },

@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra5: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra5 = [
   // politics_advanced
   { french: 'le parlement', translation: 'парламент', translationEn: 'parliament', category: 'politics_advanced', partOfSpeech: 'noun', gender: 'm', frequencyRank: 350, exampleFr: 'Le parlement a voté une nouvelle loi.', exampleRu: 'Парламент проголосовал за новый закон.', exampleEn: 'Parliament voted for a new law.' },
   { french: 'le premier ministre', translation: 'премьер-министр', translationEn: 'prime minister', category: 'politics_advanced', partOfSpeech: 'noun', gender: 'm', frequencyRank: 320, exampleFr: 'Le premier ministre a annoncé de nouvelles mesures.', exampleRu: 'Премьер-министр объявил о новых мерах.', exampleEn: 'The prime minister announced new measures.' },

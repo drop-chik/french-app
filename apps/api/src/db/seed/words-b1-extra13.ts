@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra13: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra13 = [
   // emotions_b1
   { french: 'l\'enthousiasme', translation: 'энтузиазм, воодушевление', translationEn: 'enthusiasm', category: 'emotions_b1', partOfSpeech: 'noun', gender: 'm', frequencyRank: 400, exampleFr: 'Elle a abordé ce projet avec beaucoup d\'enthousiasme.', exampleRu: 'Она подошла к этому проекту с большим энтузиазмом.', exampleEn: 'She approached this project with great enthusiasm.' },
   { french: 'la fierté', translation: 'гордость', translationEn: 'pride', category: 'emotions_b1', partOfSpeech: 'noun', gender: 'f', frequencyRank: 430, exampleFr: 'Il ressent une grande fierté pour ses enfants.', exampleRu: 'Он испытывает большую гордость за своих детей.', exampleEn: 'He feels great pride for his children.' },

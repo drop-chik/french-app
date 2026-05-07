@@ -1,6 +1,5 @@
-import type { NewWord } from './index.js';
 
-export const wordsB2Extra3: Omit<NewWord, 'id' | 'createdAt'>[] = [
+export const wordsB2Extra3 = [
   // ── Verbes B2 niveau soutenu ──
   { french: 'aborder', translation: 'затрагивать, подходить, причаливать', translationEn: 'to approach, to broach, to address', level: 'B2', category: 'verbs', partOfSpeech: 'verb', gender: null, frequencyRank: 1700, exampleFr: 'Nous allons aborder un sujet délicat.', exampleRu: 'Мы собираемся затронуть деликатную тему.', exampleEn: 'We are going to address a sensitive topic.' },
   { french: 'accroître', translation: 'увеличивать, наращивать', translationEn: 'to increase, to augment, to grow', level: 'B2', category: 'verbs', partOfSpeech: 'verb', gender: null, frequencyRank: 1701, exampleFr: 'L\'objectif est d\'accroître la productivité.', exampleRu: 'Цель — увеличить производительность.', exampleEn: 'The goal is to increase productivity.' },

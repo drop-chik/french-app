@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra11: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra11 = [
   // personality_b1
   { french: 'ambitieux', translation: 'амбициозный, честолюбивый', translationEn: 'ambitious', category: 'personality_b1', partOfSpeech: 'adjective', gender: null, frequencyRank: 440, exampleFr: 'Elle est très ambitieuse dans sa carrière.', exampleRu: 'Она очень амбициозна в своей карьере.', exampleEn: 'She is very ambitious in her career.' },
   { french: 'courageux', translation: 'смелый, мужественный', translationEn: 'courageous, brave', category: 'personality_b1', partOfSpeech: 'adjective', gender: null, frequencyRank: 430, exampleFr: 'Il a été courageux face au danger.', exampleRu: 'Он проявил мужество перед лицом опасности.', exampleEn: 'He was courageous in the face of danger.' },

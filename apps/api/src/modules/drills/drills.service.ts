@@ -107,15 +107,11 @@ export async function getDrillSession(
           title: lang === 'en' ? (topic.titleEn ?? topic.titleRu) : topic.titleRu,
           status: progress?.status ?? 'not_started',
         };
-        console.log('[drill] grammarLink resolved:', JSON.stringify(grammarLink));
-      } else {
-        console.log('[drill] grammar topic NOT FOUND for slug:', grammarSlug);
       }
-    } catch (err) {
-      console.error('[drill] grammarLink error:', err);
+    } catch {
+      // grammar link is non-critical — don't break the session if it fails
     }
   }
-  console.log('[drill] getDrillSession result grammarLink:', grammarLink);
 
   return {
     id: set.id,

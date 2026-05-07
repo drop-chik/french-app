@@ -1,6 +1,5 @@
-import { NewWord } from '../schema.js'
 
-export const wordsB1Extra3: Omit<NewWord, 'id' | 'createdAt' | 'isActive' | 'audioUrl' | 'imageUrl' | 'imageGenerating'>[] = [
+export const wordsB1Extra3 = [
   // health_advanced
   { french: 'le diagnostic', translation: 'диагноз, диагностика', translationEn: 'diagnosis', category: 'health_advanced', partOfSpeech: 'noun', gender: 'm', frequencyRank: 430, exampleFr: 'Le médecin a posé un diagnostic précis.', exampleRu: 'Врач поставил точный диагноз.', exampleEn: 'The doctor made a precise diagnosis.' },
   { french: 'le traitement', translation: 'лечение, обработка', translationEn: 'treatment', category: 'health_advanced', partOfSpeech: 'noun', gender: 'm', frequencyRank: 350, exampleFr: 'Il suit un traitement médical depuis un mois.', exampleRu: 'Он проходит курс лечения уже месяц.', exampleEn: 'He has been following a medical treatment for a month.' },
