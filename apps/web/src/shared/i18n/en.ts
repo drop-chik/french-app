@@ -40,6 +40,7 @@ export const en: Translations = {
     streakActive: '🔥 {n} days in a row',
     streakDone: '✓ Done for today',
     errorHint: 'Failed to load data. Try refreshing the page.',
+    allLevelsProgress: 'Progress by level',
   },
   profile: {
     title: 'Profile',
@@ -313,6 +314,11 @@ export const en: Translations = {
     noWords: 'No words in this group',
     modalClose: 'Close',
     practiceGroup: 'Practice',
+    tabMine: 'My words',
+    tabAll: 'All words',
+    categoryAll: 'All topics',
+    browseEmpty: 'No words match selected filters',
+    notStudied: 'Not studied',
     status: {
       new: 'New',
       learning: 'Learning',

@@ -41,6 +41,7 @@ export const ru: DeepRecord = {
     streakActive: '🔥 {n} дней подряд',
     streakDone: '✓ Сегодня выполнено',
     errorHint: 'Не удалось загрузить данные. Попробуйте обновить страницу.',
+    allLevelsProgress: 'Прогресс по уровням',
   },
   profile: {
     title: 'Профиль',
@@ -314,6 +315,11 @@ export const ru: DeepRecord = {
     noWords: 'Нет слов в этой группе',
     modalClose: 'Закрыть',
     practiceGroup: 'Повторить',
+    tabMine: 'Мои слова',
+    tabAll: 'Все слова',
+    categoryAll: 'Все темы',
+    browseEmpty: 'Нет слов по выбранным фильтрам',
+    notStudied: 'Не изучалось',
     status: {
       new: 'Новые',
       learning: 'Учатся',

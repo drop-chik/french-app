@@ -9,6 +9,7 @@ import {
   getStreak,
   repairStreak,
   getHomeData,
+  getLevelsProgress,
 } from './profile.service.js';
 
 const profileRoutes: FastifyPluginAsync = async (fastify) => {
@@ -131,6 +132,12 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     const lang = (user.uiLanguage === 'en' ? 'en' : 'ru') as 'ru' | 'en';
     const data = await getHomeData(fastify.db, userId, user.level, lang);
     reply.send(data);
+  });
+  // GET /profile/levels-progress — mastered/total words per level A1–B2
+  fastify.get('/levels-progress', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { userId } = request.user;
+    const levels = await getLevelsProgress(fastify.db, userId);
+    reply.send({ levels });
   });
 };
 

@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { eq, count, sql, gte, and, asc } from 'drizzle-orm';
+import { eq, count, sql, gte, and, asc, inArray } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, words, wordProgress, grammarTopics, grammarProgress, listeningExercises, listeningProgress, conversationSessions } from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
@@ -479,4 +479,45 @@ async function _getListeningData(db: DB, userId: string, level: LanguageLevel) {
     completed,
     next: nextExercise ? { id: nextExercise.id, title: nextExercise.title, durationSec: nextExercise.durationSec } : null,
   };
+}
+
+export async function getLevelsProgress(db: DB, userId: string) {
+  const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+
+  const [totals, mastered] = await Promise.all([
+    db
+      .select({ level: words.level, cnt: count() })
+      .from(words)
+      .where(and(eq(words.isActive, true), inArray(words.level, [...LEVELS])))
+      .groupBy(words.level),
+    db
+      .select({ level: words.level, cnt: count() })
+      .from(wordProgress)
+      .innerJoin(words, eq(wordProgress.wordId, words.id))
+      .where(
+        and(
+          eq(wordProgress.userId, userId),
+          eq(wordProgress.status, 'mastered'),
+          inArray(words.level, [...LEVELS]),
+        ),
+      )
+      .groupBy(words.level),
+  ]);
+
+  const totalMap: Record<string, number> = {};
+  for (const r of totals) totalMap[r.level] = Number(r.cnt);
+
+  const masteredMap: Record<string, number> = {};
+  for (const r of mastered) masteredMap[r.level] = Number(r.cnt);
+
+  return LEVELS.map((level) => {
+    const total = totalMap[level] ?? 0;
+    const m = masteredMap[level] ?? 0;
+    return {
+      level,
+      masteredWords: m,
+      totalWords: total,
+      percent: total > 0 ? Math.round((m / total) * 100) : 0,
+    };
+  });
 }

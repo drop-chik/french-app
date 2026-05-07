@@ -31,6 +31,23 @@ function getLang(): string {
   return useI18n.getState().lang;
 }
 
+export interface BrowseWord {
+  id: string;
+  french: string;
+  translation: string;
+  level: string;
+  category: string;
+  partOfSpeech: string;
+  exampleFr: string | null;
+  exampleRu: string | null;
+  progress: { status: string } | null;
+}
+
+export interface WordCategory {
+  name: string;
+  count: number;
+}
+
 export const wordsApi = {
   getSession: () =>
     apiRequest<{ words: WordData[]; total: number }>(`/words/session?lang=${getLang()}`),
@@ -51,4 +68,14 @@ export const wordsApi = {
     apiRequest<{ imageUrl: string | null; generating: boolean }>(`/words/${wordId}/image`, {
       method: 'POST',
     }),
+
+  getCategories: (level: string) =>
+    apiRequest<{ categories: WordCategory[] }>(`/words/categories?level=${level}`),
+
+  browse: (level: string, category: string | null, offset = 0, limit = 100) => {
+    const cat = category ? `&category=${encodeURIComponent(category)}` : '';
+    return apiRequest<{ words: BrowseWord[]; total: number }>(
+      `/words/browse?level=${level}&lang=${getLang()}${cat}&offset=${offset}&limit=${limit}`,
+    );
+  },
 };

@@ -6,6 +6,8 @@ import {
   getDictionary,
   getDistractors,
   requestWordImage,
+  getCategories,
+  browseWords,
 } from './words.service.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
@@ -93,6 +95,42 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
         lang,
       );
       reply.send({ distractors });
+    },
+  );
+
+  // GET /words/categories?level=B2 — distinct categories with counts for a level
+  fastify.get(
+    '/categories',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const query = request.query as Record<string, unknown>;
+      const user = await fastify.db.query.users.findFirst({
+        where: (u, { eq }) => eq(u.id, request.user.userId),
+        columns: { level: true },
+      });
+      const level = (String(query.level ?? user?.level ?? 'B2')) as LanguageLevel;
+      const categories = await getCategories(fastify.db, level);
+      reply.send({ categories });
+    },
+  );
+
+  // GET /words/browse?level=B2&category=&lang=ru&offset=0&limit=100
+  fastify.get(
+    '/browse',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const query = request.query as Record<string, unknown>;
+      const lang = parseLang(query);
+      const user = await fastify.db.query.users.findFirst({
+        where: (u, { eq }) => eq(u.id, request.user.userId),
+        columns: { level: true },
+      });
+      const level = (String(query.level ?? user?.level ?? 'B2')) as LanguageLevel;
+      const category = query.category ? String(query.category) : null;
+      const offset = Math.max(0, parseInt(String(query.offset ?? '0'), 10) || 0);
+      const limit = Math.min(500, Math.max(1, parseInt(String(query.limit ?? '100'), 10) || 100));
+      const result = await browseWords(fastify.db, request.user.userId, level, category, lang, limit, offset);
+      reply.send(result);
     },
   );
 

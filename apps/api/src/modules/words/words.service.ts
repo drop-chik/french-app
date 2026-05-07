@@ -1,4 +1,4 @@
-import { eq, and, lte, inArray, sql, or, isNull, asc, isNotNull } from 'drizzle-orm';
+import { eq, and, lte, inArray, sql, or, isNull, asc, isNotNull, count } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { words, wordProgress } from '../../db/schema/index.js';
 import { calculateNextReview, getStatus, createCard } from '@french-app/srs-engine';
@@ -237,6 +237,55 @@ export async function getDistractors(
     .filter((w) => w.id !== wordId)
     .slice(0, count)
     .map((w) => normalizeWord(w, lang));
+}
+
+// Get distinct categories for a given level with word counts
+export async function getCategories(db: DB, level: LanguageLevel) {
+  const rows = await db
+    .select({ category: words.category, cnt: count() })
+    .from(words)
+    .where(and(eq(words.level, level), eq(words.isActive, true)))
+    .groupBy(words.category)
+    .orderBy(asc(words.category));
+  return rows.map((r) => ({ name: r.category ?? 'other', count: Number(r.cnt) }));
+}
+
+// Browse all words for a level with optional category filter + user's progress status
+export async function browseWords(
+  db: DB,
+  userId: string,
+  level: LanguageLevel,
+  category: string | null,
+  lang: 'ru' | 'en',
+  limit: number,
+  offset: number,
+) {
+  const baseWhere = category
+    ? and(eq(words.level, level), eq(words.isActive, true), eq(words.category, category))
+    : and(eq(words.level, level), eq(words.isActive, true));
+
+  const [rows, totalRow] = await Promise.all([
+    db
+      .select({ word: words, progress: wordProgress })
+      .from(words)
+      .leftJoin(
+        wordProgress,
+        and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
+      )
+      .where(baseWhere)
+      .orderBy(asc(words.frequencyRank))
+      .limit(limit)
+      .offset(offset),
+    db.select({ total: count() }).from(words).where(baseWhere),
+  ]);
+
+  return {
+    words: rows.map((r) => ({
+      ...normalizeWord(r.word, lang),
+      progress: r.progress ? { status: r.progress.status } : null,
+    })),
+    total: Number(totalRow[0]?.total ?? 0),
+  };
 }
 
 // Request image generation for a word

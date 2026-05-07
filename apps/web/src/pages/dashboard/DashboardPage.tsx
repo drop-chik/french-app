@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { BookOpen, LayoutGrid, Headphones, MessageCircle, Book, CheckCircle, ArrowRight, Dumbbell } from 'lucide-react';
-import { profileApi } from '../../features/profile/api';
+import { profileApi, type LevelProgressData } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './DashboardPage.module.css';
@@ -14,6 +14,12 @@ export function DashboardPage() {
     queryKey: ['home'],
     queryFn: profileApi.getHomeData,
     staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: levelsData } = useQuery({
+    queryKey: ['levels-progress'],
+    queryFn: profileApi.getLevelsProgress,
+    staleTime: 5 * 60 * 1000,
   });
 
   if (isLoading) {
@@ -78,6 +84,18 @@ export function DashboardPage() {
           <span>{t.dashboard.completedListening.replace('{n}', String(lp.completedListening))} / {lp.totalListening}</span>
         </div>
       </div>
+
+      {/* All levels progress */}
+      {levelsData && levelsData.levels.length > 0 && (
+        <div className={styles.levelsCard}>
+          <p className={styles.levelsTitle}>{t.dashboard.allLevelsProgress}</p>
+          <div className={styles.levelsRow}>
+            {levelsData.levels.map((lv) => (
+              <LevelItem key={lv.level} lv={lv} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Today's plan */}
       <section className={styles.section}>
@@ -195,6 +213,29 @@ function PlanCard({
         <span className={styles.cardTitle}>{title}</span>
       </div>
       <div className={styles.cardBody}>{children}</div>
+    </div>
+  );
+}
+
+const LEVEL_COLORS: Record<string, string> = {
+  A1: '#22c55e',
+  A2: '#3b82f6',
+  B1: '#f97316',
+  B2: '#a855f7',
+};
+
+function LevelItem({ lv }: { lv: LevelProgressData }) {
+  const color = LEVEL_COLORS[lv.level] ?? '#6b7280';
+  return (
+    <div className={styles.levelItem}>
+      <div className={styles.levelHeader}>
+        <span className={styles.levelLabel} style={{ color }}>{lv.level}</span>
+        <span className={styles.levelPct}>{lv.percent}%</span>
+      </div>
+      <div className={styles.levelBar}>
+        <div className={styles.levelFill} style={{ width: `${lv.percent}%`, background: color }} />
+      </div>
+      <span className={styles.levelMeta}>{lv.masteredWords} / {lv.totalWords}</span>
     </div>
   );
 }

@@ -61,6 +61,13 @@ export interface HomeData {
   };
 }
 
+export interface LevelProgressData {
+  level: string;
+  masteredWords: number;
+  totalWords: number;
+  percent: number;
+}
+
 export const profileApi = {
   getProfile: () => apiRequest<UserProfile>('/profile'),
 
@@ -95,6 +102,8 @@ export const profileApi = {
     apiRequest<{ ok: boolean; newStreak: number }>('/profile/streak/repair', { method: 'POST' }),
 
   getHomeData: () => apiRequest<HomeData>('/profile/home'),
+
+  getLevelsProgress: () => apiRequest<{ levels: LevelProgressData[] }>('/profile/levels-progress'),
 
   logout: () =>
     apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST' }).catch(() => {
