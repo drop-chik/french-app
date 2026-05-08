@@ -46,6 +46,7 @@ export interface BrowseWord {
 export interface WordCategory {
   name: string;
   count: number;
+  masteredCount: number;
 }
 
 export const wordsApi = {
@@ -72,10 +73,17 @@ export const wordsApi = {
   getCategories: (level: string) =>
     apiRequest<{ categories: WordCategory[] }>(`/words/categories?level=${level}`),
 
-  browse: (level: string, category: string | null, offset = 0, limit = 100) => {
+  browse: (level: string, category: string | null, offset = 0, limit = 100, q?: string) => {
     const cat = category ? `&category=${encodeURIComponent(category)}` : '';
+    const search = q ? `&q=${encodeURIComponent(q)}` : '';
     return apiRequest<{ words: BrowseWord[]; total: number }>(
-      `/words/browse?level=${level}&lang=${getLang()}${cat}&offset=${offset}&limit=${limit}`,
+      `/words/browse?level=${level}&lang=${getLang()}${cat}${search}&offset=${offset}&limit=${limit}`,
     );
   },
+
+  markWord: (wordId: string, action: 'study' | 'mastered') =>
+    apiRequest<{ ok: boolean }>(`/words/${wordId}/mark`, {
+      method: 'POST',
+      body: JSON.stringify({ action }),
+    }),
 };

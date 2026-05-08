@@ -8,6 +8,7 @@ import {
   requestWordImage,
   getCategories,
   browseWords,
+  markWord,
 } from './words.service.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
@@ -98,7 +99,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // GET /words/categories?level=B2 — distinct categories with counts for a level
+  // GET /words/categories?level=B2 — distinct categories with counts + mastered count
   fastify.get(
     '/categories',
     { preHandler: [fastify.authenticate] },
@@ -109,12 +110,12 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
         columns: { level: true },
       });
       const level = (String(query.level ?? user?.level ?? 'B2')) as LanguageLevel;
-      const categories = await getCategories(fastify.db, level);
+      const categories = await getCategories(fastify.db, request.user.userId, level);
       reply.send({ categories });
     },
   );
 
-  // GET /words/browse?level=B2&category=&lang=ru&offset=0&limit=100
+  // GET /words/browse?level=B2&category=&q=&lang=ru&offset=0&limit=100
   fastify.get(
     '/browse',
     { preHandler: [fastify.authenticate] },
@@ -127,10 +128,25 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       });
       const level = (String(query.level ?? user?.level ?? 'B2')) as LanguageLevel;
       const category = query.category ? String(query.category) : null;
+      const q = query.q ? String(query.q).trim() : null;
       const offset = Math.max(0, parseInt(String(query.offset ?? '0'), 10) || 0);
       const limit = Math.min(500, Math.max(1, parseInt(String(query.limit ?? '100'), 10) || 100));
-      const result = await browseWords(fastify.db, request.user.userId, level, category, lang, limit, offset);
+      const result = await browseWords(fastify.db, request.user.userId, level, category, lang, limit, offset, q);
       reply.send(result);
+    },
+  );
+
+  // POST /words/:id/mark — manually mark word as study or mastered
+  fastify.post<{ Params: { id: string } }>(
+    '/:id/mark',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const body = request.body as { action?: string };
+      if (body.action !== 'study' && body.action !== 'mastered') {
+        return reply.status(400).send({ error: 'action must be "study" or "mastered"' });
+      }
+      await markWord(fastify.db, request.user.userId, request.params.id, body.action);
+      reply.send({ ok: true });
     },
   );
 

@@ -239,15 +239,27 @@ export async function getDistractors(
     .map((w) => normalizeWord(w, lang));
 }
 
-// Get distinct categories for a given level with word counts
-export async function getCategories(db: DB, level: LanguageLevel) {
+// Get distinct categories for a given level with word counts + mastered count
+export async function getCategories(db: DB, userId: string, level: LanguageLevel) {
   const rows = await db
-    .select({ category: words.category, cnt: count() })
+    .select({
+      category: words.category,
+      cnt: count(),
+      masteredCnt: sql<number>`count(case when ${wordProgress.status} = 'mastered' then 1 end)`,
+    })
     .from(words)
+    .leftJoin(
+      wordProgress,
+      and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
+    )
     .where(and(eq(words.level, level), eq(words.isActive, true)))
     .groupBy(words.category)
     .orderBy(asc(words.category));
-  return rows.map((r) => ({ name: r.category ?? 'other', count: Number(r.cnt) }));
+  return rows.map((r) => ({
+    name: r.category ?? 'other',
+    count: Number(r.cnt),
+    masteredCount: Number(r.masteredCnt),
+  }));
 }
 
 // Browse all words for a level with optional category filter + user's progress status
@@ -259,10 +271,20 @@ export async function browseWords(
   lang: 'ru' | 'en',
   limit: number,
   offset: number,
+  q: string | null = null,
 ) {
-  const baseWhere = category
-    ? and(eq(words.level, level), eq(words.isActive, true), eq(words.category, category))
-    : and(eq(words.level, level), eq(words.isActive, true));
+  const pattern = q ? `%${q.toLowerCase()}%` : null;
+  const baseWhere = and(
+    eq(words.level, level),
+    eq(words.isActive, true),
+    category ? eq(words.category, category) : undefined,
+    pattern
+      ? or(
+          sql`lower(${words.french}) LIKE ${pattern}`,
+          sql`lower(${words.translation}) LIKE ${pattern}`,
+        )
+      : undefined,
+  );
 
   const [rows, totalRow] = await Promise.all([
     db
@@ -286,6 +308,58 @@ export async function browseWords(
     })),
     total: Number(totalRow[0]?.total ?? 0),
   };
+}
+
+// Manually add a word to study queue or mark as mastered
+export async function markWord(
+  db: DB,
+  userId: string,
+  wordId: string,
+  action: 'study' | 'mastered',
+) {
+  const existing = await db.query.wordProgress.findFirst({
+    where: and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)),
+  });
+
+  const now = new Date();
+
+  if (action === 'study') {
+    if (!existing) {
+      await db.insert(wordProgress).values({
+        userId,
+        wordId,
+        status: 'learning',
+        easinessFactor: '2.50',
+        interval: 1,
+        repetitions: 0,
+        nextReview: now,
+        lastReviewed: now,
+        correctCount: 0,
+        incorrectCount: 0,
+      });
+    }
+  } else {
+    const farFuture = new Date(now.getTime() + 365 * 24 * 3_600_000);
+    if (!existing) {
+      await db.insert(wordProgress).values({
+        userId,
+        wordId,
+        status: 'mastered',
+        easinessFactor: '2.50',
+        interval: 365,
+        repetitions: 10,
+        nextReview: farFuture,
+        lastReviewed: now,
+        correctCount: 10,
+        incorrectCount: 0,
+      });
+    } else {
+      await db
+        .update(wordProgress)
+        .set({ status: 'mastered', interval: 365, repetitions: 10, nextReview: farFuture, lastReviewed: now })
+        .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
+    }
+  }
 }
 
 // Request image generation for a word

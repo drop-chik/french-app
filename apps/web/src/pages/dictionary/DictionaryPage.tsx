@@ -1,443 +1,441 @@
-import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Search, ChevronDown, ChevronUp, X, BookOpen, RefreshCw, Star } from 'lucide-react';
-import { wordsApi, type BrowseWord } from '../../features/words/api';
+import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check } from 'lucide-react';
+import { wordsApi, type BrowseWord, type WordCategory } from '../../features/words/api';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
 import styles from './DictionaryPage.module.css';
 
-interface DictWord {
-  id: string;
-  status: string;
-  correctCount: number;
-  incorrectCount: number;
-  interval: number;
-  nextReview: string;
-  word: {
-    id: string;
-    french: string;
-    translation: string;
-    level: string;
-    category: string;
-    exampleFr: string | null;
-    exampleRu: string | null;
-  };
-}
-
-const SECTION_PREVIEW = 8;
-const STATUS_ORDER = ['learning', 'review', 'mastered'] as const;
-const STATUS_META = {
-  learning: { icon: BookOpen,  colorClass: 'learning' },
-  review:   { icon: RefreshCw, colorClass: 'review'   },
-  mastered: { icon: Star,      colorClass: 'mastered' },
-} as const;
-
-function daysUntilReview(nextReview: string): number {
-  const diff = new Date(nextReview).getTime() - Date.now();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
-}
-
-function ReviewBadge({ nextReview, t }: { nextReview: string; t: Translations }) {
-  const days = daysUntilReview(nextReview);
-  if (days <= 0) return <span className={`${styles.reviewBadge} ${styles.reviewBadgeToday}`}>{t.dictionary.reviewToday}</span>;
-  if (days === 1) return <span className={`${styles.reviewBadge} ${styles.reviewBadgeSoon}`}>{t.dictionary.reviewTomorrow}</span>;
-  return <span className={styles.reviewBadge}>{t.dictionary.nextReview.replace('{n}', String(days))}</span>;
-}
-
-function WordRow({ item, t }: { item: DictWord; t: Translations }) {
-  return (
-    <div className={styles.wordRow}>
-      <div className={styles.wordMain}>
-        <span className={styles.wordFrench}>{item.word.french}</span>
-        <span className={styles.wordTranslation}>{item.word.translation}</span>
-      </div>
-      <div className={styles.wordRight}>
-        <span className={styles.wordLevel}>{item.word.level}</span>
-        {item.status !== 'mastered' && (
-          <ReviewBadge nextReview={item.nextReview} t={t} />
-        )}
-      </div>
-      {item.word.exampleFr && (
-        <p className={styles.wordExample}>{item.word.exampleFr}</p>
-      )}
-    </div>
-  );
-}
-
-const BROWSE_STATUS_CLASS: Record<string, string> = {
-  learning: styles.statusLearning ?? '',
-  review:   styles.statusReview ?? '',
-  mastered: styles.statusMastered ?? '',
-};
-
-function BrowseWordRow({ item, t }: { item: BrowseWord; t: Translations }) {
-  const statusLabel = item.progress
-    ? t.dictionary.status[item.progress.status as keyof typeof t.dictionary.status] ?? item.progress.status
-    : t.dictionary.notStudied;
-  const statusClass = item.progress
-    ? (BROWSE_STATUS_CLASS[item.progress.status] ?? '')
-    : (styles.statusNone ?? '');
-
-  return (
-    <div className={styles.wordRow}>
-      <div className={styles.wordMain}>
-        <span className={styles.wordFrench}>{item.french}</span>
-        <span className={styles.wordTranslation}>{item.translation}</span>
-      </div>
-      <div className={styles.wordRight}>
-        <span className={styles.wordLevel}>{item.level}</span>
-        <span className={`${styles.statusBadge} ${statusClass}`}>{statusLabel}</span>
-      </div>
-      {item.exampleFr && (
-        <p className={styles.wordExample}>{item.exampleFr}</p>
-      )}
-    </div>
-  );
-}
-
-interface SectionProps {
-  status: typeof STATUS_ORDER[number];
-  words: DictWord[];
-  t: Translations;
-  defaultOpen: boolean;
-  onPractice: (status: string) => void;
-}
-
-function Section({ status, words, t, defaultOpen, onPractice }: SectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
-  const [modalOpen, setModalOpen] = useState(false);
-  const meta = STATUS_META[status];
-  const Icon = meta.icon;
-  const preview = words.slice(0, SECTION_PREVIEW);
-  const hasMore = words.length > SECTION_PREVIEW;
-
-  return (
-    <>
-      <div className={`${styles.section} ${styles[`section_${meta.colorClass}`] ?? ''}`}>
-        <button className={styles.sectionHeader} onClick={() => setOpen((v) => !v)}>
-          <div className={styles.sectionHeaderLeft}>
-            <span className={`${styles.sectionIcon} ${styles[`sectionIcon_${meta.colorClass}`] ?? ''}`}>
-              <Icon size={16} />
-            </span>
-            <span className={styles.sectionTitle}>{t.dictionary.status[status]}</span>
-            <span className={`${styles.sectionCount} ${styles[`sectionCount_${meta.colorClass}`] ?? ''}`}>
-              {words.length}
-            </span>
-          </div>
-          <div className={styles.sectionHeaderRight}>
-            {words.length > 0 && (
-              <button
-                className={styles.practiceBtn}
-                onClick={(e) => { e.stopPropagation(); onPractice(status); }}
-              >
-                {t.dictionary.practiceGroup}
-              </button>
-            )}
-            {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </div>
-        </button>
-
-        {open && (
-          <div className={styles.sectionBody}>
-            {words.length === 0 ? (
-              <p className={styles.sectionEmpty}>{t.dictionary.noWords}</p>
-            ) : (
-              <>
-                <div className={styles.wordList}>
-                  {preview.map((item) => (
-                    <WordRow key={item.id} item={item} t={t} />
-                  ))}
-                </div>
-                {hasMore && (
-                  <button className={styles.showAllBtn} onClick={() => setModalOpen(true)}>
-                    {t.dictionary.showAll.replace('{n}', String(words.length))}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {modalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setModalOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <span className={styles.modalTitle}>
-                {t.dictionary.status[status]} — {words.length}
-              </span>
-              <button className={styles.modalClose} onClick={() => setModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              {words.map((item) => (
-                <WordRow key={item.id} item={item} t={t} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const ALL_LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+type Level = typeof ALL_LEVELS[number];
+
+const PALETTE = ['#3b82f6', '#f97316', '#22c55e', '#a855f7', '#ec4899', '#14b8a6', '#f59e0b', '#6366f1'];
+function categoryColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+  return PALETTE[Math.abs(h) % PALETTE.length] ?? PALETTE[0]!;
+}
+
+function getCategoryName(name: string, categoryNames: Record<string, string>): string {
+  return categoryNames[name] ?? (name.charAt(0).toUpperCase() + name.slice(1));
+}
+
+function daysUntil(date: string): number {
+  return Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
+}
+
+// ── Status badge ──────────────────────────────────────────────────────────────
+
+interface StatusBadgeProps {
+  status: string | null;
+  nextReview?: string | null;
+  t: Translations;
+}
+
+function StatusBadge({ status, nextReview, t }: StatusBadgeProps) {
+  if (!status) return <span className={`${styles.badge} ${styles.badgeNone}`}>{t.dictionary.notStudied}</span>;
+
+  if (status === 'mastered') return <span className={`${styles.badge} ${styles.badgeMastered}`}><Star size={10} />{t.dictionary.status.mastered}</span>;
+  if (status === 'review') {
+    const days = nextReview ? daysUntil(nextReview) : 0;
+    const label = days <= 0 ? t.dictionary.reviewToday : days === 1 ? t.dictionary.reviewTomorrow : t.dictionary.nextReview.replace('{n}', String(days));
+    return <span className={`${styles.badge} ${styles.badgeReview}`}><RefreshCw size={10} />{label}</span>;
+  }
+  return <span className={`${styles.badge} ${styles.badgeLearning}`}><BookOpen size={10} />{t.dictionary.status.learning}</span>;
+}
+
+// ── Word row with action buttons ──────────────────────────────────────────────
+
+interface WordRowProps {
+  word: BrowseWord;
+  t: Translations;
+  onMark: (id: string, action: 'study' | 'mastered') => void;
+  markingId: string | null;
+}
+
+function WordRow({ word, t, onMark, markingId }: WordRowProps) {
+  const status = word.progress?.status ?? null;
+  const isBusy = markingId === word.id;
+
+  return (
+    <div className={styles.wordRow}>
+      <div className={styles.wordInfo}>
+        <span className={styles.wordFr}>{word.french}</span>
+        <span className={styles.wordRu}>{word.translation}</span>
+        {word.exampleFr && <span className={styles.wordEx}>{word.exampleFr}</span>}
+      </div>
+      <div className={styles.wordActions}>
+        <StatusBadge status={status} nextReview={null} t={t} />
+        {status === null && (
+          <>
+            <button
+              className={`${styles.actionBtn} ${styles.actionBtnStudy}`}
+              onClick={() => onMark(word.id, 'study')}
+              disabled={isBusy}
+              title={t.dictionary.markStudy}
+            >
+              <Plus size={13} />
+            </button>
+            <button
+              className={`${styles.actionBtn} ${styles.actionBtnMastered}`}
+              onClick={() => onMark(word.id, 'mastered')}
+              disabled={isBusy}
+              title={t.dictionary.markMastered}
+            >
+              <Check size={13} />
+            </button>
+          </>
+        )}
+        {status !== null && status !== 'mastered' && (
+          <button
+            className={`${styles.actionBtn} ${styles.actionBtnMastered}`}
+            onClick={() => onMark(word.id, 'mastered')}
+            disabled={isBusy}
+            title={t.dictionary.markMastered}
+          >
+            <Check size={13} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Category card ─────────────────────────────────────────────────────────────
+
+interface CategoryCardProps {
+  cat: WordCategory;
+  color: string;
+  label: string;
+  onClick: () => void;
+}
+
+function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
+  const pct = cat.count > 0 ? Math.round((cat.masteredCount / cat.count) * 100) : 0;
+  return (
+    <button className={styles.catCard} onClick={onClick} style={{ '--cat-color': color } as React.CSSProperties}>
+      <div className={styles.catCardAccent} />
+      <div className={styles.catCardBody}>
+        <div className={styles.catCardTop}>
+          <span className={styles.catCardName}>{label}</span>
+          <ChevronRight size={14} className={styles.catCardArrow} />
+        </div>
+        <span className={styles.catCardCount}>{cat.count} слов</span>
+        <div className={styles.catProgressWrap}>
+          <div className={styles.catProgressBar}>
+            <div className={styles.catProgressFill} style={{ width: `${pct}%`, background: color }} />
+          </div>
+          <span className={styles.catProgressPct}>{pct}%</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ── Drawer (bottom sheet with category word list) ─────────────────────────────
+
+interface DrawerProps {
+  category: WordCategory | null;
+  level: Level;
+  lang: string;
+  t: Translations;
+  onClose: () => void;
+  onMark: (id: string, action: 'study' | 'mastered') => void;
+  markingId: string | null;
+  navigate: ReturnType<typeof useNavigate>;
+}
+
+function Drawer({ category, level, lang, t, onClose, onMark, markingId, navigate }: DrawerProps) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['browse-words', level, category?.name ?? null, lang, ''],
+    queryFn: () => wordsApi.browse(level, category?.name ?? null, 0, 200),
+    enabled: !!category,
+    staleTime: 60_000,
+  });
+
+  const words = data?.words ?? [];
+  const color = category ? categoryColor(category.name) : '#3b82f6';
+
+  // Lock body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  if (!category) return null;
+  const label = t.dictionary.categoryNames?.[category.name] ?? (category.name.charAt(0).toUpperCase() + category.name.slice(1));
+
+  return (
+    <div className={styles.drawerOverlay} onClick={onClose}>
+      <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.drawerHandle} />
+        <div className={styles.drawerHeader} style={{ borderColor: color }}>
+          <div className={styles.drawerHeaderLeft}>
+            <span className={styles.drawerTitle}>{label}</span>
+            <span className={styles.drawerSubtitle}>
+              {t.dictionary.masteredOf
+                .replace('{mastered}', String(category.masteredCount))
+                .replace('{total}', String(category.count))}
+            </span>
+          </div>
+          <div className={styles.drawerHeaderRight}>
+            <button
+              className={styles.drawerPracticeBtn}
+              style={{ background: color }}
+              onClick={() => { onClose(); navigate({ to: '/vocabulary' }); }}
+            >
+              {t.dictionary.drawerPractice}
+            </button>
+            <button className={styles.drawerCloseBtn} onClick={onClose}><X size={18} /></button>
+          </div>
+        </div>
+        <div className={styles.drawerBody}>
+          {isLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
+          {!isLoading && words.length === 0 && <p className={styles.loadingText}>{t.dictionary.noWordsInCategory}</p>}
+          {words.map((w) => (
+            <WordRow key={w.id} word={w} t={t} onMark={onMark} markingId={markingId} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export function DictionaryPage() {
-  const [search, setSearch] = useState('');
-  const [tab, setTab] = useState<'mine' | 'all'>('mine');
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [browseLevel, setBrowseLevel] = useState<string>('B2');
   const { t, lang } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  function handleLevelChange(level: string) {
-    setBrowseLevel(level);
-    setActiveCategory(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [level, setLevel] = useState<Level>('B2');
+  const [searchActive, setSearchActive] = useState(false);
+  const [query, setQuery] = useState('');
+  const [selectedCat, setSelectedCat] = useState<WordCategory | null>(null);
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // ── Queries ────────────────────────────────────────────────────────────────
+
+  const { data: catsData, isLoading: catsLoading } = useQuery({
+    queryKey: ['word-categories', level, lang],
+    queryFn: () => wordsApi.getCategories(level),
+    staleTime: 2 * 60_000,
+  });
+
+  const { data: listData, isLoading: listLoading } = useQuery({
+    queryKey: ['browse-words', level, null, lang, ''],
+    queryFn: () => wordsApi.browse(level, null, 0, 200),
+    enabled: viewMode === 'list',
+    staleTime: 2 * 60_000,
+  });
+
+  const debouncedQuery = useDebounce(query, 280);
+  const { data: searchData, isLoading: searchLoading } = useQuery({
+    queryKey: ['browse-search', level, debouncedQuery, lang],
+    queryFn: () => wordsApi.browse(level, null, 0, 50, debouncedQuery),
+    enabled: searchActive && debouncedQuery.length >= 2,
+    staleTime: 30_000,
+  });
+
+  // ── Mutation ───────────────────────────────────────────────────────────────
+
+  const { mutate: markWordMutate } = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: 'study' | 'mastered' }) =>
+      wordsApi.markWord(id, action),
+    onMutate: ({ id }) => setMarkingId(id),
+    onSettled: (_data, _err, { action }) => {
+      setMarkingId(null);
+      queryClient.invalidateQueries({ queryKey: ['browse-words', level] });
+      queryClient.invalidateQueries({ queryKey: ['browse-search', level] });
+      queryClient.invalidateQueries({ queryKey: ['word-categories', level] });
+      queryClient.invalidateQueries({ queryKey: ['dictionary'] });
+      if (action === 'study') queryClient.invalidateQueries({ queryKey: ['home'] });
+    },
+  });
+
+  const handleMark = useCallback((id: string, action: 'study' | 'mastered') => {
+    markWordMutate({ id, action });
+  }, [markWordMutate]);
+
+  // ── Stats strip ────────────────────────────────────────────────────────────
+
+  const categories = catsData?.categories ?? [];
+  const totalMastered = categories.reduce((s, c) => s + c.masteredCount, 0);
+  const totalWords = categories.reduce((s, c) => s + c.count, 0);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
+  function openSearch() {
+    setSearchActive(true);
+    setTimeout(() => searchRef.current?.focus(), 50);
   }
 
-  // ── "Мои слова" data ──────────────────────────────────────────────────
-  const { data: mineData, isLoading: mineLoading } = useQuery({
-    queryKey: ['dictionary', lang],
-    queryFn: () => wordsApi.getDictionary() as Promise<{ words: DictWord[] }>,
-  });
-
-  const mineWords = (mineData?.words ?? []) as DictWord[];
-
-  const counts = useMemo(() => {
-    const c: Record<typeof STATUS_ORDER[number], number> = { learning: 0, review: 0, mastered: 0 };
-    for (const w of mineWords) {
-      const key = w.status as typeof STATUS_ORDER[number];
-      if (key in c) c[key]++;
-    }
-    return c;
-  }, [mineWords]);
-
-  const grouped = useMemo(() => {
-    const g: Record<typeof STATUS_ORDER[number], DictWord[]> = { learning: [], review: [], mastered: [] };
-    for (const w of mineWords) {
-      const key = w.status as typeof STATUS_ORDER[number];
-      if (key in g) g[key].push(w);
-    }
-    g.review.sort((a, b) => new Date(a.nextReview).getTime() - new Date(b.nextReview).getTime());
-    g.learning.sort((a, b) => new Date(a.nextReview).getTime() - new Date(b.nextReview).getTime());
-    return g;
-  }, [mineWords]);
-
-  // ── "Все слова" data ──────────────────────────────────────────────────
-  const { data: categoriesData } = useQuery({
-    queryKey: ['word-categories', browseLevel],
-    queryFn: () => wordsApi.getCategories(browseLevel),
-    enabled: tab === 'all',
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: browseData, isLoading: browseLoading } = useQuery({
-    queryKey: ['browse-words', browseLevel, activeCategory, lang],
-    queryFn: () => wordsApi.browse(browseLevel, activeCategory),
-    enabled: tab === 'all',
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const categories = categoriesData?.categories ?? [];
-  const browseWords = browseData?.words ?? [];
-
-  // ── Search ────────────────────────────────────────────────────────────
-  const searchResults = useMemo(() => {
-    if (!search.trim()) return null;
-    const q = search.toLowerCase();
-    if (tab === 'mine') {
-      return mineWords.filter(
-        (w) => w.word.french.toLowerCase().includes(q) || w.word.translation.toLowerCase().includes(q),
-      );
-    }
-    return null; // browse search handled separately
-  }, [search, tab, mineWords]);
-
-  const browseSearchResults = useMemo(() => {
-    if (!search.trim() || tab !== 'all') return null;
-    const q = search.toLowerCase();
-    return browseWords.filter(
-      (w) => w.french.toLowerCase().includes(q) || w.translation.toLowerCase().includes(q),
-    );
-  }, [search, tab, browseWords]);
-
-  function handlePractice(status: string) {
-    navigate({ to: '/vocabulary', search: { filter: status } });
+  function closeSearch() {
+    setSearchActive(false);
+    setQuery('');
   }
 
-  const totalStudied = counts.learning + counts.review + counts.mastered;
+  function handleLevelChange(l: Level) {
+    setLevel(l);
+    setSelectedCat(null);
+  }
+
+  const listWords = listData?.words ?? [];
+  const searchWords = searchData?.words ?? [];
+  const showSearch = searchActive && debouncedQuery.length >= 2;
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* ── Header ── */}
       <div className={styles.header}>
-        <h1 className={styles.title}>{t.dictionary.title}</h1>
-        <p className={styles.subtitle}>{t.dictionary.wordsCount.replace('{n}', String(totalStudied))}</p>
-      </div>
-
-      {/* Stat cards */}
-      <div className={styles.statsRow}>
-        {(['learning', 'review', 'mastered'] as const).map((status) => {
-          const Icon = STATUS_META[status].icon;
-          const colorClass = STATUS_META[status].colorClass;
-          return (
-            <div key={status} className={`${styles.statCard} ${styles[`statCard_${colorClass}`] ?? ''}`}>
-              <span className={styles.statIcon}><Icon size={18} /></span>
-              <span className={styles.statValue}>{counts[status]}</span>
-              <span className={styles.statLabel}>{t.dictionary.status[status]}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Tabs */}
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${tab === 'mine' ? styles.tabActive ?? '' : ''}`}
-          onClick={() => setTab('mine')}
-        >
-          {t.dictionary.tabMine}
-        </button>
-        <button
-          className={`${styles.tab} ${tab === 'all' ? styles.tabActive ?? '' : ''}`}
-          onClick={() => setTab('all')}
-        >
-          {t.dictionary.tabAll}
-        </button>
-      </div>
-
-      {/* Level selector (browse tab) */}
-      {tab === 'all' && (
-        <div className={styles.levelSelector}>
-          {ALL_LEVELS.map((lvl) => (
-            <button
-              key={lvl}
-              className={`${styles.levelChip} ${browseLevel === lvl ? styles.levelChipActive ?? '' : ''}`}
-              onClick={() => handleLevelChange(lvl)}
-            >
-              {lvl}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Category chips (browse tab) */}
-      {tab === 'all' && categories.length > 0 && (
-        <div className={styles.categoryFilters}>
-          <button
-            className={`${styles.categoryChip} ${activeCategory === null ? styles.categoryChipActive ?? '' : ''}`}
-            onClick={() => setActiveCategory(null)}
-          >
-            {t.dictionary.categoryAll}
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.name}
-              className={`${styles.categoryChip} ${activeCategory === cat.name ? styles.categoryChipActive ?? '' : ''}`}
-              onClick={() => setActiveCategory(cat.name)}
-            >
-              {cat.name} <span className={styles.chipCount}>{cat.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Search */}
-      <div className={styles.searchWrapper}>
-        <Search size={16} className={styles.searchIcon} />
-        <input
-          className={styles.search}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t.dictionary.searchPlaceholder}
-        />
-        {search && (
-          <button className={styles.searchClear} onClick={() => setSearch('')}>
-            <X size={14} />
-          </button>
-        )}
-      </div>
-
-      {/* ── "Мои слова" tab ── */}
-      {tab === 'mine' && (
-        <>
-          {mineLoading && <p className={styles.loading}>{t.dictionary.loading}</p>}
-
-          {searchResults !== null && (
-            <div className={styles.searchResults}>
-              {searchResults.length === 0 ? (
-                <p className={styles.emptySearch}>{t.dictionary.emptySearch}</p>
-              ) : (
-                <div className={styles.wordList}>
-                  {searchResults.map((item) => (
-                    <WordRow key={item.id} item={item} t={t} />
-                  ))}
-                </div>
-              )}
-            </div>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.title}>
+            {t.dictionary.title}
+          </h1>
+          {totalWords > 0 && (
+            <span className={styles.statsStrip}>
+              <span className={styles.statItem} data-color="mastered">
+                <Star size={12} /> {totalMastered}
+              </span>
+              <span className={styles.statDivider}>/</span>
+              <span className={styles.statTotal}>{totalWords}</span>
+            </span>
           )}
-
-          {!mineLoading && searchResults === null && (
-            mineWords.length === 0 ? (
-              <p className={styles.emptyStart}>{t.dictionary.emptyStart}</p>
-            ) : (
-              <div className={styles.sections}>
-                {STATUS_ORDER.map((status) => (
-                  <Section
-                    key={status}
-                    status={status}
-                    words={grouped[status] ?? []}
-                    t={t}
-                    defaultOpen={status === 'learning' || status === 'review'}
-                    onPractice={handlePractice}
-                  />
-                ))}
-              </div>
-            )
-          )}
-        </>
-      )}
-
-      {/* ── "Все слова" tab ── */}
-      {tab === 'all' && (
-        <>
-          {browseLoading && <p className={styles.loading}>{t.dictionary.loading}</p>}
-
-          {!browseLoading && (
+        </div>
+        <div className={styles.headerRight}>
+          {!searchActive && (
             <>
-              {browseSearchResults !== null ? (
-                <div className={styles.searchResults}>
-                  {browseSearchResults.length === 0 ? (
-                    <p className={styles.emptySearch}>{t.dictionary.emptySearch}</p>
-                  ) : (
-                    <div className={styles.wordList}>
-                      {browseSearchResults.map((item) => (
-                        <BrowseWordRow key={item.id} item={item} t={t} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : browseWords.length === 0 ? (
-                <p className={styles.emptySearch}>{t.dictionary.browseEmpty}</p>
-              ) : (
-                <div className={styles.browseList}>
-                  {browseWords.map((item) => (
-                    <BrowseWordRow key={item.id} item={item} t={t} />
-                  ))}
-                  {(browseData?.total ?? 0) > browseWords.length && (
-                    <p className={styles.browseMore}>
-                      {browseData?.total} {t.dictionary.filterAll}
-                    </p>
-                  )}
-                </div>
-              )}
+              <button
+                className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive ?? '' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title={t.dictionary.gridView}
+              >
+                <LayoutGrid size={17} />
+              </button>
+              <button
+                className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive ?? '' : ''}`}
+                onClick={() => setViewMode('list')}
+                title={t.dictionary.listView}
+              >
+                <List size={17} />
+              </button>
             </>
           )}
+          <button className={styles.iconBtn} onClick={searchActive ? closeSearch : openSearch}>
+            {searchActive ? <X size={17} /> : <Search size={17} />}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Search bar ── */}
+      {searchActive && (
+        <div className={styles.searchBar}>
+          <Search size={15} className={styles.searchIcon} />
+          <input
+            ref={searchRef}
+            className={styles.searchInput}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t.dictionary.searchPlaceholder}
+          />
+          {query && <button className={styles.searchClear} onClick={() => setQuery('')}><X size={13} /></button>}
+        </div>
+      )}
+
+      {/* ── Level pills ── */}
+      {!showSearch && (
+        <div className={styles.levelPills}>
+          {ALL_LEVELS.map((l) => (
+            <button
+              key={l}
+              className={`${styles.levelPill} ${level === l ? styles.levelPillActive ?? '' : ''}`}
+              onClick={() => handleLevelChange(l)}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Search results ── */}
+      {showSearch && (
+        <div className={styles.wordListCard}>
+          {searchLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
+          {!searchLoading && searchWords.length === 0 && (
+            <p className={styles.emptyText}>{t.dictionary.emptySearch}</p>
+          )}
+          {searchWords.map((w) => (
+            <WordRow key={w.id} word={w} t={t} onMark={handleMark} markingId={markingId} />
+          ))}
+        </div>
+      )}
+
+      {/* ── Grid view ── */}
+      {!showSearch && viewMode === 'grid' && (
+        <>
+          {catsLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
+          {!catsLoading && (
+            <div className={styles.catGrid}>
+              {categories.map((cat) => {
+                const color = categoryColor(cat.name);
+                const label = getCategoryName(cat.name, (t.dictionary.categoryNames ?? {}) as Record<string, string>);
+                return (
+                  <CategoryCard
+                    key={cat.name}
+                    cat={cat}
+                    color={color}
+                    label={label}
+                    onClick={() => setSelectedCat(cat)}
+                  />
+                );
+              })}
+            </div>
+          )}
         </>
+      )}
+
+      {/* ── List view ── */}
+      {!showSearch && viewMode === 'list' && (
+        <div className={styles.wordListCard}>
+          {listLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
+          {!listLoading && listWords.map((w) => (
+            <WordRow key={w.id} word={w} t={t} onMark={handleMark} markingId={markingId} />
+          ))}
+          {!listLoading && listWords.length === 0 && (
+            <p className={styles.emptyText}>{t.dictionary.emptySearch}</p>
+          )}
+        </div>
+      )}
+
+      {/* ── Category drawer ── */}
+      {selectedCat && (
+        <Drawer
+          category={selectedCat}
+          level={level}
+          lang={lang}
+          t={t}
+          onClose={() => setSelectedCat(null)}
+          onMark={handleMark}
+          markingId={markingId}
+          navigate={navigate}
+        />
       )}
     </div>
   );
+}
+
+// ── useDebounce ───────────────────────────────────────────────────────────────
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
 }
