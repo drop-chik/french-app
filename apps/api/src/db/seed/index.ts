@@ -116,13 +116,17 @@ type WordInput = {
   exampleEn?: string | null;
 };
 
+function normalizeCategory(cat: string): string {
+  return cat.replace(/(_(extra\d*|a1|a2|b1|b2|c1|c2|basic|detailed|advanced))+$/gi, '');
+}
+
 function buildWordRows(items: WordInput[], level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') {
   return items.map((w) => ({
     french: w.french,
     translation: w.translation,
     translationEn: w.translationEn ?? undefined,
     level,
-    category: w.category,
+    category: normalizeCategory(w.category),
     partOfSpeech: w.partOfSpeech ?? undefined,
     gender: w.gender ?? undefined,
     frequencyRank: w.frequencyRank ?? undefined,
@@ -147,6 +151,7 @@ async function seedWordsBatch(
     await db.insert(words).values(batch).onConflictDoUpdate({
       target: words.french,
       set: {
+        category: sql`excluded.category`,
         translationEn: sql`excluded.translation_en`,
         exampleEn: sql`excluded.example_en`,
       },
