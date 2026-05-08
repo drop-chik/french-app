@@ -20,7 +20,18 @@ function categoryColor(name: string): string {
 }
 
 function getCategoryName(name: string, categoryNames: Record<string, string>): string {
-  return categoryNames[name] ?? (name.charAt(0).toUpperCase() + name.slice(1));
+  // Exact match
+  if (categoryNames[name]) return categoryNames[name]!;
+
+  // Progressive suffix stripping: travel_detailed_b1 → travel_detailed → travel
+  const parts = name.split('_');
+  for (let len = parts.length - 1; len >= 1; len--) {
+    const candidate = parts.slice(0, len).join('_');
+    if (categoryNames[candidate]) return categoryNames[candidate]!;
+  }
+
+  // Final fallback: capitalize each word
+  return parts.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
 function daysUntil(date: string): number {
@@ -166,7 +177,7 @@ function Drawer({ category, level, lang, t, onClose, onMark, markingId, navigate
   }, []);
 
   if (!category) return null;
-  const label = t.dictionary.categoryNames?.[category.name] ?? (category.name.charAt(0).toUpperCase() + category.name.slice(1));
+  const label = getCategoryName(category.name, (t.dictionary.categoryNames ?? {}) as Record<string, string>);
 
   return (
     <div className={styles.drawerOverlay} onClick={onClose}>
