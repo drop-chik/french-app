@@ -116,8 +116,160 @@ type WordInput = {
   exampleEn?: string | null;
 };
 
+const CATEGORY_REMAP: Record<string, string> = {
+  // Basics
+  basics: 'basics', common_phrases: 'basics', daily_phrases: 'basics',
+  question_words: 'basics', question_words_extra: 'basics', greetings_extra: 'basics',
+
+  // Numbers
+  numbers: 'numbers', ordinal_numbers: 'numbers', numbers_stats: 'numbers', quantities: 'numbers',
+
+  // Colors
+  colors: 'colors', colors_extra: 'colors',
+
+  // Time
+  time: 'time', time_extra: 'time', time_vocabulary_b1: 'time', time_expressions: 'time',
+
+  // Family
+  family: 'family', relationships: 'family', relationships_b1: 'family',
+
+  // Body
+  body: 'body', body_extra: 'body', body_detailed: 'body', body_medical_b1: 'body',
+
+  // Health
+  health: 'health', health_basic: 'health', health_advanced: 'health',
+  health_medicine_b1: 'health', medicine: 'health', mental_health: 'health',
+
+  // Emotions & Personality
+  emotions: 'emotions', emotions_b1: 'emotions',
+  personality: 'personality', personality_b1: 'personality',
+
+  // Food
+  food: 'food', food_extra: 'food', food_advanced: 'food',
+  gastronomy: 'food', cooking: 'food', vegetables_fruits: 'food',
+
+  // Home
+  home: 'home', house: 'home', housing: 'home', housing_b1: 'home',
+  housing_detailed: 'home', housing_real_estate_b1: 'home',
+  furniture: 'home', household_tasks: 'home',
+
+  // Clothes
+  clothes: 'clothes', clothes_extra: 'clothes', fashion_shopping_b1: 'clothes',
+
+  // Shopping & Finance
+  shopping: 'shopping',
+  money: 'finance', banking_money: 'finance', finance: 'finance',
+
+  // City & Places
+  city: 'city', urban: 'city', urban_life_b1: 'city',
+  directions: 'city', directions_extra: 'city', places_basic: 'city',
+
+  // Travel
+  travel: 'travel', travel_advanced: 'travel', travel_detailed: 'travel',
+  travel_tourism_b1: 'travel', travel_transport: 'travel',
+
+  // Transport
+  transport: 'transport',
+
+  // Nature
+  nature: 'nature', nature_advanced: 'nature', nature_geography_b1: 'nature',
+
+  // Environment
+  environment: 'environment', environment_b1: 'environment', environment_extra: 'environment',
+
+  // Weather
+  weather: 'weather', weather_a1: 'weather', weather_detailed: 'weather',
+
+  // Animals
+  animals: 'animals',
+
+  // Sports & Leisure
+  sports: 'sports', sports_basic: 'sports', sports_detailed: 'sports',
+  sports_leisure_b1: 'sports', leisure: 'sports',
+
+  // Education
+  school: 'education', classroom: 'education', education: 'education',
+  education_school_b1: 'education', education_advanced: 'education',
+  academic: 'education', academic_writing_b1: 'education',
+
+  // Work & Professions
+  work: 'work', work_advanced: 'work', hr: 'work', professions: 'work',
+
+  // Technology
+  technology: 'technology', technology_b1: 'technology', technology_digital_b1: 'technology',
+
+  // Science
+  science: 'science', science_b1: 'science', science_research_b1: 'science', materials: 'science',
+
+  // Geography
+  geography: 'geography', geography_b1: 'geography',
+  countries: 'geography', nationalities: 'geography',
+
+  // Politics
+  politics: 'politics', politics_advanced: 'politics',
+
+  // Law
+  law: 'law', legal_b1: 'law', legal_civic_b1: 'law',
+
+  // Economy & Business
+  economy: 'economy', economy_b1: 'economy', economy_business_b1: 'economy', economics: 'economy',
+  business: 'business', entrepreneurship: 'business',
+
+  // Society
+  society: 'society', society_b1: 'society', social: 'society',
+  social_issues: 'society', social_issues_b1: 'society', sociology: 'society',
+
+  // Arts & Culture
+  arts: 'arts', arts_culture: 'arts', arts_culture_b1: 'arts',
+  arts_literature: 'arts', literature: 'arts', architecture: 'arts',
+  instruments: 'arts',
+  culture: 'culture', culture_b1: 'culture',
+  history: 'culture', religion: 'culture', celebrations: 'culture',
+
+  // Media & Communication
+  media: 'media', media_news_b1: 'media', media_culture: 'media', media_modern: 'media',
+  communication_b1: 'communication', language: 'communication',
+
+  // Psychology & Philosophy
+  psychology: 'psychology', psychology_b1: 'psychology', psychology_mindset_b1: 'psychology',
+  philosophy: 'philosophy', ethics: 'philosophy',
+
+  // Verbs (all types → one category)
+  verbs: 'verbs', verbs_b1: 'verbs', verbs_b1_extra: 'verbs', verbs_basic: 'verbs',
+  verbs_extra: 'verbs', verbs_advanced: 'verbs', verbs_advanced_b1: 'verbs',
+  verbs_movement: 'verbs', verbs_communication: 'verbs',
+  verbs_opinion: 'verbs', verbs_opinion_extra: 'verbs',
+  reflexive_verbs: 'verbs', reflexive_verbs_basic: 'verbs', reflexive_verbs_extra: 'verbs',
+
+  // Adjectives
+  adjectives: 'adjectives', adjectives_b1: 'adjectives', adjectives_b1_extra: 'adjectives',
+  adjectives_extra: 'adjectives', adjectives_complex: 'adjectives',
+  adjectives_b1_description: 'adjectives',
+
+  // Adverbs
+  adverbs: 'adverbs', adverbs_b1: 'adverbs',
+
+  // Prepositions
+  prepositions: 'prepositions',
+
+  // Connectors
+  connectors: 'connectors', connectors_b1: 'connectors',
+  connectors_discourse_b1: 'connectors', connectors_formal: 'connectors',
+  linking_words: 'connectors',
+
+  // Expressions & Phrases
+  expressions: 'expressions', expressions_b1: 'expressions',
+  expressions_faire: 'expressions', phrases_b1_extra: 'expressions',
+
+  // Descriptions
+  descriptions: 'descriptions', description: 'descriptions',
+
+  // Nouns
+  abstract_nouns: 'nouns', abstract_nouns_b1: 'nouns', nouns_b1_extra: 'nouns',
+};
+
 function normalizeCategory(cat: string): string {
-  return cat.replace(/(_(extra\d*|a1|a2|b1|b2|c1|c2|basic|detailed|advanced))+$/gi, '');
+  return CATEGORY_REMAP[cat] ?? cat;
 }
 
 function buildWordRows(items: WordInput[], level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') {
