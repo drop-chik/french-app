@@ -271,6 +271,30 @@ function normalizeCategory(cat: string): string {
   return CATEGORY_REMAP[cat] ?? cat;
 }
 
+// C1+ words accidentally placed in B2 files — deactivated after seeding
+const DEACTIVATE_WORDS = new Set([
+  'la mécanique quantique',
+  'le nihilisme',
+  'la dialectique',
+  'la métaphysique',
+  "l'ontologie",
+  'la Cour de cassation',
+  'imprescriptible',
+  'se pourvoir en cassation',
+  'la dissonance cognitive',
+  'la phénoménologie',
+  "l'épistémologie",
+  "l'herméneutique",
+  'le solipsisme',
+  'le dogmatisme',
+  'le logocentrisme',
+  'la téléologie',
+  "l'eschatologie",
+  'le déterminisme',
+  "l'empirisme transcendantal",
+  'la scolastique',
+]);
+
 function buildWordRows(items: WordInput[], level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') {
   return items.map((w) => ({
     french: w.french,
@@ -302,6 +326,7 @@ async function seedWordsBatch(
     await db.insert(words).values(batch).onConflictDoUpdate({
       target: words.french,
       set: {
+        level: sql`excluded.level`,
         category: sql`excluded.category`,
         translationEn: sql`excluded.translation_en`,
         exampleEn: sql`excluded.example_en`,
@@ -373,17 +398,23 @@ async function seedGrammarExercises(
 }
 
 async function seed() {
-  // ===== Words A1 =====
-  console.log('Seeding words A1...');
-  const a1Rows = buildWordRows([...wordsA1, ...wordsA1Extra, ...wordsA1Extra2, ...wordsA1Extra3, ...wordsA1Extra4, ...wordsA1Extra5] as WordInput[], 'A1');
-  await seedWordsBatch(a1Rows, 'A1 words');
-  console.log(`Words A1 done! Total: ${a1Rows.length}`);
+  // Words seeded in REVERSE CEFR order (B2→B1→A2→A1) so that each word
+  // ends up at its LOWEST mentioned level — simpler vocab always wins.
 
-  // ===== Words A2 =====
-  console.log('\nSeeding words A2...');
-  const a2Rows = buildWordRows([...wordsA2, ...wordsA2Extra, ...wordsA2Extra2, ...wordsA2Extra3, ...wordsA2Extra4, ...wordsA2Extra5, ...wordsA2Extra6] as WordInput[], 'A2');
-  await seedWordsBatch(a2Rows, 'A2 words');
-  console.log(`Words A2 done! Total: ${a2Rows.length}`);
+  // ===== Words B2 (first — lowest priority) =====
+  console.log('Seeding words B2...');
+  const b2Rows = buildWordRows([
+    ...wordsB2, ...wordsB2Extra, ...wordsB2Extra2, ...wordsB2Extra3,
+    ...wordsB2Extra4, ...wordsB2Extra5, ...wordsB2Extra6, ...wordsB2Extra7,
+    ...wordsB2Extra8, ...wordsB2Extra9,
+    ...wordsB2Extra10, ...wordsB2Extra11, ...wordsB2Extra12, ...wordsB2Extra13,
+    ...wordsB2Extra14, ...wordsB2Extra15, ...wordsB2Extra16, ...wordsB2Extra17,
+    ...wordsB2Extra18, ...wordsB2Extra19, ...wordsB2Extra20, ...wordsB2Extra21,
+    ...wordsB2Extra22, ...wordsB2Extra23, ...wordsB2Extra24, ...wordsB2Extra25,
+    ...wordsB2Extra26, ...wordsB2Extra27,
+  ] as WordInput[], 'B2');
+  await seedWordsBatch(b2Rows, 'B2 words');
+  console.log(`Words B2 done! Total: ${b2Rows.length}`);
 
   // ===== Words B1 =====
   console.log('\nSeeding words B1...');
@@ -401,20 +432,17 @@ async function seed() {
   await seedWordsBatch(b1Rows, 'B1 words');
   console.log(`Words B1 done! Total: ${b1Rows.length}`);
 
-  // ===== Words B2 =====
-  console.log('\nSeeding words B2...');
-  const b2Rows = buildWordRows([
-    ...wordsB2, ...wordsB2Extra, ...wordsB2Extra2, ...wordsB2Extra3,
-    ...wordsB2Extra4, ...wordsB2Extra5, ...wordsB2Extra6, ...wordsB2Extra7,
-    ...wordsB2Extra8, ...wordsB2Extra9,
-    ...wordsB2Extra10, ...wordsB2Extra11, ...wordsB2Extra12, ...wordsB2Extra13,
-    ...wordsB2Extra14, ...wordsB2Extra15, ...wordsB2Extra16, ...wordsB2Extra17,
-    ...wordsB2Extra18, ...wordsB2Extra19, ...wordsB2Extra20, ...wordsB2Extra21,
-    ...wordsB2Extra22, ...wordsB2Extra23, ...wordsB2Extra24, ...wordsB2Extra25,
-    ...wordsB2Extra26, ...wordsB2Extra27,
-  ] as WordInput[], 'B2');
-  await seedWordsBatch(b2Rows, 'B2 words');
-  console.log(`Words B2 done! Total: ${b2Rows.length}`);
+  // ===== Words A2 =====
+  console.log('\nSeeding words A2...');
+  const a2Rows = buildWordRows([...wordsA2, ...wordsA2Extra, ...wordsA2Extra2, ...wordsA2Extra3, ...wordsA2Extra4, ...wordsA2Extra5, ...wordsA2Extra6] as WordInput[], 'A2');
+  await seedWordsBatch(a2Rows, 'A2 words');
+  console.log(`Words A2 done! Total: ${a2Rows.length}`);
+
+  // ===== Words A1 (last — highest priority, always wins) =====
+  console.log('\nSeeding words A1...');
+  const a1Rows = buildWordRows([...wordsA1, ...wordsA1Extra, ...wordsA1Extra2, ...wordsA1Extra3, ...wordsA1Extra4, ...wordsA1Extra5] as WordInput[], 'A1');
+  await seedWordsBatch(a1Rows, 'A1 words');
+  console.log(`Words A1 done! Total: ${a1Rows.length}`);
 
   // ===== Grammar Topics =====
   console.log('\nSeeding grammar topics A1...');
@@ -568,6 +596,15 @@ async function seed() {
     console.log(`  Drill: ${drill.slug} (${drill.questions.length} questions)`);
   }
   console.log(`Drills done! Total: ${drillsData.length + drillsData2.length}`);
+
+  // ===== Deactivate C1+ words misplaced in B2 files =====
+  console.log('\nDeactivating C1+ words from B2 files...');
+  const deactivateList = [...DEACTIVATE_WORDS];
+  await db
+    .update(words)
+    .set({ isActive: false })
+    .where(inArray(words.french, deactivateList));
+  console.log(`Deactivated ${deactivateList.length} C1+ words.`);
 
   console.log('\nAll seed complete!');
   process.exit(0);
