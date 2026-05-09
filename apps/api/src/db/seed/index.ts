@@ -116,156 +116,155 @@ type WordInput = {
   exampleEn?: string | null;
 };
 
+// ── 36 canonical categories ──────────────────────────────────────────────
+// Group 1: Базовое (4)
+// Group 2: Человек (4)
+// Group 3: Быт (4)
+// Group 4: Город и мир (5)
+// Group 5: Внешний мир (4)
+// Group 6: Общество (8)
+// Group 7: Наука и ум (3)
+// Group 8: Инструменты языка (4)
 const CATEGORY_REMAP: Record<string, string> = {
-  // Basics
+  // ── Основы ──
   basics: 'basics', common_phrases: 'basics', daily_phrases: 'basics',
   question_words: 'basics', question_words_extra: 'basics', greetings_extra: 'basics',
 
-  // Numbers
+  // ── Числа ──
   numbers: 'numbers', ordinal_numbers: 'numbers', numbers_stats: 'numbers', quantities: 'numbers',
 
-  // Colors
+  // ── Цвета ──
   colors: 'colors', colors_extra: 'colors',
 
-  // Time
+  // ── Время ──
   time: 'time', time_extra: 'time', time_vocabulary_b1: 'time', time_expressions: 'time',
 
-  // Family
+  // ── Семья ──
   family: 'family', relationships: 'family', relationships_b1: 'family',
 
-  // Body
+  // ── Тело ──
   body: 'body', body_extra: 'body', body_detailed: 'body', body_medical_b1: 'body',
 
-  // Health
+  // ── Здоровье ──
   health: 'health', health_basic: 'health', health_advanced: 'health',
   health_medicine_b1: 'health', medicine: 'health', mental_health: 'health',
 
-  // Emotions & Personality
+  // ── Эмоции и характер ── (emotions + personality merged)
   emotions: 'emotions', emotions_b1: 'emotions',
-  personality: 'personality', personality_b1: 'personality',
+  personality: 'emotions', personality_b1: 'emotions',
 
-  // Food
+  // ── Еда ──
   food: 'food', food_extra: 'food', food_advanced: 'food',
   gastronomy: 'food', cooking: 'food', vegetables_fruits: 'food',
 
-  // Home
+  // ── Дом ──
   home: 'home', house: 'home', housing: 'home', housing_b1: 'home',
   housing_detailed: 'home', housing_real_estate_b1: 'home',
   furniture: 'home', household_tasks: 'home',
 
-  // Clothes
+  // ── Одежда ──
   clothes: 'clothes', clothes_extra: 'clothes', fashion_shopping_b1: 'clothes',
 
-  // Shopping & Finance
+  // ── Покупки ──
   shopping: 'shopping',
-  money: 'finance', banking_money: 'finance', finance: 'finance',
+  money: 'shopping', banking_money: 'shopping', finance: 'shopping',
 
-  // City & Places
+  // ── Город ──
   city: 'city', urban: 'city', urban_life_b1: 'city',
   directions: 'city', directions_extra: 'city', places_basic: 'city',
 
-  // Travel
+  // ── Транспорт ──
+  transport: 'transport', travel_transport: 'transport',
+
+  // ── Путешествия ──
   travel: 'travel', travel_advanced: 'travel', travel_detailed: 'travel',
-  travel_tourism_b1: 'travel', travel_transport: 'travel',
+  travel_tourism_b1: 'travel',
 
-  // Transport
-  transport: 'transport',
-
-  // Nature
+  // ── Природа ──
   nature: 'nature', nature_advanced: 'nature', nature_geography_b1: 'nature',
 
-  // Environment
+  // ── Страны и народы ──
+  geography: 'geography', geography_b1: 'geography',
+  countries: 'geography', nationalities: 'geography',
+
+  // ── Экология ──
   environment: 'environment', environment_b1: 'environment', environment_extra: 'environment',
 
-  // Weather
+  // ── Погода ──
   weather: 'weather', weather_a1: 'weather', weather_detailed: 'weather',
 
-  // Animals
+  // ── Животные ──
   animals: 'animals',
 
-  // Sports & Leisure
+  // ── Спорт ──
   sports: 'sports', sports_basic: 'sports', sports_detailed: 'sports',
   sports_leisure_b1: 'sports', leisure: 'sports',
 
-  // Education
+  // ── Образование ──
   school: 'education', classroom: 'education', education: 'education',
   education_school_b1: 'education', education_advanced: 'education',
   academic: 'education', academic_writing_b1: 'education',
 
-  // Work & Professions
+  // ── Работа ──
   work: 'work', work_advanced: 'work', hr: 'work', professions: 'work',
 
-  // Technology
-  technology: 'technology', technology_b1: 'technology', technology_digital_b1: 'technology',
+  // ── Экономика ── (economy + finance + business merged)
+  economy: 'economy', economy_b1: 'economy', economy_business_b1: 'economy', economics: 'economy',
+  business: 'economy', entrepreneurship: 'economy',
 
-  // Science
-  science: 'science', science_b1: 'science', science_research_b1: 'science', materials: 'science',
-
-  // Geography
-  geography: 'geography', geography_b1: 'geography',
-  countries: 'geography', nationalities: 'geography',
-
-  // Politics
+  // ── Политика ──
   politics: 'politics', politics_advanced: 'politics',
 
-  // Law
+  // ── Право ──
   law: 'law', legal_b1: 'law', legal_civic_b1: 'law',
 
-  // Economy & Business
-  economy: 'economy', economy_b1: 'economy', economy_business_b1: 'economy', economics: 'economy',
-  business: 'business', entrepreneurship: 'business',
-
-  // Society
+  // ── Общество ──
   society: 'society', society_b1: 'society', social: 'society',
   social_issues: 'society', social_issues_b1: 'society', sociology: 'society',
 
-  // Arts & Culture
+  // ── Искусство ── (arts + culture merged)
   arts: 'arts', arts_culture: 'arts', arts_culture_b1: 'arts',
-  arts_literature: 'arts', literature: 'arts', architecture: 'arts',
-  instruments: 'arts',
-  culture: 'culture', culture_b1: 'culture',
-  history: 'culture', religion: 'culture', celebrations: 'culture',
+  arts_literature: 'arts', literature: 'arts', architecture: 'arts', instruments: 'arts',
+  culture: 'arts', culture_b1: 'arts', history: 'arts',
+  religion: 'arts', celebrations: 'arts',
 
-  // Media & Communication
+  // ── СМИ и общение ── (media + communication merged)
   media: 'media', media_news_b1: 'media', media_culture: 'media', media_modern: 'media',
-  communication_b1: 'communication', language: 'communication',
+  communication_b1: 'media', language: 'media',
 
-  // Psychology & Philosophy
+  // ── Психология ── (psychology + philosophy merged)
   psychology: 'psychology', psychology_b1: 'psychology', psychology_mindset_b1: 'psychology',
-  philosophy: 'philosophy', ethics: 'philosophy',
+  philosophy: 'psychology', ethics: 'psychology',
 
-  // Verbs (all types → one category)
+  // ── Технологии ──
+  technology: 'technology', technology_b1: 'technology', technology_digital_b1: 'technology',
+
+  // ── Наука ──
+  science: 'science', science_b1: 'science', science_research_b1: 'science', materials: 'science',
+
+  // ── Глаголы ── (все типы)
   verbs: 'verbs', verbs_b1: 'verbs', verbs_b1_extra: 'verbs', verbs_basic: 'verbs',
   verbs_extra: 'verbs', verbs_advanced: 'verbs', verbs_advanced_b1: 'verbs',
   verbs_movement: 'verbs', verbs_communication: 'verbs',
   verbs_opinion: 'verbs', verbs_opinion_extra: 'verbs',
   reflexive_verbs: 'verbs', reflexive_verbs_basic: 'verbs', reflexive_verbs_extra: 'verbs',
 
-  // Adjectives
+  // ── Прилагательные и описания ── (adjectives + adverbs + descriptions merged)
   adjectives: 'adjectives', adjectives_b1: 'adjectives', adjectives_b1_extra: 'adjectives',
   adjectives_extra: 'adjectives', adjectives_complex: 'adjectives',
   adjectives_b1_description: 'adjectives',
+  adverbs: 'adjectives', adverbs_b1: 'adjectives',
+  descriptions: 'adjectives', description: 'adjectives',
 
-  // Adverbs
-  adverbs: 'adverbs', adverbs_b1: 'adverbs',
-
-  // Prepositions
-  prepositions: 'prepositions',
-
-  // Connectors
-  connectors: 'connectors', connectors_b1: 'connectors',
-  connectors_discourse_b1: 'connectors', connectors_formal: 'connectors',
-  linking_words: 'connectors',
-
-  // Expressions & Phrases
+  // ── Выражения ── (expressions + abstract nouns)
   expressions: 'expressions', expressions_b1: 'expressions',
   expressions_faire: 'expressions', phrases_b1_extra: 'expressions',
+  abstract_nouns: 'expressions', abstract_nouns_b1: 'expressions', nouns_b1_extra: 'expressions',
 
-  // Descriptions
-  descriptions: 'descriptions', description: 'descriptions',
-
-  // Nouns
-  abstract_nouns: 'nouns', abstract_nouns_b1: 'nouns', nouns_b1_extra: 'nouns',
+  // ── Связки ── (connectors + prepositions merged)
+  connectors: 'connectors', connectors_b1: 'connectors',
+  connectors_discourse_b1: 'connectors', connectors_formal: 'connectors',
+  linking_words: 'connectors', prepositions: 'connectors',
 };
 
 function normalizeCategory(cat: string): string {
