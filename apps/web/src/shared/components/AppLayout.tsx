@@ -33,10 +33,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { to: '/dashboard',    label: t.nav.dashboard,     icon: Home,          mobileOnly: false },
     { to: '/vocabulary',   label: t.nav.words,          icon: BookOpen,      mobileOnly: false },
     { to: '/grammar',      label: t.nav.grammar,        icon: LayoutGrid,    mobileOnly: false },
-    { to: '/drills',       label: t.nav.drills,         icon: Dumbbell,      mobileOnly: false },
     { to: '/listening',    label: t.nav.listening,      icon: Headphones,    mobileOnly: false },
-    { to: '/conversation', label: t.nav.conversations,  icon: MessageCircle, mobileOnly: false },
     { to: '/writing',      label: t.nav.writing,        icon: PenLine,       mobileOnly: false },
+    { to: '/conversation', label: t.nav.conversations,  icon: MessageCircle, mobileOnly: false },
+    { to: '/drills',       label: t.nav.drills,         icon: Dumbbell,      mobileOnly: false },
     { to: '/dictionary',   label: t.nav.dictionary,     icon: Book,          mobileOnly: false },
     { to: '/profile',      label: t.nav.profile,        icon: UserCircle,    mobileOnly: true  },
   ] as const;
