@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   getPrompts,
   getPromptBySlug,
+  getPromptById,
   saveSubmission,
   getUserSubmissions,
   getSubmissionById,
@@ -50,14 +51,16 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });
 
       const { promptId, content, status, submissionId } = parsed.data;
-      const level = (request.user as { level?: string }).level ?? 'A1';
+
+      const prompt = await getPromptById(fastify.db, promptId);
+      if (!prompt) return reply.status(404).send({ error: 'Prompt not found' });
 
       const submission = await saveSubmission(
         fastify.db,
         request.user.userId,
         promptId,
         content,
-        level,
+        prompt.level,
         status,
         submissionId,
       );

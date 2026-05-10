@@ -171,6 +171,12 @@ export async function getPromptBySlug(db: DB, slug: string) {
   });
 }
 
+export async function getPromptById(db: DB, id: string) {
+  return db.query.writingPrompts.findFirst({
+    where: eq(writingPrompts.id, id),
+  });
+}
+
 export async function saveSubmission(
   db: DB,
   userId: string,
