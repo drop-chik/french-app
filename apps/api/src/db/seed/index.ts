@@ -271,6 +271,76 @@ function normalizeCategory(cat: string): string {
   return CATEGORY_REMAP[cat] ?? cat;
 }
 
+// Manual CEFR level corrections applied after seeding.
+// Source: DELF A1–B2 official vocabulary lists + FLELex (UCLouvain corpus)
+// These override whatever level the seed files assign.
+const LEVEL_CORRECTIONS: Record<string, 'A1' | 'A2' | 'B1' | 'B2'> = {
+  // ── A1 → A2 ── (not survival vocab, officially A2 in DELF curricula)
+  'accordéon': 'A2', 'clarinette': 'A2', 'harpe': 'A2',
+  'saxophone': 'A2', 'tambour': 'A2', 'trompette': 'A2', 'brumeux': 'A2',
+
+  // ── A2 → B1 ── Politics (civic discourse — DELF B1 theme)
+  'citoyen': 'B1', 'démocratie': 'B1', 'gouvernement': 'B1',
+  'impôt': 'B1', 'ministre': 'B1', 'parlement': 'B1', 'parti': 'B1',
+  // A2 → B1: Environment (technical DELF B1 "développement durable")
+  'biodiversité': 'B1', 'combustible': 'B1', 'durabilité': 'B1',
+  'empreinte carbone': 'B1', 'extinction': 'B1',
+  // A2 → B1: Science (academic register — school subjects B1)
+  'atome': 'B1', 'chimie': 'B1', 'formule': 'B1', 'gravité': 'B1', 'laboratoire': 'B1',
+  // A2 → B1: Connectors (formal discourse markers — DELF B1 writing)
+  'néanmoins': 'B1', 'toutefois': 'B1', 'en outre': 'B1', "d'ailleurs": 'B1',
+  'en revanche': 'B1', 'par conséquent': 'B1', "d'une part... d'autre part": 'B1',
+  'cependant': 'B1', 'notamment': 'B1',
+  // A2 → B1: Economy (business register — DELF B1 professional topics)
+  'bénéfice': 'B1', 'concurrence': 'B1', 'investissement': 'B1',
+  'recrutement': 'B1', 'stratégie': 'B1', 'rapport': 'B1', 'responsable': 'B1',
+  // A2 → B1: Stats / Banking
+  'statistique': 'B1', 'taux': 'B1', 'le taux de change': 'B1', 'le virement': 'B1',
+  // A2 → B1: Arts
+  "le chef-d'œuvre": 'B1', "l'opéra": 'B1',
+
+  // ── B2 → B1 ── Health (essential French social system — DELF B1 "santé")
+  'la mutuelle': 'B1', 'la sécurité sociale': 'B1', 'le médecin traitant': 'B1',
+  'le spécialiste': 'B1', 'la vaccination': 'B1', 'la pandémie': 'B1', 'le dépistage': 'B1',
+  // B2 → B1: Economy (universally known in France)
+  'la TVA': 'B1', 'le PIB': 'B1', 'la mondialisation': 'B1', 'la start-up': 'B1',
+  'la startup': 'B1', 'le management': 'B1', "le chiffre d'affaires": 'B1',
+  "l'investissement": 'B1', 'le salaire minimum': 'B1',
+  // B2 → B1: Politics (news vocabulary — DELF B1 current events)
+  'la corruption': 'B1', 'la propagande': 'B1', 'les réfugiés': 'B1',
+  'le réfugié': 'B1', 'le référendum': 'B1', "l'ONG": 'B1', 'les sanctions': 'B1',
+  "l'ambassade": 'B1', "l'ambassadeur": 'B1',
+  // B2 → B1: Psychology (everyday discourse in French)
+  'la procrastination': 'B1', 'la souffrance': 'B1', 'la morale': 'B1',
+  'le deuil': 'B1', 'le dilemme': 'B1', 'le trauma': 'B1', 'la vulnérabilité': 'B1',
+  // B2 → B1: Science (secondary school level)
+  'la molécule': 'B1', 'la photosynthèse': 'B1', 'la sélection naturelle': 'B1',
+  'la chaîne alimentaire': 'B1', 'la probabilité': 'B1', 'la statistique': 'B1', 'le neurone': 'B1',
+  // B2 → B1: Society (core French social concepts — DELF B1 "vie en société")
+  'la solidarité': 'B1', 'la migration': 'B1', 'la laïcité': 'B1', 'la précarité': 'B1',
+  'le harcèlement moral': 'B1', 'le harcèlement sexuel': 'B1',
+  'le sans-abri': 'B1', 'le bénévole': 'B1', 'le SDF (sans domicile fixe)': 'B1',
+  'la parité': 'B1', 'le congé parental': 'B1', 'la revendication': 'B1',
+  // B2 → B1: Sports (basic reporting vocabulary)
+  'la blessure': 'B1', "la médaille d'or": 'B1', 'les Jeux olympiques': 'B1',
+  'le dopage': 'B1', 'la compétition': 'B1', 'le classement': 'B1', 'la finale': 'B1',
+  // B2 → B1: Technology (modern everyday vocabulary)
+  'le logiciel': 'B1', 'la voiture électrique': 'B1', 'la réalité virtuelle': 'B1',
+  // B2 → B1: Work (common French workplace)
+  'le burn-out': 'B1', 'les ressources humaines': 'B1', "l'entretien d'embauche": 'B1',
+  'le candidat': 'B1', "l'intérim": 'B1', 'la productivité': 'B1', 'le recrutement': 'B1',
+  // B2 → B1: Home / Geography / Environment
+  'le HLM (habitation à loyer modéré)': 'B1', 'la colocation': 'B1',
+  'la métropole': 'B1', 'la forêt tropicale': 'B1', 'le col': 'B1',
+  'le changement climatique': 'B1', 'le greenwashing': 'B1',
+
+  // ── B1 → A2 ── (too common to be B1 — appear in A2 DELF texts)
+  'la paix': 'A2', 'le respect': 'A2', 'la crise': 'A2', 'la décision': 'A2',
+
+  // ── B1 → B2 ── (overestimated in B1 files — specialized vocabulary)
+  'la gentrification': 'B2', 'actionnaire': 'B2', 'déficitaire': 'B2',
+};
+
 // C1+ words accidentally placed in B2 files — deactivated after seeding
 const DEACTIVATE_WORDS = new Set([
   'la mécanique quantique',
@@ -596,6 +666,15 @@ async function seed() {
     console.log(`  Drill: ${drill.slug} (${drill.questions.length} questions)`);
   }
   console.log(`Drills done! Total: ${drillsData.length + drillsData2.length}`);
+
+  // ===== Apply manual CEFR level corrections =====
+  console.log('\nApplying CEFR level corrections...');
+  let corrected = 0;
+  for (const [french, level] of Object.entries(LEVEL_CORRECTIONS)) {
+    await db.update(words).set({ level }).where(eq(words.french, french));
+    corrected++;
+  }
+  console.log(`Applied ${corrected} level corrections.`);
 
   // ===== Deactivate C1+ words misplaced in B2 files =====
   console.log('\nDeactivating C1+ words from B2 files...');
