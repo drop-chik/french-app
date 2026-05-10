@@ -85,7 +85,7 @@ export function FlashcardMode({ words, onComplete }: Props) {
   if (!current) return null;
 
   const progress = (index / words.length) * 100;
-  const categoryLabel = (t.flashcard.categories[current.category] as string | undefined) ?? current.category;
+  const categoryLabel = ((t.dictionary.categoryNames as Record<string, string>)[current.category]) ?? current.category;
 
   return (
     <div className={styles.container}>

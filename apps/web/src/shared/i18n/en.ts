@@ -145,12 +145,6 @@ export const en: Translations = {
       hard: 'Hard',
       good: 'Got it!',
     },
-    categories: {
-      verbs_basic: 'Verbs', family: 'Family', food: 'Food', house: 'Home',
-      transport: 'City & Transport', body: 'Body', clothes: 'Clothes',
-      colors: 'Colors', numbers: 'Numbers', time: 'Time', nature: 'Nature',
-      adjectives: 'Adjectives', basics: 'Basics',
-    },
   },
   session: {
     done: 'Session complete!',
@@ -352,8 +346,8 @@ export const en: Translations = {
       economy:     'Economy & finance',
       politics:    'Politics',
       law:         'Law',
-      society:     'Society & culture',
-      arts:        'Arts & literature',
+      society:     'Society',
+      arts:        'Arts & culture',
       media:       'Media & communication',
       // ── Knowledge & mind ──
       technology:  'Technology',
