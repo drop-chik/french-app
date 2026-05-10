@@ -163,22 +163,22 @@ export function WritingResultPage({ id }: Props) {
               <ScoreBar
                 label={tw.taskCompletion}
                 score={feedback.scores.taskCompletion}
-                max={Math.round(feedback.scores.maxTotal * 0.32)}
+                max={feedback.scores.taskMax ?? Math.round(feedback.scores.maxTotal * 0.4)}
               />
               <ScoreBar
                 label={tw.coherence}
                 score={feedback.scores.coherence}
-                max={Math.round(feedback.scores.maxTotal * 0.32)}
+                max={feedback.scores.cohMax ?? Math.round(feedback.scores.maxTotal * 0.3)}
               />
               <ScoreBar
                 label={tw.vocabulary}
                 score={feedback.scores.vocabulary}
-                max={Math.round(feedback.scores.maxTotal * 0.2)}
+                max={feedback.scores.vocMax ?? Math.round(feedback.scores.maxTotal * 0.2)}
               />
               <ScoreBar
                 label={tw.grammar}
                 score={feedback.scores.grammar}
-                max={Math.round(feedback.scores.maxTotal * 0.16)}
+                max={feedback.scores.gramMax ?? Math.round(feedback.scores.maxTotal * 0.1)}
               />
             </div>
           </section>

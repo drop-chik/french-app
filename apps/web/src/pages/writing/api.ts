@@ -48,6 +48,10 @@ export interface WritingScores {
   grammar: number;
   total: number;
   maxTotal: number;
+  taskMax: number;
+  cohMax: number;
+  vocMax: number;
+  gramMax: number;
 }
 
 export interface WritingMetrics {

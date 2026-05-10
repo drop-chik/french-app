@@ -34,6 +34,10 @@ export interface WritingScores {
   grammar: number;
   total: number;
   maxTotal: number;
+  taskMax: number;
+  cohMax: number;
+  vocMax: number;
+  gramMax: number;
 }
 
 export interface WritingFeedbackData {
@@ -81,15 +85,19 @@ function computeMetrics(content: string): WritingMetrics {
   return { ttr, connectorCount, avgSentenceLen, wordCount };
 }
 
+// ── Score ranges per DELF level ──────────────────────────────────────────────
+
+const SCORE_RANGES: Record<string, { max: number; taskMax: number; cohMax: number; vocMax: number; gramMax: number }> = {
+  A1: { max: 20, taskMax: 8, cohMax: 6, vocMax: 4, gramMax: 2 },
+  A2: { max: 25, taskMax: 8, cohMax: 8, vocMax: 5, gramMax: 4 },
+  B1: { max: 25, taskMax: 8, cohMax: 8, vocMax: 5, gramMax: 4 },
+  B2: { max: 50, taskMax: 16, cohMax: 16, vocMax: 10, gramMax: 8 },
+};
+
 // ── AI system prompt ──────────────────────────────────────────────────────────
 
 function buildSystemPrompt(level: string, writingType: string, promptFr: string, minWords: number, maxWords: number) {
-  const scoreRanges: Record<string, { max: number; taskMax: number; cohMax: number; vocMax: number; gramMax: number }> = {
-    A1: { max: 20, taskMax: 8, cohMax: 6, vocMax: 4, gramMax: 2 },
-    A2: { max: 25, taskMax: 8, cohMax: 8, vocMax: 5, gramMax: 4 },
-    B1: { max: 25, taskMax: 8, cohMax: 8, vocMax: 5, gramMax: 4 },
-    B2: { max: 50, taskMax: 16, cohMax: 16, vocMax: 10, gramMax: 8 },
-  };
+  const scoreRanges = SCORE_RANGES;
   const s = scoreRanges[level] ?? scoreRanges['B1']!;
 
   return `Tu es un correcteur expert du DELF niveau ${level}, spécialisé dans l'évaluation des productions écrites.
@@ -261,8 +269,16 @@ export async function generateFeedback(
   const raw = response.choices[0]?.message?.content ?? '{}';
   const parsed = JSON.parse(raw) as WritingFeedbackData;
 
+  const s = SCORE_RANGES[submission.level] ?? SCORE_RANGES['B1']!;
+
   const feedbackData: WritingFeedbackData = {
-    scores: parsed.scores,
+    scores: {
+      ...parsed.scores,
+      taskMax: s.taskMax,
+      cohMax: s.cohMax,
+      vocMax: s.vocMax,
+      gramMax: s.gramMax,
+    },
     corrections: parsed.corrections ?? [],
     metrics,
     suggestions: parsed.suggestions ?? [],
