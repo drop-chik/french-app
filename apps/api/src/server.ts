@@ -17,6 +17,7 @@ import listeningRoutes from './modules/listening/listening.routes.js';
 import conversationRoutes from './modules/conversation/conversation.routes.js';
 import profileRoutes from './modules/profile/profile.routes.js';
 import drillsRoutes from './modules/drills/drills.routes.js';
+import writingRoutes from './modules/writing/writing.routes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -56,6 +57,7 @@ await fastify.register(listeningRoutes, { prefix: '/listening' });
 await fastify.register(conversationRoutes, { prefix: '/conversation' });
 await fastify.register(profileRoutes, { prefix: '/profile' });
 await fastify.register(drillsRoutes, { prefix: '/drills' });
+await fastify.register(writingRoutes, { prefix: '/writing' });
 
 // Health check
 fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));

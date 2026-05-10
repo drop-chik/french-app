@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { db } from '../index.js';
-import { words, grammarTopics, grammarExercises, listeningExercises, drillSets, drillQuestions } from '../schema/index.js';
+import { words, grammarTopics, grammarExercises, listeningExercises, drillSets, drillQuestions, writingPrompts } from '../schema/index.js';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
@@ -101,6 +101,7 @@ import { listeningExercisesB1 } from './listening-b1.js';
 import { listeningExercisesB2 } from './listening-b2.js';
 import { drillsData } from './drills.js';
 import { drillsData2 } from './drills2.js';
+import { writingPromptsData } from './writing-prompts.js';
 
 type WordInput = {
   french: string;
@@ -745,6 +746,43 @@ async function seed() {
     .set({ isActive: false })
     .where(inArray(words.french, deactivateList));
   console.log(`Deactivated ${deactivateList.length} C1+ words.`);
+
+  // ===== Writing prompts =====
+  console.log('\nSeeding writing prompts...');
+  for (const prompt of writingPromptsData) {
+    await db
+      .insert(writingPrompts)
+      .values({
+        slug: prompt.slug,
+        titleRu: prompt.titleRu,
+        titleEn: prompt.titleEn,
+        level: prompt.level,
+        writingType: prompt.writingType,
+        promptFr: prompt.promptFr,
+        promptRu: prompt.promptRu,
+        promptEn: prompt.promptEn,
+        tipsRu: prompt.tipsRu,
+        tipsEn: prompt.tipsEn,
+        minWords: prompt.minWords,
+        maxWords: prompt.maxWords,
+        requiredElements: prompt.requiredElements,
+      })
+      .onConflictDoUpdate({
+        target: writingPrompts.slug,
+        set: {
+          titleRu: prompt.titleRu,
+          titleEn: prompt.titleEn,
+          promptFr: prompt.promptFr,
+          promptRu: prompt.promptRu,
+          promptEn: prompt.promptEn,
+          tipsRu: prompt.tipsRu,
+          tipsEn: prompt.tipsEn,
+          minWords: prompt.minWords,
+          maxWords: prompt.maxWords,
+        },
+      });
+  }
+  console.log(`Writing prompts done! Total: ${writingPromptsData.length}`);
 
   console.log('\nAll seed complete!');
   process.exit(0);

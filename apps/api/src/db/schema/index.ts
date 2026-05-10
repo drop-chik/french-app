@@ -278,3 +278,108 @@ export const placementTests = pgTable('placement_tests', {
   resultLevel: languageLevelEnum('result_level').notNull(),
   completedAt: timestamp('completed_at').defaultNow().notNull(),
 });
+
+// ─── Writing feature ────────────────────────────────────────────────────────
+
+export const writingTypeEnum = pgEnum('writing_type', [
+  'postcard',
+  'message',
+  'letter_informal',
+  'letter_formal',
+  'email',
+  'description',
+  'blog_article',
+  'essay',
+  'narrative',
+]);
+
+export const submissionStatusEnum = pgEnum('submission_status', [
+  'draft',
+  'submitted',
+]);
+
+// Writing prompts library (seeded)
+export const writingPrompts = pgTable(
+  'writing_prompts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: varchar('slug', { length: 100 }).unique().notNull(),
+    titleRu: varchar('title_ru', { length: 255 }).notNull(),
+    titleEn: varchar('title_en', { length: 255 }).notNull(),
+    level: languageLevelEnum('level').notNull(),
+    writingType: writingTypeEnum('writing_type').notNull(),
+    promptRu: text('prompt_ru').notNull(),
+    promptEn: text('prompt_en').notNull(),
+    promptFr: text('prompt_fr').notNull(),
+    tipsRu: jsonb('tips_ru').default([]).notNull(),
+    tipsEn: jsonb('tips_en').default([]).notNull(),
+    minWords: integer('min_words').notNull(),
+    maxWords: integer('max_words').notNull(),
+    requiredElements: jsonb('required_elements').default([]).notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+  },
+  (t) => [
+    index('idx_writing_prompts_level').on(t.level, t.writingType),
+  ],
+);
+
+// User essay submissions
+export const writingSubmissions = pgTable(
+  'writing_submissions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    promptId: uuid('prompt_id')
+      .notNull()
+      .references(() => writingPrompts.id),
+    content: text('content').notNull(),
+    wordCount: integer('word_count').default(0).notNull(),
+    level: languageLevelEnum('level').notNull(),
+    status: submissionStatusEnum('status').default('draft').notNull(),
+    submittedAt: timestamp('submitted_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('idx_writing_submissions_user').on(t.userId, t.createdAt),
+  ],
+);
+
+// AI feedback for a submission (one-to-one with submissions)
+export const writingFeedback = pgTable('writing_feedback', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  submissionId: uuid('submission_id')
+    .notNull()
+    .unique()
+    .references(() => writingSubmissions.id, { onDelete: 'cascade' }),
+  // DELF rubric scores: { taskCompletion, coherence, vocabulary, grammar, total, maxTotal }
+  scores: jsonb('scores').notNull(),
+  // [{original, corrected, type, severity, explanation, position?}]
+  corrections: jsonb('corrections').default([]).notNull(),
+  // {ttr, connectorCount, avgSentenceLen, complexSentenceRatio, errorDensity, tensesUsed}
+  metrics: jsonb('metrics').notNull(),
+  // [{type, suggestion, reason}]
+  suggestions: jsonb('suggestions').default([]).notNull(),
+  overallComment: text('overall_comment').notNull(),
+  strengths: jsonb('strengths').default([]).notNull(),
+  improvements: jsonb('improvements').default([]).notNull(),
+  generatedAt: timestamp('generated_at').defaultNow().notNull(),
+});
+
+// Aggregated writing progress per user
+export const writingProgress = pgTable('writing_progress', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  totalSubmissions: integer('total_submissions').default(0).notNull(),
+  avgScore: decimal('avg_score', { precision: 5, scale: 2 }).default('0').notNull(),
+  avgWordCount: decimal('avg_word_count', { precision: 6, scale: 1 }).default('0').notNull(),
+  // { grammar, vocabulary, coherence, connectors } — 0..100 each
+  areaScores: jsonb('area_scores').default({}).notNull(),
+  lastWritingAt: timestamp('last_writing_at'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
