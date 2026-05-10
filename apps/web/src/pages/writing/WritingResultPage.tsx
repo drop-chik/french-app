@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Loader2, AlertCircle, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
+import { Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { writingApi, type WritingCorrection } from './api';
 import { useI18n } from '../../shared/i18n';
 import styles from './WritingResultPage.module.css';
@@ -76,6 +76,12 @@ export function WritingResultPage({ id }: Props) {
   const feedback = submission?.feedback;
   const prompt = submission?.prompt;
 
+  useEffect(() => {
+    if (submission && !feedback && submission.status === 'submitted' && !feedbackMutation.isPending && !feedbackMutation.isError) {
+      feedbackMutation.mutate();
+    }
+  }, [submission, feedback]);
+
   const getTitle = () => {
     if (!prompt) return '';
     return lang === 'ru' ? prompt.titleRu : prompt.titleEn;
@@ -129,12 +135,7 @@ export function WritingResultPage({ id }: Props) {
 
       {!feedback && submission.status === 'submitted' && (
         <div className={styles.feedbackPrompt}>
-          {feedbackMutation.isPending ? (
-            <div className={styles.feedbackLoading}>
-              <Loader2 size={24} className={styles.spinner} />
-              <span>{tw.loadingFeedback}</span>
-            </div>
-          ) : feedbackMutation.isError ? (
+          {feedbackMutation.isError ? (
             <div className={styles.feedbackError}>
               <AlertCircle size={20} />
               <span>{tw.errorFeedback}</span>
@@ -143,12 +144,9 @@ export function WritingResultPage({ id }: Props) {
               </button>
             </div>
           ) : (
-            <div className={styles.feedbackCta}>
-              <BarChart3 size={32} className={styles.ctaIcon} />
-              <p>Ваша работа ждёт оценки AI-эксперта по системе DELF</p>
-              <button className={styles.btnPrimary} onClick={() => feedbackMutation.mutate()}>
-                {tw.getFeedback}
-              </button>
+            <div className={styles.feedbackLoading}>
+              <Loader2 size={32} className={styles.spinner} />
+              <span>{tw.loadingFeedback}</span>
             </div>
           )}
         </div>

@@ -99,6 +99,7 @@
   align-items: center;
   gap: var(--space-3);
   color: var(--color-text-secondary);
+  font-size: var(--text-base);
 }
 
 .feedbackError {
@@ -108,16 +109,6 @@
   gap: var(--space-3);
   color: #ef4444;
 }
-
-.feedbackCta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-  color: var(--color-text-secondary);
-}
-
-.ctaIcon { color: var(--color-brand); }
 
 /* Sections */
 .content {

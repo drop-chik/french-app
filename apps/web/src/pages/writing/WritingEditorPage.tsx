@@ -202,6 +202,7 @@ export function WritingEditorPage({ slug }: Props) {
             onChange={handleContentChange}
             placeholder={`Écris ton texte ici... (${prompt.minWords}–${prompt.maxWords} mots)`}
             disabled={isSubmitted}
+            spellCheck={false}
           />
 
           {!isSubmitted && (
