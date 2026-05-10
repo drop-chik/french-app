@@ -326,6 +326,7 @@ export const en: Translations = {
       basics:      'Basics',
       numbers:     'Numbers',
       time:        'Time',
+      calendar:    'Calendar',
       // ── People ──
       family:      'Family',
       body:        'Body',
@@ -339,7 +340,9 @@ export const en: Translations = {
       // ── City & world ──
       city:        'City & places',
       travel:      'Travel & transport',
-      nature:      'Nature, weather & animals',
+      nature:      'Nature & landscape',
+      weather:     'Weather & climate',
+      animals:     'Animals',
       geography:   'Countries & peoples',
       // ── Society ──
       environment: 'Environment',
@@ -358,7 +361,8 @@ export const en: Translations = {
       psychology:  'Psychology',
       // ── Language tools ──
       verbs:       'Verbs',
-      adjectives:  'Adjectives & colors',
+      adjectives:  'Adjectives',
+      colors:      'Colors',
       expressions: 'Expressions & connectors',
       other:       'Other',
     },

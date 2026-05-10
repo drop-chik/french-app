@@ -327,6 +327,7 @@ export const ru: DeepRecord = {
       basics:      'Основы',
       numbers:     'Числа',
       time:        'Время',
+      calendar:    'Календарь',
       // ── Человек ──
       family:      'Семья',
       body:        'Тело',
@@ -340,7 +341,9 @@ export const ru: DeepRecord = {
       // ── Город и мир ──
       city:        'Город и места',
       travel:      'Путешествия и транспорт',
-      nature:      'Природа, погода и животные',
+      nature:      'Природа и ландшафт',
+      weather:     'Погода и климат',
+      animals:     'Животные',
       geography:   'Страны и народы',
       // ── Общество ──
       environment: 'Экология',
@@ -359,7 +362,8 @@ export const ru: DeepRecord = {
       psychology:  'Психология',
       // ── Инструменты языка ──
       verbs:       'Глаголы',
-      adjectives:  'Прилагательные и цвета',
+      adjectives:  'Прилагательные',
+      colors:      'Цвета',
       expressions: 'Выражения и связки',
       other:       'Прочее',
     },

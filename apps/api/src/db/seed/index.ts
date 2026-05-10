@@ -116,7 +116,7 @@ type WordInput = {
   exampleEn?: string | null;
 };
 
-// ── 36 canonical categories ──────────────────────────────────────────────
+// ── 35 canonical categories ──────────────────────────────────────────────
 // Group 1: Базовое (4)
 // Group 2: Человек (4)
 // Group 3: Быт (4)
@@ -133,8 +133,8 @@ const CATEGORY_REMAP: Record<string, string> = {
   // ── Числа ──
   numbers: 'numbers', ordinal_numbers: 'numbers', numbers_stats: 'numbers', quantities: 'numbers',
 
-  // ── Цвета → объединены с Прилагательными ──
-  colors: 'adjectives', colors_extra: 'adjectives',
+  // ── Цвета ──
+  colors: 'colors', colors_extra: 'colors',
 
   // ── Время ──
   time: 'time', time_extra: 'time', time_vocabulary_b1: 'time', time_expressions: 'time',
@@ -190,11 +190,14 @@ const CATEGORY_REMAP: Record<string, string> = {
   // ── Экология ──
   environment: 'environment', environment_b1: 'environment', environment_extra: 'environment',
 
-  // ── Погода → объединена с Природой ──
-  weather: 'nature', weather_a1: 'nature', weather_detailed: 'nature',
+  // ── Погода ──
+  weather: 'weather', weather_a1: 'weather', weather_detailed: 'weather',
 
-  // ── Животные → объединены с Природой ──
-  animals: 'nature',
+  // ── Животные ──
+  animals: 'animals',
+
+  // ── Календарь (дни/месяцы/сезоны) — post-seed split from 'time' ──
+  calendar: 'calendar',
 
   // ── Спорт ──
   sports: 'sports', sports_basic: 'sports', sports_detailed: 'sports',
@@ -675,6 +678,64 @@ async function seed() {
     corrected++;
   }
   console.log(`Applied ${corrected} level corrections.`);
+
+  // ===== Apply category corrections (split merged categories back into specific ones) =====
+  console.log('\nApplying category corrections...');
+
+  // Calendar words: split from 'time' into dedicated 'calendar' category
+  const CALENDAR_WORDS = [
+    'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche',
+    'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août',
+    'septembre', 'octobre', 'novembre', 'décembre',
+    'le printemps', "l'été", "l'automne", "l'hiver", 'la saison',
+    "l'année", 'le mois', 'la semaine', 'agenda',
+    'annuel', 'hebdomadaire', 'mensuel', 'quotidien', 'semestre', 'trimestre',
+    'décennie', 'siècle', 'le siècle',
+  ];
+  await db.update(words).set({ category: 'calendar' }).where(inArray(words.french, CALENDAR_WORDS));
+
+  // Color words: ensure dedicated 'colors' category even if seed file used 'adjectives'
+  const COLOR_WORDS = [
+    'blanc', 'bleu', 'jaune', 'noir', 'rouge', 'vert', 'orange', 'violet', 'rose',
+    'gris', 'marron', 'beige', 'bordeaux', 'brun', 'roux', 'argenté', 'doré', 'blond', 'foncé',
+  ];
+  await db.update(words).set({ category: 'colors' }).where(inArray(words.french, COLOR_WORDS));
+
+  // Animal words: ensure dedicated 'animals' category
+  const ANIMAL_WORDS = [
+    'canard', 'chat', 'le chat', 'cheval', 'chien', 'le chien', 'cochon', 'éléphant',
+    'grenouille', 'lapin', 'lion', "l'animal", "l'oiseau", 'loup', 'mouton', 'oiseau',
+    'ours', 'papillon', 'poisson', 'renard', 'serpent', 'singe', 'tigre', 'vache',
+    'faune', 'la faune',
+  ];
+  await db.update(words).set({ category: 'animals' }).where(inArray(words.french, ANIMAL_WORDS));
+
+  // Weather words: ensure dedicated 'weather' category (not 'nature')
+  const WEATHER_WORDS = [
+    'chaleur', 'ciel', 'le ciel', 'couvert', 'frais', 'humide', 'la neige', 'la pluie',
+    'le nuage', 'le soleil', 'le vent', 'neigeux', 'orageux', 'pluvieux', 'sec', 'venteux',
+    'arc-en-ciel', 'brumeux', 'canicule', 'degré', 'ensoleillé', 'foudre', 'gel', 'humidité',
+    'il fait beau', 'il fait chaud', 'il fait froid', 'il neige', 'il pleut', 'inondation',
+    'la météo', 'la température', 'le brouillard', 'météo', 'nuageux', 'prévision', 'sécheresse',
+    'la sécheresse', 'tempête', 'verglas', 'le séisme', "l'éruption volcanique", "l'inondation",
+    'tremblement de terre',
+  ];
+  await db.update(words).set({ category: 'weather' }).where(inArray(words.french, WEATHER_WORDS));
+
+  // Ecology words: ensure 'environment' category (not 'nature')
+  const ECOLOGY_WORDS = [
+    'la biodiversité', 'la conservation', 'déforestation', 'la déforestation',
+    'la ressource naturelle', "l'écosystème", 'le développement durable',
+    "l'effet de serre", "l'empreinte carbone", "l'énergie éolienne", "l'énergie solaire",
+    'le réchauffement climatique', 'polluer', 'préserver', 'protection de la nature',
+    'reboisement', 'pollinisation', 'flore', 'la flore',
+  ];
+  await db.update(words).set({ category: 'environment' }).where(inArray(words.french, ECOLOGY_WORDS));
+
+  // Fix misplaced word
+  await db.update(words).set({ category: 'body' }).where(eq(words.french, 'les cheveux'));
+
+  console.log('Category corrections applied.');
 
   // ===== Deactivate C1+ words misplaced in B2 files =====
   console.log('\nDeactivating C1+ words from B2 files...');
