@@ -133,8 +133,8 @@ const CATEGORY_REMAP: Record<string, string> = {
   // ── Числа ──
   numbers: 'numbers', ordinal_numbers: 'numbers', numbers_stats: 'numbers', quantities: 'numbers',
 
-  // ── Цвета ──
-  colors: 'colors', colors_extra: 'colors',
+  // ── Цвета → объединены с Прилагательными ──
+  colors: 'adjectives', colors_extra: 'adjectives',
 
   // ── Время ──
   time: 'time', time_extra: 'time', time_vocabulary_b1: 'time', time_expressions: 'time',
@@ -165,16 +165,16 @@ const CATEGORY_REMAP: Record<string, string> = {
   // ── Одежда ──
   clothes: 'clothes', clothes_extra: 'clothes', fashion_shopping_b1: 'clothes',
 
-  // ── Покупки ──
+  // ── Покупки ── (money/finance → economy)
   shopping: 'shopping',
-  money: 'shopping', banking_money: 'shopping', finance: 'shopping',
+  money: 'economy', banking_money: 'economy', finance: 'economy',
 
   // ── Город ──
   city: 'city', urban: 'city', urban_life_b1: 'city',
   directions: 'city', directions_extra: 'city', places_basic: 'city',
 
-  // ── Транспорт ──
-  transport: 'transport', travel_transport: 'transport',
+  // ── Транспорт → объединён с Путешествиями ──
+  transport: 'travel', travel_transport: 'travel',
 
   // ── Путешествия ──
   travel: 'travel', travel_advanced: 'travel', travel_detailed: 'travel',
@@ -190,11 +190,11 @@ const CATEGORY_REMAP: Record<string, string> = {
   // ── Экология ──
   environment: 'environment', environment_b1: 'environment', environment_extra: 'environment',
 
-  // ── Погода ──
-  weather: 'weather', weather_a1: 'weather', weather_detailed: 'weather',
+  // ── Погода → объединена с Природой ──
+  weather: 'nature', weather_a1: 'nature', weather_detailed: 'nature',
 
-  // ── Животные ──
-  animals: 'animals',
+  // ── Животные → объединены с Природой ──
+  animals: 'nature',
 
   // ── Спорт ──
   sports: 'sports', sports_basic: 'sports', sports_detailed: 'sports',
@@ -222,11 +222,11 @@ const CATEGORY_REMAP: Record<string, string> = {
   society: 'society', society_b1: 'society', social: 'society',
   social_issues: 'society', social_issues_b1: 'society', sociology: 'society',
 
-  // ── Искусство ── (arts + culture merged)
+  // ── Искусство ── (arts + culture; celebrations → society)
   arts: 'arts', arts_culture: 'arts', arts_culture_b1: 'arts',
   arts_literature: 'arts', literature: 'arts', architecture: 'arts', instruments: 'arts',
   culture: 'arts', culture_b1: 'arts', history: 'arts',
-  religion: 'arts', celebrations: 'arts',
+  religion: 'arts', celebrations: 'society',
 
   // ── СМИ и общение ── (media + communication merged)
   media: 'media', media_news_b1: 'media', media_culture: 'media', media_modern: 'media',
@@ -261,10 +261,10 @@ const CATEGORY_REMAP: Record<string, string> = {
   expressions_faire: 'expressions', phrases_b1_extra: 'expressions',
   abstract_nouns: 'expressions', abstract_nouns_b1: 'expressions', nouns_b1_extra: 'expressions',
 
-  // ── Связки ── (connectors + prepositions merged)
-  connectors: 'connectors', connectors_b1: 'connectors',
-  connectors_discourse_b1: 'connectors', connectors_formal: 'connectors',
-  linking_words: 'connectors', prepositions: 'connectors',
+  // ── Связки → объединены с Выражениями ──
+  connectors: 'expressions', connectors_b1: 'expressions',
+  connectors_discourse_b1: 'expressions', connectors_formal: 'expressions',
+  linking_words: 'expressions', prepositions: 'expressions',
 };
 
 function normalizeCategory(cat: string): string {
