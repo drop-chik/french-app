@@ -4,10 +4,11 @@ import { placementQuestions, savePlacementResult } from './placement.service.js'
 
 const submitSchema = z.object({
   answers: z.record(z.string(), z.string()),
+  selfReportedLevel: z.enum(['A1', 'A2', 'B1', 'B2']).optional(),
 });
 
 const placementRoutes: FastifyPluginAsync = async (fastify) => {
-  // GET /placement/questions — get all test questions (without correct answers)
+  // GET /placement/questions — get all questions including correct answers (for adaptive frontend logic)
   fastify.get(
     '/questions',
     { preHandler: [fastify.authenticate] },
@@ -18,7 +19,7 @@ const placementRoutes: FastifyPluginAsync = async (fastify) => {
         type: q.type,
         question: q.question,
         options: q.options,
-        // correct answer NOT sent to client
+        correct: q.correct,
       }));
       reply.send({ questions });
     },
@@ -38,6 +39,7 @@ const placementRoutes: FastifyPluginAsync = async (fastify) => {
         fastify.db,
         request.user.userId,
         parsed.data.answers,
+        parsed.data.selfReportedLevel,
       );
 
       reply.send(result);

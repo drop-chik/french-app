@@ -6,15 +6,16 @@ export interface PlacementQuestion {
   type: 'vocabulary' | 'grammar' | 'comprehension';
   question: string;
   options: string[];
+  correct: string;
 }
 
 export const placementApi = {
   getQuestions: () =>
     apiRequest<{ questions: PlacementQuestion[] }>('/placement/questions'),
 
-  submit: (answers: Record<string, string>) =>
+  submit: (answers: Record<string, string>, selfReportedLevel?: string) =>
     apiRequest<{ resultLevel: 'A1' | 'A2' | 'B1' | 'B2' }>('/placement/submit', {
       method: 'POST',
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({ answers, selfReportedLevel }),
     }),
 };

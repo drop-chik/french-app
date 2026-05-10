@@ -412,3 +412,102 @@
   flex-direction: column;
   gap: var(--space-3);
 }
+
+/* Self-select phase */
+.selfSelectCard {
+  max-width: 500px;
+  width: 100%;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  text-align: center;
+}
+
+.selfSelectTitle {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.selfSelectSubtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  margin: calc(-1 * var(--space-3)) 0 0;
+}
+
+.selfSelectGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.levelCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-4);
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), transform var(--transition-fast);
+  text-align: center;
+  font-family: inherit;
+}
+
+.levelCard:hover {
+  border-color: var(--color-brand);
+  background: var(--color-brand-light);
+  transform: translateY(-2px);
+}
+
+.levelCard:active {
+  transform: translateY(0);
+}
+
+.levelCardBadge {
+  display: inline-block;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.04em;
+}
+
+.levelCardTitle {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.levelCardDesc {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  line-height: 1.4;
+}
+
+/* Answer feedback states */
+.optionCorrect {
+  border-color: #22c55e !important;
+  background-color: #f0fdf4 !important;
+  color: #166534 !important;
+}
+
+.optionWrong {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  color: #991b1b !important;
+}
+
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
+}

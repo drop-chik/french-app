@@ -7,7 +7,13 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './PlacementPage.module.css';
 
-type Phase = 'intro' | 'test' | 'result' | 'onboarding';
+type Phase = 'intro' | 'self-select' | 'test' | 'result' | 'onboarding';
+type Level = 'A1' | 'A2' | 'B1' | 'B2';
+
+const LEVELS: Level[] = ['A1', 'A2', 'B1', 'B2'];
+const LEVEL_INDEX: Record<Level, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+const MAX_QUESTIONS = 10;
+const STREAK_TO_CHANGE = 2;
 
 const LEVEL_CONTENT: Record<string, { words: number; grammar: number; listening: number }> = {
   A1: { words: 798,  grammar: 25, listening: 13 },
@@ -44,57 +50,125 @@ export function PlacementPage() {
   const { t } = useI18n();
 
   const [phase, setPhase] = useState<Phase>('intro');
-  const [current, setCurrent] = useState(0);
+  const [selfReportedLevel, setSelfReportedLevel] = useState<Level>('A1');
+
+  // Test state
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [chosen, setChosen] = useState<string | null>(null);
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [askedIds, setAskedIds] = useState<string[]>([]);
+  const [currentLevel, setCurrentLevel] = useState<Level>('A1');
+  const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
+  const [consecutiveWrong, setConsecutiveWrong] = useState(0);
+  const [currentQ, setCurrentQ] = useState<PlacementQuestion | null>(null);
+  const [isShowingFeedback, setIsShowingFeedback] = useState(false);
+  const [chosenOption, setChosenOption] = useState<string | null>(null);
+  const [questionsAsked, setQuestionsAsked] = useState(0);
   const [resultLevel, setResultLevel] = useState<string | null>(null);
 
   const { data } = useQuery({
     queryKey: ['placement-questions'],
     queryFn: () => placementApi.getQuestions(),
-    enabled: phase !== 'intro',
+    staleTime: Infinity,
   });
 
   const questions = data?.questions ?? [];
-  const currentQ: PlacementQuestion | undefined = questions[current];
 
   const submitMutation = useMutation({
-    mutationFn: (ans: Record<string, string>) => placementApi.submit(ans),
-    onSuccess: (data) => {
-      setResultLevel(data.resultLevel);
+    mutationFn: (payload: { answers: Record<string, string>; selfReportedLevel: Level }) =>
+      placementApi.submit(payload.answers, payload.selfReportedLevel),
+    onSuccess: (res) => {
+      setResultLevel(res.resultLevel);
       setPhase('result');
       if (user && accessToken) {
-        setAuth(accessToken, { ...user, level: data.resultLevel, placementTestDone: true });
+        setAuth(accessToken, { ...user, level: res.resultLevel, placementTestDone: true });
       }
       queryClient.invalidateQueries({ queryKey: ['words-session'] });
     },
   });
 
+  function pickQuestion(level: Level, asked: string[]): PlacementQuestion | null {
+    const pool = questions.filter(q => q.level === level && !asked.includes(q.id));
+    if (pool.length > 0) return pool[Math.floor(Math.random() * pool.length)] ?? null;
+    const any = questions.filter(q => !asked.includes(q.id));
+    return any[Math.floor(Math.random() * any.length)] ?? null;
+  }
+
+  function startTest(level: Level) {
+    setSelfReportedLevel(level);
+    setCurrentLevel(level);
+    setAnswers({});
+    setAskedIds([]);
+    setConsecutiveCorrect(0);
+    setConsecutiveWrong(0);
+    setQuestionsAsked(0);
+    setIsShowingFeedback(false);
+    setChosenOption(null);
+    const firstQ = pickQuestion(level, []);
+    setCurrentQ(firstQ);
+    setPhase('test');
+  }
+
   function handleChoose(option: string) {
-    if (chosen || !currentQ || isBlocked) return;
-    setChosen(option);
+    if (isShowingFeedback || !currentQ) return;
+
+    const isCorrect = option === currentQ.correct;
+    setChosenOption(option);
+    setIsShowingFeedback(true);
+
     const newAnswers = { ...answers, [currentQ.id]: option };
     setAnswers(newAnswers);
+    const newAsked = [...askedIds, currentQ.id];
+    setAskedIds(newAsked);
+    const newCount = questionsAsked + 1;
+    setQuestionsAsked(newCount);
+
+    let cc = consecutiveCorrect;
+    let cw = consecutiveWrong;
+    let newLevel = currentLevel;
+
+    if (isCorrect) {
+      cc++;
+      cw = 0;
+      if (cc >= STREAK_TO_CHANGE) {
+        const idx = LEVEL_INDEX[currentLevel];
+        newLevel = LEVELS[Math.min(idx + 1, LEVELS.length - 1)] ?? currentLevel;
+        cc = 0;
+      }
+    } else {
+      cw++;
+      cc = 0;
+      if (cw >= STREAK_TO_CHANGE) {
+        const idx = LEVEL_INDEX[currentLevel];
+        newLevel = LEVELS[Math.max(idx - 1, 0)] ?? currentLevel;
+        cw = 0;
+      }
+    }
+
+    setConsecutiveCorrect(cc);
+    setConsecutiveWrong(cw);
 
     setTimeout(() => {
-      if (current + 1 >= questions.length) {
-        submitMutation.mutate(newAnswers);
-      } else {
-        setIsBlocked(true);
-        setCurrent((c) => c + 1);
-        setChosen(null);
-        setTimeout(() => setIsBlocked(false), 400);
+      if (newCount >= MAX_QUESTIONS) {
+        submitMutation.mutate({ answers: newAnswers, selfReportedLevel });
+        return;
       }
-    }, 500);
+      setCurrentLevel(newLevel);
+      const nextQ = pickQuestion(newLevel, newAsked);
+      if (!nextQ) {
+        submitMutation.mutate({ answers: newAnswers, selfReportedLevel });
+        return;
+      }
+      setCurrentQ(nextQ);
+      setIsShowingFeedback(false);
+      setChosenOption(null);
+    }, 700);
   }
 
   function skipTest() {
-    submitMutation.mutate({});
+    submitMutation.mutate({ answers: {}, selfReportedLevel: 'A1' });
   }
 
-  const progress = questions.length > 0 ? (current / questions.length) * 100 : 0;
-  const levelDesc = (t.placement.levelDesc as Record<string, string>);
+  const levelDesc = t.placement.levelDesc as Record<string, string>;
+  const selfSelectLevels = t.placement.selfSelectLevels as Record<string, { title: string; desc: string }>;
 
   /* ── Intro ─────────────────────────────────────────────────────── */
   if (phase === 'intro') {
@@ -113,7 +187,7 @@ export function PlacementPage() {
             <span>⏱ {t.placement.duration}</span>
             <span>🎓 {t.placement.levels}</span>
           </div>
-          <button className={styles.startBtn} onClick={() => setPhase('test')}>
+          <button className={styles.startBtn} onClick={() => setPhase('self-select')}>
             {t.placement.startTest}
           </button>
           <button className={styles.skipBtn} onClick={skipTest}>
@@ -124,7 +198,45 @@ export function PlacementPage() {
     );
   }
 
-  /* ── Result (screen 1) ─────────────────────────────────────────── */
+  /* ── Self-select ────────────────────────────────────────────────── */
+  if (phase === 'self-select') {
+    return (
+      <div className={styles.page}>
+        <motion.div
+          className={styles.selfSelectCard}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <h2 className={styles.selfSelectTitle}>{t.placement.selfSelectTitle}</h2>
+          <p className={styles.selfSelectSubtitle}>{t.placement.selfSelectSubtitle}</p>
+
+          <div className={styles.selfSelectGrid}>
+            {LEVELS.map((level) => {
+              const info = selfSelectLevels[level];
+              return (
+                <button
+                  key={level}
+                  className={styles.levelCard}
+                  onClick={() => startTest(level)}
+                >
+                  <span className={`${styles.levelCardBadge} ${styles[`badge_${level}`]}`}>{level}</span>
+                  <span className={styles.levelCardTitle}>{info?.title ?? level}</span>
+                  <span className={styles.levelCardDesc}>{info?.desc ?? ''}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button className={styles.skipBtn} onClick={skipTest}>
+            {t.placement.skip}
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  /* ── Result ─────────────────────────────────────────────────────── */
   if (phase === 'result' && resultLevel) {
     const planItems = t.placement.planItems as never as Array<{ icon: string; text: string }>;
     return (
@@ -144,7 +256,6 @@ export function PlacementPage() {
           >
             {resultLevel}
           </motion.div>
-
           <motion.h2
             className={styles.resultTitle}
             initial={{ opacity: 0, y: 8 }}
@@ -153,7 +264,6 @@ export function PlacementPage() {
           >
             {t.placement.yourLevel}
           </motion.h2>
-
           <motion.p
             className={styles.resultDesc}
             initial={{ opacity: 0 }}
@@ -162,7 +272,6 @@ export function PlacementPage() {
           >
             {levelDesc[resultLevel] ?? ''}
           </motion.p>
-
           <motion.div
             className={styles.planSection}
             initial={{ opacity: 0, y: 10 }}
@@ -179,7 +288,6 @@ export function PlacementPage() {
               ))}
             </ul>
           </motion.div>
-
           <motion.button
             className={styles.continueBtn}
             initial={{ opacity: 0, y: 8 }}
@@ -194,10 +302,9 @@ export function PlacementPage() {
     );
   }
 
-  /* ── Onboarding (screen 2) ─────────────────────────────────────── */
+  /* ── Onboarding ─────────────────────────────────────────────────── */
   if (phase === 'onboarding' && resultLevel) {
     const content = LEVEL_CONTENT[resultLevel] ?? { words: 0, grammar: 0, listening: 0 };
-
     const statRows = [
       { icon: '📚', value: content.words,     label: t.placement.wordsLabel },
       ...(content.grammar   > 0 ? [{ icon: '📖', value: content.grammar,   label: t.placement.grammarLabel }]   : []),
@@ -220,7 +327,6 @@ export function PlacementPage() {
               {(t.placement.planForLevel as string).replace('{level}', resultLevel)}
             </p>
           </div>
-
           <motion.div className={styles.statsGrid} variants={stagger} initial="hidden" animate="show">
             {statRows.map((s, i) => (
               <motion.div key={i} className={styles.statItem} variants={statItem}>
@@ -230,7 +336,6 @@ export function PlacementPage() {
               </motion.div>
             ))}
           </motion.div>
-
           <motion.div
             className={styles.firstStepBox}
             initial={{ opacity: 0 }}
@@ -240,23 +345,16 @@ export function PlacementPage() {
             <p className={styles.firstStepTitle}>{t.placement.firstStep}</p>
             <p className={styles.firstStepDesc}>{t.placement.firstStepDesc}</p>
           </motion.div>
-
           <motion.div
             className={styles.onboardingActions}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55 }}
           >
-            <button
-              className={styles.continueBtn}
-              onClick={() => navigate({ to: '/vocabulary' })}
-            >
+            <button className={styles.continueBtn} onClick={() => navigate({ to: '/vocabulary' })}>
               {t.placement.startLearning}
             </button>
-            <button
-              className={styles.skipBtn}
-              onClick={() => navigate({ to: '/dashboard' })}
-            >
+            <button className={styles.skipBtn} onClick={() => navigate({ to: '/dashboard' })}>
               {t.placement.toDashboard}
             </button>
           </motion.div>
@@ -265,8 +363,8 @@ export function PlacementPage() {
     );
   }
 
-  /* ── Loading ───────────────────────────────────────────────────── */
-  if (!currentQ) {
+  /* ── Loading / submitting ───────────────────────────────────────── */
+  if (submitMutation.isPending || (phase === 'test' && !currentQ)) {
     return (
       <div className={styles.page}>
         <p className={styles.loading}>{t.placement.loading}</p>
@@ -274,19 +372,21 @@ export function PlacementPage() {
     );
   }
 
+  if (!currentQ) return null;
+
   /* ── Test ──────────────────────────────────────────────────────── */
   return (
     <div className={styles.page}>
       <div className={styles.testContainer}>
         <div className={styles.progressRow}>
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+            <div className={styles.progressFill} style={{ width: `${(questionsAsked / MAX_QUESTIONS) * 100}%` }} />
           </div>
-          <span className={styles.progressText}>{current + 1}/{questions.length}</span>
+          <span className={styles.progressText}>{questionsAsked + 1}/{MAX_QUESTIONS}</span>
         </div>
 
-        <span className={`${styles.levelBadge} ${styles[`badge_${currentQ.level}`]}`}>
-          {currentQ.level}
+        <span className={`${styles.levelBadge} ${styles[`badge_${currentLevel}`]}`}>
+          {currentLevel}
         </span>
 
         <AnimatePresence mode="wait">
@@ -301,13 +401,17 @@ export function PlacementPage() {
 
             <div className={styles.options}>
               {currentQ.options.map((opt) => {
-                const isChosen = chosen === opt;
+                let cls = styles.option ?? '';
+                if (isShowingFeedback) {
+                  if (opt === currentQ.correct) cls += ` ${styles.optionCorrect ?? ''}`;
+                  else if (opt === chosenOption) cls += ` ${styles.optionWrong ?? ''}`;
+                }
                 return (
                   <button
                     key={opt}
-                    className={`${styles.option} ${isChosen ? styles.optionChosen : ''}`}
+                    className={cls}
                     onClick={() => handleChoose(opt)}
-                    disabled={!!chosen || isBlocked}
+                    disabled={isShowingFeedback}
                   >
                     {opt}
                   </button>

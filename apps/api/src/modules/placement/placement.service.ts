@@ -8,8 +8,9 @@ export { placementQuestions };
 export type AnswerMap = Record<string, string>; // questionId → chosen option
 
 // Evaluate answers and determine level
-export function evaluateLevel(answers: AnswerMap): 'A1' | 'A2' | 'B1' | 'B2' {
-  const levelScores: Record<string, { correct: number; total: number }> = {
+export function evaluateLevel(answers: AnswerMap, selfReportedLevel?: string): 'A1' | 'A2' | 'B1' | 'B2' {
+  const ORDERED = ['A1', 'A2', 'B1', 'B2'] as const;
+  const scores: Record<string, { correct: number; total: number }> = {
     A1: { correct: 0, total: 0 },
     A2: { correct: 0, total: 0 },
     B1: { correct: 0, total: 0 },
@@ -18,22 +19,29 @@ export function evaluateLevel(answers: AnswerMap): 'A1' | 'A2' | 'B1' | 'B2' {
 
   for (const q of placementQuestions) {
     if (!(q.id in answers)) continue;
-    levelScores[q.level]!.total++;
-    if (answers[q.id] === q.correct) {
-      levelScores[q.level]!.correct++;
-    }
+    scores[q.level]!.total++;
+    if (answers[q.id] === q.correct) scores[q.level]!.correct++;
   }
 
-  // Calculate % per level
-  const pct = (level: string) => {
-    const s = levelScores[level]!;
-    return s.total === 0 ? 0 : s.correct / s.total;
-  };
+  // Highest level with >= 50% correct (only for levels that were actually tested)
+  for (const level of ['B2', 'B1', 'A2', 'A1'] as const) {
+    const s = scores[level]!;
+    if (s.total > 0 && s.correct / s.total >= 0.5) return level;
+  }
 
-  // Logic: start from top, assign highest level with ≥50% correct
-  if (pct('B2') >= 0.5) return 'B2';
-  if (pct('B1') >= 0.5) return 'B1';
-  if (pct('A2') >= 0.5) return 'A2';
+  // Nothing passed 50% — use highest tested level minus one step
+  const tested = (['B2', 'B1', 'A2', 'A1'] as const).filter(l => scores[l]!.total > 0);
+  if (tested.length > 0) {
+    const highest = tested[0]!;
+    const idx = ORDERED.indexOf(highest);
+    return ORDERED[Math.max(idx - 1, 0)] ?? 'A1';
+  }
+
+  // No answers (skipped test) — use self-reported level or A1
+  if (selfReportedLevel === 'A1' || selfReportedLevel === 'A2' ||
+      selfReportedLevel === 'B1' || selfReportedLevel === 'B2') {
+    return selfReportedLevel;
+  }
   return 'A1';
 }
 
@@ -42,8 +50,9 @@ export async function savePlacementResult(
   db: DB,
   userId: string,
   answers: AnswerMap,
+  selfReportedLevel?: string,
 ) {
-  const resultLevel = evaluateLevel(answers);
+  const resultLevel = evaluateLevel(answers, selfReportedLevel);
 
   // Save test record
   await db.insert(placementTests).values({
