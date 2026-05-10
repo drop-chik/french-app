@@ -187,8 +187,8 @@ export function DashboardPage() {
         <h2 className={styles.sectionTitle}>{t.dashboard.quickAccess}</h2>
         <div className={styles.quickGrid}>
           <QuickLink to="/writing"      icon={<PenLine size={20} />}       label={t.nav.writing} />
-          <QuickLink to="/conversation" icon={<MessageCircle size={20} />} label={t.nav.conversations} />
           <QuickLink to="/drills"       icon={<Dumbbell size={20} />}      label={t.nav.drills} />
+          <QuickLink to="/conversation" icon={<MessageCircle size={20} />} label={t.nav.conversations} />
           <QuickLink to="/dictionary"   icon={<Book size={20} />}          label={t.nav.dictionary} />
         </div>
       </section>
