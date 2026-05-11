@@ -21,6 +21,7 @@ export interface LearningStats {
   incorrectAnswers: number;
   weekReviews: number;
   weekTrend: number | null;
+  wordsDueToday: number;
 }
 
 export interface DayActivity {

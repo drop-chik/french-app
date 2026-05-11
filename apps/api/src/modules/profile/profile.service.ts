@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { eq, count, sql, gte, lt, and, asc, inArray } from 'drizzle-orm';
+import { eq, count, sql, gte, lt, lte, and, asc, inArray } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, words, wordProgress, grammarTopics, grammarProgress, listeningExercises, listeningProgress, conversationSessions } from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
@@ -166,6 +166,16 @@ export async function getStats(db: DB, userId: string) {
     ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100)
     : (thisWeek > 0 ? 100 : null);
 
+  // Words due for review today (nextReview <= now)
+  const [dueResult] = await db
+    .select({ cnt: count() })
+    .from(wordProgress)
+    .where(and(
+      eq(wordProgress.userId, userId),
+      lte(wordProgress.nextReview, now),
+    ));
+  const wordsDueToday = Number(dueResult?.cnt ?? 0);
+
   return {
     words: {
       total: totalWords,
@@ -185,6 +195,7 @@ export async function getStats(db: DB, userId: string) {
     incorrectAnswers: Number(incorrectResult?.total ?? 0),
     weekReviews: thisWeek,
     weekTrend,
+    wordsDueToday,
   };
 }
 

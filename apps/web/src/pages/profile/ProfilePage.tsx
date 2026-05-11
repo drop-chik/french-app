@@ -274,8 +274,7 @@ export function ProfilePage() {
       {/* 4. Insight grid */}
       <InsightGrid
         wordsBreakdown={chartsData?.statusBreakdown ?? {}}
-        correctAnswers={correctAnswers}
-        incorrectAnswers={incorrectAnswers}
+        wordsDueToday={stats?.wordsDueToday ?? 0}
         grammarCompleted={stats?.grammar.completed ?? 0}
         listeningCompleted={stats?.listening.completed ?? 0}
         conversations={stats?.conversations ?? 0}
@@ -290,8 +289,10 @@ export function ProfilePage() {
             review: t.profile.wordStatusReview,
             mastered: t.profile.wordStatusMastered,
           },
-          accuracyTitle: t.profile.insightAccuracyTitle,
-          accuracySub: t.profile.insightAccuracySub,
+          reviewTitle: t.profile.insightReviewTitle,
+          reviewSub: t.profile.insightReviewSub,
+          reviewCta: t.profile.insightReviewCta,
+          reviewDone: t.profile.insightReviewDone,
           skillsTitle: t.profile.insightSkillsTitle,
           skillsGrammar: t.profile.insightSkillsGrammar,
           skillsListening: t.profile.insightSkillsListening,

@@ -1,21 +1,24 @@
+import { Link } from '@tanstack/react-router';
+import { Zap, CheckCircle2 } from 'lucide-react';
 import { useCountUp } from './useCountUp';
 import styles from './InsightGrid.module.css';
 
 interface InsightGridProps {
   wordsBreakdown: Record<string, number>;
-  correctAnswers: number;
-  incorrectAnswers: number;
+  wordsDueToday: number;
   grammarCompleted: number;
   listeningCompleted: number;
   conversations: number;
   weekReviews: number;
-  weekActivity: number[]; // last 7 days reviewed counts (for sparkline)
+  weekActivity: number[];
   labels: {
     wordsTitle: string;
     wordsSub: string;
     wordsStatus: { new: string; learning: string; review: string; mastered: string };
-    accuracyTitle: string;
-    accuracySub: string;
+    reviewTitle: string;
+    reviewSub: string;
+    reviewCta: string;
+    reviewDone: string;
     skillsTitle: string;
     skillsGrammar: string;
     skillsListening: string;
@@ -34,11 +37,14 @@ export function InsightGrid(props: InsightGridProps) {
         sub={props.labels.wordsSub}
         statusLabels={props.labels.wordsStatus}
       />
-      <AccuracyInsight
-        correct={props.correctAnswers}
-        incorrect={props.incorrectAnswers}
-        title={props.labels.accuracyTitle}
-        subTemplate={props.labels.accuracySub}
+      <ReviewTodayInsight
+        due={props.wordsDueToday}
+        labels={{
+          title: props.labels.reviewTitle,
+          sub: props.labels.reviewSub,
+          cta: props.labels.reviewCta,
+          done: props.labels.reviewDone,
+        }}
       />
       <SkillsInsight
         grammar={props.grammarCompleted}
@@ -126,77 +132,40 @@ function WordsInsight({
   );
 }
 
-// ── 2) Accuracy insight — radial progress ────────────────────────────────────
+// ── 2) Review today — actionable card ────────────────────────────────────────
 
-function AccuracyInsight({
-  correct,
-  incorrect,
-  title,
-  subTemplate,
+function ReviewTodayInsight({
+  due,
+  labels,
 }: {
-  correct: number;
-  incorrect: number;
-  title: string;
-  subTemplate: string;
+  due: number;
+  labels: { title: string; sub: string; cta: string; done: string };
 }) {
-  const total = correct + incorrect;
-  const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const animAccuracy = useCountUp(accuracy, 1000);
-
-  const size = 120;
-  const stroke = 12;
-  const R = size / 2 - stroke / 2;
-  const C = 2 * Math.PI * R;
-  const filled = (accuracy / 100) * C;
+  const anim = useCountUp(due);
+  const allDone = due === 0;
 
   return (
-    <div className={styles.card}>
-      <h3 className={styles.cardTitle}>{title}</h3>
-      <div className={styles.radialWrap}>
-        <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={R}
-            stroke="var(--color-border)"
-            strokeWidth={stroke}
-            fill="none"
-          />
-          {accuracy > 0 && (
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={R}
-              stroke="#22c55e"
-              strokeWidth={stroke}
-              fill="none"
-              strokeDasharray={`${filled.toFixed(1)} ${(C - filled).toFixed(1)}`}
-              strokeLinecap="round"
-              style={{
-                transformOrigin: `${size / 2}px ${size / 2}px`,
-                transform: 'rotate(-90deg)',
-                transition: 'stroke-dasharray 0.9s cubic-bezier(0.25,1,0.5,1)',
-              }}
-            />
-          )}
-          <text
-            x={size / 2}
-            y={size / 2 + 7}
-            textAnchor="middle"
-            fontSize="28"
-            fontWeight="800"
-            fill="var(--color-text-primary)"
-            style={{ fontVariantNumeric: 'tabular-nums' }}
-          >
-            {animAccuracy}%
-          </text>
-        </svg>
-      </div>
-      <p className={styles.cardSub}>
-        {total > 0
-          ? subTemplate.replace('{c}', String(correct)).replace('{t}', String(total))
-          : '—'}
-      </p>
+    <div className={`${styles.card} ${allDone ? styles.cardDone : styles.cardCta}`}>
+      <h3 className={styles.cardTitle}>{labels.title}</h3>
+
+      {allDone ? (
+        <div className={styles.doneWrap}>
+          <CheckCircle2 size={48} className={styles.doneIcon} />
+          <p className={styles.doneText}>{labels.done}</p>
+        </div>
+      ) : (
+        <>
+          <div className={styles.reviewBig}>
+            <Zap size={28} className={styles.reviewBigIcon} />
+            <span>{anim}</span>
+          </div>
+          <p className={styles.cardSub}>{labels.sub}</p>
+          <Link to="/vocabulary" className={styles.reviewCta}>
+            {labels.cta}
+            <span className={styles.reviewCtaArrow}>→</span>
+          </Link>
+        </>
+      )}
     </div>
   );
 }
