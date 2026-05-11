@@ -284,7 +284,6 @@ export function ProfilePage() {
         grammarTotal={homeData?.levelProgress.totalGrammar ?? 0}
         listeningCompleted={homeData?.levelProgress.completedListening ?? 0}
         listeningTotal={homeData?.levelProgress.totalListening ?? 0}
-        conversations={stats?.conversations ?? 0}
         nextGrammar={homeData?.todayPlan.nextGrammar ?? null}
         nextListening={homeData?.todayPlan.nextListening ?? null}
         weekReviews={stats?.weekReviews ?? 0}
@@ -305,7 +304,8 @@ export function ProfilePage() {
           continueTitle: t.profile.insightContinueTitle,
           continueGrammar: t.profile.insightContinueGrammar,
           continueListening: t.profile.insightContinueListening,
-          continueConversation: t.profile.insightContinueConversation,
+          continueReading: t.profile.insightContinueReading,
+          continueReadingSub: t.profile.insightContinueReadingSub,
           continueAllDone: t.profile.insightContinueAllDone,
           weekTitle: t.profile.insightWeekTitle,
           weekSub: t.profile.insightWeekSub,

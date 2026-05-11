@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Zap, CheckCircle2, ArrowRight, BookOpen, Headphones, MessageSquare } from 'lucide-react';
+import { Zap, CheckCircle2, ArrowRight, BookOpen, Headphones, BookText } from 'lucide-react';
 import { useCountUp } from './useCountUp';
 import styles from './InsightGrid.module.css';
 
@@ -16,7 +16,6 @@ interface InsightGridProps {
   grammarTotal: number;
   listeningCompleted: number;
   listeningTotal: number;
-  conversations: number;
   nextGrammar: { slug: string; title: string; status: string } | null;
   nextListening: { id: string; title: string; durationSec: number } | null;
   weekReviews: number;
@@ -32,7 +31,8 @@ interface InsightGridProps {
     continueTitle: string;
     continueGrammar: string;
     continueListening: string;
-    continueConversation: string;
+    continueReading: string;
+    continueReadingSub: string;
     continueAllDone: string;
     weekTitle: string;
     weekSub: string;
@@ -64,12 +64,12 @@ export function InsightGrid(props: InsightGridProps) {
         grammarTotal={props.grammarTotal}
         listeningCompleted={props.listeningCompleted}
         listeningTotal={props.listeningTotal}
-        conversations={props.conversations}
         labels={{
           title: props.labels.continueTitle,
           grammar: props.labels.continueGrammar,
           listening: props.labels.continueListening,
-          conversation: props.labels.continueConversation,
+          reading: props.labels.continueReading,
+          readingSub: props.labels.continueReadingSub,
           allDone: props.labels.continueAllDone,
         }}
       />
@@ -197,7 +197,6 @@ function ContinueLearningInsight({
   grammarTotal,
   listeningCompleted,
   listeningTotal,
-  conversations,
   labels,
 }: {
   nextGrammar: { slug: string; title: string; status: string } | null;
@@ -206,12 +205,12 @@ function ContinueLearningInsight({
   grammarTotal: number;
   listeningCompleted: number;
   listeningTotal: number;
-  conversations: number;
   labels: {
     title: string;
     grammar: string;
     listening: string;
-    conversation: string;
+    reading: string;
+    readingSub: string;
     allDone: string;
   };
 }) {
@@ -254,11 +253,11 @@ function ContinueLearningInsight({
             />
           )}
           <ContinueRow
-            icon={<MessageSquare size={16} />}
-            category={labels.conversation}
-            title={`${conversations}`}
+            icon={<BookText size={16} />}
+            category={labels.reading}
+            title={labels.readingSub}
             color="#ec4899"
-            to="/conversations"
+            to="/reading"
             standalone
           />
         </div>
