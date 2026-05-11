@@ -79,6 +79,10 @@ jobs:
           # uncomment it in playwright.config.ts. For now we run against the
           # currently-deployed Vercel build — same surface the user sees.
           PLAYWRIGHT_BASE_URL: https://french-web-two.vercel.app
+          # Credentials for the authenticated suite. If unset, auth.setup.ts
+          # skips and the chromium-auth project is skipped too.
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
 
       - name: Upload Playwright report on failure
         if: failure()

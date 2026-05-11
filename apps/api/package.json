@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed/index.ts",
-    "generate-audio": "tsx src/scripts/generate-audio.ts"
+    "generate-audio": "tsx src/scripts/generate-audio.ts",
+    "streak-reminder": "tsx src/scripts/streak-reminder.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

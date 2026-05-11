@@ -38,6 +38,7 @@ Thumbs.db
 test-results
 playwright-report
 playwright/.cache
+.auth
 
 # Claude Code local permissions (not for sharing)
 .claude/settings.local.json

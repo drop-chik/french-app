@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'node:path';
 
 /**
  * Playwright config — point this at whatever instance you want to smoke-test.
@@ -6,10 +7,15 @@ import { defineConfig, devices } from '@playwright/test';
  * Local default: PLAYWRIGHT_BASE_URL=http://localhost:5173 (the Vite dev server).
  * Production:    PLAYWRIGHT_BASE_URL=https://french-web-two.vercel.app
  *
- * The webServer block is intentionally not enabled — most local sessions
- * already have `pnpm dev` running. If you want Playwright to launch the dev
- * server itself, uncomment the webServer block below.
+ * Authenticated specs depend on `auth.setup.ts`, which reads
+ * E2E_TEST_EMAIL / E2E_TEST_PASSWORD and stores cookies + localStorage (the
+ * JWT) into .auth/user.json. The `chromium-auth` project loads that state.
+ * If those env vars aren't set, setup skips and the authenticated suite is
+ * skipped along with it.
  */
+
+const AUTH_FILE = path.join(process.cwd(), '.auth', 'user.json');
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -25,9 +31,22 @@ export default defineConfig({
   },
 
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // Add { name: 'mobile', use: { ...devices['iPhone 13'] } } once we have
-    // mobile-specific flows worth testing.
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'chromium',
+      testMatch: /public-pages\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'chromium-auth',
+      testMatch: /authenticated\..*\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE },
+      dependencies: ['setup'],
+    },
   ],
 
   // webServer: {
