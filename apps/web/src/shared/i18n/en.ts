@@ -47,6 +47,9 @@ export const en: Translations = {
   profile: {
     title: 'Profile',
     personalInfo: 'Personal Information',
+    personalInfoDesc: 'Name and contact details visible on your profile',
+    changePasswordDesc: 'Update your account password for security',
+    languageDesc: 'Choose the interface language for the app',
     name: 'Name',
     email: 'Email',
     saveChanges: 'Save Changes',

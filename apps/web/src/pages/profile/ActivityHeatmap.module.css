@@ -1,5 +1,6 @@
 .section {
-  --cell: 16px;
+  --cell: 18px;
+  --cell-gap: 4px;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
@@ -30,74 +31,84 @@
   font-weight: 500;
 }
 
+/* Center the heatmap inside the wide card */
 .heatmapScroll {
+  display: flex;
+  justify-content: center;
   overflow-x: auto;
-  padding-bottom: var(--space-2);
+  padding: var(--space-2) 0;
 }
 
 .heatmapOuter {
   display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  min-width: fit-content;
+  align-items: stretch;
+  gap: var(--space-3);
 }
 
+/* ── Day-of-week labels (left column) ── */
 .dayLabels {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  display: grid;
+  grid-template-rows: 20px repeat(7, var(--cell));
+  row-gap: var(--cell-gap);
   flex-shrink: 0;
-  padding-top: 18px; /* leave space for month labels row */
+}
+
+.daySpacer {
+  /* aligns the day-labels grid with the month-labels row above the heatmap */
 }
 
 .dayLabel {
-  height: var(--cell);
-  line-height: var(--cell);
   font-size: 10px;
+  line-height: var(--cell);
   color: var(--color-text-tertiary, var(--color-text-secondary));
   font-weight: 500;
   text-align: right;
-  min-width: 26px;
+  white-space: nowrap;
+  min-width: 22px;
 }
 
-.gridWrap {
+/* ── Grid area (month labels + cells) ── */
+.gridArea {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--cell-gap);
 }
 
-.monthLabels {
-  display: grid;
-  gap: 3px;
-  height: 16px;
+.monthLabelsRow {
+  position: relative;
+  height: 20px;
 }
 
 .monthLabel {
-  font-size: 10px;
-  color: var(--color-text-tertiary, var(--color-text-secondary));
+  position: absolute;
+  top: 0;
+  font-size: 11px;
   font-weight: 600;
+  color: var(--color-text-secondary);
   white-space: nowrap;
-  overflow: visible;
   text-transform: capitalize;
+  letter-spacing: 0.02em;
 }
 
 .grid {
   display: grid;
   grid-template-rows: repeat(7, var(--cell));
   grid-auto-flow: column;
-  gap: 3px;
+  gap: var(--cell-gap);
 }
 
 .cell {
   width: var(--cell);
   height: var(--cell);
-  border-radius: 3px;
-  transition: transform 0.1s, box-shadow 0.1s;
+  border-radius: 4px;
+  transition: transform 0.12s, outline 0.12s;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
 }
 
 .cell:hover {
   transform: scale(1.15);
-  box-shadow: 0 0 0 1px var(--color-text-secondary);
+  outline-color: var(--color-text-secondary);
 }
 
 .cellToday {
@@ -126,9 +137,21 @@
 .legendCell {
   width: 12px;
   height: 12px;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
+/* ── Responsive ── */
 @media (max-width: 768px) {
-  .section { padding: var(--space-5); }
+  .section {
+    --cell: 14px;
+    --cell-gap: 3px;
+    padding: var(--space-5);
+  }
+  .heatmapScroll {
+    justify-content: flex-start;
+  }
+  .dayLabel {
+    font-size: 9px;
+    min-width: 20px;
+  }
 }

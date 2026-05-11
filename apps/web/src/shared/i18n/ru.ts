@@ -48,6 +48,9 @@ export const ru: DeepRecord = {
   profile: {
     title: 'Профиль',
     personalInfo: 'Личная информация',
+    personalInfoDesc: 'Имя и контактные данные, видимые в профиле',
+    changePasswordDesc: 'Обновите пароль аккаунта для безопасности',
+    languageDesc: 'Выберите язык интерфейса приложения',
     name: 'Имя',
     email: 'Email',
     saveChanges: 'Сохранить',

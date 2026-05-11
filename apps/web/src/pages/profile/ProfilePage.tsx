@@ -318,24 +318,31 @@ export function ProfilePage() {
       {/* 6. Settings accordion */}
       <details className={styles.accordion}>
         <summary className={styles.accordionSummary}>
-          <Settings size={16} />
-          {t.profile.settings}
-          <ChevronDown size={16} className={styles.accordionChevron} />
+          <Settings size={18} />
+          <span>{t.profile.settings}</span>
+          <ChevronDown size={18} className={styles.accordionChevron} />
         </summary>
         <div className={styles.accordionContent}>
-          <div className={styles.settingsGrid}>
-            {/* Personal info */}
-            <div className={styles.settingsCard}>
-              <h3 className={styles.settingsCardTitle}>
-                <User size={15} /> {t.profile.personalInfo}
-              </h3>
-              <form
-                className={styles.form}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  updateProfileMutation.mutate({ name, email });
-                }}
-              >
+
+          {/* — Personal info — */}
+          <div className={styles.settingsBlock}>
+            <div className={styles.settingsBlockHead}>
+              <div className={`${styles.settingsIconBubble} ${styles.bubbleBlue}`}>
+                <User size={18} />
+              </div>
+              <div className={styles.settingsBlockTitleWrap}>
+                <h3 className={styles.settingsBlockTitle}>{t.profile.personalInfo}</h3>
+                <p className={styles.settingsBlockDesc}>{t.profile.personalInfoDesc}</p>
+              </div>
+            </div>
+            <form
+              className={styles.settingsForm}
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateProfileMutation.mutate({ name, email });
+              }}
+            >
+              <div className={styles.fieldRow}>
                 <div className={styles.field}>
                   <label className={styles.label}>{t.profile.name}</label>
                   <input
@@ -356,29 +363,41 @@ export function ProfilePage() {
                     required
                   />
                 </div>
+              </div>
+              <div className={styles.settingsFooter}>
                 {profileMsg && (
                   <p className={profileMsg.type === 'ok' ? styles.success : styles.error}>
                     {profileMsg.text}
                   </p>
                 )}
-                <button className={styles.btn} type="submit" disabled={updateProfileMutation.isPending}>
+                <button className={styles.btnPrimary} type="submit" disabled={updateProfileMutation.isPending}>
                   {updateProfileMutation.isPending ? t.common.loading : t.profile.saveChanges}
                 </button>
-              </form>
-            </div>
+              </div>
+            </form>
+          </div>
 
-            {/* Password */}
-            <div className={styles.settingsCard}>
-              <h3 className={styles.settingsCardTitle}>
-                <Lock size={15} /> {t.profile.changePassword}
-              </h3>
-              <form
-                className={styles.form}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  updatePasswordMutation.mutate();
-                }}
-              >
+          <div className={styles.settingsDivider} />
+
+          {/* — Security — */}
+          <div className={styles.settingsBlock}>
+            <div className={styles.settingsBlockHead}>
+              <div className={`${styles.settingsIconBubble} ${styles.bubbleOrange}`}>
+                <Lock size={18} />
+              </div>
+              <div className={styles.settingsBlockTitleWrap}>
+                <h3 className={styles.settingsBlockTitle}>{t.profile.changePassword}</h3>
+                <p className={styles.settingsBlockDesc}>{t.profile.changePasswordDesc}</p>
+              </div>
+            </div>
+            <form
+              className={styles.settingsForm}
+              onSubmit={(e) => {
+                e.preventDefault();
+                updatePasswordMutation.mutate();
+              }}
+            >
+              <div className={styles.fieldRow}>
                 <div className={styles.field}>
                   <label className={styles.label}>{t.profile.currentPassword}</label>
                   <input
@@ -400,36 +419,52 @@ export function ProfilePage() {
                     required
                   />
                 </div>
+              </div>
+              <div className={styles.settingsFooter}>
                 {pwdMsg && (
                   <p className={pwdMsg.type === 'ok' ? styles.success : styles.error}>
                     {pwdMsg.text}
                   </p>
                 )}
-                <button className={styles.btn} type="submit" disabled={updatePasswordMutation.isPending}>
+                <button className={styles.btnPrimary} type="submit" disabled={updatePasswordMutation.isPending}>
                   {updatePasswordMutation.isPending ? t.common.loading : t.profile.updatePassword}
                 </button>
-              </form>
-            </div>
-
-            {/* Language */}
-            <div className={styles.settingsCard}>
-              <h3 className={styles.settingsCardTitle}>
-                <Globe size={15} /> {t.profile.language}
-              </h3>
-              <div className={styles.langButtons}>
-                <button
-                  className={`${styles.langBtn} ${lang === 'ru' ? styles.langBtnActive : ''}`}
-                  onClick={() => handleLangChange('ru')}
-                >
-                  Русский (RU)
-                </button>
-                <button
-                  className={`${styles.langBtn} ${lang === 'en' ? styles.langBtnActive : ''}`}
-                  onClick={() => handleLangChange('en')}
-                >
-                  English (EN)
-                </button>
               </div>
+            </form>
+          </div>
+
+          <div className={styles.settingsDivider} />
+
+          {/* — Language — */}
+          <div className={styles.settingsBlock}>
+            <div className={styles.settingsBlockHead}>
+              <div className={`${styles.settingsIconBubble} ${styles.bubbleGreen}`}>
+                <Globe size={18} />
+              </div>
+              <div className={styles.settingsBlockTitleWrap}>
+                <h3 className={styles.settingsBlockTitle}>{t.profile.language}</h3>
+                <p className={styles.settingsBlockDesc}>{t.profile.languageDesc}</p>
+              </div>
+            </div>
+            <div className={styles.langTiles}>
+              <button
+                className={`${styles.langTile} ${lang === 'ru' ? styles.langTileActive : ''}`}
+                onClick={() => handleLangChange('ru')}
+                type="button"
+              >
+                <span className={styles.langFlag}>🇷🇺</span>
+                <span className={styles.langTileName}>Русский</span>
+                <span className={styles.langTileCode}>RU</span>
+              </button>
+              <button
+                className={`${styles.langTile} ${lang === 'en' ? styles.langTileActive : ''}`}
+                onClick={() => handleLangChange('en')}
+                type="button"
+              >
+                <span className={styles.langFlag}>🇬🇧</span>
+                <span className={styles.langTileName}>English</span>
+                <span className={styles.langTileCode}>EN</span>
+              </button>
             </div>
           </div>
         </div>

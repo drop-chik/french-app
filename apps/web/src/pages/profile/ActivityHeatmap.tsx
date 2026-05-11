@@ -14,14 +14,14 @@ interface ActivityHeatmapProps {
 
 function getColor(reviewed: number): string {
   if (reviewed === 0) return 'var(--color-border)';
-  if (reviewed <= 3)  return 'rgba(249,115,22,0.20)';
+  if (reviewed <= 3)  return 'rgba(249,115,22,0.22)';
   if (reviewed <= 10) return 'rgba(249,115,22,0.45)';
   if (reviewed <= 25) return 'rgba(249,115,22,0.72)';
   return '#f97316';
 }
 
-const DAY_LABELS_RU = ['', 'Пн', '', 'Ср', '', 'Пт', ''];
-const DAY_LABELS_EN = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+const DAY_LABELS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const DAY_LABELS_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function ActivityHeatmap(props: ActivityHeatmapProps) {
   const { activity, labels, lang } = props;
@@ -43,12 +43,11 @@ export function ActivityHeatmap(props: ActivityHeatmapProps) {
   }
   const numWeeks = cells.length / 7;
 
-  // Build month labels — show when month changes between weeks
+  // Build month labels — position by week column index
   const monthFmt = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-US', { month: 'short' });
   const monthLabels: { week: number; label: string }[] = [];
   let lastMonth = -1;
   for (let w = 0; w < numWeeks; w++) {
-    // First non-null cell in this week
     const firstCell = cells.slice(w * 7, w * 7 + 7).find((c) => c !== null);
     if (!firstCell) continue;
     const d = new Date(firstCell.date + 'T12:00:00');
@@ -70,24 +69,32 @@ export function ActivityHeatmap(props: ActivityHeatmapProps) {
 
       <div className={styles.heatmapScroll}>
         <div className={styles.heatmapOuter}>
+          {/* Day labels column */}
           <div className={styles.dayLabels}>
+            {/* spacer to align with month-labels row */}
+            <span className={styles.daySpacer} />
             {dayLabels.map((d, i) => (
-              <span key={i} className={styles.dayLabel}>{d}</span>
+              <span key={i} className={styles.dayLabel}>
+                {i % 2 === 0 ? d : ''}
+              </span>
             ))}
           </div>
-          <div className={styles.gridWrap}>
+
+          {/* Grid + month labels */}
+          <div className={styles.gridArea}>
             <div
-              className={styles.monthLabels}
-              style={{ gridTemplateColumns: `repeat(${numWeeks}, var(--cell))` }}
+              className={styles.monthLabelsRow}
+              style={{ width: `calc(${numWeeks} * (var(--cell) + var(--cell-gap)) - var(--cell-gap))` }}
             >
-              {Array.from({ length: numWeeks }, (_, w) => {
-                const ml = monthLabels.find((m) => m.week === w);
-                return (
-                  <span key={w} className={styles.monthLabel}>
-                    {ml ? ml.label : ''}
-                  </span>
-                );
-              })}
+              {monthLabels.map((ml) => (
+                <span
+                  key={ml.week}
+                  className={styles.monthLabel}
+                  style={{ left: `calc(${ml.week} * (var(--cell) + var(--cell-gap)))` }}
+                >
+                  {ml.label}
+                </span>
+              ))}
             </div>
             <div
               className={styles.grid}
@@ -110,7 +117,7 @@ export function ActivityHeatmap(props: ActivityHeatmapProps) {
         <span className={styles.legendText}>{labels.less}</span>
         <div className={styles.legendCells}>
           <div className={styles.legendCell} style={{ background: 'var(--color-border)' }} />
-          <div className={styles.legendCell} style={{ background: 'rgba(249,115,22,0.20)' }} />
+          <div className={styles.legendCell} style={{ background: 'rgba(249,115,22,0.22)' }} />
           <div className={styles.legendCell} style={{ background: 'rgba(249,115,22,0.45)' }} />
           <div className={styles.legendCell} style={{ background: 'rgba(249,115,22,0.72)' }} />
           <div className={styles.legendCell} style={{ background: '#f97316' }} />
