@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @french-app/shared-types build
+          pnpm --filter @french-app/srs-engine build
+
+      - name: Typecheck (api)
+        run: pnpm --filter @french-app/api typecheck
+
+      - name: Typecheck (web)
+        run: pnpm --filter @french-app/web typecheck
+
+      - name: Lint CSS custom properties
+        run: pnpm lint:css
+
+      - name: Test (srs-engine)
+        run: pnpm --filter @french-app/srs-engine test
+
+      - name: Test (api)
+        run: pnpm --filter @french-app/api test

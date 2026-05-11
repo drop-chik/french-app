@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useAuthStore } from '../../features/auth/authStore';
 import { AppLayout } from '../../shared/components/AppLayout';
+import { ErrorBoundary } from '../../shared/components/ErrorBoundary';
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: () => {
@@ -11,7 +12,9 @@ export const Route = createFileRoute('/_auth')({
   },
   component: () => (
     <AppLayout>
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
     </AppLayout>
   ),
 });

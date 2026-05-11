@@ -8,5 +8,6 @@
     "emitDecoratorMetadata": false,
     "experimentalDecorators": false
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
 }

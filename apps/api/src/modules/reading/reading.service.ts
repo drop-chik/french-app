@@ -164,7 +164,7 @@ export async function saveWordToVocab(db: DB, userId: string, wordFr: string) {
 }
 
 // French verb lemmatization — tries common endings to find the infinitive
-function tryVerbStem(word: string): string[] {
+export function tryVerbStem(word: string): string[] {
   const candidates: string[] = [];
 
   // Present -er (parle, parles, parlons, parlez, parlent)
@@ -175,7 +175,7 @@ function tryVerbStem(word: string): string[] {
   if (word.endsWith('e') && word.length > 3) candidates.push(word.slice(0, -1) + 'er');
 
   // Passé composé -é/-ée/-és/-ées (aimé → aimer)
-  if (/é[es]?$/.test(word))  candidates.push(word.replace(/é[es]?$/, 'er'));
+  if (/é(es?|s)?$/.test(word)) candidates.push(word.replace(/é(es?|s)?$/, 'er'));
 
   // Present participle -ant → try -er and -ir (marchant → marcher)
   if (word.endsWith('issant')) candidates.push(word.slice(0, -6) + 'ir');
@@ -201,7 +201,7 @@ function tryVerbStem(word: string): string[] {
 }
 
 // French noun/adjective lemmatization — strips plural/feminine endings to find base form
-function tryNounStem(word: string): string[] {
+export function tryNounStem(word: string): string[] {
   const candidates: string[] = [];
 
   // Plural -eaux → singular -eau (tableaux → tableau)
@@ -223,12 +223,19 @@ function tryNounStem(word: string): string[] {
   if (word.endsWith('ive'))    candidates.push(word.slice(0, -3) + 'if');   // créative→créatif
   if (word.endsWith('ières'))  candidates.push(word.slice(0, -5) + 'ier');  // premières→premier
   if (word.endsWith('ière'))   candidates.push(word.slice(0, -4) + 'ier');  // première→premier
-  if (word.endsWith('euses'))  candidates.push(word.slice(0, -5) + 'eur');  // heureuses→heureux
-  if (word.endsWith('euse'))   candidates.push(word.slice(0, -4) + 'eur');  // heureuse→heureux
+  // -euse → both -eur (chanteuse→chanteur, noun) and -eux (heureuse→heureux, adj)
+  if (word.endsWith('euses')) {
+    candidates.push(word.slice(0, -5) + 'eur');
+    candidates.push(word.slice(0, -5) + 'eux');
+  }
+  if (word.endsWith('euse')) {
+    candidates.push(word.slice(0, -4) + 'eur');
+    candidates.push(word.slice(0, -4) + 'eux');
+  }
   if (word.endsWith('rices'))  candidates.push(word.slice(0, -5) + 'eur');  // actrices→acteur
   if (word.endsWith('rice'))   candidates.push(word.slice(0, -4) + 'eur');  // actrice→acteur
   if (word.endsWith('iques'))  candidates.push(word.slice(0, -1));           // islamiques→islamique
-  if (word.endsWith('ales'))   candidates.push(word.slice(0, -5) + 'al');   // nationales→national
+  if (word.endsWith('ales'))   candidates.push(word.slice(0, -2));          // nationales→national (strip -es)
   if (word.endsWith('ale'))    candidates.push(word.slice(0, -3) + 'al');   // nationale→national
   if (word.endsWith('aux'))    candidates.push(word.slice(0, -3) + 'al');   // nationaux→national
 

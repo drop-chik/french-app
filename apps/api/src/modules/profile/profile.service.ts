@@ -199,7 +199,7 @@ export async function getStats(db: DB, userId: string) {
   };
 }
 
-function _calcStreakFromDates(dates: string[]): number {
+export function _calcStreakFromDates(dates: string[]): number {
   let streak = 0;
   let prevDate: Date | null = null;
   for (const dateStr of dates) {
