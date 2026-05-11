@@ -111,7 +111,7 @@ details[open] .accordionChevron { transform: rotate(180deg); }
 
 /* ── Settings block (one per section) ── */
 .settingsBlock {
-  padding: var(--space-7) 0 var(--space-8);
+  padding: var(--space-8) 0 var(--space-10);
 }
 
 .settingsBlock:first-child { padding-top: var(--space-6); }
