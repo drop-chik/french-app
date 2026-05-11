@@ -22,8 +22,10 @@
   /* Brand (French blue) */
   --color-brand: #1d4ed8;
   --color-brand-hover: #1e40af;
+  --color-brand-dark: #1e3a8a;
   --color-brand-light: #dbeafe;
   --color-brand-text: #1e3a8a;
+  --color-brand-rgb: 29 78 216;
 
   /* Accent (French red) */
   --color-accent: #dc2626;

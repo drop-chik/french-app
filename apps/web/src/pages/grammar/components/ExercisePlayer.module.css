@@ -23,7 +23,7 @@
   height: 100%;
   background-color: var(--color-brand);
   border-radius: var(--radius-full);
-  transition: width var(--transition-normal);
+  transition: width var(--transition-base);
 }
 
 .progressText {

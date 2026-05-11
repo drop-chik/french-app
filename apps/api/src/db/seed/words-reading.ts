@@ -68,7 +68,6 @@ export const wordsReading = [
   { french: 'utiliser',     translation: 'использовать',                  partOfSpeech: 'verb', level: 'A2' as const, gender: null },
   { french: 'choisir',      translation: 'выбирать',                      partOfSpeech: 'verb', level: 'A2' as const, gender: null },
   { french: 'permettre',    translation: 'позволять, разрешать',          partOfSpeech: 'verb', level: 'A2' as const, gender: null },
-  { french: 'montrer',      translation: 'показывать',                    partOfSpeech: 'verb', level: 'A2' as const, gender: null },
   { french: 'laisser',      translation: 'оставлять; позволять',          partOfSpeech: 'verb', level: 'A2' as const, gender: null },
   { french: 'tenir',        translation: 'держать; проводить',            partOfSpeech: 'verb', level: 'A2' as const, gender: null },
   // ── B1 ───────────────────────────────────────────────────────────────────────

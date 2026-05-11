@@ -531,7 +531,6 @@ const FUNCTION_WORDS: Record<string, { tr: string; pos: string; level: string; b
   'telle':      { tr: 'такая, подобная',              pos: 'det',  level: 'A2' },
   'tels':       { tr: 'такие (м.р.)',                 pos: 'det',  level: 'A2' },
   'telles':     { tr: 'такие (ж.р.)',                 pos: 'det',  level: 'A2' },
-  'tout':       { tr: 'весь, всё, очень',             pos: 'det',  level: 'A1' },
   'fois':       { tr: 'раз (une fois = однажды)',      pos: 'noun', level: 'A1' },
   'chose':      { tr: 'вещь, дело, нечто',            pos: 'noun', level: 'A1' },
   'celui':      { tr: 'тот, тот который',             pos: 'pron', level: 'A2' },

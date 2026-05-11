@@ -22,8 +22,10 @@
   /* Brand */
   --color-brand: #3b82f6;
   --color-brand-hover: #60a5fa;
+  --color-brand-dark: #2563eb;
   --color-brand-light: #1e3a5f;
   --color-brand-text: #93c5fd;
+  --color-brand-rgb: 59 130 246;
 
   /* Accent */
   --color-accent: #f87171;
