@@ -4,18 +4,16 @@
   padding: var(--space-5) var(--space-6);
   color: white;
   overflow: hidden;
-  box-shadow: 0 10px 32px -12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 28px -12px rgba(0, 0, 0, 0.3);
 }
 
-/* Subtle radial darken in the bottom-right corner — adds depth, kills the
-   flat-bright-block feeling on dark theme */
 .hero::after {
   content: '';
   position: absolute;
   inset: 0;
   background: radial-gradient(
     120% 100% at 100% 100%,
-    rgba(0, 0, 0, 0.28) 0%,
+    rgba(0, 0, 0, 0.3) 0%,
     rgba(0, 0, 0, 0) 60%
   );
   pointer-events: none;
@@ -27,22 +25,22 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
+/* Single-row layout: avatar + identity + divider + metrics */
 .heroBody {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-5);
-  margin-bottom: var(--space-4);
 }
 
 /* Avatar with ring */
 .avatarWrap {
   position: relative;
-  width: 104px;
-  height: 104px;
+  width: 92px;
+  height: 92px;
   flex-shrink: 0;
 }
 
@@ -55,10 +53,10 @@
 
 .avatarInner {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
   border-radius: 50%;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.15);
@@ -76,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 800;
   color: white;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -84,10 +82,10 @@
 
 .avatarEdit {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 30px;
-  height: 30px;
+  bottom: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
   background: white;
   color: var(--color-text-primary);
   border-radius: 50%;
@@ -96,7 +94,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: transform var(--transition-fast);
   z-index: 1;
 }
@@ -110,7 +108,7 @@
   cursor: not-allowed;
 }
 
-/* Identity */
+/* Identity — flex:1 takes remaining space between avatar and metrics */
 .identity {
   flex: 1;
   min-width: 0;
@@ -120,7 +118,7 @@
 }
 
 .name {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   line-height: 1.1;
   margin: 0;
@@ -151,17 +149,23 @@
 
 .memberSince {
   font-size: var(--text-sm);
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* Metrics row */
+/* Vertical divider between identity and metrics */
+.divider {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+}
+
+/* Metrics — 2×2 grid on the right side */
 .metrics {
-  position: relative;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  grid-template-columns: repeat(2, auto);
+  gap: var(--space-3) var(--space-5);
+  flex-shrink: 0;
 }
 
 .metric {
@@ -169,21 +173,22 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  min-width: 90px;
 }
 
 .metricTop {
   display: flex;
   align-items: baseline;
-  gap: var(--space-2);
+  gap: 6px;
 }
 
 .metricIcon {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
 }
 
 .metricValue {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -192,21 +197,29 @@
 
 .metricLabel {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   font-weight: 600;
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-  .hero { padding: var(--space-5); }
-  .heroBody { flex-direction: column; text-align: center; gap: var(--space-4); }
-  .identity { align-items: center; }
+@media (max-width: 900px) {
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .metric { min-width: 0; }
+}
+
+@media (max-width: 640px) {
+  .heroBody {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+  .identity { align-items: center; text-align: center; }
   .identityMeta { justify-content: center; }
-  .name { font-size: 24px; }
-  .avatarWrap { width: 90px; height: 90px; }
-  .avatarPlaceholder { font-size: 30px; }
+  .divider { width: 100%; height: 1px; align-self: auto; }
   .metrics { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
-  .metricValue { font-size: 22px; }
+  .name { font-size: 24px; }
+  .avatarWrap { width: 80px; height: 80px; margin: 0 auto; }
+  .avatarPlaceholder { font-size: 28px; }
 }

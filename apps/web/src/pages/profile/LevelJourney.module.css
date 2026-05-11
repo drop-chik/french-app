@@ -2,7 +2,7 @@
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-6) var(--space-7);
+  padding: var(--space-5) var(--space-6) var(--space-6);
 }
 
 .title {
@@ -11,13 +11,16 @@
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 var(--space-5);
+  margin: 0 0 var(--space-4);
 }
 
 .journey {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-3);
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .stage {
@@ -25,6 +28,10 @@
   align-items: center;
   gap: var(--space-3);
   flex-shrink: 0;
+}
+
+.stage:last-child {
+  flex: 0 0 auto;
 }
 
 /* ── Level node ── */
@@ -83,18 +90,15 @@
   color: var(--color-text-tertiary, var(--color-text-secondary));
 }
 
-/* Current node — glow halo without growing the actual node */
-.nodeCurrent {
-  filter: drop-shadow(0 0 12px var(--node-color, var(--color-brand)));
-}
-
+/* Current node — soft glow without overflowing the section */
 .nodeCurrent::before {
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -3px;
   border-radius: 50%;
   background: var(--node-color, var(--color-brand));
-  opacity: 0.12;
+  opacity: 0.18;
+  filter: blur(6px);
   z-index: -1;
 }
 
@@ -129,9 +133,10 @@
 /* ── Connector between stages ── */
 .connectorWrap {
   position: relative;
-  flex: 1;
+  flex: 1 1 0;
   height: 3px;
   min-width: 24px;
+  max-width: 60px;
 }
 
 .connectorBg {

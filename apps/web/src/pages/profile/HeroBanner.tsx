@@ -27,7 +27,6 @@ interface HeroBannerProps {
 export function HeroBanner(props: HeroBannerProps) {
   const gradient = LEVEL_GRADIENTS[props.level] ?? LEVEL_GRADIENTS.A1!;
 
-  // Animated counters
   const streakAnim = useCountUp(props.streak);
   const wordsAnim = useCountUp(props.wordsMastered);
   const accAnim = useCountUp(props.accuracy ?? 0);
@@ -35,18 +34,17 @@ export function HeroBanner(props: HeroBannerProps) {
 
   return (
     <section className={styles.hero} style={{ backgroundImage: gradient }}>
-      {/* Decorative pattern overlay */}
       <svg className={styles.pattern} aria-hidden="true">
         <defs>
           <pattern id="hero-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.18)" />
+            <circle cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.16)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#hero-dots)" />
       </svg>
 
       <div className={styles.heroBody}>
-        {/* Avatar with progress ring */}
+        {/* Avatar */}
         <div className={styles.avatarWrap}>
           <ProgressRing percent={props.levelPercent} />
           <div className={styles.avatarInner}>
@@ -64,7 +62,7 @@ export function HeroBanner(props: HeroBannerProps) {
             disabled={props.avatarUploading}
             title="Change avatar"
           >
-            <Camera size={14} />
+            <Camera size={13} />
           </button>
         </div>
 
@@ -78,41 +76,43 @@ export function HeroBanner(props: HeroBannerProps) {
             </span>
           </div>
         </div>
-      </div>
 
-      {/* Big metrics row */}
-      <div className={styles.metrics}>
-        <Metric icon="🔥" value={streakAnim} label={props.labels.streak} />
-        <Metric icon="📚" value={wordsAnim} label={props.labels.words} />
-        <Metric
-          icon="✓"
-          value={props.accuracy === null ? '—' : `${accAnim}%`}
-          label={props.labels.accuracy}
-        />
-        <Metric icon="📝" value={gramAnim} label={props.labels.grammar} />
+        <div className={styles.divider} />
+
+        {/* Metrics — 2×2 grid on the right */}
+        <div className={styles.metrics}>
+          <Metric icon="🔥" value={streakAnim} label={props.labels.streak} />
+          <Metric icon="📚" value={wordsAnim} label={props.labels.words} />
+          <Metric
+            icon="✓"
+            value={props.accuracy === null ? '—' : `${accAnim}%`}
+            label={props.labels.accuracy}
+          />
+          <Metric icon="📝" value={gramAnim} label={props.labels.grammar} />
+        </div>
       </div>
     </section>
   );
 }
 
 function ProgressRing({ percent }: { percent: number }) {
-  const R = 58;
+  const R = 52;
   const C = 2 * Math.PI * R;
   const filled = Math.max(0, Math.min(1, percent / 100)) * C;
   return (
-    <svg viewBox="0 0 130 130" className={styles.ring}>
-      <circle cx="65" cy="65" r={R} stroke="rgba(255,255,255,0.25)" strokeWidth="6" fill="none" />
+    <svg viewBox="0 0 120 120" className={styles.ring}>
+      <circle cx="60" cy="60" r={R} stroke="rgba(255,255,255,0.25)" strokeWidth="6" fill="none" />
       {percent > 0 && (
         <circle
-          cx="65"
-          cy="65"
+          cx="60"
+          cy="60"
           r={R}
           stroke="white"
           strokeWidth="6"
           fill="none"
           strokeDasharray={`${filled.toFixed(1)} ${(C - filled).toFixed(1)}`}
           strokeLinecap="round"
-          style={{ transformOrigin: '65px 65px', transform: 'rotate(-90deg)' }}
+          style={{ transformOrigin: '60px 60px', transform: 'rotate(-90deg)' }}
         />
       )}
     </svg>
