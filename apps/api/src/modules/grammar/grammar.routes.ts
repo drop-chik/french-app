@@ -7,6 +7,8 @@ import {
   checkAnswer,
   submitTopicResults,
 } from './grammar.service.js';
+import { recordAction } from '../achievements/achievements.service.js';
+import { XP_REWARDS } from '../achievements/xp.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const answerSchema = z.object({
@@ -107,7 +109,17 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
         parsed.data.total,
       );
 
-      reply.send(result);
+      // XP only when the topic is completed (high score)
+      const xpDelta = parsed.data.score >= parsed.data.total * 0.7
+        ? XP_REWARDS.GRAMMAR_TOPIC_DONE
+        : XP_REWARDS.GRAMMAR_EXERCISE;
+      const action = await recordAction(fastify.db, request.user.userId, xpDelta);
+
+      reply.send({
+        ...result,
+        xp: { gained: xpDelta, total: action.totalXp, level: action.level, leveledUp: action.leveledUp },
+        unlocked: action.newlyUnlocked,
+      });
     },
   );
 };

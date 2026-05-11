@@ -1,6 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { getExercises, getExercise, submitAnswers } from './listening.service.js';
+import { recordAction } from '../achievements/achievements.service.js';
+import { XP_REWARDS } from '../achievements/xp.js';
 import { generateTTS } from './tts.service.js';
 import { getAudioData } from '../../services/audio.service.js';
 import type { LanguageLevel } from '@french-app/shared-types';
@@ -67,7 +69,13 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
         request.params.id,
         parsed.data.answers,
       );
-      reply.send(result);
+
+      const action = await recordAction(fastify.db, request.user.userId, XP_REWARDS.LISTENING_DONE);
+      reply.send({
+        ...result,
+        xp: { gained: XP_REWARDS.LISTENING_DONE, total: action.totalXp, level: action.level, leveledUp: action.leveledUp },
+        unlocked: action.newlyUnlocked,
+      });
     },
   );
 

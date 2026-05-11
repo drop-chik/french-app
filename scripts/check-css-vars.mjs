@@ -31,6 +31,7 @@ const RUNTIME_VARS = new Set([
   '--cell-gap',
   '--ci',          // confetti keyframe
   '--cat-color',   // DictionaryPage sets per-category via inline style
+  '--tint',        // AchievementsPage badge accent set via inline style
 ]);
 
 async function walk(dir) {

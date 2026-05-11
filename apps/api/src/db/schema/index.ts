@@ -41,9 +41,26 @@ export const users = pgTable('users', {
   placementTestDone: boolean('placement_test_done').default(false).notNull(),
   streakRepairUsedAt: timestamp('streak_repair_used_at'),
   streakRepairSavedValue: integer('streak_repair_saved_value').default(0),
+  xp: integer('xp').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Achievements: one row per (userId, achievementId) when the user unlocks it.
+// The catalog of achievement IDs lives in code (apps/api/src/modules/achievements/registry.ts),
+// not in the DB — that way adding new achievements is just a code change.
+export const userAchievements = pgTable(
+  'user_achievements',
+  {
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    achievementId: varchar('achievement_id', { length: 60 }).notNull(),
+    unlockedAt: timestamp('unlocked_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('user_achievements_pk').on(t.userId, t.achievementId),
+    index('idx_user_achievements_user').on(t.userId),
+  ],
+);
 
 // OAuth accounts (for future Google login)
 export const oauthAccounts = pgTable(

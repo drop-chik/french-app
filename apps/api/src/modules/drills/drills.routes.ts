@@ -1,5 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { getDrills, getDrillSession, submitDrillSession, generateInfiniteQuestions } from './drills.service.js';
+import { recordAction } from '../achievements/achievements.service.js';
+import { XP_REWARDS } from '../achievements/xp.js';
 
 function parseLang(query: Record<string, unknown>): 'ru' | 'en' {
   return query.lang === 'en' ? 'en' : 'ru';
@@ -54,7 +56,13 @@ const drillsRoutes: FastifyPluginAsync = async (fastify) => {
         answers,
       );
       if (!result) return reply.status(404).send({ error: 'Drill not found' });
-      reply.send(result);
+
+      const action = await recordAction(fastify.db, request.user.userId, XP_REWARDS.DRILL_DONE);
+      reply.send({
+        ...result,
+        xp: { gained: XP_REWARDS.DRILL_DONE, total: action.totalXp, level: action.level, leveledUp: action.leveledUp },
+        unlocked: action.newlyUnlocked,
+      });
     },
   );
 };

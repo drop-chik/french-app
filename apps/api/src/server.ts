@@ -20,6 +20,7 @@ import drillsRoutes from './modules/drills/drills.routes.js';
 import writingRoutes from './modules/writing/writing.routes.js';
 import readingRoutes from './modules/reading/reading.routes.js';
 import conjugationRoutes from './modules/conjugation/conjugation.routes.js';
+import achievementsRoutes from './modules/achievements/achievements.routes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -62,6 +63,7 @@ await fastify.register(drillsRoutes, { prefix: '/drills' });
 await fastify.register(writingRoutes, { prefix: '/writing' });
 await fastify.register(readingRoutes, { prefix: '/reading' });
 await fastify.register(conjugationRoutes, { prefix: '/conjugation' });
+await fastify.register(achievementsRoutes, { prefix: '/achievements' });
 
 // Health check
 fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));

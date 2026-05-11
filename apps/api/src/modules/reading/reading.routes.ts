@@ -8,6 +8,8 @@ import {
   getUserStats,
   translateWord,
 } from './reading.service.js';
+import { recordAction } from '../achievements/achievements.service.js';
+import { XP_REWARDS } from '../achievements/xp.js';
 
 const progressSchema = z.object({
   score: z.number().int().min(0),
@@ -62,7 +64,13 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
         parsed.data.wordsLookedUp,
         parsed.data.wordsSaved,
       );
-      reply.send({ ok: true });
+
+      const action = await recordAction(fastify.db, request.user.userId, XP_REWARDS.READING_DONE);
+      reply.send({
+        ok: true,
+        xp: { gained: XP_REWARDS.READING_DONE, total: action.totalXp, level: action.level, leveledUp: action.leveledUp },
+        unlocked: action.newlyUnlocked,
+      });
     },
   );
 

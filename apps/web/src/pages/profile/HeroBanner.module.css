@@ -204,6 +204,78 @@
   font-weight: 600;
 }
 
+/* ── XP strip at the bottom ── */
+.xpStrip {
+  position: relative;
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.xpLevelChip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  min-width: 56px;
+}
+
+.xpLevelChipLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.xpLevelChipValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.xpBarWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.xpBar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.xpBarFill {
+  height: 100%;
+  background: white;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.xpBarText {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.88);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .metrics { grid-template-columns: repeat(2, 1fr); }

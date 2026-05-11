@@ -13,7 +13,13 @@ export const ru: DeepRecord = {
     reading: 'Чтение',
     writing: 'Письмо',
     conjugation: 'Спряжения',
+    achievements: 'Достижения',
     profile: 'Профиль',
+  },
+  achievements: {
+    title: 'Достижения',
+    unlockedOf: 'Открыто {n} из {total}',
+    level: 'Уровень',
   },
   conjugation: {
     title: 'Спряжение глаголов',

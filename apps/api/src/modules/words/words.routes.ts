@@ -10,6 +10,8 @@ import {
   browseWords,
   markWord,
 } from './words.service.js';
+import { recordAction } from '../achievements/achievements.service.js';
+import { XP_REWARDS } from '../achievements/xp.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const gradeSchema = z.object({
@@ -58,7 +60,16 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
         parsed.data.grade as 0 | 1 | 2 | 3 | 4 | 5,
       );
 
-      reply.send({ nextReview: result.nextReview, interval: result.interval });
+      // XP + achievement check (best-effort, never throws)
+      const xpDelta = parsed.data.grade >= 3 ? XP_REWARDS.WORD_CORRECT : XP_REWARDS.WORD_INCORRECT;
+      const action = await recordAction(fastify.db, request.user.userId, xpDelta);
+
+      reply.send({
+        nextReview: result.nextReview,
+        interval: result.interval,
+        xp: { gained: xpDelta, total: action.totalXp, level: action.level, leveledUp: action.leveledUp },
+        unlocked: action.newlyUnlocked,
+      });
     },
   );
 

@@ -12,7 +12,13 @@ export const en: Translations = {
     reading: 'Reading',
     writing: 'Writing',
     conjugation: 'Conjugation',
+    achievements: 'Achievements',
     profile: 'Profile',
+  },
+  achievements: {
+    title: 'Achievements',
+    unlockedOf: 'Unlocked {n} of {total}',
+    level: 'Level',
   },
   conjugation: {
     title: 'Verb Conjugation',

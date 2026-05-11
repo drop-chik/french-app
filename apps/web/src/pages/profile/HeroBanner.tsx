@@ -3,6 +3,13 @@ import { useCountUp } from './useCountUp';
 import { LEVEL_GRADIENTS } from './profile.constants';
 import styles from './HeroBanner.module.css';
 
+interface XpSummary {
+  level: number;
+  xpAtLevel: number;
+  xpForNextLevel: number;
+  pctToNext: number;
+}
+
 interface HeroBannerProps {
   name: string;
   level: string;
@@ -13,12 +20,14 @@ interface HeroBannerProps {
   wordsMastered: number;
   accuracy: number | null;
   grammarCompleted: number;
+  xp: XpSummary | null;
   labels: {
     streak: string;
     words: string;
     accuracy: string;
     grammar: string;
     memberSince: string;
+    xpLevel: string;
   };
   onAvatarClick: () => void;
   avatarUploading: boolean;
@@ -91,6 +100,24 @@ export function HeroBanner(props: HeroBannerProps) {
           <Metric icon="📝" value={gramAnim} label={props.labels.grammar} />
         </div>
       </div>
+
+      {/* XP bar — full-width strip at the bottom of the banner */}
+      {props.xp && (
+        <div className={styles.xpStrip}>
+          <div className={styles.xpLevelChip}>
+            <span className={styles.xpLevelChipLabel}>{props.labels.xpLevel}</span>
+            <span className={styles.xpLevelChipValue}>{props.xp.level}</span>
+          </div>
+          <div className={styles.xpBarWrap}>
+            <div className={styles.xpBar}>
+              <div className={styles.xpBarFill} style={{ width: `${props.xp.pctToNext}%` }} />
+            </div>
+            <span className={styles.xpBarText}>
+              {props.xp.xpAtLevel} / {props.xp.xpForNextLevel} XP
+            </span>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

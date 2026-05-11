@@ -7,6 +7,7 @@ import type { UserProfile } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
+import { achievementsApi } from '../../features/achievements/api';
 import { HeroBanner } from './HeroBanner';
 import { StreakCard, WeeklyGoalCard } from './StatCards';
 import { LevelJourney } from './LevelJourney';
@@ -44,6 +45,10 @@ export function ProfilePage() {
   const { data: homeData } = useQuery({
     queryKey: ['profile-home'],
     queryFn: profileApi.getHomeData,
+  });
+  const { data: xpData } = useQuery({
+    queryKey: ['xp-summary'],
+    queryFn: achievementsApi.xp,
   });
 
   const [name, setName] = useState('');
@@ -221,12 +226,14 @@ export function ProfilePage() {
         wordsMastered={stats?.words.mastered ?? 0}
         accuracy={accuracy}
         grammarCompleted={stats?.grammar.completed ?? 0}
+        xp={xpData ?? null}
         labels={{
           streak: t.profile.heroStreakDays,
           words: t.profile.heroWords,
           accuracy: t.profile.accuracy,
           grammar: t.profile.heroGrammar,
           memberSince: t.profile.memberSince,
+          xpLevel: t.achievements.level,
         }}
         onAvatarClick={() => fileInputRef.current?.click()}
         avatarUploading={avatarMutation.isPending}
