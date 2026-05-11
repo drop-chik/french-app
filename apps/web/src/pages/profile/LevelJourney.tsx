@@ -35,15 +35,23 @@ export function LevelJourney(props: LevelJourneyProps) {
           const mastered = data?.masteredWords ?? 0;
           const total = data?.totalWords ?? 0;
           const isCurrent = lvl === props.currentLevel;
-          const isPast = i < currentIndex;
-          const isLocked = i > currentIndex;
 
+          // Status logic — based on actual progress, not just position
           let status: string;
-          if (percent >= 100) status = props.labels.master;
-          else if (isCurrent) status = props.labels.active;
-          else if (isPast) status = props.labels.master;
-          else if (i === currentIndex + 1) status = props.labels.next;
-          else status = props.labels.locked;
+          let nodeState: 'mastered' | 'active' | 'next' | 'locked';
+          if (percent >= 100) {
+            status = props.labels.master;
+            nodeState = 'mastered';
+          } else if (percent > 0 || isCurrent) {
+            status = props.labels.active;
+            nodeState = 'active';
+          } else if (i === currentIndex + 1) {
+            status = props.labels.next;
+            nodeState = 'next';
+          } else {
+            status = props.labels.locked;
+            nodeState = 'locked';
+          }
 
           return (
             <div key={lvl} className={styles.stage}>
@@ -51,12 +59,11 @@ export function LevelJourney(props: LevelJourneyProps) {
                 level={lvl}
                 percent={percent}
                 isCurrent={isCurrent}
-                isLocked={isLocked}
-                isPast={isPast || percent >= 100}
+                state={nodeState}
               />
               <div className={styles.stageInfo}>
                 <span className={styles.stageStatus}>{status}</span>
-                {!isLocked && (
+                {nodeState !== 'locked' && (
                   <span className={styles.stageNumbers}>
                     {mastered}/{total}
                   </span>
@@ -66,7 +73,7 @@ export function LevelJourney(props: LevelJourneyProps) {
                 <Connector
                   fromColor={LEVEL_COLORS[lvl]!}
                   toColor={LEVEL_COLORS[LEVEL_ORDER[i + 1]!]!}
-                  filled={isPast || percent >= 100}
+                  filled={percent >= 100}
                 />
               )}
             </div>
@@ -81,25 +88,26 @@ function LevelNode({
   level,
   percent,
   isCurrent,
-  isLocked,
-  isPast,
+  state,
 }: {
   level: string;
   percent: number;
   isCurrent: boolean;
-  isLocked: boolean;
-  isPast: boolean;
+  state: 'mastered' | 'active' | 'next' | 'locked';
 }) {
   const color = LEVEL_COLORS[level] ?? '#94a3b8';
-  const size = isCurrent ? 96 : 64;
-  const R = size / 2 - 6;
+  const size = 76;
+  const strokeWidth = 5;
+  const R = size / 2 - strokeWidth;
   const C = 2 * Math.PI * R;
   const filled = Math.max(0, Math.min(1, percent / 100)) * C;
+  const isLocked = state === 'locked';
+  const isMastered = state === 'mastered';
 
   return (
     <div
       className={`${styles.node} ${isCurrent ? styles.nodeCurrent : ''} ${isLocked ? styles.nodeLocked : ''}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, ...(isCurrent && ({ ['--node-color' as string]: color })) }}
     >
       <svg viewBox={`0 0 ${size} ${size}`} className={styles.nodeSvg}>
         <circle
@@ -107,7 +115,7 @@ function LevelNode({
           cy={size / 2}
           r={R}
           stroke="var(--color-border)"
-          strokeWidth={isCurrent ? 6 : 4}
+          strokeWidth={strokeWidth}
           fill="var(--color-bg-secondary)"
         />
         {!isLocked && percent > 0 && (
@@ -116,7 +124,7 @@ function LevelNode({
             cy={size / 2}
             r={R}
             stroke={color}
-            strokeWidth={isCurrent ? 6 : 4}
+            strokeWidth={strokeWidth}
             fill="none"
             strokeDasharray={`${filled.toFixed(1)} ${(C - filled).toFixed(1)}`}
             strokeLinecap="round"
@@ -127,27 +135,31 @@ function LevelNode({
             }}
           />
         )}
+        {/* Full ring for mastered (without animation flicker) */}
+        {isMastered && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={R}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="none"
+            opacity="0.4"
+          />
+        )}
       </svg>
       <div className={styles.nodeContent}>
         {isLocked ? (
-          <Lock size={isCurrent ? 22 : 16} className={styles.nodeLockIcon} />
-        ) : isPast && !isCurrent ? (
+          <Lock size={18} className={styles.nodeLockIcon} />
+        ) : isMastered ? (
           <>
-            <Check size={isCurrent ? 22 : 16} style={{ color }} />
-            <span className={styles.nodeLabel} style={{ color }}>{level}</span>
+            <Check size={18} style={{ color, strokeWidth: 3 }} />
+            <span className={styles.nodeLevelSmall} style={{ color }}>{level}</span>
           </>
         ) : (
           <>
-            <span
-              className={styles.nodeLevel}
-              style={{
-                color,
-                fontSize: isCurrent ? '20px' : '15px',
-              }}
-            >
-              {level}
-            </span>
-            {isCurrent && (
+            <span className={styles.nodeLevel} style={{ color }}>{level}</span>
+            {percent > 0 && (
               <span className={styles.nodePercent}>{percent}%</span>
             )}
           </>

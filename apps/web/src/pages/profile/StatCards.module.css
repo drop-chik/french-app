@@ -35,12 +35,19 @@
 
 /* ── Streak card ── */
 .streakCard {
-  background: linear-gradient(
-    135deg,
-    rgba(249, 115, 22, 0.06) 0%,
-    rgba(239, 68, 68, 0.04) 100%
-  );
-  border-color: rgba(249, 115, 22, 0.25);
+  background: var(--color-bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.streakCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f97316, #ef4444);
 }
 
 .streakIcon {
@@ -121,12 +128,19 @@
 
 /* ── Weekly goal card ── */
 .goalCard {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.06) 0%,
-    rgba(99, 102, 241, 0.04) 100%
-  );
-  border-color: rgba(59, 130, 246, 0.25);
+  background: var(--color-bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.goalCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
 }
 
 .goalIcon {

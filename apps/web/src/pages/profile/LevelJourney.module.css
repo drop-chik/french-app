@@ -17,8 +17,7 @@
 .journey {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .stage {
@@ -35,6 +34,11 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.node:hover {
+  transform: scale(1.05);
 }
 
 .nodeSvg {
@@ -50,38 +54,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
 }
 
 .nodeLevel {
   font-weight: 800;
+  font-size: 18px;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.nodeLabel {
+.nodeLevelSmall {
   font-weight: 700;
   font-size: 10px;
   letter-spacing: 0.05em;
 }
 
 .nodePercent {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--color-text-secondary);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  margin-top: 1px;
 }
 
 .nodeLockIcon {
   color: var(--color-text-tertiary, var(--color-text-secondary));
 }
 
+/* Current node — glow halo without growing the actual node */
 .nodeCurrent {
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
+  filter: drop-shadow(0 0 12px var(--node-color, var(--color-brand)));
+}
+
+.nodeCurrent::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: var(--node-color, var(--color-brand));
+  opacity: 0.12;
+  z-index: -1;
 }
 
 .nodeLocked .nodeContent {
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 /* ── Stage info under node ── */
@@ -94,16 +112,16 @@
 }
 
 .stageStatus {
-  font-size: var(--text-xs);
+  font-size: 10px;
   color: var(--color-text-secondary);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
 }
 
 .stageNumbers {
-  font-size: var(--text-xs);
+  font-size: 11px;
   color: var(--color-text-tertiary, var(--color-text-secondary));
   font-variant-numeric: tabular-nums;
 }
@@ -112,8 +130,8 @@
 .connectorWrap {
   position: relative;
   flex: 1;
-  height: 4px;
-  min-width: 20px;
+  height: 3px;
+  min-width: 24px;
 }
 
 .connectorBg {
@@ -127,14 +145,20 @@
   position: absolute;
   inset: 0;
   border-radius: 2px;
-  transition: opacity 0.4s;
 }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .section { padding: var(--space-5); }
-  .journey { flex-wrap: wrap; gap: var(--space-3); }
-  .stage { flex: 1 1 auto; flex-direction: column; gap: var(--space-2); }
+  .journey {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-4);
+  }
+  .stage {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
   .connectorWrap { display: none; }
   .stageInfo { align-items: center; }
 }
