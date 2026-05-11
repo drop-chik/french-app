@@ -195,17 +195,23 @@
   z-index: 1;
   /* 1fr | node | 1fr — node fills the centre column, card flows into one side */
   grid-template-columns: 1fr 64px 1fr;
+  /* `dense` lets a later item back-fill an earlier column. DOM order is
+     node→card; on left-side rows the card wants col 1 (before node's col 2),
+     and without dense it would spill onto row 2, leaving the node visually
+     floating above the text. */
+  grid-auto-flow: row dense;
   column-gap: var(--space-4);
 }
 
 .nodeRow > .node {
   grid-column: 2;
+  grid-row: 1;
   justify-self: center;
   z-index: 2;
 }
 
-.nodeSide_right > .card { grid-column: 3; justify-self: start; }
-.nodeSide_left  > .card { grid-column: 1; justify-self: end; }
+.nodeSide_right > .card { grid-column: 3; grid-row: 1; justify-self: start; }
+.nodeSide_left  > .card { grid-column: 1; grid-row: 1; justify-self: end; }
 
 /* ── Node (the circle on the path) ── */
 .node {
