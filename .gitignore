@@ -34,5 +34,10 @@ Thumbs.db
 
 .vercel
 
+# Playwright
+test-results
+playwright-report
+playwright/.cache
+
 # Claude Code local permissions (not for sharing)
 .claude/settings.local.json
