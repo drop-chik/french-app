@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { orderByFrequency } from '@french-app/srs-engine';
 import type { WordData } from '../../../features/words/api';
 import type { SessionResult } from '../FlashcardMode/FlashcardMode';
 import { FlashcardMode } from '../FlashcardMode/FlashcardMode';
@@ -21,10 +22,15 @@ interface Phase {
 }
 
 function buildPhases(words: WordData[]): Phase[] {
-  const newWords = words.filter((w) => !w.progress || w.progress.status === 'new');
-  const learningWords = words.filter((w) => w.progress?.status === 'learning');
-  const reviewWords = words.filter((w) => w.progress?.status === 'review');
-  const masteredWords = words.filter((w) => w.progress?.status === 'mastered');
+  // Within each status bucket, surface higher-frequency words first (with
+  // jitter — see orderByFrequency). The backend already returns *new* words
+  // in frequency order, but due/learning/review get shuffled by the SQL
+  // layer; this re-sorts them so a B1 user practising "comprendre" first
+  // before "désappointer" — even on review-only sessions.
+  const newWords = orderByFrequency(words.filter((w) => !w.progress || w.progress.status === 'new'));
+  const learningWords = orderByFrequency(words.filter((w) => w.progress?.status === 'learning'));
+  const reviewWords = orderByFrequency(words.filter((w) => w.progress?.status === 'review'));
+  const masteredWords = orderByFrequency(words.filter((w) => w.progress?.status === 'mastered'));
 
   const phases: Phase[] = [];
   if (newWords.length > 0) phases.push({ mode: 'flashcard', words: newWords });
@@ -39,7 +45,7 @@ function buildPhases(words: WordData[]): Phase[] {
 
   // Fallback: если ни одна фаза не собралась — просто Flashcard со всеми
   if (phases.length === 0) {
-    phases.push({ mode: 'flashcard', words });
+    phases.push({ mode: 'flashcard', words: orderByFrequency(words) });
   }
 
   return phases;

@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { calculateNextReview, getStatus, createCard } from '@french-app/srs-engine';
+import { calculateNextReview, getStatus, createCard, orderByFrequency } from '@french-app/srs-engine';
 import type { SRSGrade } from '@french-app/srs-engine';
 import { Play, CheckCircle } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
@@ -91,10 +91,16 @@ export function VocabularyPage() {
   const repairAvailable = streakData?.repairAvailable ?? false;
   const savedStreak = streakData?.savedStreak ?? 0;
 
-  // If coming from Dictionary with a status filter, only show those words
-  const sessionWords = statusFilter
-    ? words.filter((w) => w.progress?.status === statusFilter)
-    : words;
+  // If coming from Dictionary with a status filter, only show those words.
+  // useMemo so we don't reshuffle on every render (which would visibly reorder
+  // the cards while a session is open). Re-shuffle only when the underlying
+  // data or filter changes.
+  const sessionWords = useMemo(() => {
+    const filtered = statusFilter
+      ? words.filter((w) => w.progress?.status === statusFilter)
+      : words;
+    return orderByFrequency(filtered);
+  }, [words, statusFilter]);
 
   const estimatedMin = Math.max(5, Math.ceil(sessionWords.length * 0.6));
 
