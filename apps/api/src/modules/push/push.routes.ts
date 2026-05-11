@@ -95,11 +95,13 @@ const pushRoutes: FastifyPluginAsync = async (fastify) => {
       security: authorizedSecurity,
     },
   }, async (request, reply) => {
+    // Same shape the streak-reminder cron will use later — keeping it
+    // consistent so this test exercises the real production payload.
     const result = await sendToUser(fastify.db, request.user.userId, {
-      title: 'FrenchUp 🔔',
-      body: 'Тестовое уведомление — всё работает! 🎉',
-      url: '/dashboard',
-      tag: 'test',
+      title: '🔥 Не теряй серию!',
+      body: 'Твоя серия ждёт — потрать 5 минут на повторение и удержи streak.',
+      url: '/vocabulary',
+      tag: 'streak-reminder',
     });
     reply.send(result);
   });

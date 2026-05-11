@@ -539,11 +539,19 @@ function NotificationsBlock() {
   const { t } = useI18n();
   const { permission, subscribed, busy, enable, disable, test } = usePush();
 
-  let status: string;
-  if (permission === 'unsupported') status = t.profile.notifUnsupported;
-  else if (permission === 'denied') status = t.profile.notifDenied;
-  else if (subscribed) status = t.profile.notifEnabled;
-  else status = t.profile.notifDisabled;
+  const isUnsupported = permission === 'unsupported';
+  const isDenied = permission === 'denied';
+  const canToggle = !isUnsupported && !isDenied && !busy;
+
+  let hint: string | null = null;
+  if (isUnsupported) hint = t.profile.notifUnsupported;
+  else if (isDenied) hint = t.profile.notifDenied;
+
+  async function handleToggle() {
+    if (!canToggle) return;
+    if (subscribed) await disable();
+    else await enable();
+  }
 
   return (
     <div className={styles.settingsBlock}>
@@ -557,32 +565,36 @@ function NotificationsBlock() {
         </div>
       </div>
       <div className={styles.notifBody}>
-        <span className={styles.notifStatus}>{status}</span>
-        <div className={styles.notifActions}>
-          {permission !== 'unsupported' && permission !== 'denied' && !subscribed && (
-            <button type="button" className={styles.btnPrimary} disabled={busy} onClick={enable}>
-              {busy ? t.common.loading : t.profile.notifEnable}
-            </button>
-          )}
-          {subscribed && (
-            <>
-              <button
-                type="button"
-                className={styles.btnSecondary}
-                disabled={busy}
-                onClick={async () => {
-                  const r = await test();
-                  console.log('[push] test result:', r);
-                }}
-              >
-                {t.profile.notifTest}
-              </button>
-              <button type="button" className={styles.btnSecondary} disabled={busy} onClick={disable}>
-                {t.profile.notifDisable}
-              </button>
-            </>
-          )}
+        <div className={styles.notifRow}>
+          <span className={styles.notifLabel}>
+            {subscribed ? t.profile.notifEnabled : t.profile.notifDisabled}
+          </span>
+          {/* iOS-style toggle */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={subscribed}
+            disabled={!canToggle}
+            onClick={handleToggle}
+            className={`${styles.toggle} ${subscribed ? styles.toggleOn : ''}`}
+          >
+            <span className={styles.toggleKnob} />
+          </button>
         </div>
+        {hint && <p className={styles.notifHint}>{hint}</p>}
+        {subscribed && (
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            disabled={busy}
+            onClick={async () => {
+              const r = await test();
+              console.log('[push] test result:', r);
+            }}
+          >
+            {t.profile.notifTest}
+          </button>
+        )}
       </div>
     </div>
   );
