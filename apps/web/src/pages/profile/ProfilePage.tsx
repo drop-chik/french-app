@@ -1,21 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
-import { Camera, Lock, User, BarChart3, Globe, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { Lock, User, Globe, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import type { UserProfile } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
-import { ProfileCharts } from './ProfileCharts';
+import { HeroBanner } from './HeroBanner';
+import { StreakCard, WeeklyGoalCard } from './StatCards';
+import { LevelJourney } from './LevelJourney';
+import { InsightGrid } from './InsightGrid';
+import { ActivityHeatmap } from './ActivityHeatmap';
 import styles from './ProfilePage.module.css';
-
-const LEVEL_COLORS: Record<string, string> = {
-  A1: '#22c55e',
-  A2: '#3b82f6',
-  B1: '#f59e0b',
-  B2: '#8b5cf6',
-};
 
 export function ProfilePage() {
   const { t, lang, setLang } = useI18n();
@@ -27,34 +24,32 @@ export function ProfilePage() {
     queryKey: ['profile'],
     queryFn: profileApi.getProfile,
   });
-
   const { data: stats } = useQuery({
     queryKey: ['profile-stats'],
     queryFn: profileApi.getStats,
   });
-
   const { data: streakData } = useQuery({
     queryKey: ['profile-streak'],
     queryFn: profileApi.getStreak,
   });
-
   const { data: levelsData } = useQuery({
     queryKey: ['profile-levels'],
     queryFn: profileApi.getLevelsProgress,
+  });
+  const { data: chartsData } = useQuery({
+    queryKey: ['profile-charts'],
+    queryFn: profileApi.getCharts,
   });
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
-
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [pwdMsg, setPwdMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
-
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   useEffect(() => {
@@ -165,15 +160,15 @@ export function ProfilePage() {
     { year: 'numeric', month: 'long' },
   );
 
-  const streak = streakData?.streak ?? 0;
   const correctAnswers = stats?.correctAnswers ?? 0;
   const incorrectAnswers = stats?.incorrectAnswers ?? 0;
   const totalAnswers = correctAnswers + incorrectAnswers;
-  const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
-
+  const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : null;
   const currentLevelData = levelsData?.levels.find((l) => l.level === profile.level);
   const currentLevelPercent = currentLevelData?.percent ?? 0;
-  const levelColor = LEVEL_COLORS[profile.level] ?? 'var(--color-brand)';
+
+  // Build last-7-days activity counts for the WeekInsight sparkline
+  const weekActivity = (chartsData?.activity ?? []).slice(-7).map((d) => d.reviewed);
 
   return (
     <div className={styles.page}>
@@ -189,7 +184,7 @@ export function ProfilePage() {
         />
       )}
 
-      {/* Page header */}
+      {/* Header */}
       <div className={styles.pageHeader}>
         <h1 className={styles.title}>{t.profile.title}</h1>
         <button
@@ -202,109 +197,125 @@ export function ProfilePage() {
         </button>
       </div>
 
-      {/* Hero card */}
-      <section className={styles.heroCard}>
-        <div className={styles.heroAvatarWrap}>
-          <HeroRing percent={currentLevelPercent} color={levelColor} />
-          <div className={styles.heroAvatarInner}>
-            {avatarSrc ? (
-              <img src={avatarSrc} alt="avatar" className={styles.heroAvatarImg} />
-            ) : (
-              <div className={styles.heroAvatarPlaceholder}>
-                {profile.name[0]?.toUpperCase()}
-              </div>
-            )}
-          </div>
-          <button
-            className={styles.heroAvatarEdit}
-            onClick={() => fileInputRef.current?.click()}
-            title={t.profile.changeAvatar}
-            disabled={avatarMutation.isPending}
-          >
-            <Camera size={13} />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            style={{ display: 'none' }}
-            onChange={handleAvatarChange}
-          />
-        </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={handleAvatarChange}
+      />
 
-        <div className={styles.heroContent}>
-          <div className={styles.heroName}>{profile.name}</div>
-          <div className={styles.heroMeta}>
-            <span className={styles.levelBadge} style={{ background: levelColor }}>
-              {profile.level}
-            </span>
-            <span className={styles.heroSince}>{t.profile.memberSince} {memberSince}</span>
-          </div>
-          {avatarError && <p className={styles.error}>{avatarError}</p>}
+      {/* 1. Hero banner */}
+      <HeroBanner
+        name={profile.name}
+        level={profile.level}
+        memberSince={memberSince}
+        avatarSrc={avatarSrc}
+        levelPercent={currentLevelPercent}
+        streak={streakData?.streak ?? 0}
+        wordsMastered={stats?.words.mastered ?? 0}
+        accuracy={accuracy}
+        grammarCompleted={stats?.grammar.completed ?? 0}
+        labels={{
+          streak: t.profile.heroStreakDays,
+          words: t.profile.heroWords,
+          accuracy: t.profile.accuracy,
+          grammar: t.profile.heroGrammar,
+          memberSince: t.profile.memberSince,
+        }}
+        onAvatarClick={() => fileInputRef.current?.click()}
+        avatarUploading={avatarMutation.isPending}
+      />
+      {avatarError && <p className={styles.errorBanner}>{avatarError}</p>}
 
-          <div className={styles.heroStats}>
-            <HeroStat value={streak} label={t.profile.heroStreakDays} icon="🔥" />
-            <HeroStat value={stats?.words.mastered ?? 0} label={t.profile.heroWords} icon="📚" />
-            <HeroStat
-              value={totalAnswers > 0 ? `${accuracy}%` : '—'}
-              label={t.profile.accuracy}
-              icon="✓"
-            />
-            <HeroStat value={stats?.grammar.completed ?? 0} label={t.profile.heroGrammar} icon="📝" />
-          </div>
-        </div>
-      </section>
+      {/* 2. Streak + Weekly goal */}
+      <div className={styles.twoCol}>
+        <StreakCard
+          streak={streakData?.streak ?? 0}
+          todayCompleted={streakData?.todayCompleted ?? false}
+          last7Days={streakData?.last7Days ?? []}
+          labels={{
+            title: t.profile.streakTitle,
+            days: t.profile.streakDays,
+            keepGoing: t.profile.streakKeepGoing,
+            started: t.profile.streakStarted,
+            start: t.profile.streakStart,
+            broken: t.profile.streakBroken,
+          }}
+          lang={lang}
+        />
+        <WeeklyGoalCard
+          current={stats?.weekReviews ?? 0}
+          trend={stats?.weekTrend ?? null}
+          labels={{
+            title: t.profile.weeklyGoalTitle,
+            of: t.profile.weeklyGoalOf,
+            daysLeft: t.profile.weeklyGoalDaysLeft,
+            lastDay: t.profile.weeklyGoalLastDay,
+            done: t.profile.weeklyGoalDone,
+          }}
+        />
+      </div>
 
-      {/* Level rings */}
-      <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>
-          <BarChart3 size={18} /> {t.profile.levelProgress}
-        </h2>
-        <div className={styles.levelRings}>
-          {levelsData?.levels.map((l) => (
-            <LevelRing
-              key={l.level}
-              level={l.level}
-              percent={l.percent}
-              masteredWords={l.masteredWords}
-              totalWords={l.totalWords}
-              isCurrent={l.level === profile.level}
-            />
-          ))}
-        </div>
-      </section>
+      {/* 3. Level journey */}
+      <LevelJourney
+        levels={levelsData?.levels ?? []}
+        currentLevel={profile.level}
+        labels={{
+          title: t.profile.levelJourneyTitle,
+          master: t.profile.levelStatusMaster,
+          active: t.profile.levelStatusActive,
+          next: t.profile.levelStatusNext,
+          locked: t.profile.levelStatusLocked,
+        }}
+      />
 
-      {/* Stats grid */}
-      <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>
-          <BarChart3 size={18} /> {t.profile.stats}
-        </h2>
-        <div className={styles.statsGrid}>
-          <StatCard
-            value={stats?.words.mastered ?? 0}
-            label={t.profile.wordsMastered}
-            color="green"
-            trend={stats?.weekTrend ?? null}
-            trendLabel={stats?.weekTrend !== null && stats?.weekTrend !== undefined
-              ? stats.weekTrend >= 0
-                ? String(t.profile.weekTrendUp).replace('{n}', String(Math.abs(stats.weekTrend)))
-                : String(t.profile.weekTrendDown).replace('{n}', String(stats.weekTrend))
-              : undefined}
-          />
-          <StatCard value={stats?.words.learning ?? 0} label={t.profile.wordsInProgress} color="blue" />
-          <StatCard value={stats?.words.total ?? 0} label={t.profile.wordsLearned} color="purple" />
-          <StatCard value={stats?.weekReviews ?? 0} label={t.profile.weekReviews} color="indigo" />
-          <StatCard value={correctAnswers} label={t.profile.correctAnswers} color="teal" />
-          <StatCard value={incorrectAnswers} label={t.profile.incorrectAnswers} color="orange" />
-          <StatCard value={stats?.grammar.completed ?? 0} label={t.profile.grammarCompleted} color="pink" />
-          <StatCard value={stats?.listening.completed ?? 0} label={t.profile.listeningCompleted} color="slate" />
-        </div>
-      </section>
+      {/* 4. Insight grid */}
+      <InsightGrid
+        wordsBreakdown={chartsData?.statusBreakdown ?? {}}
+        correctAnswers={correctAnswers}
+        incorrectAnswers={incorrectAnswers}
+        grammarCompleted={stats?.grammar.completed ?? 0}
+        listeningCompleted={stats?.listening.completed ?? 0}
+        conversations={stats?.conversations ?? 0}
+        weekReviews={stats?.weekReviews ?? 0}
+        weekActivity={weekActivity}
+        labels={{
+          wordsTitle: t.profile.insightWordsTitle,
+          wordsSub: t.profile.insightWordsSub,
+          wordsStatus: {
+            new: t.profile.wordStatusNew,
+            learning: t.profile.wordStatusLearning,
+            review: t.profile.wordStatusReview,
+            mastered: t.profile.wordStatusMastered,
+          },
+          accuracyTitle: t.profile.insightAccuracyTitle,
+          accuracySub: t.profile.insightAccuracySub,
+          skillsTitle: t.profile.insightSkillsTitle,
+          skillsGrammar: t.profile.insightSkillsGrammar,
+          skillsListening: t.profile.insightSkillsListening,
+          skillsConversations: t.profile.insightSkillsConversations,
+          weekTitle: t.profile.insightWeekTitle,
+          weekSub: t.profile.insightWeekSub,
+        }}
+      />
 
-      {/* Charts */}
-      <ProfileCharts />
+      {/* 5. Activity heatmap (90 days) */}
+      {chartsData && chartsData.activity.length > 0 && (
+        <ActivityHeatmap
+          activity={chartsData.activity}
+          labels={{
+            title: t.profile.activityTitle,
+            less: t.profile.activityLegendLess,
+            more: t.profile.activityLegendMore,
+            activeDays: t.profile.activityActiveDays,
+            words: t.profile.heatmapWords,
+          }}
+          lang={lang}
+        />
+      )}
 
-      {/* Settings accordion */}
+      {/* 6. Settings accordion */}
       <details className={styles.accordion}>
         <summary className={styles.accordionSummary}>
           <Settings size={16} />
@@ -423,116 +434,6 @@ export function ProfilePage() {
           </div>
         </div>
       </details>
-    </div>
-  );
-}
-
-// ── Internal components ──────────────────────────────────────────────────────
-
-function HeroRing({ percent, color }: { percent: number; color: string }) {
-  const R = 44;
-  const C = 2 * Math.PI * R;
-  const filled = Math.max(0, Math.min(1, percent / 100)) * C;
-  return (
-    <svg viewBox="0 0 100 100" className={styles.heroRingSvg}>
-      <circle cx="50" cy="50" r={R} stroke="var(--color-border)" strokeWidth="7" fill="none" />
-      {percent > 0 && (
-        <circle
-          cx="50"
-          cy="50"
-          r={R}
-          stroke={color}
-          strokeWidth="7"
-          fill="none"
-          strokeDasharray={`${filled.toFixed(1)} ${(C - filled).toFixed(1)}`}
-          strokeLinecap="round"
-          style={{ transformOrigin: '50px 50px', transform: 'rotate(-90deg)' }}
-        />
-      )}
-    </svg>
-  );
-}
-
-function HeroStat({ value, label, icon }: { value: number | string; label: string; icon: string }) {
-  return (
-    <div className={styles.heroStat}>
-      <span className={styles.heroStatValue}>{value}</span>
-      <span className={styles.heroStatLabel}>{icon} {label}</span>
-    </div>
-  );
-}
-
-function LevelRing({
-  level,
-  percent,
-  masteredWords,
-  totalWords,
-  isCurrent,
-}: {
-  level: string;
-  percent: number;
-  masteredWords: number;
-  totalWords: number;
-  isCurrent?: boolean;
-}) {
-  const R = 32;
-  const C = 2 * Math.PI * R;
-  const filled = Math.max(0, Math.min(1, percent / 100)) * C;
-  const color = LEVEL_COLORS[level] ?? 'var(--color-brand)';
-
-  return (
-    <div className={`${styles.levelRing} ${isCurrent ? styles.levelRingCurrent : ''}`}>
-      <svg viewBox="0 0 76 76" className={styles.levelRingSvg}>
-        <circle cx="38" cy="38" r={R} stroke="var(--color-border)" strokeWidth="6" fill="none" />
-        {percent > 0 && (
-          <circle
-            cx="38"
-            cy="38"
-            r={R}
-            stroke={color}
-            strokeWidth="6"
-            fill="none"
-            strokeDasharray={`${filled.toFixed(1)} ${(C - filled).toFixed(1)}`}
-            strokeLinecap="round"
-            style={{ transformOrigin: '38px 38px', transform: 'rotate(-90deg)' }}
-          />
-        )}
-        <text x="38" y="34" textAnchor="middle" fontSize="13" fontWeight="700" fill={color}>
-          {level}
-        </text>
-        <text x="38" y="50" textAnchor="middle" fontSize="10" fill="var(--color-text-secondary)">
-          {percent}%
-        </text>
-      </svg>
-      <p className={styles.levelRingMeta}>
-        {masteredWords}/{totalWords}
-      </p>
-    </div>
-  );
-}
-
-function StatCard({
-  value,
-  label,
-  color,
-  trend,
-  trendLabel,
-}: {
-  value: number;
-  label: string;
-  color: string;
-  trend?: number | null;
-  trendLabel?: string | undefined;
-}) {
-  return (
-    <div className={`${styles.statCard} ${styles[`statCard_${color}`] ?? ''}`}>
-      <span className={styles.statValue}>{value}</span>
-      <span className={styles.statLabel}>{label}</span>
-      {trendLabel && trend !== null && trend !== undefined && (
-        <span className={`${styles.statTrend} ${trend >= 0 ? styles.trendUp : styles.trendDown}`}>
-          {trendLabel}
-        </span>
-      )}
     </div>
   );
 }

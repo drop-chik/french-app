@@ -97,9 +97,13 @@ export const profileApi = {
   getCharts: () => apiRequest<ChartsData>('/profile/charts'),
 
   getStreak: () =>
-    apiRequest<{ streak: number; todayCompleted: boolean; repairAvailable: boolean; savedStreak: number }>(
-      '/profile/streak',
-    ),
+    apiRequest<{
+      streak: number;
+      todayCompleted: boolean;
+      repairAvailable: boolean;
+      savedStreak: number;
+      last7Days: { date: string; active: boolean }[];
+    }>('/profile/streak'),
 
   repairStreak: () =>
     apiRequest<{ ok: boolean; newStreak: number }>('/profile/streak/repair', { method: 'POST' }),

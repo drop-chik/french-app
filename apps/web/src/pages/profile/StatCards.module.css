@@ -1,0 +1,226 @@
+/* ── Shared card style ── */
+.card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.12);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Streak card ── */
+.streakCard {
+  background: linear-gradient(
+    135deg,
+    rgba(249, 115, 22, 0.06) 0%,
+    rgba(239, 68, 68, 0.04) 100%
+  );
+  border-color: rgba(249, 115, 22, 0.25);
+}
+
+.streakIcon {
+  color: #f97316;
+}
+
+.streakBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.streakNumberWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.streakNumber {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  color: #f97316;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.streakDaysLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+/* 7-day dots */
+.streakDays {
+  display: flex;
+  gap: 6px;
+}
+
+.streakDayCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.streakDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-border);
+  transition: transform 0.15s;
+}
+
+.streakDotActive {
+  background: #f97316;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.55);
+}
+
+.streakDot:hover {
+  transform: scale(1.2);
+}
+
+.streakDayName {
+  font-size: 9px;
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  font-weight: 500;
+}
+
+.streakMsg {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ── Weekly goal card ── */
+.goalCard {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.06) 0%,
+    rgba(99, 102, 241, 0.04) 100%
+  );
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.goalIcon {
+  color: #3b82f6;
+}
+
+.trendBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.trendUp {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.trendDown {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.goalBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.goalNumberWrap {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.goalCurrent {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text-primary);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.goalSub {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.goalProgressTrack {
+  width: 100%;
+  height: 10px;
+  background: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.goalProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.goalProgressDone {
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+}
+
+.goalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.goalPct {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.goalHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .streakNumber { font-size: 44px; }
+  .goalCurrent { font-size: 36px; }
+  .streakBody { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+}

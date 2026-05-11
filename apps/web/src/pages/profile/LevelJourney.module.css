@@ -1,0 +1,140 @@
+.section {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-7);
+}
+
+.title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-5);
+}
+
+.journey {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* ── Level node ── */
+.node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nodeSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.nodeContent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.nodeLevel {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.nodeLabel {
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.nodePercent {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.nodeLockIcon {
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+.nodeCurrent {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
+}
+
+.nodeLocked .nodeContent {
+  opacity: 0.5;
+}
+
+/* ── Stage info under node ── */
+.stageInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stageStatus {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.stageNumbers {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Connector between stages ── */
+.connectorWrap {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  min-width: 20px;
+}
+
+.connectorBg {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.connectorFill {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  transition: opacity 0.4s;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .section { padding: var(--space-5); }
+  .journey { flex-wrap: wrap; gap: var(--space-3); }
+  .stage { flex: 1 1 auto; flex-direction: column; gap: var(--space-2); }
+  .connectorWrap { display: none; }
+  .stageInfo { align-items: center; }
+}

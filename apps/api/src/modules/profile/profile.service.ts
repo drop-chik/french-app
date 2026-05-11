@@ -211,6 +211,7 @@ export async function getStreak(db: DB, userId: string): Promise<{
   todayCompleted: boolean;
   repairAvailable: boolean;
   savedStreak: number;
+  last7Days: { date: string; active: boolean }[];
 }> {
   const [user, rows] = await Promise.all([
     db.query.users.findFirst({
@@ -264,7 +265,17 @@ export async function getStreak(db: DB, userId: string): Promise<{
   const repairAvailable = streakJustBroke && cooldownOver && !repairUsedRecently;
   const savedStreak = repairAvailable ? _calcStreakFromDates(dates) : (user?.streakRepairSavedValue ?? 0);
 
-  return { streak, todayCompleted, repairAvailable, savedStreak };
+  // Build last 7 days array (from 6 days ago to today)
+  const dateSet = new Set(dates);
+  const last7Days: { date: string; active: boolean }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    last7Days.push({ date: dateStr, active: dateSet.has(dateStr) });
+  }
+
+  return { streak, todayCompleted, repairAvailable, savedStreak, last7Days };
 }
 
 export async function repairStreak(db: DB, userId: string): Promise<{ ok: boolean; newStreak: number }> {

@@ -1,0 +1,198 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 200px;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.12);
+}
+
+.cardTitle {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.cardSub {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  margin: 0;
+}
+
+.emptyHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+/* ── Words ── */
+.wordsBig {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text-primary);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.segBar {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--color-border);
+  margin-top: var(--space-2);
+}
+
+.segBarPart {
+  height: 100%;
+  transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.segLegend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin-top: var(--space-1);
+}
+
+.segLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.segDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.segLegendLabel {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.segLegendVal {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Accuracy radial ── */
+.radialWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  margin: var(--space-1) 0;
+}
+
+/* ── Skills ── */
+.skills {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.skillRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skillHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.skillIcon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.skillLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+.skillValue {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.skillTrack {
+  width: 100%;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.skillFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* ── Week ── */
+.weekBig {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text-primary);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekSpark {
+  width: 100%;
+  height: 56px;
+  margin-top: auto;
+}
+
+.weekBar {
+  fill: #6366f1;
+  opacity: 0.85;
+}
+
+.weekBarEmpty {
+  fill: var(--color-border);
+}
