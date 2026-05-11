@@ -45,56 +45,66 @@
   gap: var(--space-4);
 }
 
-.searchWrap {
-  position: relative;
+.searchRow {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: var(--space-3);
-  background: var(--color-bg-secondary);
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 4px 4px 4px var(--space-5);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.searchWrap:focus-within {
-  border-color: var(--color-brand);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+.inputWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--color-text-tertiary, var(--color-text-secondary));
-  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .searchInput {
-  flex: 1;
-  border: none;
-  background: transparent;
+  width: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-3) 44px;
+  background: var(--color-bg-secondary);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
   color: var(--color-text-primary);
   font-size: var(--text-base);
   font-weight: 500;
-  padding: var(--space-3) 0;
   outline: none;
-  min-width: 0;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 48px;
 }
 
 .searchInput::placeholder {
   color: var(--color-text-tertiary, var(--color-text-secondary));
 }
 
+.searchInput:hover {
+  border-color: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+.searchInput:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
 .searchBtn {
-  padding: var(--space-3) var(--space-5);
+  padding: 0 var(--space-5);
   background: var(--color-brand);
   color: white;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
   transition: opacity var(--transition-fast);
   flex-shrink: 0;
-  min-height: 40px;
+  min-height: 48px;
 }
 
 .searchBtn:hover:not(:disabled) { opacity: 0.88; }

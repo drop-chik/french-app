@@ -85,18 +85,20 @@ export function ConjugationPage() {
       </div>
 
       <form className={styles.searchForm} onSubmit={handleSubmit}>
-        <div className={styles.searchWrap}>
-          <Search size={18} className={styles.searchIcon} />
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t.conjugation.placeholder}
-            className={styles.searchInput}
-            autoFocus
-            autoComplete="off"
-            spellCheck={false}
-          />
+        <div className={styles.searchRow}>
+          <div className={styles.inputWrap}>
+            <Search size={18} className={styles.searchIcon} />
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t.conjugation.placeholder}
+              className={styles.searchInput}
+              autoFocus
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
           <button type="submit" className={styles.searchBtn} disabled={input.trim().length < 2}>
             {t.conjugation.searchBtn}
           </button>
