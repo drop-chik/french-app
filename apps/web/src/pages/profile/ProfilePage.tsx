@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
-import { Lock, User, Globe, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import type { UserProfile } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -9,6 +9,7 @@ import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import { achievementsApi } from '../../features/achievements/api';
 import { AchievementBadge } from '../../features/achievements/AchievementBadge';
+import { usePush } from '../../features/push/usePush';
 import { HeroBanner } from './HeroBanner';
 import { StreakCard, WeeklyGoalCard } from './StatCards';
 import { LevelJourney } from './LevelJourney';
@@ -523,8 +524,66 @@ export function ProfilePage() {
               </button>
             </div>
           </div>
+
+          <div className={styles.settingsDivider} />
+
+          {/* — Notifications — */}
+          <NotificationsBlock />
         </div>
       </details>
+    </div>
+  );
+}
+
+function NotificationsBlock() {
+  const { t } = useI18n();
+  const { permission, subscribed, busy, enable, disable, test } = usePush();
+
+  let status: string;
+  if (permission === 'unsupported') status = t.profile.notifUnsupported;
+  else if (permission === 'denied') status = t.profile.notifDenied;
+  else if (subscribed) status = t.profile.notifEnabled;
+  else status = t.profile.notifDisabled;
+
+  return (
+    <div className={styles.settingsBlock}>
+      <div className={styles.settingsBlockHead}>
+        <div className={`${styles.settingsIconBubble} ${styles.bubblePink}`}>
+          <Bell size={18} />
+        </div>
+        <div className={styles.settingsBlockTitleWrap}>
+          <h3 className={styles.settingsBlockTitle}>{t.profile.notifTitle}</h3>
+          <p className={styles.settingsBlockDesc}>{t.profile.notifDesc}</p>
+        </div>
+      </div>
+      <div className={styles.notifBody}>
+        <span className={styles.notifStatus}>{status}</span>
+        <div className={styles.notifActions}>
+          {permission !== 'unsupported' && permission !== 'denied' && !subscribed && (
+            <button type="button" className={styles.btnPrimary} disabled={busy} onClick={enable}>
+              {busy ? t.common.loading : t.profile.notifEnable}
+            </button>
+          )}
+          {subscribed && (
+            <>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                disabled={busy}
+                onClick={async () => {
+                  const r = await test();
+                  console.log('[push] test result:', r);
+                }}
+              >
+                {t.profile.notifTest}
+              </button>
+              <button type="button" className={styles.btnSecondary} disabled={busy} onClick={disable}>
+                {t.profile.notifDisable}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

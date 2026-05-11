@@ -23,6 +23,7 @@ import writingRoutes from './modules/writing/writing.routes.js';
 import readingRoutes from './modules/reading/reading.routes.js';
 import conjugationRoutes from './modules/conjugation/conjugation.routes.js';
 import achievementsRoutes from './modules/achievements/achievements.routes.js';
+import pushRoutes from './modules/push/push.routes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -84,6 +85,7 @@ await fastify.register(swagger, {
       { name: 'achievements', description: 'XP, levels and badge unlocks' },
       { name: 'placement',    description: 'Initial CEFR placement test' },
       { name: 'images',       description: 'On-demand DALL-E word illustrations' },
+      { name: 'push',         description: 'Web-Push subscriptions and notifications' },
     ],
   },
 });
@@ -120,6 +122,7 @@ await fastify.register(writingRoutes, { prefix: '/writing' });
 await fastify.register(readingRoutes, { prefix: '/reading' });
 await fastify.register(conjugationRoutes, { prefix: '/conjugation' });
 await fastify.register(achievementsRoutes, { prefix: '/achievements' });
+await fastify.register(pushRoutes, { prefix: '/push' });
 
 // Health check
 fastify.get('/health', {

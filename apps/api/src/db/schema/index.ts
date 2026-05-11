@@ -46,6 +46,27 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Web-push subscriptions — one row per browser/device. Identified by the
+// endpoint URL the browser registers. Same user can have many subscriptions
+// (laptop + phone). On unsubscribe / 410-Gone we delete the row.
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    userAgent: varchar('user_agent', { length: 255 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    lastUsedAt: timestamp('last_used_at'),
+  },
+  (t) => [
+    unique('push_subscriptions_endpoint_uq').on(t.endpoint),
+    index('idx_push_subs_user').on(t.userId),
+  ],
+);
+
 // Achievements: one row per (userId, achievementId) when the user unlocks it.
 // The catalog of achievement IDs lives in code (apps/api/src/modules/achievements/registry.ts),
 // not in the DB — that way adding new achievements is just a code change.
