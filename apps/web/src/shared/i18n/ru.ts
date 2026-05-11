@@ -563,7 +563,7 @@ export const ru: DeepRecord = {
     planForLevel: 'Для уровня {level} мы подготовили:',
     wordsLabel: 'слов',
     grammarLabel: 'тем грамматики',
-    listeningLabel: 'аудиоупражнений',
+    listeningLabel: 'на слух',
     aiLabel: 'AI-разговоры',
     firstStep: 'С чего начать',
     firstStepDesc: 'Начни с самых частых слов — они встречаются в живой речи чаще всего.',

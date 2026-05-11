@@ -562,7 +562,7 @@ export const en: Translations = {
     planForLevel: 'For level {level} we have prepared:',
     wordsLabel: 'words',
     grammarLabel: 'grammar topics',
-    listeningLabel: 'listening exercises',
+    listeningLabel: 'listening',
     aiLabel: 'AI conversations',
     firstStep: 'Where to start',
     firstStepDesc: 'Begin with the most frequent words — they appear most often in real speech.',
