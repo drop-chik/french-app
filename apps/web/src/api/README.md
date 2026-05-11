@@ -1,7 +1,7 @@
 # API types (auto-generated)
 
-`openapi.types.ts` is regenerated from the running API's `/docs/json` endpoint.
-Don't edit it by hand — it'll just be overwritten.
+`openapi.types.ts` is regenerated from the running API's `/docs/openapi.json`
+endpoint (served by Scalar). Don't edit it by hand — it'll just be overwritten.
 
 ## Re-generate
 

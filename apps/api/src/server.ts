@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
-import swaggerUi from '@fastify/swagger-ui';
+import scalar from '@scalar/fastify-api-reference';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 import { db } from './db/index.js';
@@ -88,12 +88,17 @@ await fastify.register(swagger, {
   },
 });
 
-await fastify.register(swaggerUi, {
+// Scalar API Reference — modern Swagger-UI alternative. Auto-discovers the
+// spec from @fastify/swagger (above) and serves a single-bundle HTML page —
+// no static asset files needed (Docker / pnpm hardlinks broke them for
+// swagger-ui, Scalar avoids the issue entirely).
+// Spec is also exposed at /docs/json and /docs/yaml for codegen.
+await fastify.register(scalar, {
   routePrefix: '/docs',
-  uiConfig: {
-    docExpansion: 'list',  // collapse endpoints by default — easier to scan
-    deepLinking: true,
-    persistAuthorization: true, // keep the bearer token across page reloads
+  configuration: {
+    title: 'FrenchUp API',
+    theme: 'purple',
+    authentication: { preferredSecurityScheme: 'bearerAuth' },
   },
 });
 
