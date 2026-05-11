@@ -1,5 +1,7 @@
 .page {
   max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -189,11 +191,11 @@
   position: relative;
   display: grid;
   align-items: center;
-  margin: var(--space-3) 0;
+  margin: var(--space-6) 0;
   z-index: 1;
   /* 1fr | node | 1fr — node fills the centre column, card flows into one side */
   grid-template-columns: 1fr 64px 1fr;
-  column-gap: var(--space-3);
+  column-gap: var(--space-4);
 }
 
 .nodeRow > .node { grid-column: 2; }
@@ -299,7 +301,7 @@
 
 .currentBadge {
   position: absolute;
-  bottom: -22px;
+  top: -22px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 9px;
@@ -312,6 +314,7 @@
   border-radius: var(--radius-full);
   border: 1.5px solid var(--level-from);
   white-space: nowrap;
+  z-index: 3;
 }
 
 /* ── Card next to the node ── */
@@ -326,9 +329,10 @@
   text-align: left;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  max-width: 360px;
+  max-width: 300px;
   width: 100%;
   position: relative;
+  min-width: 0;
 }
 
 .card::before {
@@ -336,13 +340,13 @@
   content: '';
   position: absolute;
   top: 50%;
-  width: var(--space-3);
+  width: var(--space-4);
   height: 2px;
   background: var(--color-border);
 }
 
-.nodeSide_right > .card::before { left: calc(-1 * var(--space-3)); }
-.nodeSide_left  > .card::before { right: calc(-1 * var(--space-3)); }
+.nodeSide_right > .card::before { left: calc(-1 * var(--space-4)); }
+.nodeSide_left  > .card::before { right: calc(-1 * var(--space-4)); }
 
 .card:hover:not(:disabled) {
   transform: translateX(2px);
