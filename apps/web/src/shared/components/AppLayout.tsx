@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle, Home, Dumbbell, PenLine, BookMarked } from 'lucide-react';
+import { Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle, Home, Dumbbell, PenLine, BookMarked, Type } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -37,6 +37,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { to: '/reading',      label: t.nav.reading,        icon: BookMarked,    mobileOnly: false },
     { to: '/writing',      label: t.nav.writing,        icon: PenLine,       mobileOnly: false },
     { to: '/drills',       label: t.nav.drills,         icon: Dumbbell,      mobileOnly: false },
+    { to: '/conjugation',  label: t.nav.conjugation,    icon: Type,          mobileOnly: false },
     { to: '/conversation', label: t.nav.conversations,  icon: MessageCircle, mobileOnly: false },
     { to: '/dictionary',   label: t.nav.dictionary,     icon: Book,          mobileOnly: false },
     { to: '/profile',      label: t.nav.profile,        icon: UserCircle,    mobileOnly: true  },

@@ -25,6 +25,7 @@ import { Route as AuthDrillsRouteImport } from './app/routes/_auth.drills'
 import { Route as AuthDictionaryRouteImport } from './app/routes/_auth.dictionary'
 import { Route as AuthDashboardRouteImport } from './app/routes/_auth.dashboard'
 import { Route as AuthConversationRouteImport } from './app/routes/_auth.conversation'
+import { Route as AuthConjugationRouteImport } from './app/routes/_auth.conjugation'
 import { Route as AuthWritingSlugRouteImport } from './app/routes/_auth.writing.$slug'
 import { Route as AuthReadingSlugRouteImport } from './app/routes/_auth.reading.$slug'
 import { Route as AuthListeningIdRouteImport } from './app/routes/_auth.listening.$id'
@@ -111,6 +112,11 @@ const AuthConversationRoute = AuthConversationRouteImport.update({
   path: '/conversation',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthConjugationRoute = AuthConjugationRouteImport.update({
+  id: '/conjugation',
+  path: '/conjugation',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthWritingSlugRoute = AuthWritingSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/conjugation': typeof AuthConjugationRoute
   '/conversation': typeof AuthConversationRoute
   '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/conjugation': typeof AuthConjugationRoute
   '/conversation': typeof AuthConversationRoute
   '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/_auth/conjugation': typeof AuthConjugationRoute
   '/_auth/conversation': typeof AuthConversationRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dictionary': typeof AuthDictionaryRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/terms'
+    | '/conjugation'
     | '/conversation'
     | '/dashboard'
     | '/dictionary'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/terms'
+    | '/conjugation'
     | '/conversation'
     | '/dashboard'
     | '/dictionary'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/terms'
+    | '/_auth/conjugation'
     | '/_auth/conversation'
     | '/_auth/dashboard'
     | '/_auth/dictionary'
@@ -408,6 +420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConversationRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/conjugation': {
+      id: '/_auth/conjugation'
+      path: '/conjugation'
+      fullPath: '/conjugation'
+      preLoaderRoute: typeof AuthConjugationRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/writing/$slug': {
       id: '/_auth/writing/$slug'
       path: '/$slug'
@@ -516,6 +535,7 @@ const AuthWritingRouteWithChildren = AuthWritingRoute._addFileChildren(
 )
 
 interface AuthRouteChildren {
+  AuthConjugationRoute: typeof AuthConjugationRoute
   AuthConversationRoute: typeof AuthConversationRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDictionaryRoute: typeof AuthDictionaryRoute
@@ -530,6 +550,7 @@ interface AuthRouteChildren {
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthConjugationRoute: AuthConjugationRoute,
   AuthConversationRoute: AuthConversationRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDictionaryRoute: AuthDictionaryRoute,
