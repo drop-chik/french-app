@@ -25,6 +25,7 @@ export interface ListeningExerciseListItem {
   transcript: string;
   durationSec: number;
   questions: ListeningQuestion[];
+  progress: { completed: boolean; score: number } | null;
 }
 
 export interface SubmitResult {

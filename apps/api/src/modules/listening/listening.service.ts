@@ -15,12 +15,31 @@ const exerciseCols = {
   durationSec: listeningExercises.durationSec,
 };
 
-// Get all exercises for a level
-export async function getExercises(db: DB, level: LanguageLevel) {
-  return db
-    .select(exerciseCols)
+// Get all exercises for a level, with per-user progress joined in.
+// `progress` is null when the user has never attempted that exercise.
+export async function getExercises(db: DB, userId: string, level: LanguageLevel) {
+  const rows = await db
+    .select({
+      ...exerciseCols,
+      progressCompleted: listeningProgress.completed,
+      progressScore: listeningProgress.score,
+    })
     .from(listeningExercises)
+    .leftJoin(
+      listeningProgress,
+      and(
+        eq(listeningProgress.exerciseId, listeningExercises.id),
+        eq(listeningProgress.userId, userId),
+      ),
+    )
     .where(eq(listeningExercises.level, level));
+
+  return rows.map(({ progressCompleted, progressScore, ...ex }) => ({
+    ...ex,
+    progress: progressCompleted !== null
+      ? { completed: progressCompleted, score: progressScore ?? 0 }
+      : null,
+  }));
 }
 
 // Get single exercise (without correct answers; audio_data not loaded)

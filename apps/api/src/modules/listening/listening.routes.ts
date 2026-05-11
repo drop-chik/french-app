@@ -31,7 +31,7 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const query = request.query as { level?: string };
       const level = (query.level ?? 'A1') as LanguageLevel;
-      const exercises = await getExercises(fastify.db, level);
+      const exercises = await getExercises(fastify.db, request.user.userId, level);
       reply.send({ exercises });
     },
   );

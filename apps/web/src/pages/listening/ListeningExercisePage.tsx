@@ -1,10 +1,23 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, Play, Pause, Volume2, ChevronDown, ChevronUp, CheckCircle, XCircle } from 'lucide-react';
+import {
+  ArrowLeft, Play, Pause, Volume2, ChevronDown, ChevronUp, CheckCircle, XCircle,
+  Rewind, FastForward,
+} from 'lucide-react';
 import { listeningApi } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './ListeningExercisePage.module.css';
+
+const PLAYBACK_SPEEDS = [0.75, 1, 1.25, 1.5] as const;
+
+/** Split a French transcript into sentences. Keeps . ! ? as endings. */
+function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 function ExerciseSkeleton() {
   return (
@@ -59,6 +72,7 @@ export function ListeningExercisePage({ id }: Props) {
   const [audioReady, setAudioReady] = useState(false);
   const retryRef = useRef(0);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState<number>(1);
 
   // Exercise state
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -139,6 +153,76 @@ export function ListeningExercisePage({ id }: Props) {
     audio.currentTime = time;
     setCurrentTime(time);
   };
+
+  // Skip ±N seconds, clamped to [0, duration]
+  const seekBy = (delta: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const next = Math.max(0, Math.min(audio.duration || duration || 0, audio.currentTime + delta));
+    audio.currentTime = next;
+    setCurrentTime(next);
+  };
+
+  // Change playback speed and persist it onto the audio element
+  const applyRate = (rate: number) => {
+    setPlaybackRate(rate);
+    if (audioRef.current) audioRef.current.playbackRate = rate;
+  };
+
+  // Re-apply current rate when audio element is (re)created
+  useEffect(() => {
+    if (audioReady && audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [audioReady, playbackRate]);
+
+  // Split transcript into sentences once; each sentence gets a fractional
+  // start time based on its index (we don't have real per-sentence timestamps,
+  // but evenly distributing the duration is close enough for jump-to navigation).
+  const sentences = useMemo(() => exercise ? splitSentences(exercise.transcript) : [], [exercise]);
+  const sentenceTimes = useMemo(() => {
+    if (!exercise || sentences.length === 0) return [] as number[];
+    const total = duration || exercise.durationSec;
+    return sentences.map((_, i) => (i / sentences.length) * total);
+  }, [sentences, duration, exercise]);
+
+  // Which sentence is currently being read (by clock position)
+  const activeSentenceIdx = useMemo(() => {
+    if (sentenceTimes.length === 0) return -1;
+    let idx = 0;
+    for (let i = 0; i < sentenceTimes.length; i++) {
+      if (currentTime >= (sentenceTimes[i] ?? 0)) idx = i;
+      else break;
+    }
+    return idx;
+  }, [currentTime, sentenceTimes]);
+
+  const jumpToSentence = (idx: number) => {
+    const audio = audioRef.current;
+    const t = sentenceTimes[idx];
+    if (!audio || t === undefined) return;
+    audio.currentTime = t;
+    setCurrentTime(t);
+    if (!isPlaying) {
+      audio.play().catch(() => null);
+      setIsPlaying(true);
+    }
+  };
+
+  // ── Keyboard shortcuts: Space = play/pause, Left/Right = seek ±5s ──
+  useEffect(() => {
+    if (!audioReady) return;
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+      else if (e.key === 'ArrowLeft')  { e.preventDefault(); seekBy(-5); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); seekBy(5);  }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioReady, isPlaying, duration]);
 
   const allAnswered = exercise ? exercise.questions.every((q) => answers[q.id]) : false;
 
@@ -230,17 +314,10 @@ export function ListeningExercisePage({ id }: Props) {
 
       {/* Audio Player */}
       <div className={styles.player}>
-        <div className={styles.playerIcon}>
-          <Volume2 size={20} />
-        </div>
-        <div className={styles.playerControls}>
-          <button
-            className={styles.playButton}
-            onClick={togglePlay}
-            disabled={!hasAudio}
-          >
-            {!hasAudio ? <div className={styles.loadingDot} /> : isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </button>
+        <div className={styles.playerTopRow}>
+          <div className={styles.playerIcon}>
+            <Volume2 size={20} />
+          </div>
           <div className={styles.progressBar}>
             <input
               type="range"
@@ -251,6 +328,7 @@ export function ListeningExercisePage({ id }: Props) {
               onChange={handleSeek}
               className={styles.progressInput}
               disabled={!hasAudio}
+              style={{ ['--progress' as string]: `${(currentTime / (duration || exercise.durationSec || 1)) * 100}%` }}
             />
             <div className={styles.progressTimes}>
               <span>{formatTime(currentTime)}</span>
@@ -258,6 +336,55 @@ export function ListeningExercisePage({ id }: Props) {
             </div>
           </div>
         </div>
+
+        <div className={styles.playerBottomRow}>
+          <button
+            className={styles.seekButton}
+            onClick={() => seekBy(-5)}
+            disabled={!hasAudio}
+            aria-label="-5s"
+          >
+            <Rewind size={18} />
+            <span>5s</span>
+          </button>
+
+          <button
+            className={styles.playButton}
+            onClick={togglePlay}
+            disabled={!hasAudio}
+          >
+            {!hasAudio ? <div className={styles.loadingDot} /> : isPlaying ? <Pause size={22} /> : <Play size={22} />}
+          </button>
+
+          <button
+            className={styles.seekButton}
+            onClick={() => seekBy(5)}
+            disabled={!hasAudio}
+            aria-label="+5s"
+          >
+            <span>5s</span>
+            <FastForward size={18} />
+          </button>
+
+          {/* Speed control */}
+          <div className={styles.speedControl}>
+            <span className={styles.speedLabel}>{t.listening.speedLabel}</span>
+            <div className={styles.speedButtons}>
+              {PLAYBACK_SPEEDS.map((rate) => (
+                <button
+                  key={rate}
+                  className={`${styles.speedButton} ${playbackRate === rate ? styles.speedButtonActive : ''}`}
+                  onClick={() => applyRate(rate)}
+                  disabled={!hasAudio}
+                >
+                  {rate}×
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.keyboardHint}>{t.listening.keyboardHint}</div>
       </div>
 
       {/* Transcript Toggle */}
@@ -271,7 +398,18 @@ export function ListeningExercisePage({ id }: Props) {
 
       {showTranscript && (
         <div className={styles.transcript}>
-          {exercise.transcript}
+          <div className={styles.transcriptHint}>{t.listening.jumpToHint}</div>
+          {sentences.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`${styles.sentence} ${i === activeSentenceIdx ? styles.sentenceActive : ''}`}
+              onClick={() => jumpToSentence(i)}
+              disabled={!hasAudio}
+            >
+              {s}
+            </button>
+          ))}
         </div>
       )}
 

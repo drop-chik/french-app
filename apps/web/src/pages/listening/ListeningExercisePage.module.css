@@ -54,17 +54,36 @@
 /* Player */
 .player {
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  background-color: var(--color-surface);
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
+}
+
+.playerTopRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.playerBottomRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .playerIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-brand-light);
   color: var(--color-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -77,10 +96,10 @@
 }
 
 .playButton {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: var(--radius-full);
-  background-color: var(--color-brand);
+  background: linear-gradient(135deg, var(--color-brand), #6366f1);
   color: white;
   border: none;
   cursor: pointer;
@@ -88,12 +107,103 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background-color var(--transition-fast), opacity var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.5);
 }
 
 .playButton:hover:not(:disabled) {
-  background-color: var(--color-brand-dark, var(--color-brand));
-  opacity: 0.85;
+  transform: scale(1.06);
+  box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.6);
+}
+
+.seekButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 40px;
+}
+
+.seekButton:hover:not(:disabled) {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.seekButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.speedControl {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.speedLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.speedButtons {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.speedButton {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-md) - 3px);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+}
+
+.speedButton:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.speedButtonActive {
+  background: var(--color-brand);
+  color: white;
+}
+
+.speedButtonActive:hover:not(:disabled) {
+  color: white;
+}
+
+.speedButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.keyboardHint {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
 }
 
 .playButton:disabled {
@@ -173,10 +283,54 @@
   background-color: var(--color-bg-secondary, var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  font-size: var(--text-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.transcriptHint {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.sentence {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
   color: var(--color-text-secondary);
+  font-size: var(--text-sm);
   line-height: 1.7;
-  white-space: pre-line;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  font-family: inherit;
+}
+
+.sentence:hover:not(:disabled) {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+.sentenceActive {
+  background-color: var(--color-brand-light);
+  color: var(--color-brand);
+  font-weight: 500;
+}
+
+.sentenceActive:hover:not(:disabled) {
+  background-color: var(--color-brand-light);
+  color: var(--color-brand);
+}
+
+.sentence:disabled {
+  cursor: default;
 }
 
 /* Questions */
@@ -463,6 +617,23 @@
 
   .playerIcon {
     display: none;
+  }
+
+  .playButton {
+    width: 48px;
+    height: 48px;
+  }
+
+  .speedControl {
+    margin-left: 0;
+    flex: 1 1 100%;
+    justify-content: space-between;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .seekButton {
+    padding: var(--space-2);
   }
 
   .options {
