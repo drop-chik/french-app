@@ -4,7 +4,7 @@
   background-color: var(--color-bg);
 }
 
-/* Sidebar */
+/* ─────────────────────────────── Sidebar (desktop) ─────────────────────────── */
 .sidebar {
   width: 220px;
   flex-shrink: 0;
@@ -43,7 +43,7 @@
   letter-spacing: -0.025em;
 }
 
-/* Nav */
+/* Desktop nav (the full list) */
 .nav {
   display: flex;
   flex-direction: column;
@@ -76,26 +76,24 @@
   position: relative;
 }
 
-@media (min-width: 769px) {
-  .navLinkActive::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 55%;
-    background-color: var(--color-brand);
-    border-radius: 0 3px 3px 0;
-  }
+.navLinkActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 55%;
+  background-color: var(--color-brand);
+  border-radius: 0 3px 3px 0;
 }
 
 .navLink:active {
   transform: scale(0.94);
 }
 
-/* Hidden on desktop, shown only on mobile */
-.navLinkMobileOnly {
+/* Mobile nav: rendered as a separate element, hidden on desktop */
+.mobileNav {
   display: none;
 }
 
@@ -222,101 +220,271 @@
   overflow-y: auto;
 }
 
-/* Mobile — bottom nav bar */
+/* ─────────────────────────────── Mobile ──────────────────────────────── */
 @media (max-width: 768px) {
   .layout {
-    flex-direction: column-reverse;
+    flex-direction: column;
     min-height: 100dvh;
   }
 
+  /* The sidebar element collapses to "just the bottom nav bar". The
+     desktop sub-elements (logo, .nav, .sidebarFooter) are hidden — the
+     mobile nav is a separate <nav> that takes over. */
   .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
     width: 100%;
     height: auto;
-    min-height: 56px;
-    position: sticky;
-    bottom: 0;
-    top: auto;
-    flex-direction: row;
-    padding: 0 var(--space-2);
-    align-items: center;
+    min-height: 60px;
+    background-color: var(--color-bg);
+    padding: 0;
     border-right: none;
     border-top: 1px solid var(--color-border);
-    border-bottom: none;
     z-index: 100;
+    /* Respect iOS safe-area on home-indicator devices */
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .logo {
-    display: none;
-  }
-
-  .nav {
-    flex-direction: row;
-    flex: 1;
-    justify-content: space-around;
-    gap: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .navLink {
-    flex-direction: column;
-    gap: 2px;
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-md);
-    min-width: 44px;
-    min-height: 44px;
-    justify-content: center;
-    align-items: center;
-    font-size: 10px;
-  }
-
-  .navLink span {
-    display: block;
-    font-size: 10px;
-    line-height: 1;
-  }
-
+  .logo,
+  .nav,
   .sidebarFooter {
-    padding-top: 0;
-    border-top: none;
-    padding-left: var(--space-2);
+    display: none;
   }
 
-  .navLinkMobileOnly {
+  .mobileNav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    width: 100%;
+    gap: 0;
+  }
+
+  .mobileNavLink {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--space-2) var(--space-1);
+    background: none;
+    border: none;
+    color: var(--color-text-tertiary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    font-family: inherit;
+    min-height: 56px;
   }
 
-  .userInfo {
-    display: none;
+  .mobileNavLink span {
+    font-size: 10.5px;
+    line-height: 1;
+    font-weight: var(--font-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 
-  .userDetails {
-    display: none;
+  .mobileNavLinkActive {
+    color: var(--color-brand);
   }
 
-  .themeToggle {
-    min-width: 44px;
-    min-height: 44px;
+  .mobileNavLinkActive span {
+    font-weight: var(--font-semibold);
   }
 
+  .mobileNavLink:active {
+    transform: scale(0.92);
+  }
+
+  .moreButton {
+    /* Same styling as nav links */
+  }
+
+  /* Main needs bottom padding so content isn't hidden behind the nav bar */
   .main {
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-4) calc(60px + env(safe-area-inset-bottom, 0) + var(--space-4));
     overflow-y: auto;
     flex: 1;
     min-height: 0;
   }
 }
 
-@media (max-width: 480px) {
-  .navLink span {
-    display: none;
+@media (max-width: 360px) {
+  .mobileNavLink span {
+    font-size: 9.5px;
+  }
+}
+
+/* ─────────────────────────── "More" bottom sheet ─────────────────────────── */
+.sheetBackdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sheetBackdrop {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.18s ease-out;
   }
 
-  .navLink {
-    padding: var(--space-2);
+  .sheet {
+    width: 100%;
+    max-height: 85dvh;
+    background-color: var(--color-bg);
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+    padding: var(--space-3) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom, 0));
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow-y: auto;
   }
+
+  .sheetHandle {
+    width: 36px;
+    height: 4px;
+    background-color: var(--color-border);
+    border-radius: 2px;
+    margin: 0 auto var(--space-3);
+  }
+
+  .sheetHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+
+  .sheetTitle {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .sheetClose {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+  }
+
+  .sheetClose:hover {
+    background-color: var(--color-border);
+  }
+
+  .sheetGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+  }
+
+  .sheetItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: var(--space-3) var(--space-1);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    min-height: 72px;
+    cursor: pointer;
+  }
+
+  .sheetItem:hover {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+
+  .sheetItem:active {
+    transform: scale(0.96);
+  }
+
+  .sheetItem span {
+    font-size: var(--text-xs);
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .sheetItemActive {
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-text);
+  }
+
+  .sheetDivider {
+    height: 1px;
+    background-color: var(--color-border);
+    margin: var(--space-4) 0 var(--space-3);
+  }
+
+  .sheetThemeRow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    font-family: inherit;
+  }
+
+  .sheetThemeRow:hover {
+    background-color: var(--color-bg-tertiary);
+  }
+
+  .sheetThemeValue {
+    margin-left: auto;
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+@media (max-width: 360px) {
+  .sheetGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes streakPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }

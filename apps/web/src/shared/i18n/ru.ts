@@ -15,6 +15,9 @@ export const ru: DeepRecord = {
     conjugation: 'Спряжения',
     achievements: 'Достижения',
     profile: 'Профиль',
+    more: 'Ещё',
+    moreSheetTitle: 'Все разделы',
+    theme: 'Тема',
   },
   achievements: {
     title: 'Достижения',

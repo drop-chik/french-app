@@ -14,6 +14,9 @@ export const en: Translations = {
     conjugation: 'Conjugation',
     achievements: 'Achievements',
     profile: 'Profile',
+    more: 'More',
+    moreSheetTitle: 'All sections',
+    theme: 'Theme',
   },
   achievements: {
     title: 'Achievements',
