@@ -452,18 +452,24 @@ export function ProfilePage() {
                 onClick={() => handleLangChange('ru')}
                 type="button"
               >
-                <span className={styles.langFlag}>🇷🇺</span>
-                <span className={styles.langTileName}>Русский</span>
-                <span className={styles.langTileCode}>RU</span>
+                <span className={`${styles.langBadge} ${styles.langBadgeRu}`}>RU</span>
+                <div className={styles.langTileText}>
+                  <span className={styles.langTileName}>Русский</span>
+                  <span className={styles.langTileSub}>Russian</span>
+                </div>
+                {lang === 'ru' && <span className={styles.langCheck} />}
               </button>
               <button
                 className={`${styles.langTile} ${lang === 'en' ? styles.langTileActive : ''}`}
                 onClick={() => handleLangChange('en')}
                 type="button"
               >
-                <span className={styles.langFlag}>🇬🇧</span>
-                <span className={styles.langTileName}>English</span>
-                <span className={styles.langTileCode}>EN</span>
+                <span className={`${styles.langBadge} ${styles.langBadgeEn}`}>EN</span>
+                <div className={styles.langTileText}>
+                  <span className={styles.langTileName}>English</span>
+                  <span className={styles.langTileSub}>English</span>
+                </div>
+                {lang === 'en' && <span className={styles.langCheck} />}
               </button>
             </div>
           </div>
