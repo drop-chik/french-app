@@ -265,6 +265,7 @@ export function ProfilePage() {
           title: t.profile.levelJourneyTitle,
           master: t.profile.levelStatusMaster,
           active: t.profile.levelStatusActive,
+          available: t.profile.levelStatusAvailable,
           next: t.profile.levelStatusNext,
           locked: t.profile.levelStatusLocked,
         }}
@@ -452,7 +453,7 @@ export function ProfilePage() {
                 onClick={() => handleLangChange('ru')}
                 type="button"
               >
-                <span className={`${styles.langBadge} ${styles.langBadgeRu}`}>RU</span>
+                <span className={styles.langBadge}>RU</span>
                 <div className={styles.langTileText}>
                   <span className={styles.langTileName}>Русский</span>
                   <span className={styles.langTileSub}>Russian</span>
@@ -464,7 +465,7 @@ export function ProfilePage() {
                 onClick={() => handleLangChange('en')}
                 type="button"
               >
-                <span className={`${styles.langBadge} ${styles.langBadgeEn}`}>EN</span>
+                <span className={styles.langBadge}>EN</span>
                 <div className={styles.langTileText}>
                   <span className={styles.langTileName}>English</span>
                   <span className={styles.langTileSub}>English</span>

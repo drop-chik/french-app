@@ -123,6 +123,7 @@ export const ru: DeepRecord = {
     levelJourneyTitle: 'Путь обучения',
     levelStatusMaster: 'Мастер',
     levelStatusActive: 'Изучаешь',
+    levelStatusAvailable: 'Доступно',
     levelStatusNext: 'Дальше',
     levelStatusLocked: 'Заблок.',
     insightWordsTitle: 'Словарь',

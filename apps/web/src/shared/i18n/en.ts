@@ -122,6 +122,7 @@ export const en: Translations = {
     levelJourneyTitle: 'Learning path',
     levelStatusMaster: 'Master',
     levelStatusActive: 'Learning',
+    levelStatusAvailable: 'Available',
     levelStatusNext: 'Next',
     levelStatusLocked: 'Locked',
     insightWordsTitle: 'Vocabulary',

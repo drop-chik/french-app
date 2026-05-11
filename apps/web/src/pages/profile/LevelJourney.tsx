@@ -16,6 +16,7 @@ interface LevelJourneyProps {
     title: string;
     master: string;
     active: string;
+    available: string;
     next: string;
     locked: string;
   };
@@ -36,15 +37,22 @@ export function LevelJourney(props: LevelJourneyProps) {
           const total = data?.totalWords ?? 0;
           const isCurrent = lvl === props.currentLevel;
 
-          // Status logic — based on actual progress, not just position
+          // Status logic — previous levels are always at least "available"
           let status: string;
-          let nodeState: 'mastered' | 'active' | 'next' | 'locked';
+          let nodeState: 'mastered' | 'active' | 'available' | 'next' | 'locked';
           if (percent >= 100) {
             status = props.labels.master;
             nodeState = 'mastered';
-          } else if (percent > 0 || isCurrent) {
+          } else if (isCurrent) {
             status = props.labels.active;
             nodeState = 'active';
+          } else if (percent > 0) {
+            status = props.labels.active;
+            nodeState = 'active';
+          } else if (i < currentIndex) {
+            // Previous level, no progress yet — accessible but not started
+            status = props.labels.available;
+            nodeState = 'available';
           } else if (i === currentIndex + 1) {
             status = props.labels.next;
             nodeState = 'next';
@@ -93,7 +101,7 @@ function LevelNode({
   level: string;
   percent: number;
   isCurrent: boolean;
-  state: 'mastered' | 'active' | 'next' | 'locked';
+  state: 'mastered' | 'active' | 'available' | 'next' | 'locked';
 }) {
   const color = LEVEL_COLORS[level] ?? '#94a3b8';
   const size = 76;
@@ -103,6 +111,8 @@ function LevelNode({
   const filled = Math.max(0, Math.min(1, percent / 100)) * C;
   const isLocked = state === 'locked';
   const isMastered = state === 'mastered';
+  const isAvailable = state === 'available';
+  const isDim = isLocked || isAvailable;
 
   return (
     <div
@@ -118,7 +128,7 @@ function LevelNode({
           strokeWidth={strokeWidth}
           fill="var(--color-bg-secondary)"
         />
-        {!isLocked && percent > 0 && (
+        {!isDim && percent > 0 && !isMastered && (
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -135,7 +145,6 @@ function LevelNode({
             }}
           />
         )}
-        {/* Full ring for mastered (without animation flicker) */}
         {isMastered && (
           <circle
             cx={size / 2}
@@ -144,7 +153,7 @@ function LevelNode({
             stroke={color}
             strokeWidth={strokeWidth}
             fill="none"
-            opacity="0.4"
+            opacity="0.5"
           />
         )}
       </svg>
@@ -158,7 +167,12 @@ function LevelNode({
           </>
         ) : (
           <>
-            <span className={styles.nodeLevel} style={{ color }}>{level}</span>
+            <span
+              className={styles.nodeLevel}
+              style={{ color: isAvailable ? 'var(--color-text-secondary)' : color }}
+            >
+              {level}
+            </span>
             {percent > 0 && (
               <span className={styles.nodePercent}>{percent}%</span>
             )}
