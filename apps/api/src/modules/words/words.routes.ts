@@ -126,7 +126,10 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
         where: (u, { eq }) => eq(u.id, request.user.userId),
         columns: { level: true },
       });
-      const level = (String(query.level ?? user?.level ?? 'B2')) as LanguageLevel;
+      // level="all" → search across every CEFR level (useful when the user
+      // doesn't know which level a word belongs to). Default to the user's level.
+      const levelParam = String(query.level ?? user?.level ?? 'B2');
+      const level: LanguageLevel | null = levelParam === 'all' ? null : (levelParam as LanguageLevel);
       const category = query.category ? String(query.category) : null;
       const q = query.q ? String(query.q).trim() : null;
       const offset = Math.max(0, parseInt(String(query.offset ?? '0'), 10) || 0);

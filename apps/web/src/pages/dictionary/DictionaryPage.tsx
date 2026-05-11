@@ -65,16 +65,34 @@ interface WordRowProps {
   t: Translations;
   onMark: (id: string, action: 'study' | 'mastered') => void;
   markingId: string | null;
+  showLevel?: boolean;
 }
 
-function WordRow({ word, t, onMark, markingId }: WordRowProps) {
+const LEVEL_TINT: Record<string, string> = {
+  A1: '#22c55e',
+  A2: '#3b82f6',
+  B1: '#f59e0b',
+  B2: '#8b5cf6',
+};
+
+function WordRow({ word, t, onMark, markingId, showLevel }: WordRowProps) {
   const status = word.progress?.status ?? null;
   const isBusy = markingId === word.id;
 
   return (
     <div className={styles.wordRow}>
       <div className={styles.wordInfo}>
-        <span className={styles.wordFr}>{word.french}</span>
+        <span className={styles.wordFrLine}>
+          <span className={styles.wordFr}>{word.french}</span>
+          {showLevel && word.level && (
+            <span
+              className={styles.wordLevelChip}
+              style={{ color: LEVEL_TINT[word.level], background: `${LEVEL_TINT[word.level]}1a` }}
+            >
+              {word.level}
+            </span>
+          )}
+        </span>
         <span className={styles.wordRu}>{word.translation}</span>
         {word.exampleFr && <span className={styles.wordEx}>{word.exampleFr}</span>}
       </div>
@@ -247,8 +265,9 @@ export function DictionaryPage() {
 
   const debouncedQuery = useDebounce(query, 280);
   const { data: searchData, isLoading: searchLoading } = useQuery({
-    queryKey: ['browse-search', level, debouncedQuery, lang],
-    queryFn: () => wordsApi.browse(level, null, 0, 50, debouncedQuery),
+    queryKey: ['browse-search', debouncedQuery, lang],
+    // Search ignores the level filter — show matches across all levels.
+    queryFn: () => wordsApi.browse('all', null, 0, 80, debouncedQuery),
     enabled: searchActive && debouncedQuery.length >= 2,
     staleTime: 30_000,
   });
@@ -381,7 +400,7 @@ export function DictionaryPage() {
             <p className={styles.emptyText}>{t.dictionary.emptySearch}</p>
           )}
           {searchWords.map((w) => (
-            <WordRow key={w.id} word={w} t={t} onMark={handleMark} markingId={markingId} />
+            <WordRow key={w.id} word={w} t={t} onMark={handleMark} markingId={markingId} showLevel />
           ))}
         </div>
       )}

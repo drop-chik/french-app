@@ -73,7 +73,7 @@ export const wordsApi = {
   getCategories: (level: string) =>
     apiRequest<{ categories: WordCategory[] }>(`/words/categories?level=${level}`),
 
-  browse: (level: string, category: string | null, offset = 0, limit = 100, q?: string) => {
+  browse: (level: string | 'all', category: string | null, offset = 0, limit = 100, q?: string) => {
     const cat = category ? `&category=${encodeURIComponent(category)}` : '';
     const search = q ? `&q=${encodeURIComponent(q)}` : '';
     return apiRequest<{ words: BrowseWord[]; total: number }>(

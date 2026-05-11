@@ -266,7 +266,7 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
 export async function browseWords(
   db: DB,
   userId: string,
-  level: LanguageLevel,
+  level: LanguageLevel | null,
   category: string | null,
   lang: 'ru' | 'en',
   limit: number,
@@ -275,7 +275,7 @@ export async function browseWords(
 ) {
   const pattern = q ? `%${q.toLowerCase()}%` : null;
   const baseWhere = and(
-    eq(words.level, level),
+    level ? eq(words.level, level) : undefined,
     eq(words.isActive, true),
     category ? eq(words.category, category) : undefined,
     pattern
