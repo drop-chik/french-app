@@ -486,8 +486,12 @@ export const ru: DeepRecord = {
   },
   grammar: {
     title: 'Грамматика',
+    subtitle: 'Твой путь от первой темы до B2',
     loading: 'Загрузка тем...',
     topicsCompleted: 'из {total} тем завершено',
+    currentLabel: 'Сейчас',
+    nextLabel: 'Дальше',
+    lockedHint: 'Заверши предыдущую тему',
     categories: {
       articles: 'Артикли',
       nouns: 'Существительные',

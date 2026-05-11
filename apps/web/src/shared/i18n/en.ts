@@ -485,8 +485,12 @@ export const en: Translations = {
   },
   grammar: {
     title: 'Grammar',
+    subtitle: 'Your path from your first topic to B2',
     loading: 'Loading topics...',
     topicsCompleted: 'of {total} topics completed',
+    currentLabel: 'Now',
+    nextLabel: 'Next',
+    lockedHint: 'Finish the previous topic',
     categories: {
       articles: 'Articles',
       nouns: 'Nouns',
