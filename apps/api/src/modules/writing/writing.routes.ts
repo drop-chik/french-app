@@ -10,6 +10,7 @@ import {
   generateFeedback,
   getUserStats,
 } from './writing.service.js';
+import { authorizedSecurity } from '../../openapi/schemas.js';
 
 const saveSchema = z.object({
   promptId: z.string().uuid(),
@@ -22,7 +23,18 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /writing/prompts — list prompts (optionally filter by level & type)
   fastify.get(
     '/prompts',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'List writing prompts (filter by level/type)',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: { level: { type: 'string' }, type: { type: 'string' } },
+        },
+      },
+    },
     async (request, reply) => {
       const { level, type } = request.query as { level?: string; type?: string };
       const prompts = await getPrompts(fastify.db, level, type);
@@ -33,7 +45,15 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /writing/prompts/:slug — get single prompt
   fastify.get(
     '/prompts/:slug',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'Prompt detail by slug',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { slug: { type: 'string' } } },
+      },
+    },
     async (request, reply) => {
       const { slug } = request.params as { slug: string };
       const prompt = await getPromptBySlug(fastify.db, slug);
@@ -45,7 +65,25 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /writing/submissions — save draft or submit
   fastify.post(
     '/submissions',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'Save a draft or submit a completed writing piece',
+        description: 'Pass submissionId to overwrite an existing draft; omit it to create a new submission.',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['promptId', 'content'],
+          properties: {
+            promptId:     { type: 'string', format: 'uuid' },
+            content:      { type: 'string', minLength: 1, maxLength: 5000 },
+            status:       { type: 'string', enum: ['draft', 'submitted'], default: 'draft' },
+            submissionId: { type: 'string', format: 'uuid' },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const parsed = saveSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });
@@ -71,7 +109,14 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /writing/submissions — list user submissions
   fastify.get(
     '/submissions',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'List user submissions (drafts and submitted)',
+        security: authorizedSecurity,
+      },
+    },
     async (request, reply) => {
       const submissions = await getUserSubmissions(fastify.db, request.user.userId);
       reply.send({ submissions });
@@ -81,7 +126,15 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /writing/submissions/:id — get one submission with feedback
   fastify.get(
     '/submissions/:id',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'Submission detail (with AI feedback when generated)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const submission = await getSubmissionById(fastify.db, request.user.userId, id);
@@ -93,7 +146,15 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /writing/submissions/:id/feedback — generate AI feedback
   fastify.post(
     '/submissions/:id/feedback',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'Generate AI grammar / style feedback for a submission',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       try {
@@ -109,7 +170,14 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /writing/stats — user writing statistics
   fastify.get(
     '/stats',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'User writing statistics',
+        security: authorizedSecurity,
+      },
+    },
     async (request, reply) => {
       const stats = await getUserStats(fastify.db, request.user.userId);
       reply.send(stats);

@@ -5,6 +5,7 @@ import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
 import { generateTTS } from './tts.service.js';
 import { getAudioData } from '../../services/audio.service.js';
+import { authorizedSecurity } from '../../openapi/schemas.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const submitSchema = z.object({
@@ -15,7 +16,18 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /listening/exercises?level=A1
   fastify.get(
     '/exercises',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['listening'],
+        summary: 'List listening exercises for a CEFR level',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: { level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] } },
+        },
+      },
+    },
     async (request, reply) => {
       const query = request.query as { level?: string };
       const level = (query.level ?? 'A1') as LanguageLevel;
@@ -27,7 +39,15 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /listening/exercises/:id
   fastify.get<{ Params: { id: string } }>(
     '/exercises/:id',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['listening'],
+        summary: 'Exercise detail (transcript, questions, user progress)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
     async (request, reply) => {
       const exercise = await getExercise(fastify.db, request.user.userId, request.params.id);
       if (!exercise) return reply.status(404).send({ error: 'Exercise not found' });
@@ -36,9 +56,17 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // GET /listening/exercises/:id/audio — public, no auth (UUID is unguessable)
-  // Serves pre-generated MP3 from audio_data bytea column (raw SQL, not in schema).
   fastify.get<{ Params: { id: string } }>(
     '/exercises/:id/audio',
+    {
+      schema: {
+        tags: ['listening'],
+        summary: 'Serve pre-generated MP3 (public, UUID-protected)',
+        description: 'Streams the bytea audio column as audio/mpeg with 1-year immutable cache headers.',
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        produces: ['audio/mpeg'],
+      },
+    },
     async (request, reply) => {
       const audioData = await getAudioData(fastify.db, request.params.id);
 
@@ -58,7 +86,26 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /listening/exercises/:id/submit
   fastify.post<{ Params: { id: string } }>(
     '/exercises/:id/submit',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['listening'],
+        summary: 'Submit answers (awards 25 XP)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        body: {
+          type: 'object',
+          required: ['answers'],
+          properties: {
+            answers: {
+              type: 'object',
+              description: 'Map of questionId → answer',
+              additionalProperties: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const parsed = submitSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });
@@ -82,7 +129,20 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /listening/tts — on-demand TTS for vocabulary modes (single words)
   fastify.post(
     '/tts',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['listening'],
+        summary: 'On-demand TTS — used by vocabulary modes to pronounce a word',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['text'],
+          properties: { text: { type: 'string', minLength: 1, maxLength: 1000 } },
+        },
+        produces: ['audio/mpeg'],
+      },
+    },
     async (request, reply) => {
       const body = request.body as { text?: string };
       if (!body.text || body.text.trim().length === 0) {

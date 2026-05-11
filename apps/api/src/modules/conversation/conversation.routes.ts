@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { createSession, getSessions, getSession, deleteSession, streamReply } from './conversation.service.js';
+import { authorizedSecurity } from '../../openapi/schemas.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const createSessionSchema = z.object({
@@ -16,7 +17,14 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /conversation/sessions — list user sessions
   fastify.get(
     '/sessions',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['conversation'],
+        summary: 'List the user\'s conversation sessions',
+        security: authorizedSecurity,
+      },
+    },
     async (request, reply) => {
       const sessions = await getSessions(fastify.db, request.user.userId);
       reply.send({ sessions });
@@ -26,7 +34,22 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /conversation/sessions — create new session
   fastify.post(
     '/sessions',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['conversation'],
+        summary: 'Start a new AI conversation on a chosen topic',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['topic'],
+          properties: {
+            topic: { type: 'string', minLength: 1, maxLength: 200 },
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const parsed = createSessionSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });
@@ -40,7 +63,15 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /conversation/sessions/:id — get session with messages
   fastify.get<{ Params: { id: string } }>(
     '/sessions/:id',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['conversation'],
+        summary: 'Session detail with full message history',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
     async (request, reply) => {
       const session = await getSession(fastify.db, request.user.userId, request.params.id);
       if (!session) return reply.status(404).send({ error: 'Session not found' });
@@ -52,7 +83,15 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   // DELETE /conversation/sessions/:id — delete a session
   fastify.delete<{ Params: { id: string } }>(
     '/sessions/:id',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['conversation'],
+        summary: 'Delete a session',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
     async (request, reply) => {
       const deleted = await deleteSession(fastify.db, request.user.userId, request.params.id);
       if (!deleted) return reply.status(404).send({ error: 'Session not found' });
@@ -63,7 +102,22 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /conversation/sessions/:id/message — send message, stream reply via SSE
   fastify.post<{ Params: { id: string } }>(
     '/sessions/:id/message',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['conversation'],
+        summary: 'Send a user message; reply streams back as Server-Sent Events',
+        description: 'Response is text/event-stream. Each "data:" line carries a JSON object: { chunk: "…" } for partial text, { done: true } at the end, { error: "…" } on failure.',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        body: {
+          type: 'object',
+          required: ['message'],
+          properties: { message: { type: 'string', minLength: 1, maxLength: 2000 } },
+        },
+        produces: ['text/event-stream'],
+      },
+    },
     async (request, reply) => {
       const parsed = messageSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });

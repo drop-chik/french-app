@@ -12,6 +12,7 @@ import {
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
+import { authorizedSecurity, errorSchema, langQuery } from '../../openapi/schemas.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const gradeSchema = z.object({
@@ -26,7 +27,15 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /words/session — today's study session
   fastify.get(
     '/session',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: "Today's study session (due reviews + up to 20 new words)",
+        security: authorizedSecurity,
+        querystring: langQuery,
+      },
+    },
     async (request, reply) => {
       const { userId } = request.user;
       const query = request.query as Record<string, unknown>;
@@ -46,7 +55,21 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /words/:id/answer — record grade after study
   fastify.post<{ Params: { id: string } }>(
     '/:id/answer',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Record SM-2 grade (0-5), awards XP + checks achievements',
+        description: 'Updates SRS state and returns the next-review date. Also awards XP (5 for grade≥3, 1 otherwise) and reports any unlocked achievements.',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        body: {
+          type: 'object',
+          required: ['grade'],
+          properties: { grade: { type: 'integer', minimum: 0, maximum: 5 } },
+        },
+      },
+    },
     async (request, reply) => {
       const parsed = gradeSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -76,7 +99,22 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /words/dictionary — learned words with pagination (?offset=0&limit=200)
   fastify.get(
     '/dictionary',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Dictionary — all words the user has progress on',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: {
+            lang:   { type: 'string', enum: ['ru', 'en'], default: 'ru' },
+            offset: { type: 'integer', minimum: 0, default: 0 },
+            limit:  { type: 'integer', minimum: 1, maximum: 500, default: 200 },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
@@ -90,7 +128,16 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /words/:id/distractors — 3 wrong options for multiple choice
   fastify.get<{ Params: { id: string } }>(
     '/:id/distractors',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: '3 wrong-answer options for multiple-choice mode',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        querystring: langQuery,
+      },
+    },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
@@ -113,7 +160,18 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /words/categories?level=B2 — distinct categories with counts + mastered count
   fastify.get(
     '/categories',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Word categories with counts + mastered for the given level',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: { level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] } },
+        },
+      },
+    },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const user = await fastify.db.query.users.findFirst({
@@ -129,7 +187,26 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /words/browse?level=B2&category=&q=&lang=ru&offset=0&limit=100
   fastify.get(
     '/browse',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Search words — filter by level/category/query',
+        description: 'level="all" searches across every CEFR level. q matches against both French and the user-language translation.',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: {
+            level:    { type: 'string', description: 'A1/A2/B1/B2 or "all"' },
+            category: { type: 'string' },
+            q:        { type: 'string' },
+            lang:     { type: 'string', enum: ['ru', 'en'], default: 'ru' },
+            offset:   { type: 'integer', minimum: 0, default: 0 },
+            limit:    { type: 'integer', minimum: 1, maximum: 500, default: 100 },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
@@ -153,7 +230,20 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /words/:id/mark — manually mark word as study or mastered
   fastify.post<{ Params: { id: string } }>(
     '/:id/mark',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Manually mark a word as "study" or "mastered"',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        body: {
+          type: 'object',
+          required: ['action'],
+          properties: { action: { type: 'string', enum: ['study', 'mastered'] } },
+        },
+      },
+    },
     async (request, reply) => {
       const body = request.body as { action?: string };
       if (body.action !== 'study' && body.action !== 'mastered') {
@@ -167,7 +257,15 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /words/:id/image — request DALL-E image generation
   fastify.post<{ Params: { id: string } }>(
     '/:id/image',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Trigger DALL-E image generation for a word (async)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
     async (request, reply) => {
       const result = await requestWordImage(fastify.db, request.params.id);
       reply.send(result);

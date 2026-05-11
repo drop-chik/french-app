@@ -10,6 +10,7 @@ import {
 } from './reading.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
+import { authorizedSecurity } from '../../openapi/schemas.js';
 
 const progressSchema = z.object({
   score: z.number().int().min(0),
@@ -26,7 +27,21 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /reading/texts — list all texts (optionally filter by level/topic)
   fastify.get(
     '/texts',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['reading'],
+        summary: 'List reading texts (filterable by level / topic)',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: {
+            level: { type: 'string' },
+            topic: { type: 'string' },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const { level, topic } = request.query as { level?: string; topic?: string };
       const texts = await getTexts(fastify.db, request.user.userId, level, topic);
@@ -37,7 +52,15 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /reading/texts/:slug — get single text with questions and user progress
   fastify.get(
     '/texts/:slug',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['reading'],
+        summary: 'Reading text by slug (content + questions + user progress)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { slug: { type: 'string' } } },
+      },
+    },
     async (request, reply) => {
       const { slug } = request.params as { slug: string };
       const text = await getTextBySlug(fastify.db, request.user.userId, slug);
@@ -49,7 +72,25 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /reading/progress/:textId — save reading session results
   fastify.post(
     '/progress/:textId',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['reading'],
+        summary: 'Save reading session results (awards 20 XP)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { textId: { type: 'string', format: 'uuid' } } },
+        body: {
+          type: 'object',
+          required: ['score', 'totalQuestions'],
+          properties: {
+            score:          { type: 'integer', minimum: 0 },
+            totalQuestions: { type: 'integer', minimum: 1 },
+            wordsLookedUp:  { type: 'array', items: { type: 'string' } },
+            wordsSaved:     { type: 'array', items: { type: 'string' } },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const { textId } = request.params as { textId: string };
       const parsed = progressSchema.safeParse(request.body);
@@ -77,7 +118,19 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /reading/words/save — add a word from a text to the user's vocabulary
   fastify.post(
     '/words/save',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['reading'],
+        summary: 'Add a word from a reading text to the user vocabulary',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['word'],
+          properties: { word: { type: 'string', minLength: 1, maxLength: 100 } },
+        },
+      },
+    },
     async (request, reply) => {
       const parsed = saveWordSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });
@@ -90,7 +143,19 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /reading/translate?word=xxx — look up a word in the vocabulary DB
   fastify.get(
     '/translate',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['reading'],
+        summary: 'Look up translation for a word seen in a text (popover endpoint)',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          required: ['word'],
+          properties: { word: { type: 'string' } },
+        },
+      },
+    },
     async (request, reply) => {
       const { word } = request.query as { word?: string };
       if (!word) return reply.status(400).send({ error: 'word is required' });
@@ -102,7 +167,14 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /reading/stats — user's reading statistics
   fastify.get(
     '/stats',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['reading'],
+        summary: "User's reading statistics",
+        security: authorizedSecurity,
+      },
+    },
     async (request, reply) => {
       const stats = await getUserStats(fastify.db, request.user.userId);
       reply.send(stats);

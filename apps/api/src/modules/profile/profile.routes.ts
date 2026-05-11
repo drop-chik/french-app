@@ -11,10 +11,19 @@ import {
   getHomeData,
   getLevelsProgress,
 } from './profile.service.js';
+import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
 
 const profileRoutes: FastifyPluginAsync = async (fastify) => {
-  // GET /profile — get current user profile
-  fastify.get('/', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+  // GET /profile
+  fastify.get('/', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Current user profile',
+      security: authorizedSecurity,
+      response: { 200: userSchema, 404: errorSchema },
+    },
+  }, async (request, reply) => {
     const { userId } = request.user;
     try {
       const profile = await getProfile(fastify.db, userId);
@@ -24,11 +33,26 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // PATCH /profile — update name, email, uiLanguage
-  fastify.patch('/', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+  // PATCH /profile
+  fastify.patch('/', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Update profile (name, email, uiLanguage)',
+      security: authorizedSecurity,
+      body: {
+        type: 'object',
+        properties: {
+          name:       { type: 'string', minLength: 1 },
+          email:      { type: 'string', format: 'email' },
+          uiLanguage: { type: 'string', enum: ['ru', 'en'] },
+        },
+      },
+      response: { 200: userSchema, 409: errorSchema },
+    },
+  }, async (request, reply) => {
     const { userId } = request.user;
     const body = request.body as { name?: string; email?: string; uiLanguage?: string };
-
     try {
       const updated = await updateProfile(fastify.db, userId, body);
       reply.send(updated);
@@ -40,8 +64,28 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // PATCH /profile/password — change password
-  fastify.patch('/password', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+  // PATCH /profile/password
+  fastify.patch('/password', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Change password',
+      security: authorizedSecurity,
+      body: {
+        type: 'object',
+        required: ['currentPassword', 'newPassword'],
+        properties: {
+          currentPassword: { type: 'string' },
+          newPassword:     { type: 'string', minLength: 8 },
+        },
+      },
+      response: {
+        200: { type: 'object', properties: { ok: { type: 'boolean' } } },
+        400: errorSchema,
+        401: errorSchema,
+      },
+    },
+  }, async (request, reply) => {
     const { userId } = request.user;
     const body = request.body as { currentPassword: string; newPassword: string };
 
@@ -60,14 +104,30 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // POST /profile/avatar — upload avatar (base64 data URL)
-  fastify.post('/avatar', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+  // POST /profile/avatar
+  fastify.post('/avatar', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Upload avatar (base64 data URL, max ~300KB)',
+      security: authorizedSecurity,
+      body: {
+        type: 'object',
+        required: ['avatar'],
+        properties: {
+          avatar: { type: 'string', description: 'data:image/...;base64,...' },
+        },
+      },
+      response: {
+        200: { type: 'object', properties: { avatarUrl: { type: 'string', nullable: true } } },
+        400: errorSchema,
+        413: errorSchema,
+      },
+    },
+  }, async (request, reply) => {
     const { userId } = request.user;
     const body = request.body as { avatar: string };
-
-    if (!body.avatar) {
-      return reply.status(400).send({ error: 'No avatar provided' });
-    }
+    if (!body.avatar) return reply.status(400).send({ error: 'No avatar provided' });
 
     try {
       const result = await updateAvatar(fastify.db, userId, body.avatar);
@@ -83,29 +143,54 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /profile/stats — learning statistics
-  fastify.get('/stats', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-    const { userId } = request.user;
-    const stats = await getStats(fastify.db, userId);
+  // GET /profile/stats
+  fastify.get('/stats', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Learning statistics (words, grammar, listening, week trend)',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const stats = await getStats(fastify.db, request.user.userId);
     reply.send(stats);
   });
 
-  // GET /profile/charts — data for progress charts
-  fastify.get('/charts', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-    const { userId } = request.user;
-    const charts = await getCharts(fastify.db, userId);
+  // GET /profile/charts
+  fastify.get('/charts', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: '90-day activity, weekly accuracy, word-status breakdown',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const charts = await getCharts(fastify.db, request.user.userId);
     reply.send(charts);
   });
 
-  // GET /profile/streak — consecutive days streak + whether user studied today
-  fastify.get('/streak', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-    const { userId } = request.user;
-    const result = await getStreak(fastify.db, userId);
+  // GET /profile/streak
+  fastify.get('/streak', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Current streak + last-7-days activity calendar',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const result = await getStreak(fastify.db, request.user.userId);
     reply.send(result);
   });
 
-  // POST /profile/streak/repair — use one-time streak repair
-  fastify.post('/streak/repair', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+  // POST /profile/streak/repair
+  fastify.post('/streak/repair', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Use one-time streak repair (30-day cooldown)',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
     const { userId } = request.user;
     try {
       const result = await repairStreak(fastify.db, userId);
@@ -121,8 +206,15 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // GET /profile/home — aggregated dashboard data
-  fastify.get('/home', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+  // GET /profile/home
+  fastify.get('/home', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Aggregated dashboard data (streak + level progress + today plan) in one call',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
     const { userId } = request.user;
     const user = await fastify.db.query.users.findFirst({
       where: (u, { eq }) => eq(u.id, userId),
@@ -133,10 +225,17 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     const data = await getHomeData(fastify.db, userId, user.level, lang);
     reply.send(data);
   });
-  // GET /profile/levels-progress — mastered/total words per level A1–B2
-  fastify.get('/levels-progress', { preHandler: [fastify.authenticate] }, async (request, reply) => {
-    const { userId } = request.user;
-    const levels = await getLevelsProgress(fastify.db, userId);
+
+  // GET /profile/levels-progress
+  fastify.get('/levels-progress', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Mastered/total words per CEFR level (A1–B2)',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const levels = await getLevelsProgress(fastify.db, request.user.userId);
     reply.send({ levels });
   });
 };

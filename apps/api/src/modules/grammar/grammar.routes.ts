@@ -9,6 +9,7 @@ import {
 } from './grammar.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
+import { authorizedSecurity, langQuery } from '../../openapi/schemas.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const answerSchema = z.object({
@@ -28,7 +29,21 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /grammar/topics?level=A1&lang=en
   fastify.get(
     '/topics',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['grammar'],
+        summary: 'List grammar topics with user progress',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: {
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            lang:  { type: 'string', enum: ['ru', 'en'], default: 'ru' },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const level = ((query.level as string) ?? 'A1') as LanguageLevel;
@@ -47,7 +62,16 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /grammar/topics/:slug?lang=en — topic detail with content
   fastify.get<{ Params: { slug: string } }>(
     '/topics/:slug',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['grammar'],
+        summary: 'Topic detail (theory blocks + metadata)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { slug: { type: 'string' } } },
+        querystring: langQuery,
+      },
+    },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
@@ -60,7 +84,16 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /grammar/topics/:slug/exercises?lang=en
   fastify.get<{ Params: { slug: string } }>(
     '/topics/:slug/exercises',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['grammar'],
+        summary: 'Exercises for a topic',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { slug: { type: 'string' } } },
+        querystring: langQuery,
+      },
+    },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
@@ -73,7 +106,16 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /grammar/exercises/:id/check?lang=en — check a single answer
   fastify.post<{ Params: { id: string } }>(
     '/exercises/:id/check',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['grammar'],
+        summary: 'Check one exercise answer',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        querystring: langQuery,
+      },
+    },
     async (request, reply) => {
       const parsed = answerSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });
@@ -96,7 +138,24 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /grammar/topics/:slug/submit — submit exercise session results
   fastify.post<{ Params: { slug: string } }>(
     '/topics/:slug/submit',
-    { preHandler: [fastify.authenticate] },
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['grammar'],
+        summary: 'Submit topic results (updates progress + awards XP)',
+        description: 'Score >= 70% awards GRAMMAR_TOPIC_DONE XP, otherwise GRAMMAR_EXERCISE.',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { slug: { type: 'string' } } },
+        body: {
+          type: 'object',
+          required: ['score', 'total'],
+          properties: {
+            score: { type: 'integer', minimum: 0 },
+            total: { type: 'integer', minimum: 1 },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const parsed = submitSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });

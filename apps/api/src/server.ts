@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 import { db } from './db/index.js';
@@ -46,6 +48,55 @@ await fastify.register(cors, {
   credentials: true,
 });
 
+// OpenAPI spec — registered BEFORE the routes so they can attach schemas.
+await fastify.register(swagger, {
+  openapi: {
+    info: {
+      title: 'FrenchUp API',
+      description: 'REST API for the FrenchUp learning app. Auth is JWT-based: log in via /auth/login, then click "Authorize" above and paste the access token.',
+      version: '1.0.0',
+    },
+    servers: [
+      { url: 'http://localhost:3001', description: 'Local development' },
+      { url: 'https://french-app-production.up.railway.app', description: 'Production' },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT access token returned by /auth/login or /auth/register.',
+        },
+      },
+    },
+    tags: [
+      { name: 'auth',         description: 'Registration, login, refresh, logout' },
+      { name: 'words',        description: 'Vocabulary: study sessions, SRS answers, dictionary, categories' },
+      { name: 'grammar',      description: 'Grammar topics, theory and exercises' },
+      { name: 'listening',    description: 'Listening exercises and on-demand TTS' },
+      { name: 'reading',      description: 'Reading texts and word-translation popups' },
+      { name: 'writing',      description: 'Writing prompts, submissions and AI feedback' },
+      { name: 'drills',       description: 'Grammar drill sets and infinite-mode questions' },
+      { name: 'conversation', description: 'AI conversation sessions with streaming responses' },
+      { name: 'conjugation',  description: 'Verb conjugation tables (regular + irregular)' },
+      { name: 'profile',      description: 'User profile, stats, charts, streak, avatar' },
+      { name: 'achievements', description: 'XP, levels and badge unlocks' },
+      { name: 'placement',    description: 'Initial CEFR placement test' },
+      { name: 'images',       description: 'On-demand DALL-E word illustrations' },
+    ],
+  },
+});
+
+await fastify.register(swaggerUi, {
+  routePrefix: '/docs',
+  uiConfig: {
+    docExpansion: 'list',  // collapse endpoints by default — easier to scan
+    deepLinking: true,
+    persistAuthorization: true, // keep the bearer token across page reloads
+  },
+});
+
 // Plugins
 await fastify.register(dbPlugin);
 await fastify.register(authPlugin);
@@ -66,7 +117,23 @@ await fastify.register(conjugationRoutes, { prefix: '/conjugation' });
 await fastify.register(achievementsRoutes, { prefix: '/achievements' });
 
 // Health check
-fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+fastify.get('/health', {
+  schema: {
+    summary: 'Health check',
+    description: 'Returns { status: "ok" } when the API is reachable. Used by Railway healthchecks.',
+    tags: ['system'],
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'ok' },
+          timestamp: { type: 'string', format: 'date-time' },
+        },
+        required: ['status', 'timestamp'],
+      },
+    },
+  },
+}, async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
 const port = parseInt(process.env['PORT'] ?? '3001', 10);
 const host = '0.0.0.0';
