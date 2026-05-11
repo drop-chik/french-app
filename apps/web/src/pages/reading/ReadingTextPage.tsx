@@ -254,6 +254,7 @@ function cleanWord(token: string): string {
     .toLowerCase()
     .replace(/^[«»""''.,!?;:()[\]—–\-]+/, '')
     .replace(/[«»""''.,!?;:()[\]—–\-]+$/, '')
+    .replace(/^qu'/i, '')
     .replace(/^[lLdD]'/, '')
     .replace(/^[mM]'/, '')
     .replace(/^[sS]'/, '')
@@ -274,11 +275,13 @@ const POS_LABELS: Record<string, { label: string; color: string }> = {
   noun:   { label: 'существительное', color: '#8b5cf6' },
   adj:    { label: 'прилагательное',  color: '#10b981' },
   adverb: { label: 'наречие',         color: '#f59e0b' },
+  adv:    { label: 'наречие',         color: '#f59e0b' },
   number: { label: 'числительное',    color: '#6366f1' },
   pron:   { label: 'местоимение',     color: '#ec4899' },
   prep:   { label: 'предлог',         color: '#64748b' },
-  conj:   { label: 'союз',            color: '#64748b' },
-  art:    { label: 'артикль',         color: '#64748b' },
+  conj:   { label: 'союз',            color: '#94a3b8' },
+  art:    { label: 'артикль',         color: '#94a3b8' },
+  det:    { label: 'определитель',    color: '#94a3b8' },
 };
 
 interface PopupState {
