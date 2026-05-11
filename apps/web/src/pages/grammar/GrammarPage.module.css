@@ -198,7 +198,11 @@
   column-gap: var(--space-4);
 }
 
-.nodeRow > .node { grid-column: 2; }
+.nodeRow > .node {
+  grid-column: 2;
+  justify-self: center;
+  z-index: 2;
+}
 
 .nodeSide_right > .card { grid-column: 3; justify-self: start; }
 .nodeSide_left  > .card { grid-column: 1; justify-self: end; }
@@ -257,10 +261,13 @@
   display: none;
 }
 
-/* Status colors */
+/* Status colors. NB: locked nodes use a muted background instead of opacity —
+   opacity would make the path line visible *through* the node. */
 .nodeStatus_locked {
   background: var(--color-bg-tertiary, #e5e7eb);
   color: var(--color-text-tertiary);
+}
+.nodeStatus_locked .nodeNumber {
   opacity: 0.55;
 }
 .nodeStatus_locked .nodeIcon { color: var(--color-text-tertiary); }
