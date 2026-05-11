@@ -38,4 +38,5 @@ export interface AchievementsResponse {
 export const achievementsApi = {
   list: () => apiRequest<AchievementsResponse>('/achievements'),
   xp: () => apiRequest<XpSummary>('/achievements/xp'),
+  recent: (limit = 5) => apiRequest<{ items: AchievementItem[] }>(`/achievements/recent?limit=${limit}`),
 };

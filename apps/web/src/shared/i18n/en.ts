@@ -69,6 +69,8 @@ export const en: Translations = {
     streakDone: '✓ Done for today',
     errorHint: 'Failed to load data. Try refreshing the page.',
     allLevelsProgress: 'Progress by level',
+    recentAchievements: 'Recent achievements',
+    viewAll: 'View all',
   },
   profile: {
     title: 'Profile',
@@ -174,6 +176,8 @@ export const en: Translations = {
     activityLongestStreak: 'Longest streak',
     activityNoData: 'no data',
     accuracyTitle: 'Weekly accuracy',
+    recentAchievementsTitle: 'Recent achievements',
+    viewAll: 'View all',
   },
   vocabulary: {
     title: 'Words',

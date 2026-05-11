@@ -70,6 +70,8 @@ export const ru: DeepRecord = {
     streakDone: '✓ Сегодня выполнено',
     errorHint: 'Не удалось загрузить данные. Попробуйте обновить страницу.',
     allLevelsProgress: 'Прогресс по уровням',
+    recentAchievements: 'Недавние достижения',
+    viewAll: 'Все',
   },
   profile: {
     title: 'Профиль',
@@ -175,6 +177,8 @@ export const ru: DeepRecord = {
     activityLongestStreak: 'Лучшая серия',
     activityNoData: 'нет данных',
     accuracyTitle: 'Точность по неделям',
+    recentAchievementsTitle: 'Последние достижения',
+    viewAll: 'Все',
   },
   vocabulary: {
     title: 'Слова',

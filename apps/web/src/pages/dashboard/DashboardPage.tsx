@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BookOpen, LayoutGrid, Headphones, MessageCircle, Book, CheckCircle, ArrowRight, Dumbbell, PenLine, BookMarked } from 'lucide-react';
+import { BookOpen, LayoutGrid, Headphones, MessageCircle, Book, CheckCircle, ArrowRight, Dumbbell, PenLine, BookMarked, Trophy } from 'lucide-react';
 import { profileApi, type LevelProgressData } from '../../features/profile/api';
+import { achievementsApi } from '../../features/achievements/api';
+import { AchievementBadge } from '../../features/achievements/AchievementBadge';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './DashboardPage.module.css';
 
 export function DashboardPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const user = useAuthStore((s) => s.user);
 
   const { data, isLoading, isError } = useQuery({
@@ -20,6 +22,18 @@ export function DashboardPage() {
     queryKey: ['levels-progress'],
     queryFn: profileApi.getLevelsProgress,
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: xpData } = useQuery({
+    queryKey: ['xp-summary'],
+    queryFn: achievementsApi.xp,
+    staleTime: 60_000,
+  });
+
+  const { data: recentAchievements } = useQuery({
+    queryKey: ['achievements-recent'],
+    queryFn: () => achievementsApi.recent(4),
+    staleTime: 60_000,
   });
 
   if (isLoading) {
@@ -94,6 +108,46 @@ export function DashboardPage() {
               <LevelItem key={lv.level} lv={lv} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* XP + recent achievements row */}
+      {(xpData || (recentAchievements && recentAchievements.items.length > 0)) && (
+        <div className={styles.achievementsRow}>
+          {xpData && (
+            <Link to="/achievements" className={styles.xpCard}>
+              <div className={styles.xpCardIcon}>
+                <Trophy size={22} />
+              </div>
+              <div className={styles.xpCardBody}>
+                <div className={styles.xpCardTopLine}>
+                  <span className={styles.xpCardLevelLabel}>{t.achievements.level}</span>
+                  <span className={styles.xpCardLevelValue}>{xpData.level}</span>
+                </div>
+                <div className={styles.xpCardBar}>
+                  <div className={styles.xpCardBarFill} style={{ width: `${xpData.pctToNext}%` }} />
+                </div>
+                <span className={styles.xpCardRange}>{xpData.xpAtLevel} / {xpData.xpForNextLevel} XP</span>
+              </div>
+              <ArrowRight size={16} className={styles.xpCardArrow} />
+            </Link>
+          )}
+
+          {recentAchievements && recentAchievements.items.length > 0 && (
+            <div className={styles.recentCard}>
+              <div className={styles.recentHeader}>
+                <span className={styles.recentTitle}>{t.dashboard.recentAchievements}</span>
+                <Link to="/achievements" className={styles.recentMore}>
+                  {t.dashboard.viewAll} <ArrowRight size={12} />
+                </Link>
+              </div>
+              <div className={styles.recentBadges}>
+                {recentAchievements.items.map((item) => (
+                  <AchievementBadge key={item.id} item={item} lang={lang} size="sm" />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

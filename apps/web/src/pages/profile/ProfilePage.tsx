@@ -8,6 +8,7 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import { achievementsApi } from '../../features/achievements/api';
+import { AchievementBadge } from '../../features/achievements/AchievementBadge';
 import { HeroBanner } from './HeroBanner';
 import { StreakCard, WeeklyGoalCard } from './StatCards';
 import { LevelJourney } from './LevelJourney';
@@ -49,6 +50,11 @@ export function ProfilePage() {
   const { data: xpData } = useQuery({
     queryKey: ['xp-summary'],
     queryFn: achievementsApi.xp,
+  });
+  const { data: recentAchievementsData } = useQuery({
+    queryKey: ['profile-recent-achievements'],
+    queryFn: () => achievementsApi.recent(6),
+    staleTime: 60_000,
   });
 
   const [name, setName] = useState('');
@@ -282,6 +288,27 @@ export function ProfilePage() {
           locked: t.profile.levelStatusLocked,
         }}
       />
+
+      {/* 3.5 Recent achievements */}
+      {recentAchievementsData && recentAchievementsData.items.length > 0 && (
+        <section className={styles.recentAchievements}>
+          <div className={styles.recentAchievementsHeader}>
+            <h2 className={styles.recentAchievementsTitle}>{t.profile.recentAchievementsTitle}</h2>
+            <button
+              type="button"
+              className={styles.recentAchievementsMore}
+              onClick={() => router.navigate({ to: '/achievements' })}
+            >
+              {t.profile.viewAll} →
+            </button>
+          </div>
+          <div className={styles.recentAchievementsGrid}>
+            {recentAchievementsData.items.map((item) => (
+              <AchievementBadge key={item.id} item={item} lang={lang} size="sm" />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 4. Insight grid */}
       <InsightGrid
