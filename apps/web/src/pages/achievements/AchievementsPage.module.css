@@ -281,6 +281,38 @@
 }
 
 @media (max-width: 700px) {
-  .hero { flex-direction: column; align-items: stretch; }
-  .xpSummary { width: 100%; }
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+  .xpSummary { width: 100%; min-width: 0; }
+  .heroLeft { min-width: 0; }
+
+  .title { font-size: var(--text-xl); }
+  .subtitle { font-size: var(--text-xs); }
+
+  .heroIconWrap { width: 44px; height: 44px; }
+
+  .xpLevelWrap { padding: var(--space-2) var(--space-3); min-width: 56px; }
+  .xpLevelValue { font-size: 22px; }
+  .xpLevelLabel { font-size: 9px; }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .badge {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .badgeIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .badgeIconEmoji { font-size: 22px; }
 }

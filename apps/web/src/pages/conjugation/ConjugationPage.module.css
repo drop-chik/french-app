@@ -306,7 +306,33 @@
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
-  .title { font-size: var(--text-2xl); }
-  .searchWrap { flex-wrap: wrap; }
+  .title { font-size: var(--text-xl); }
+  .subtitle { font-size: var(--text-xs); }
   .verbInf { font-size: var(--text-2xl); }
+
+  .titleWrap { gap: var(--space-3); }
+  .titleIcon { width: 28px; height: 28px; }
+
+  .searchRow {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .searchBtn {
+    width: 100%;
+  }
+
+  .tensesGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .tenseCard {
+    padding: var(--space-4);
+  }
+
+  .row {
+    grid-template-columns: 44px 1fr;
+    padding: var(--space-1) 0;
+  }
 }
