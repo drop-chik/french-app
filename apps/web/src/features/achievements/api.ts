@@ -1,5 +1,16 @@
 import { apiRequest } from '../../lib/apiClient';
+import type { paths } from '../../api/openapi.types';
 
+// ── Types pulled straight from the OpenAPI spec ─────────────────────────────
+// Backend changes the response shape? TypeScript catches it at compile time
+// instead of letting the bug ship to production.
+export type XpSummary =
+  paths['/achievements/xp']['get']['responses']['200']['content']['application/json'];
+
+// Categories and rarity are still local enums — they're frontend-only display
+// concerns. The achievement item shape comes from prod stats and stays a
+// hand-written contract for now (the OpenAPI schema for /achievements doesn't
+// pin every field yet).
 export type AchievementRarity = 'bronze' | 'silver' | 'gold' | 'legendary';
 export type AchievementCategory =
   | 'words' | 'streak' | 'grammar' | 'listening' | 'reading' | 'conversation' | 'general';
@@ -19,14 +30,6 @@ export interface AchievementItem {
   pct: number;
   unlocked: boolean;
   unlockedAt: string | null;
-}
-
-export interface XpSummary {
-  xp: number;
-  level: number;
-  xpAtLevel: number;
-  xpForNextLevel: number;
-  pctToNext: number;
 }
 
 export interface AchievementsResponse {
