@@ -2,11 +2,12 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   motion, useInView, useMotionValue, useSpring, useTransform, useScroll, animate,
 } from 'framer-motion';
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react';
 import {
   Brain, Bot, BookOpen, Headphones, Layers, Zap, PenTool, Grid3X3,
   Ear, Type, ArrowRight, TrendingUp, MessageCircle, ChevronDown,
-  Sparkles, CheckCircle, XCircle, RotateCcw,
+  Sparkles, CheckCircle, XCircle, RotateCcw, Flame, Trophy, Lock,
+  Dumbbell, Check, Minus, X as XIcon,
 } from 'lucide-react';
 import { useI18n } from '../../shared/i18n';
 import foxHero from './fox-hero.png';
@@ -85,6 +86,115 @@ function AnimatedSection({ children, className }: { children: React.ReactNode; c
   );
 }
 
+/* ── TiltCard: 3D rotation following the cursor inside the card.
+   Used on every bento card — gives them the "alive" feel without being gaudy. */
+function TiltCard({ children, className, max = 7 }: { children: ReactNode; className?: string; max?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [max, -max]), { stiffness: 220, damping: 22 });
+  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [-max, max]), { stiffness: 220, damping: 22 });
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  const handleLeave = () => { mx.set(0); my.set(0); };
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{ rotateX, rotateY, transformPerspective: 1000, transformStyle: 'preserve-3d', willChange: 'transform' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ── MagneticButton: pulls itself toward the cursor when nearby.
+   Subtle (max 8px translate). Wrapper for the big CTA buttons. */
+function MagneticButton(props: {
+  children: ReactNode;
+  className?: string | undefined;
+  onClick?: (() => void) | undefined;
+  strength?: number | undefined;
+}) {
+  const { children, className, onClick, strength = 8 } = props;
+  const ref = useRef<HTMLButtonElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 240, damping: 18 });
+  const sy = useSpring(y, { stiffness: 240, damping: 18 });
+
+  const handleMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    x.set(((e.clientX - cx) / r.width) * strength * 2);
+    y.set(((e.clientY - cy) / r.height) * strength * 2);
+  };
+  const handleLeave = () => { x.set(0); y.set(0); };
+
+  return (
+    <motion.button
+      ref={ref}
+      className={className}
+      onClick={onClick}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{ x: sx, y: sy }}
+      whileTap={{ scale: 0.96 }}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+/* ── CompareCell: yes / partial / no marker for the comparison table. */
+interface CompareLegend { yes: string; partial: string; no: string }
+function CompareCell({ value, legend }: { value: string; legend: CompareLegend }) {
+  if (value === 'yes') {
+    return (
+      <span className={`${styles.compareMark} ${styles.compareMarkYes}`}>
+        <Check size={16} /> <span>{legend.yes}</span>
+      </span>
+    );
+  }
+  if (value === 'partial') {
+    return (
+      <span className={`${styles.compareMark} ${styles.compareMarkPartial}`}>
+        <Minus size={16} /> <span>{legend.partial}</span>
+      </span>
+    );
+  }
+  return (
+    <span className={`${styles.compareMark} ${styles.compareMarkNo}`}>
+      <XIcon size={16} /> <span>{legend.no}</span>
+    </span>
+  );
+}
+
+/* ── GlowCursor: soft radial glow that follows the mouse on the hero.
+   Pure decoration. Skipped on touch devices (no mouse events fire). */
+function GlowCursor() {
+  const mx = useMotionValue(-1000);
+  const my = useMotionValue(-1000);
+  const sx = useSpring(mx, { stiffness: 80, damping: 20 });
+  const sy = useSpring(my, { stiffness: 80, damping: 20 });
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => { mx.set(e.clientX); my.set(e.clientY); };
+    window.addEventListener('pointermove', onMove);
+    return () => window.removeEventListener('pointermove', onMove);
+  }, [mx, my]);
+  return <motion.div className={styles.glowCursor} style={{ x: sx, y: sy }} aria-hidden />;
+}
+
 /* ── Data ── */
 const HERO_DOTS = [
   { size: 6, top: '14%', left: '7%',   delay: 0 },
@@ -122,6 +232,11 @@ export function LandingPage() {
   const demoCards = (t.landing.demoCards as Array<{ translation: string; hint: string }>);
   const MARQUEE_ITEMS = MARQUEE_WORDS.map((word, i) => ({ word, trans: marqueeWords[i] ?? word }));
   const DEMO_CARDS = DEMO_CARD_DATA.map((d, i) => ({ ...d, en: demoCards[i]?.translation ?? '', hint: demoCards[i]?.hint ?? '' }));
+  const cmpLegend: CompareLegend = {
+    yes: t.landing.compare.legendYes,
+    partial: t.landing.compare.legendPartial,
+    no: t.landing.compare.legendNo,
+  };
 
   /* Preloader — only on first visit per session */
   const [showPreloader, setShowPreloader] = useState(() => {
@@ -233,6 +348,7 @@ export function LandingPage() {
 
       {/* ═══ HERO ═══ */}
       <section className={styles.hero} onMouseMove={handleMouseMove}>
+        <GlowCursor />
         {/* Animated orbs */}
         <div className={styles.heroOrb1} />
         <div className={styles.heroOrb2} />
@@ -284,14 +400,13 @@ export function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1 }}
             >
-              <motion.button
+              <MagneticButton
                 className={styles.heroCta}
                 onClick={goWithConfetti}
-                whileHover={{ scale: 1.04, y: -2 }}
-                whileTap={{ scale: 0.97 }}
+                strength={12}
               >
                 {t.landing.hero.cta} <ArrowRight size={20} />
-              </motion.button>
+              </MagneticButton>
               <p className={styles.heroNote}>{t.landing.hero.note}</p>
             </motion.div>
           </div>
@@ -352,10 +467,10 @@ export function LandingPage() {
       <section className={styles.stats}>
         <AnimatedSection className={styles.statsInner}>
           {[
-            { value: 12000, suffix: '+', label: t.landing.stats.wordsDb },
-            { value: 8,     suffix: '',  label: t.landing.stats.modes },
-            { value: 6,     suffix: '',  label: t.landing.stats.levels },
-            { value: 98,    suffix: '%', label: t.landing.stats.satisfied },
+            { value: 3500, suffix: '+', label: t.landing.stats.wordsDb },
+            { value: 10,   suffix: '+', label: t.landing.stats.modes },
+            { value: 4,    suffix: '',  label: t.landing.stats.levels },
+            { value: 60,   suffix: '+', label: t.landing.stats.satisfied },
           ].map((stat, i) => (
             <motion.div key={i} className={styles.statItem} variants={fadeUp} transition={{ duration: 0.5 }}>
               <div className={styles.statValue}><CountUp to={stat.value} suffix={stat.suffix} /></div>
@@ -376,76 +491,125 @@ export function LandingPage() {
             <motion.div className={styles.bentoGrid} variants={stagger}>
 
               {/* AI Chat — wide */}
-              <motion.div className={`${styles.bentoCard} ${styles.bentoChatCard}`} variants={fadeUp} transition={{ duration: 0.5 }} whileHover={{ y: -4 }}>
-                <div className={styles.bentoCardHeader}>
-                  <span className={styles.bentoIcon}><Bot size={20} /></span>
-                  <span className={styles.bentoBadge}>AI</span>
-                </div>
-                <h3 className={styles.bentoTitle}>{t.landing.features.aiChat}</h3>
-                <p className={styles.bentoDesc}>{t.landing.features.aiChatDesc}</p>
-                <div className={styles.chatPreview}>
-                  <div className={styles.chatBubbleUser}>Bonjour ! Je m'appelle Anna.</div>
-                  <div className={styles.chatBubbleAi}>
-                    <span>{typedText}</span>
-                    <span className={styles.cursor}>|</span>
+              <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+                <TiltCard className={`${styles.bentoCard} ${styles.bentoChatCard}`}>
+                  <div className={styles.bentoCardHeader}>
+                    <span className={styles.bentoIcon}><Bot size={20} /></span>
+                    <span className={styles.bentoBadge}>AI</span>
                   </div>
-                </div>
+                  <h3 className={styles.bentoTitle}>{t.landing.features.aiChat}</h3>
+                  <p className={styles.bentoDesc}>{t.landing.features.aiChatDesc}</p>
+                  <div className={styles.chatPreview}>
+                    <div className={styles.chatBubbleUser}>Bonjour ! Je m'appelle Anna.</div>
+                    <div className={styles.chatBubbleAi}>
+                      <span>{typedText}</span>
+                      <span className={styles.cursor}>|</span>
+                    </div>
+                  </div>
+                </TiltCard>
               </motion.div>
 
               {/* Flashcard flip */}
-              <motion.div className={`${styles.bentoCard} ${styles.bentoFlipCard}`} variants={fadeUp} transition={{ duration: 0.5 }}>
-                <div className={styles.bentoCardHeader}>
-                  <span className={styles.bentoIcon}><Brain size={20} /></span>
-                </div>
-                <h3 className={styles.bentoTitle}>{t.landing.features.cards}</h3>
-                <div className={styles.flipCard}>
-                  <div className={styles.flipCardInner}>
-                    <div className={styles.flipCardFront}>
-                      <div className={styles.flipWord}>Chat</div>
-                      <div className={styles.flipHint}>{t.landing.flipHint}</div>
-                    </div>
-                    <div className={styles.flipCardBack}>
-                      <div className={styles.flipEmoji}>🐱</div>
-                      <div className={styles.flipAnswer}>{t.landing.flipAnswer}</div>
+              <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+                <TiltCard className={`${styles.bentoCard} ${styles.bentoFlipCard}`}>
+                  <div className={styles.bentoCardHeader}>
+                    <span className={styles.bentoIcon}><Brain size={20} /></span>
+                  </div>
+                  <h3 className={styles.bentoTitle}>{t.landing.features.cards}</h3>
+                  <p className={styles.bentoDesc}>{t.landing.features.cardsDesc}</p>
+                  <div className={styles.flipCard}>
+                    <div className={styles.flipCardInner}>
+                      <div className={styles.flipCardFront}>
+                        <div className={styles.flipWord}>Chat</div>
+                        <div className={styles.flipHint}>{t.landing.flipHint}</div>
+                      </div>
+                      <div className={styles.flipCardBack}>
+                        <div className={styles.flipEmoji}>🐱</div>
+                        <div className={styles.flipAnswer}>{t.landing.flipAnswer}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </TiltCard>
               </motion.div>
 
               {/* Grammar */}
-              <motion.div className={`${styles.bentoCard} ${styles.bentoGrammarCard}`} variants={fadeUp} transition={{ duration: 0.5 }} whileHover={{ y: -4 }}>
-                <div className={styles.bentoCardHeader}>
-                  <span className={styles.bentoIcon}><BookOpen size={20} /></span>
-                </div>
-                <h3 className={styles.bentoTitle}>{t.landing.features.grammar}</h3>
-                <p className={styles.bentoDesc}>{t.landing.features.grammarDesc}</p>
-                <div className={styles.grammarTable}>
-                  {[['Je', 'suis'], ['Tu', 'es'], ['Il/Elle', 'est']].map(([pro, v]) => (
-                    <div key={pro} className={styles.grammarRow}>
-                      <span className={styles.grammarPro}>{pro}</span>
-                      <span className={styles.grammarVerb}>{v}</span>
-                    </div>
-                  ))}
-                </div>
+              <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+                <TiltCard className={`${styles.bentoCard} ${styles.bentoGrammarCard}`}>
+                  <div className={styles.bentoCardHeader}>
+                    <span className={styles.bentoIcon}><BookOpen size={20} /></span>
+                  </div>
+                  <h3 className={styles.bentoTitle}>{t.landing.features.grammar}</h3>
+                  <p className={styles.bentoDesc}>{t.landing.features.grammarDesc}</p>
+                  <div className={styles.grammarTable}>
+                    {[['Je', 'suis'], ['Tu', 'es'], ['Il/Elle', 'est']].map(([pro, v]) => (
+                      <div key={pro} className={styles.grammarRow}>
+                        <span className={styles.grammarPro}>{pro}</span>
+                        <span className={styles.grammarVerb}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </TiltCard>
               </motion.div>
 
               {/* Listening / Sound wave */}
-              <motion.div className={`${styles.bentoCard} ${styles.bentoListenCard}`} variants={fadeUp} transition={{ duration: 0.5 }} whileHover={{ y: -4 }}>
-                <div className={styles.bentoCardHeader}>
-                  <span className={styles.bentoIcon}><Headphones size={20} /></span>
-                </div>
-                <h3 className={styles.bentoTitle}>{t.landing.features.listening}</h3>
-                <p className={styles.bentoDesc}>{t.landing.features.listeningDesc}</p>
-                <div className={styles.soundWave}>
-                  {Array.from({ length: 14 }).map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className={styles.soundBar}
-                      animate={{ scaleY: [0.25, 1, 0.25] }}
-                      transition={{ duration: 0.7 + i * 0.06, repeat: Infinity, delay: i * 0.07, ease: 'easeInOut' }}
-                    />
-                  ))}
-                </div>
+              <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+                <TiltCard className={`${styles.bentoCard} ${styles.bentoListenCard}`}>
+                  <div className={styles.bentoCardHeader}>
+                    <span className={styles.bentoIcon}><Headphones size={20} /></span>
+                  </div>
+                  <h3 className={styles.bentoTitle}>{t.landing.features.listening}</h3>
+                  <p className={styles.bentoDesc}>{t.landing.features.listeningDesc}</p>
+                  <div className={styles.soundWave}>
+                    {Array.from({ length: 14 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className={styles.soundBar}
+                        animate={{ scaleY: [0.25, 1, 0.25] }}
+                        transition={{ duration: 0.7 + i * 0.06, repeat: Infinity, delay: i * 0.07, ease: 'easeInOut' }}
+                      />
+                    ))}
+                  </div>
+                </TiltCard>
+              </motion.div>
+
+              {/* Conjugation */}
+              <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+                <TiltCard className={`${styles.bentoCard} ${styles.bentoConjCard}`}>
+                  <div className={styles.bentoCardHeader}>
+                    <span className={styles.bentoIcon}><Type size={20} /></span>
+                  </div>
+                  <h3 className={styles.bentoTitle}>{t.landing.features.conjugation}</h3>
+                  <p className={styles.bentoDesc}>{t.landing.features.conjugationDesc}</p>
+                  <div className={styles.conjPreview}>
+                    <div className={styles.conjVerb}>être</div>
+                    <div className={styles.conjRows}>
+                      <div><span className={styles.conjPro}>je</span> <span className={styles.conjForm}>suis</span></div>
+                      <div><span className={styles.conjPro}>tu</span> <span className={styles.conjForm}>es</span></div>
+                      <div><span className={styles.conjPro}>il/elle</span> <span className={styles.conjForm}>est</span></div>
+                      <div><span className={styles.conjPro}>nous</span> <span className={styles.conjForm}>sommes</span></div>
+                    </div>
+                  </div>
+                </TiltCard>
+              </motion.div>
+
+              {/* Drills */}
+              <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+                <TiltCard className={`${styles.bentoCard} ${styles.bentoDrillsCard}`}>
+                  <div className={styles.bentoCardHeader}>
+                    <span className={styles.bentoIcon}><Dumbbell size={20} /></span>
+                    <span className={styles.bentoBadge}>∞</span>
+                  </div>
+                  <h3 className={styles.bentoTitle}>{t.landing.features.drills}</h3>
+                  <p className={styles.bentoDesc}>{t.landing.features.drillsDesc}</p>
+                  <div className={styles.drillsPreview}>
+                    <div className={styles.drillsLine}>J'__ allé au marché.</div>
+                    <div className={styles.drillsOptions}>
+                      <span className={styles.drillsOpt}>ai</span>
+                      <span className={`${styles.drillsOpt} ${styles.drillsOptOk}`}>suis</span>
+                      <span className={styles.drillsOpt}>es</span>
+                    </div>
+                  </div>
+                </TiltCard>
               </motion.div>
 
             </motion.div>
@@ -609,6 +773,187 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ═══ CEFR PATH ═══ */}
+      <section className={styles.cefr}>
+        <div className={styles.cefrInner}>
+          <AnimatedSection>
+            <motion.div className={styles.sectionLabel} variants={fadeIn}>{t.landing.cefrPath.label}</motion.div>
+            <motion.h2 className={styles.sectionTitle} variants={fadeUp} transition={{ duration: 0.5 }}>
+              {t.landing.cefrPath.title}
+            </motion.h2>
+            <motion.p className={styles.sectionLead} variants={fadeUp} transition={{ duration: 0.5 }}>
+              {t.landing.cefrPath.subtitle}
+            </motion.p>
+
+            <motion.div className={styles.cefrTrack} variants={stagger}>
+              <div className={styles.cefrLine} />
+              {(t.landing.cefrPath.levels as Array<{ code: string; name: string; desc: string; duration: string }>).map((lvl, i) => (
+                <motion.div
+                  key={lvl.code}
+                  className={`${styles.cefrNode} ${styles[`cefrNode${lvl.code}`] ?? ''}`}
+                  variants={fadeUp}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div className={styles.cefrBadge}>{lvl.code}</div>
+                  <div className={styles.cefrBody}>
+                    <h4 className={styles.cefrName}>{lvl.name}</h4>
+                    <p className={styles.cefrDesc}>{lvl.desc}</p>
+                    <span className={styles.cefrDuration}>{lvl.duration}</span>
+                  </div>
+                  {i < 3 && <div className={styles.cefrArrow}>→</div>}
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ STREAK HOOK ═══ */}
+      <section className={styles.streak}>
+        <div className={styles.streakInner}>
+          <AnimatedSection>
+            <div className={styles.streakLayout}>
+              <motion.div className={styles.streakLeft} variants={fadeUp} transition={{ duration: 0.5 }}>
+                <div className={styles.sectionLabel}>{t.landing.streak.label}</div>
+                <h2 className={styles.sectionTitle}>{t.landing.streak.title}</h2>
+                <p className={styles.sectionLead}>{t.landing.streak.subtitle}</p>
+
+                <ul className={styles.streakBullets}>
+                  {[
+                    { title: t.landing.streak.bullet1, desc: t.landing.streak.bullet1desc, icon: <Flame size={18} /> },
+                    { title: t.landing.streak.bullet2, desc: t.landing.streak.bullet2desc, icon: <Trophy size={18} /> },
+                    { title: t.landing.streak.bullet3, desc: t.landing.streak.bullet3desc, icon: <RotateCcw size={18} /> },
+                  ].map((b, i) => (
+                    <li key={i} className={styles.streakBullet}>
+                      <span className={styles.streakBulletIcon}>{b.icon}</span>
+                      <div>
+                        <div className={styles.streakBulletTitle}>{b.title}</div>
+                        <div className={styles.streakBulletDesc}>{b.desc}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              <motion.div
+                className={styles.streakRight}
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+              >
+                <div className={styles.streakFlameWrap}>
+                  <motion.div
+                    className={styles.streakFlameOuter}
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                  <motion.div
+                    className={styles.streakFlame}
+                    animate={{ rotate: [-3, 3, -3] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    🔥
+                  </motion.div>
+                </div>
+                <div className={styles.streakNumber}>
+                  <CountUp to={147} />
+                </div>
+                <div className={styles.streakLabel}>day streak</div>
+                <div className={styles.streakWeek}>
+                  {[true, true, true, true, true, true, false].map((on, i) => (
+                    <div key={i} className={`${styles.streakDay} ${on ? styles.streakDayOn : ''}`} />
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ ACHIEVEMENTS ═══ */}
+      <section className={styles.achievements}>
+        <div className={styles.achievementsInner}>
+          <AnimatedSection>
+            <motion.div className={styles.sectionLabel} variants={fadeIn}>{t.landing.achievements.label}</motion.div>
+            <motion.h2 className={styles.sectionTitle} variants={fadeUp} transition={{ duration: 0.5 }}>
+              {t.landing.achievements.title}
+            </motion.h2>
+            <motion.p className={styles.sectionLead} variants={fadeUp} transition={{ duration: 0.5 }}>
+              {t.landing.achievements.subtitle}
+            </motion.p>
+
+            <motion.div className={styles.achievementsGrid} variants={stagger}>
+              {(t.landing.achievements.list as Array<{ icon: string; title: string; desc: string; rarity: string }>).map((a, i) => {
+                const locked = i >= 4;
+                return (
+                  <motion.div
+                    key={i}
+                    className={`${styles.achBadge} ${styles[`achRarity_${a.rarity}`] ?? ''} ${locked ? styles.achBadgeLocked : ''}`}
+                    variants={fadeUp}
+                    transition={{ duration: 0.4 }}
+                    whileHover={{ y: -4, scale: 1.03 }}
+                  >
+                    <div className={styles.achIconWrap}>
+                      <span className={styles.achIcon}>{a.icon}</span>
+                      {locked && <Lock size={14} className={styles.achLock} />}
+                    </div>
+                    <div className={styles.achInfo}>
+                      <div className={styles.achTitle}>{a.title}</div>
+                      <div className={styles.achDesc}>{a.desc}</div>
+                    </div>
+                    <div className={styles.achRarityTag}>
+                      {a.rarity === 'bronze'    && t.landing.achievements.rarityBronze}
+                      {a.rarity === 'silver'    && t.landing.achievements.raritySilver}
+                      {a.rarity === 'gold'      && t.landing.achievements.rarityGold}
+                      {a.rarity === 'legendary' && t.landing.achievements.rarityLegendary}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ COMPARISON TABLE ═══ */}
+      <section className={styles.compare}>
+        <div className={styles.compareInner}>
+          <AnimatedSection>
+            <motion.div className={styles.sectionLabel} variants={fadeIn}>{t.landing.compare.label}</motion.div>
+            <motion.h2 className={styles.sectionTitle} variants={fadeUp} transition={{ duration: 0.5 }}>
+              {t.landing.compare.title}
+            </motion.h2>
+            <motion.p className={styles.sectionLead} variants={fadeUp} transition={{ duration: 0.5 }}>
+              {t.landing.compare.subtitle}
+            </motion.p>
+
+            <motion.div className={styles.compareTableWrap} variants={fadeUp} transition={{ duration: 0.5 }}>
+              <table className={styles.compareTable}>
+                <thead>
+                  <tr>
+                    <th className={styles.compareFeatureCol}></th>
+                    {(t.landing.compare.columns as string[]).map((col, i) => (
+                      <th key={col} className={i === 0 ? styles.compareUsCol : styles.compareThemCol}>
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(t.landing.compare.rows as Array<{ feature: string; frenchup: string; duolingo: string; babbel: string }>).map((row, i) => (
+                    <tr key={i}>
+                      <td className={styles.compareFeature}>{row.feature}</td>
+                      <td className={styles.compareUsCell}><CompareCell value={row.frenchup} legend={cmpLegend} /></td>
+                      <td className={styles.compareThemCell}><CompareCell value={row.duolingo} legend={cmpLegend} /></td>
+                      <td className={styles.compareThemCell}><CompareCell value={row.babbel} legend={cmpLegend} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </motion.div>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* ═══ CTA BLOCK ═══ */}
       <section className={styles.ctaBlock}>
         <AnimatedSection className={styles.ctaInner}>
@@ -627,16 +972,15 @@ export function LandingPage() {
           <motion.p className={styles.ctaSubtitle} variants={fadeUp} transition={{ duration: 0.5 }}>
             {t.landing.cta.subtitle}
           </motion.p>
-          <motion.button
-            className={styles.ctaButton}
-            onClick={goWithConfetti}
-            variants={fadeUp}
-            transition={{ duration: 0.5 }}
-            whileHover={{ scale: 1.06, y: -3 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            {t.landing.cta.button}
-          </motion.button>
+          <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
+            <MagneticButton
+              className={styles.ctaButton}
+              onClick={goWithConfetti}
+              strength={14}
+            >
+              {t.landing.cta.button}
+            </MagneticButton>
+          </motion.div>
         </AnimatedSection>
       </section>
 

@@ -522,10 +522,12 @@
 .bentoCard:hover { box-shadow: 0 20px 50px rgba(0,0,0,.09); }
 .bentoCard:hover::before { opacity: 1; }
 
-.bentoChatCard { grid-column: span 2; min-height: 280px; }
-.bentoFlipCard  { grid-column: span 1; min-height: 280px; }
+.bentoChatCard    { grid-column: span 2; min-height: 280px; }
+.bentoFlipCard    { grid-column: span 1; min-height: 280px; }
 .bentoGrammarCard { grid-column: span 1; }
 .bentoListenCard  { grid-column: span 2; }
+.bentoConjCard    { grid-column: span 1; }
+.bentoDrillsCard  { grid-column: span 2; }
 
 .bentoCardHeader {
   display: flex;
@@ -1228,4 +1230,761 @@
   .modeCard { padding: 20px var(--space-3); }
   .features, .demo, .modes, .ctaBlock { padding: 64px var(--space-4); }
   .journey { padding: 64px var(--space-4); }
+}
+
+/* ═══════════════════════════════════════════════
+   2026 REFRESH — new sections & wow effects
+═══════════════════════════════════════════════ */
+
+/* ── Glow cursor (hero only) ── */
+.glowCursor {
+  position: fixed;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 600px;
+  height: 600px;
+  margin-left: -300px;
+  margin-top: -300px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(37, 99, 235, 0.08) 35%, transparent 70%);
+  z-index: 1;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+/* ── Shared section utilities ── */
+.sectionLabel {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+  background: rgba(37, 99, 235, 0.08);
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+
+.sectionLead {
+  font-size: 1.15rem;
+  color: var(--color-muted);
+  max-width: 720px;
+  margin: -20px auto 56px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ── Bento extras: Conjugation card ── */
+.conjPreview {
+  margin-top: auto;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.06), transparent);
+  border: 1px solid rgba(249, 115, 22, 0.15);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.conjVerb {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-orange);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.conjRows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 18px;
+  font-size: 13px;
+}
+
+.conjRows > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.conjPro {
+  color: var(--color-muted);
+  min-width: 36px;
+}
+
+.conjForm {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* ── Bento extras: Drills card ── */
+.drillsPreview {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.drillsLine {
+  font-size: 15px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  font-style: italic;
+}
+
+.drillsOptions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.drillsOpt {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.drillsOptOk {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #15803d;
+}
+
+/* ═══════════════════════════════════════════════
+   CEFR PATH SECTION
+═══════════════════════════════════════════════ */
+.cefr {
+  padding: 120px 32px;
+  background: linear-gradient(180deg, var(--color-bg) 0%, #ffffff 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.cefrInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.cefrTrack {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  position: relative;
+  margin-top: 56px;
+}
+
+.cefrLine {
+  position: absolute;
+  top: 38px;
+  left: 8%;
+  right: 8%;
+  height: 3px;
+  background: linear-gradient(90deg,
+    #22c55e 0%, #22c55e 25%,
+    #3b82f6 25%, #3b82f6 50%,
+    #f97316 50%, #f97316 75%,
+    #a855f7 75%, #a855f7 100%);
+  border-radius: 2px;
+  opacity: 0.18;
+  z-index: 0;
+}
+
+.cefrNode {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  z-index: 1;
+}
+
+.cefrBadge {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.04em;
+  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s;
+}
+
+.cefrNode:hover .cefrBadge { transform: scale(1.08); }
+
+.cefrNodeA1 .cefrBadge { background: linear-gradient(135deg, #22c55e, #15803d); }
+.cefrNodeA2 .cefrBadge { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.cefrNodeB1 .cefrBadge { background: linear-gradient(135deg, #f97316, #c2410c); }
+.cefrNodeB2 .cefrBadge { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+
+.cefrBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  padding: 20px 18px;
+  width: 100%;
+  max-width: 220px;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.cefrNode:hover .cefrBody {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -10px rgba(0, 0, 0, 0.12);
+}
+
+.cefrName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.cefrDesc {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cefrDuration {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-blue);
+  background: rgba(37, 99, 235, 0.1);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-top: 6px;
+  align-self: center;
+}
+
+.cefrArrow {
+  display: none; /* the line under does the job on desktop */
+}
+
+/* ═══════════════════════════════════════════════
+   STREAK SECTION
+═══════════════════════════════════════════════ */
+.streak {
+  padding: 120px 32px;
+  background: linear-gradient(135deg, #1a0f08 0%, #2a1810 50%, #1a0f08 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.streak::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 50%, rgba(249, 115, 22, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.streakInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.streakLayout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.streakLeft .sectionLabel {
+  color: #fb923c;
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.streakLeft .sectionTitle {
+  color: white;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.streakLeft .sectionLead {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: left;
+  margin: 0 0 32px 0;
+}
+
+.streakBullets {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.streakBullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.streakBulletIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(249, 115, 22, 0.18);
+  color: #fb923c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.streakBulletTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 2px;
+}
+
+.streakBulletDesc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.5;
+}
+
+.streakRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.streakFlameWrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.streakFlameOuter {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.55) 0%, rgba(249, 115, 22, 0.18) 40%, transparent 70%);
+  filter: blur(8px);
+}
+
+.streakFlame {
+  font-size: 128px;
+  filter: drop-shadow(0 0 24px rgba(249, 115, 22, 0.6));
+  position: relative;
+  z-index: 1;
+}
+
+.streakNumber {
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: white;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.streakLabel {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+.streakWeek {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.streakDay {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.streakDayOn {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.5);
+}
+
+/* ═══════════════════════════════════════════════
+   ACHIEVEMENTS SECTION
+═══════════════════════════════════════════════ */
+.achievements {
+  padding: 120px 32px;
+  background: var(--color-bg);
+}
+
+.achievementsInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.achievementsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 56px;
+}
+
+.achBadge {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  text-align: left;
+  overflow: hidden;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+.achBadge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--tint, var(--brand-blue));
+}
+
+.achBadgeLocked {
+  opacity: 0.55;
+}
+
+.achBadgeLocked::before {
+  background: var(--color-border);
+}
+
+.achRarity_bronze    { --tint: #cd7f32; }
+.achRarity_silver    { --tint: #94a3b8; }
+.achRarity_gold      { --tint: #f59e0b; }
+.achRarity_legendary { --tint: #a855f7; }
+
+.achIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--tint, var(--brand-blue)) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.achBadgeLocked .achIconWrap {
+  background: var(--color-bg);
+}
+
+.achIcon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.achBadgeLocked .achIcon {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.achLock {
+  position: absolute;
+  color: var(--color-muted);
+}
+
+.achInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.achTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.achDesc {
+  font-size: 13px;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.achRarityTag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tint, var(--brand-blue));
+  background: color-mix(in srgb, var(--tint, var(--brand-blue)) 14%, transparent);
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+/* ═══════════════════════════════════════════════
+   COMPARE TABLE
+═══════════════════════════════════════════════ */
+.compare {
+  padding: 120px 32px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compareInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.compareTableWrap {
+  margin-top: 48px;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-bg);
+}
+
+.compareTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 600px;
+}
+
+.compareTable th,
+.compareTable td {
+  padding: 16px 18px;
+  text-align: left;
+}
+
+.compareTable th {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.compareUsCol {
+  color: var(--brand-blue) !important;
+  position: relative;
+}
+
+.compareUsCol::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-blue), var(--brand-purple));
+}
+
+.compareThemCol {
+  color: var(--color-muted);
+}
+
+.compareFeatureCol {
+  width: 38%;
+}
+
+.compareTable tbody tr {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compareTable tbody tr:last-child { border-bottom: none; }
+
+.compareFeature {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.compareUsCell {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.compareMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.compareMarkYes {
+  color: #15803d;
+}
+
+.compareMarkPartial {
+  color: #d97706;
+}
+
+.compareMarkNo {
+  color: #dc2626;
+  opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE — new sections
+═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .bentoGrid {
+    grid-template-columns: 1fr;
+  }
+  .bentoConjCard,
+  .bentoDrillsCard {
+    grid-column: span 1;
+  }
+
+  .conjRows {
+    grid-template-columns: 1fr;
+  }
+
+  .cefr,
+  .streak,
+  .achievements,
+  .compare {
+    padding: 80px 24px;
+  }
+
+  .cefrTrack {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 36px;
+  }
+
+  .cefrLine {
+    display: none;
+  }
+
+  .cefrNode {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .cefrBadge {
+    width: 56px;
+    height: 56px;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .cefrBody {
+    align-items: flex-start;
+    text-align: left;
+    flex: 1;
+    padding: 12px 16px;
+    max-width: none;
+  }
+
+  .cefrDuration {
+    align-self: flex-start;
+  }
+
+  .streakLayout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .streakLeft .sectionTitle {
+    font-size: 1.8rem;
+  }
+
+  .streakFlameWrap {
+    width: 160px;
+    height: 160px;
+  }
+
+  .streakFlame {
+    font-size: 88px;
+  }
+
+  .streakNumber {
+    font-size: 48px;
+  }
+
+  .achievementsGrid {
+    grid-template-columns: 1fr;
+    margin-top: 36px;
+  }
+
+  .sectionLead {
+    font-size: 1rem;
+    margin: -12px auto 36px;
+  }
+
+  .compareTableWrap {
+    margin-top: 32px;
+  }
+
+  .compareTable th,
+  .compareTable td {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .compareMark span {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .cefr,
+  .streak,
+  .achievements,
+  .compare {
+    padding: 64px var(--space-4);
+  }
+
+  .achBadge {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .achIconWrap {
+    width: 44px;
+    height: 44px;
+  }
+
+  .achIcon {
+    font-size: 22px;
+  }
 }
