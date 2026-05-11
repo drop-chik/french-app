@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BookOpen, LayoutGrid, Headphones, MessageCircle, Book, CheckCircle, ArrowRight, Dumbbell, PenLine } from 'lucide-react';
+import { BookOpen, LayoutGrid, Headphones, MessageCircle, Book, CheckCircle, ArrowRight, Dumbbell, PenLine, BookMarked } from 'lucide-react';
 import { profileApi, type LevelProgressData } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
@@ -186,6 +186,7 @@ export function DashboardPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>{t.dashboard.quickAccess}</h2>
         <div className={styles.quickGrid}>
+          <QuickLink to="/reading"      icon={<BookMarked size={20} />}    label={t.nav.reading} />
           <QuickLink to="/writing"      icon={<PenLine size={20} />}       label={t.nav.writing} />
           <QuickLink to="/drills"       icon={<Dumbbell size={20} />}      label={t.nav.drills} />
           <QuickLink to="/conversation" icon={<MessageCircle size={20} />} label={t.nav.conversations} />

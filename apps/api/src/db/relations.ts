@@ -14,6 +14,8 @@ import {
   writingSubmissions,
   writingFeedback,
   writingProgress,
+  readingTexts,
+  readingProgress,
 } from './schema/index.js';
 
 export const usersRelations = relations(users, ({ many, one }) => ({
@@ -24,6 +26,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   oauthAccounts: many(oauthAccounts),
   writingSubmissions: many(writingSubmissions),
   writingProgress: one(writingProgress, { fields: [users.id], references: [writingProgress.userId] }),
+  readingProgress: many(readingProgress),
 }));
 
 export const wordsRelations = relations(words, ({ many }) => ({
@@ -79,5 +82,15 @@ export const writingFeedbackRelations = relations(writingFeedback, ({ one }) => 
 
 export const writingProgressRelations = relations(writingProgress, ({ one }) => ({
   user: one(users, { fields: [writingProgress.userId], references: [users.id] }),
+}));
+
+// Reading relations
+export const readingTextsRelations = relations(readingTexts, ({ many }) => ({
+  progress: many(readingProgress),
+}));
+
+export const readingProgressRelations = relations(readingProgress, ({ one }) => ({
+  user: one(users, { fields: [readingProgress.userId], references: [users.id] }),
+  text: one(readingTexts, { fields: [readingProgress.textId], references: [readingTexts.id] }),
 }));
 

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { db } from '../index.js';
-import { words, grammarTopics, grammarExercises, listeningExercises, drillSets, drillQuestions, writingPrompts } from '../schema/index.js';
+import { words, grammarTopics, grammarExercises, listeningExercises, drillSets, drillQuestions, writingPrompts, readingTexts } from '../schema/index.js';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { wordsA1 } from './words-a1.js';
 import { wordsA1Extra } from './words-a1-extra.js';
@@ -102,6 +102,7 @@ import { listeningExercisesB2 } from './listening-b2.js';
 import { drillsData } from './drills.js';
 import { drillsData2 } from './drills2.js';
 import { writingPromptsData } from './writing-prompts.js';
+import { readingTextsData } from './reading.js';
 
 type WordInput = {
   french: string;
@@ -783,6 +784,35 @@ async function seed() {
       });
   }
   console.log(`Writing prompts done! Total: ${writingPromptsData.length}`);
+
+  // ===== Reading texts =====
+  console.log('\nSeeding reading texts...');
+  for (const rt of readingTextsData) {
+    await db
+      .insert(readingTexts)
+      .values({
+        slug: rt.slug,
+        title: rt.title,
+        level: rt.level,
+        topic: rt.topic,
+        contentFr: rt.contentFr,
+        wordMap: rt.wordMap,
+        questions: rt.questions,
+        estimatedMinutes: rt.estimatedMinutes,
+      })
+      .onConflictDoUpdate({
+        target: readingTexts.slug,
+        set: {
+          title: rt.title,
+          contentFr: rt.contentFr,
+          wordMap: rt.wordMap,
+          questions: rt.questions,
+          estimatedMinutes: rt.estimatedMinutes,
+        },
+      });
+    console.log(`  Reading: ${rt.slug}`);
+  }
+  console.log(`Reading texts done! Total: ${readingTextsData.length}`);
 
   console.log('\nAll seed complete!');
   process.exit(0);

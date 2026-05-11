@@ -368,6 +368,50 @@ export const writingFeedback = pgTable('writing_feedback', {
   generatedAt: timestamp('generated_at').defaultNow().notNull(),
 });
 
+// ─── Reading feature ────────────────────────────────────────────────────────
+
+// Reading texts library (seeded)
+export const readingTexts = pgTable(
+  'reading_texts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    slug: varchar('slug', { length: 100 }).notNull().unique(),
+    title: varchar('title', { length: 200 }).notNull(),
+    level: languageLevelEnum('level').notNull(),
+    topic: varchar('topic', { length: 50 }).notNull(),
+    contentFr: text('content_fr').notNull(),
+    // Record<string, {tr: string, pos: string}> — lowercased word form → translation
+    wordMap: jsonb('word_map').notNull(),
+    // ReadingQuestion[] — embedded DELF-style questions
+    questions: jsonb('questions').notNull(),
+    estimatedMinutes: integer('estimated_minutes').notNull().default(3),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('idx_reading_texts_level').on(t.level, t.topic)],
+);
+
+// Reading progress per user
+export const readingProgress = pgTable(
+  'reading_progress',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    textId: uuid('text_id')
+      .notNull()
+      .references(() => readingTexts.id, { onDelete: 'cascade' }),
+    completedAt: timestamp('completed_at'),
+    score: integer('score'),
+    totalQuestions: integer('total_questions'),
+    wordsLookedUp: jsonb('words_looked_up').default([]).notNull(),
+    wordsSaved: jsonb('words_saved').default([]).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [unique().on(t.userId, t.textId)],
+);
+
 // Aggregated writing progress per user
 export const writingProgress = pgTable('writing_progress', {
   id: uuid('id').primaryKey().defaultRandom(),

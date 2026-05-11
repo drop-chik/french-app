@@ -71,6 +71,13 @@
       "when": 1778438627671,
       "tag": "0009_gifted_alex_wilder",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778491451332,
+      "tag": "0010_careful_black_panther",
+      "breakpoints": true
     }
   ]
 }

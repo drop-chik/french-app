@@ -1,0 +1,1260 @@
+export interface ReadingQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correct: string;
+  explanation: string;
+}
+
+export interface ReadingTextData {
+  slug: string;
+  title: string;
+  level: 'A1' | 'A2' | 'B1' | 'B2';
+  topic: string;
+  contentFr: string;
+  wordMap: Record<string, { tr: string; pos: string }>;
+  questions: ReadingQuestion[];
+  estimatedMinutes: number;
+}
+
+export const readingTextsData: ReadingTextData[] = [
+
+  // ═══════════════════════════════════════════════════════════════
+  // A1
+  // ═══════════════════════════════════════════════════════════════
+
+  {
+    slug: 'a1-ma-famille',
+    title: 'Ma famille',
+    level: 'A1',
+    topic: 'famille',
+    estimatedMinutes: 3,
+    contentFr: `Je m'appelle Marie. J'ai vingt-cinq ans. Je suis française.
+
+Dans ma famille, il y a quatre personnes : ma mère, mon père, mon frère et moi. Ma mère s'appelle Claire. Elle a cinquante ans. Elle est professeure. Mon père s'appelle Paul. Il a cinquante-deux ans. Il est médecin.
+
+Mon frère s'appelle Thomas. Il a dix-neuf ans. Il est étudiant. Il étudie l'informatique à Paris.
+
+Nous habitons dans un appartement à Lyon. Notre appartement a trois chambres. Il y a aussi un salon, une cuisine et deux salles de bain.
+
+Le week-end, nous aimons faire des activités ensemble. Nous allons au cinéma ou au restaurant. Mon père aime cuisiner. Ma mère préfère lire. Et moi, j'adore faire du sport.
+
+J'aime beaucoup ma famille !`,
+    wordMap: {
+      "appelle": { tr: "зовут (s'appeler)", pos: "verb" },
+      "marie": { tr: "Мари (имя)", pos: "noun" },
+      "vingt-cinq": { tr: "двадцать пять", pos: "number" },
+      "française": { tr: "француженка", pos: "adj" },
+      "famille": { tr: "семья", pos: "noun" },
+      "quatre": { tr: "четыре", pos: "number" },
+      "personnes": { tr: "человека (personne)", pos: "noun" },
+      "mère": { tr: "мать, мама", pos: "noun" },
+      "père": { tr: "отец, папа", pos: "noun" },
+      "frère": { tr: "брат", pos: "noun" },
+      "claire": { tr: "Клер (имя)", pos: "noun" },
+      "cinquante": { tr: "пятьдесят", pos: "number" },
+      "professeure": { tr: "учительница", pos: "noun" },
+      "paul": { tr: "Поль (имя)", pos: "noun" },
+      "médecin": { tr: "врач", pos: "noun" },
+      "thomas": { tr: "Тома (имя)", pos: "noun" },
+      "dix-neuf": { tr: "девятнадцать", pos: "number" },
+      "étudiant": { tr: "студент", pos: "noun" },
+      "étudie": { tr: "учится (étudier)", pos: "verb" },
+      "informatique": { tr: "информатика", pos: "noun" },
+      "paris": { tr: "Париж", pos: "noun" },
+      "habitons": { tr: "живём (habiter)", pos: "verb" },
+      "appartement": { tr: "квартира", pos: "noun" },
+      "lyon": { tr: "Лион", pos: "noun" },
+      "chambres": { tr: "спальни (chambre)", pos: "noun" },
+      "salon": { tr: "гостиная", pos: "noun" },
+      "cuisine": { tr: "кухня", pos: "noun" },
+      "salles": { tr: "комнаты (salle)", pos: "noun" },
+      "bain": { tr: "ванная", pos: "noun" },
+      "week-end": { tr: "выходные", pos: "noun" },
+      "aimons": { tr: "любим (aimer)", pos: "verb" },
+      "activités": { tr: "занятия (activité)", pos: "noun" },
+      "cinéma": { tr: "кино, кинотеатр", pos: "noun" },
+      "restaurant": { tr: "ресторан", pos: "noun" },
+      "cuisiner": { tr: "готовить (еду)", pos: "verb" },
+      "préfère": { tr: "предпочитает (préférer)", pos: "verb" },
+      "lire": { tr: "читать", pos: "verb" },
+      "adore": { tr: "обожаю (adorer)", pos: "verb" },
+      "sport": { tr: "спорт", pos: "noun" },
+      "aime": { tr: "люблю (aimer)", pos: "verb" },
+      "beaucoup": { tr: "очень, много", pos: "adverb" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Сколько человек в семье Мари?",
+        options: ["2", "3", "4", "5"],
+        correct: "4",
+        explanation: "В тексте: «il y a quatre personnes : ma mère, mon père, mon frère et moi»",
+      },
+      {
+        id: "q2",
+        question: "Где учится Тома?",
+        options: ["В Лионе", "В Париже", "В Марселе", "В Бордо"],
+        correct: "В Париже",
+        explanation: "В тексте: «Il étudie l'informatique à Paris»",
+      },
+      {
+        id: "q3",
+        question: "Где живёт семья Мари?",
+        options: ["В доме в Париже", "В квартире в Лионе", "В доме в Лионе", "В квартире в Париже"],
+        correct: "В квартире в Лионе",
+        explanation: "В тексте: «Nous habitons dans un appartement à Lyon»",
+      },
+      {
+        id: "q4",
+        question: "Чем занимается отец Мари в выходные?",
+        options: ["Читает книги", "Занимается спортом", "Ходит в кино", "Готовит"],
+        correct: "Готовит",
+        explanation: "В тексте: «Mon père aime cuisiner»",
+      },
+    ],
+  },
+
+  {
+    slug: 'a1-au-cafe',
+    title: 'Au café',
+    level: 'A1',
+    topic: 'vie_quotidienne',
+    estimatedMinutes: 3,
+    contentFr: `C'est samedi matin. Lucas va au café avec son amie Emma.
+
+Au café, le serveur arrive.
+— Bonjour ! Vous désirez ?
+— Bonjour ! Je voudrais un café crème, s'il vous plaît, dit Lucas.
+— Et pour moi, un thé au citron et un croissant, dit Emma.
+— Très bien. Vous voulez autre chose ?
+— Oui, une bouteille d'eau, s'il vous plaît.
+
+Le serveur apporte les commandes. Lucas prend son café. Emma mange son croissant. Il est délicieux !
+
+— C'est combien ? demande Lucas.
+— Ça fait sept euros cinquante, monsieur.
+— Voilà, merci.
+— Merci à vous. Bonne journée !
+
+Lucas et Emma restent au café une heure. Ils parlent de leurs projets pour le week-end. Emma veut aller au cinéma. Lucas préfère se promener dans le parc.`,
+    wordMap: {
+      "samedi": { tr: "суббота", pos: "noun" },
+      "matin": { tr: "утро", pos: "noun" },
+      "café": { tr: "кафе; кофе", pos: "noun" },
+      "amie": { tr: "подруга", pos: "noun" },
+      "serveur": { tr: "официант", pos: "noun" },
+      "arrive": { tr: "приходит (arriver)", pos: "verb" },
+      "désirez": { tr: "желаете (désirer)", pos: "verb" },
+      "voudrais": { tr: "хотел(а) бы (vouloir)", pos: "verb" },
+      "crème": { tr: "сливки; со сливками", pos: "noun" },
+      "thé": { tr: "чай", pos: "noun" },
+      "citron": { tr: "лимон", pos: "noun" },
+      "croissant": { tr: "круассан", pos: "noun" },
+      "bouteille": { tr: "бутылка", pos: "noun" },
+      "eau": { tr: "вода", pos: "noun" },
+      "apporte": { tr: "приносит (apporter)", pos: "verb" },
+      "commandes": { tr: "заказы (commande)", pos: "noun" },
+      "prend": { tr: "берёт (prendre)", pos: "verb" },
+      "mange": { tr: "ест (manger)", pos: "verb" },
+      "délicieux": { tr: "восхитительный, вкусный", pos: "adj" },
+      "combien": { tr: "сколько", pos: "adverb" },
+      "euros": { tr: "евро", pos: "noun" },
+      "restent": { tr: "остаются (rester)", pos: "verb" },
+      "heure": { tr: "час", pos: "noun" },
+      "parlent": { tr: "говорят (parler)", pos: "verb" },
+      "projets": { tr: "планы (projet)", pos: "noun" },
+      "veut": { tr: "хочет (vouloir)", pos: "verb" },
+      "aller": { tr: "идти, ехать", pos: "verb" },
+      "préfère": { tr: "предпочитает (préférer)", pos: "verb" },
+      "promener": { tr: "гулять (se promener)", pos: "verb" },
+      "parc": { tr: "парк", pos: "noun" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Что заказала Эмма?",
+        options: [
+          "Кофе со сливками и круассан",
+          "Чай с лимоном и круассан",
+          "Чай с молоком и багет",
+          "Кофе и воду",
+        ],
+        correct: "Чай с лимоном и круассан",
+        explanation: "В тексте: «un thé au citron et un croissant»",
+      },
+      {
+        id: "q2",
+        question: "Сколько стоили заказы?",
+        options: ["5 €", "6,50 €", "7,50 €", "9 €"],
+        correct: "7,50 €",
+        explanation: "В тексте: «Ça fait sept euros cinquante»",
+      },
+      {
+        id: "q3",
+        question: "Сколько времени Лукас и Эмма провели в кафе?",
+        options: ["Полчаса", "Час", "Два часа", "Весь день"],
+        correct: "Час",
+        explanation: "В тексте: «Lucas et Emma restent au café une heure»",
+      },
+      {
+        id: "q4",
+        question: "Что хотел делать в выходные Лукас?",
+        options: ["Идти в кино", "Пойти в ресторан", "Гулять в парке", "Остаться дома"],
+        correct: "Гулять в парке",
+        explanation: "В тексте: «Lucas préfère se promener dans le parc»",
+      },
+    ],
+  },
+
+  {
+    slug: 'a1-mon-ecole',
+    title: 'Mon école',
+    level: 'A1',
+    topic: 'education',
+    estimatedMinutes: 3,
+    contentFr: `Je m'appelle Léo. J'ai onze ans. Je suis élève à l'école primaire Victor Hugo à Bordeaux.
+
+Mon école est grande et belle. Il y a vingt classes, une bibliothèque, une cantine et un grand gymnase. Dans ma classe, nous sommes vingt-cinq élèves — treize garçons et douze filles.
+
+Ma maîtresse s'appelle Madame Dupont. Elle est très sympa et patiente. J'aime bien mes cours. Ma matière préférée, c'est les mathématiques. Je n'aime pas beaucoup le dessin.
+
+L'école commence à huit heures trente. On a une récréation à dix heures. Le déjeuner est à midi. Les cours finissent à seize heures trente.
+
+Après l'école, je retrouve mes amis. Nous jouons au football dans le parc. Le mardi, j'ai cours de guitare. C'est ma passion !
+
+J'aime mon école parce que j'ai de bons amis là-bas.`,
+    wordMap: {
+      "léo": { tr: "Лео (имя)", pos: "noun" },
+      "onze": { tr: "одиннадцать", pos: "number" },
+      "élève": { tr: "ученик", pos: "noun" },
+      "école": { tr: "школа", pos: "noun" },
+      "primaire": { tr: "начальная (школа)", pos: "adj" },
+      "bordeaux": { tr: "Бордо (город)", pos: "noun" },
+      "grande": { tr: "большая", pos: "adj" },
+      "belle": { tr: "красивая", pos: "adj" },
+      "vingt": { tr: "двадцать", pos: "number" },
+      "classes": { tr: "классы (classe)", pos: "noun" },
+      "bibliothèque": { tr: "библиотека", pos: "noun" },
+      "cantine": { tr: "столовая", pos: "noun" },
+      "gymnase": { tr: "спортзал", pos: "noun" },
+      "sommes": { tr: "нас есть (être)", pos: "verb" },
+      "garçons": { tr: "мальчики (garçon)", pos: "noun" },
+      "filles": { tr: "девочки (fille)", pos: "noun" },
+      "maîtresse": { tr: "учительница", pos: "noun" },
+      "sympa": { tr: "приятная, добрая", pos: "adj" },
+      "patiente": { tr: "терпеливая", pos: "adj" },
+      "cours": { tr: "уроки, занятия", pos: "noun" },
+      "matière": { tr: "предмет (в школе)", pos: "noun" },
+      "préférée": { tr: "любимый/ая", pos: "adj" },
+      "mathématiques": { tr: "математика", pos: "noun" },
+      "dessin": { tr: "рисование", pos: "noun" },
+      "commence": { tr: "начинается (commencer)", pos: "verb" },
+      "récréation": { tr: "перемена", pos: "noun" },
+      "déjeuner": { tr: "обед", pos: "noun" },
+      "finissent": { tr: "заканчиваются (finir)", pos: "verb" },
+      "retrouve": { tr: "встречаю (retrouver)", pos: "verb" },
+      "jouons": { tr: "играем (jouer)", pos: "verb" },
+      "football": { tr: "футбол", pos: "noun" },
+      "mardi": { tr: "вторник", pos: "noun" },
+      "guitare": { tr: "гитара", pos: "noun" },
+      "passion": { tr: "страсть, увлечение", pos: "noun" },
+      "parce que": { tr: "потому что", pos: "conj" },
+      "amis": { tr: "друзья (ami)", pos: "noun" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Где находится школа Лео?",
+        options: ["В Париже", "В Лионе", "В Бордо", "В Марселе"],
+        correct: "В Бордо",
+        explanation: "В тексте: «à l'école primaire Victor Hugo à Bordeaux»",
+      },
+      {
+        id: "q2",
+        question: "Какой предмет нравится Лео больше всего?",
+        options: ["Рисование", "Французский язык", "Математика", "Физкультура"],
+        correct: "Математика",
+        explanation: "В тексте: «Ma matière préférée, c'est les mathématiques»",
+      },
+      {
+        id: "q3",
+        question: "Во сколько заканчиваются уроки?",
+        options: ["В 15:30", "В 16:00", "В 16:30", "В 17:00"],
+        correct: "В 16:30",
+        explanation: "В тексте: «Les cours finissent à seize heures trente»",
+      },
+      {
+        id: "q4",
+        question: "Каким увлечением занимается Лео по вторникам?",
+        options: ["Футболом", "Гитарой", "Плаванием", "Рисованием"],
+        correct: "Гитарой",
+        explanation: "В тексте: «Le mardi, j'ai cours de guitare»",
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // A2
+  // ═══════════════════════════════════════════════════════════════
+
+  {
+    slug: 'a2-vacances-sophie',
+    title: 'Les vacances de Sophie',
+    level: 'A2',
+    topic: 'voyage',
+    estimatedMinutes: 4,
+    contentFr: `Chère Lucie,
+
+Je t'écris depuis la Bretagne, où je passe mes vacances d'été avec ma famille. C'est magnifique ici ! Nous avons loué une petite maison à deux kilomètres de la mer.
+
+Tous les matins, nous allons à la plage. L'eau est froide, mais ça ne me dérange pas — j'adore nager ! Mon frère préfère faire du surf. Mes parents, eux, restent sur la plage et lisent.
+
+Hier, nous avons visité la ville de Quimper. C'est une ville médiévale très belle avec une cathédrale impressionnante. Nous avons mangé des crêpes dans un restaurant typique — elles étaient délicieuses ! La spécialité de la région, c'est la galette de sarrasin au jambon et au fromage.
+
+Demain, nous allons faire une randonnée sur le sentier côtier. Il paraît que la vue sur la mer est exceptionnelle.
+
+Je rentre à Paris samedi prochain. J'espère te voir bientôt !
+
+Gros bisous,
+Sophie`,
+    wordMap: {
+      "bretagne": { tr: "Бретань (регион Франции)", pos: "noun" },
+      "vacances": { tr: "каникулы, отпуск", pos: "noun" },
+      "magnifique": { tr: "великолепный", pos: "adj" },
+      "loué": { tr: "сняли (louer)", pos: "verb" },
+      "kilomètres": { tr: "километры", pos: "noun" },
+      "mer": { tr: "море", pos: "noun" },
+      "matins": { tr: "утра (matin)", pos: "noun" },
+      "plage": { tr: "пляж", pos: "noun" },
+      "froide": { tr: "холодная", pos: "adj" },
+      "dérange": { tr: "беспокоит (déranger)", pos: "verb" },
+      "nager": { tr: "плавать", pos: "verb" },
+      "surf": { tr: "сёрфинг", pos: "noun" },
+      "restent": { tr: "остаются (rester)", pos: "verb" },
+      "lisent": { tr: "читают (lire)", pos: "verb" },
+      "visité": { tr: "посетили (visiter)", pos: "verb" },
+      "quimper": { tr: "Кимпер (город)", pos: "noun" },
+      "médiévale": { tr: "средневековый", pos: "adj" },
+      "cathédrale": { tr: "собор", pos: "noun" },
+      "impressionnante": { tr: "впечатляющий", pos: "adj" },
+      "mangé": { tr: "съели (manger)", pos: "verb" },
+      "crêpes": { tr: "блины, крепы (crêpe)", pos: "noun" },
+      "typique": { tr: "типичный", pos: "adj" },
+      "délicieuses": { tr: "восхитительные", pos: "adj" },
+      "spécialité": { tr: "специалитет, фирменное блюдо", pos: "noun" },
+      "galette": { tr: "галета (гречневый блин)", pos: "noun" },
+      "sarrasin": { tr: "гречка", pos: "noun" },
+      "jambon": { tr: "ветчина", pos: "noun" },
+      "fromage": { tr: "сыр", pos: "noun" },
+      "randonnée": { tr: "пеший поход", pos: "noun" },
+      "sentier": { tr: "тропа", pos: "noun" },
+      "côtier": { tr: "прибрежный", pos: "adj" },
+      "vue": { tr: "вид", pos: "noun" },
+      "exceptionnelle": { tr: "исключительный", pos: "adj" },
+      "rentre": { tr: "возвращаюсь (rentrer)", pos: "verb" },
+      "espère": { tr: "надеюсь (espérer)", pos: "verb" },
+      "bientôt": { tr: "скоро", pos: "adverb" },
+      "bisous": { tr: "поцелуи (bisou)", pos: "noun" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Где Софи проводит каникулы?",
+        options: ["В Нормандии", "В Провансе", "В Бретани", "В Эльзасе"],
+        correct: "В Бретани",
+        explanation: "В тексте: «Je t'écris depuis la Bretagne»",
+      },
+      {
+        id: "q2",
+        question: "Что делал брат Софи на пляже?",
+        options: ["Нырял", "Занимался сёрфингом", "Строил замки из песка", "Читал"],
+        correct: "Занимался сёрфингом",
+        explanation: "В тексте: «Mon frère préfère faire du surf»",
+      },
+      {
+        id: "q3",
+        question: "Что является специалитетом региона?",
+        options: [
+          "Кофе с круассаном",
+          "Мидии с картошкой",
+          "Гречневая галета с ветчиной и сыром",
+          "Устрицы с лимоном",
+        ],
+        correct: "Гречневая галета с ветчиной и сыром",
+        explanation: "В тексте: «la galette de sarrasin au jambon et au fromage»",
+      },
+      {
+        id: "q4",
+        question: "Когда Софи возвращается в Париж?",
+        options: ["В пятницу", "В субботу", "В воскресенье", "В понедельник"],
+        correct: "В субботу",
+        explanation: "В тексте: «Je rentre à Paris samedi prochain»",
+      },
+    ],
+  },
+
+  {
+    slug: 'a2-cuisine-francaise',
+    title: 'La cuisine française',
+    level: 'A2',
+    topic: 'gastronomie',
+    estimatedMinutes: 4,
+    contentFr: `La cuisine française est connue dans le monde entier. Elle fait partie du patrimoine culturel de la France. En 2010, l'UNESCO a reconnu le repas gastronomique français comme patrimoine immatériel de l'humanité.
+
+Un repas français traditionnel comporte plusieurs plats. D'abord, on sert l'entrée : une salade, une soupe ou une charcuterie. Ensuite vient le plat principal, souvent de la viande ou du poisson accompagné de légumes. Puis on sert le fromage — la France produit plus de 1000 variétés différentes ! Enfin, on termine avec le dessert.
+
+Chaque région de France a ses spécialités. La Normandie est connue pour ses camemberts et ses calvados. La Bourgogne propose d'excellents vins et le bœuf bourguignon. Dans le Sud, on aime la bouillabaisse, une soupe de poisson marseillaise.
+
+En France, manger est un moment social important. On prend le temps de déjeuner ensemble et on ne mange pas en marchant dans la rue. Le repas du dimanche en famille est une tradition très respectée.`,
+    wordMap: {
+      "connue": { tr: "известная (connaître)", pos: "adj" },
+      "entier": { tr: "весь, целый", pos: "adj" },
+      "patrimoine": { tr: "наследие", pos: "noun" },
+      "culturel": { tr: "культурный", pos: "adj" },
+      "unesco": { tr: "ЮНЕСКО", pos: "noun" },
+      "reconnu": { tr: "признало (reconnaître)", pos: "verb" },
+      "gastronomique": { tr: "гастрономический", pos: "adj" },
+      "immatériel": { tr: "нематериальный", pos: "adj" },
+      "humanité": { tr: "человечество", pos: "noun" },
+      "traditionnel": { tr: "традиционный", pos: "adj" },
+      "comporte": { tr: "включает (comporter)", pos: "verb" },
+      "plats": { tr: "блюда (plat)", pos: "noun" },
+      "entrée": { tr: "закуска, первое блюдо", pos: "noun" },
+      "soupe": { tr: "суп", pos: "noun" },
+      "charcuterie": { tr: "мясная нарезка", pos: "noun" },
+      "principal": { tr: "главный", pos: "adj" },
+      "viande": { tr: "мясо", pos: "noun" },
+      "poisson": { tr: "рыба", pos: "noun" },
+      "accompagné": { tr: "с гарниром (accompagner)", pos: "verb" },
+      "légumes": { tr: "овощи (légume)", pos: "noun" },
+      "fromage": { tr: "сыр", pos: "noun" },
+      "produit": { tr: "производит (produire)", pos: "verb" },
+      "variétés": { tr: "сорта, разновидности", pos: "noun" },
+      "dessert": { tr: "десерт", pos: "noun" },
+      "normandie": { tr: "Нормандия", pos: "noun" },
+      "camemberts": { tr: "камамбер (сыр)", pos: "noun" },
+      "calvados": { tr: "кальвадос (яблочная водка)", pos: "noun" },
+      "bourgogne": { tr: "Бургундия", pos: "noun" },
+      "vins": { tr: "вина (vin)", pos: "noun" },
+      "bœuf": { tr: "говядина, бык", pos: "noun" },
+      "bouillabaisse": { tr: "буйабес (суп)", pos: "noun" },
+      "marseillaise": { tr: "марсельский", pos: "adj" },
+      "social": { tr: "социальный, общественный", pos: "adj" },
+      "déjeuner": { tr: "обедать; обед", pos: "verb" },
+      "marchant": { tr: "идя (marcher)", pos: "verb" },
+      "respectée": { tr: "уважаемый (respecter)", pos: "adj" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Когда ЮНЕСКО признало французский гастрономический обед наследием человечества?",
+        options: ["В 2005 году", "В 2008 году", "В 2010 году", "В 2015 году"],
+        correct: "В 2010 году",
+        explanation: "В тексте: «En 2010, l'UNESCO a reconnu le repas gastronomique français»",
+      },
+      {
+        id: "q2",
+        question: "Каков правильный порядок блюд во французском обеде?",
+        options: [
+          "Суп → мясо → десерт",
+          "Закуска → главное блюдо → сыр → десерт",
+          "Закуска → сыр → главное блюдо → десерт",
+          "Суп → главное блюдо → десерт → сыр",
+        ],
+        correct: "Закуска → главное блюдо → сыр → десерт",
+        explanation: "В тексте перечислены в порядке: entrée, plat principal, fromage, dessert",
+      },
+      {
+        id: "q3",
+        question: "Сколько разновидностей сыра производится во Франции?",
+        options: ["Более 100", "Более 500", "Более 1000", "Более 2000"],
+        correct: "Более 1000",
+        explanation: "В тексте: «la France produit plus de 1000 variétés différentes»",
+      },
+      {
+        id: "q4",
+        question: "Что является очень уважаемой традицией во Франции?",
+        options: [
+          "Завтрак в постели",
+          "Обед в ресторане каждую субботу",
+          "Воскресный обед всей семьёй",
+          "Ужин при свечах",
+        ],
+        correct: "Воскресный обед всей семьёй",
+        explanation: "В тексте: «Le repas du dimanche en famille est une tradition très respectée»",
+      },
+    ],
+  },
+
+  {
+    slug: 'a2-mon-quartier',
+    title: 'Mon quartier idéal',
+    level: 'A2',
+    topic: 'ville',
+    estimatedMinutes: 4,
+    contentFr: `J'habite dans le quartier de Montmartre à Paris depuis trois ans. C'est un quartier très vivant et artistique. Je l'adore !
+
+Dans mon quartier, il y a beaucoup de choses intéressantes. La célèbre basilique du Sacré-Cœur se trouve au sommet de la butte Montmartre. De là-haut, on a une vue magnifique sur toute la ville de Paris. Je monte souvent là-bas le soir pour admirer le coucher de soleil.
+
+Il y a aussi de nombreux cafés, restaurants et galeries d'art. La place du Tertre est un endroit emblématique où les artistes peignent leurs tableaux en plein air. C'est très pittoresque !
+
+Mon café préféré s'appelle « Le Consulat ». Le patron s'appelle Henri. Il est très accueillant. Je vais là-bas tous les dimanches matin pour lire le journal et boire un café.
+
+Ce que j'aime le moins dans mon quartier, c'est le nombre de touristes en été. Parfois, c'est difficile de se déplacer dans les rues. Mais ça fait partie du charme de Paris, je suppose !`,
+    wordMap: {
+      "quartier": { tr: "квартал, район", pos: "noun" },
+      "montmartre": { tr: "Монмартр (район Парижа)", pos: "noun" },
+      "depuis": { tr: "с (тех пор)", pos: "prep" },
+      "vivant": { tr: "живой, оживлённый", pos: "adj" },
+      "artistique": { tr: "художественный", pos: "adj" },
+      "célèbre": { tr: "знаменитый", pos: "adj" },
+      "basilique": { tr: "базилика", pos: "noun" },
+      "sacré-cœur": { tr: "Сакре-Кёр (собор)", pos: "noun" },
+      "sommet": { tr: "вершина", pos: "noun" },
+      "butte": { tr: "холм", pos: "noun" },
+      "monte": { tr: "поднимаюсь (monter)", pos: "verb" },
+      "admirer": { tr: "любоваться", pos: "verb" },
+      "coucher": { tr: "закат", pos: "noun" },
+      "soleil": { tr: "солнце", pos: "noun" },
+      "nombreux": { tr: "многочисленный", pos: "adj" },
+      "galeries": { tr: "галереи (galerie)", pos: "noun" },
+      "place": { tr: "площадь", pos: "noun" },
+      "endroit": { tr: "место", pos: "noun" },
+      "emblématique": { tr: "знаковый, символичный", pos: "adj" },
+      "artistes": { tr: "художники (artiste)", pos: "noun" },
+      "peignent": { tr: "рисуют (peindre)", pos: "verb" },
+      "tableaux": { tr: "картины (tableau)", pos: "noun" },
+      "plein": { tr: "полный; на открытом воздухе", pos: "adj" },
+      "pittoresque": { tr: "живописный", pos: "adj" },
+      "patron": { tr: "хозяин заведения", pos: "noun" },
+      "accueillant": { tr: "гостеприимный", pos: "adj" },
+      "journal": { tr: "газета; дневник", pos: "noun" },
+      "touristes": { tr: "туристы (touriste)", pos: "noun" },
+      "déplacer": { tr: "передвигаться (se déplacer)", pos: "verb" },
+      "charme": { tr: "очарование, шарм", pos: "noun" },
+      "suppose": { tr: "полагаю (supposer)", pos: "verb" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Как давно рассказчик живёт на Монмартре?",
+        options: ["Один год", "Два года", "Три года", "Пять лет"],
+        correct: "Три года",
+        explanation: "В тексте: «depuis trois ans»",
+      },
+      {
+        id: "q2",
+        question: "Почему рассказчик часто поднимается на холм вечером?",
+        options: [
+          "Чтобы сделать фотографии для туристов",
+          "Чтобы полюбоваться закатом",
+          "Чтобы встретиться с художниками",
+          "Чтобы найти свободное место в кафе",
+        ],
+        correct: "Чтобы полюбоваться закатом",
+        explanation: "В тексте: «pour admirer le coucher de soleil»",
+      },
+      {
+        id: "q3",
+        question: "Что рассказчик делает по воскресеньям в кафе «Le Consulat»?",
+        options: [
+          "Рисует картины",
+          "Встречается с друзьями",
+          "Читает газету и пьёт кофе",
+          "Работает за компьютером",
+        ],
+        correct: "Читает газету и пьёт кофе",
+        explanation: "В тексте: «pour lire le journal et boire un café»",
+      },
+      {
+        id: "q4",
+        question: "Что рассказчику не нравится в своём районе?",
+        options: [
+          "Шум от машин",
+          "Высокие цены в магазинах",
+          "Много туристов летом",
+          "Нет хороших ресторанов",
+        ],
+        correct: "Много туристов летом",
+        explanation: "В тексте: «le nombre de touristes en été»",
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // B1
+  // ═══════════════════════════════════════════════════════════════
+
+  {
+    slug: 'b1-cinema-francais',
+    title: 'Les Français et le cinéma',
+    level: 'B1',
+    topic: 'culture',
+    estimatedMinutes: 5,
+    contentFr: `La France est souvent appelée « le pays du septième art ». En effet, c'est à Paris que les frères Lumière ont inventé le cinéma en 1895. Depuis lors, la France a développé une relation particulière avec cet art. Chaque année, les Français vont en moyenne cinq fois au cinéma, ce qui en fait l'un des publics les plus assidus d'Europe.
+
+Le festival de Cannes, créé en 1946, est devenu l'un des événements cinématographiques les plus prestigieux du monde. La Palme d'Or récompense chaque année les meilleurs films. Des réalisateurs comme Jean-Luc Godard, François Truffaut et Agnès Varda ont révolutionné le cinéma mondial avec ce qu'on appelle la « Nouvelle Vague » dans les années 1960.
+
+En France, la diversité cinématographique est protégée par la loi. Une partie des recettes des films américains à succès est reversée au financement du cinéma français indépendant. Ce système, unique au monde, permet à des films d'auteur de voir le jour même sans le soutien des grands studios.
+
+Aujourd'hui, le streaming représente un défi majeur pour les salles de cinéma. Cependant, les Français restent attachés à l'expérience collective du cinéma. Aller voir un film sur grand écran reste un rituel social important, surtout pour les premières de films très attendus.`,
+    wordMap: {
+      "septième": { tr: "седьмой", pos: "adj" },
+      "art": { tr: "искусство", pos: "noun" },
+      "frères": { tr: "братья (frère)", pos: "noun" },
+      "lumière": { tr: "Люмьер; свет", pos: "noun" },
+      "inventé": { tr: "изобрели (inventer)", pos: "verb" },
+      "développé": { tr: "развила (développer)", pos: "verb" },
+      "particulière": { tr: "особенный", pos: "adj" },
+      "moyenne": { tr: "в среднем; средний", pos: "noun" },
+      "assidus": { tr: "постоянные, преданные", pos: "adj" },
+      "festival": { tr: "фестиваль", pos: "noun" },
+      "cannes": { tr: "Канны", pos: "noun" },
+      "créé": { tr: "созданный (créer)", pos: "verb" },
+      "événements": { tr: "события (événement)", pos: "noun" },
+      "cinématographiques": { tr: "кинематографический", pos: "adj" },
+      "prestigieux": { tr: "престижный", pos: "adj" },
+      "palme": { tr: "Золотая Пальмовая ветвь", pos: "noun" },
+      "récompense": { tr: "награждает (récompenser)", pos: "verb" },
+      "réalisateurs": { tr: "режиссёры (réalisateur)", pos: "noun" },
+      "révolutionné": { tr: "революционизировали (révolutionner)", pos: "verb" },
+      "nouvelle vague": { tr: "новая волна", pos: "noun" },
+      "diversité": { tr: "разнообразие", pos: "noun" },
+      "protégée": { tr: "защищённая (protéger)", pos: "adj" },
+      "recettes": { tr: "выручка; рецепты", pos: "noun" },
+      "reversée": { tr: "перечисляется (reverser)", pos: "verb" },
+      "financement": { tr: "финансирование", pos: "noun" },
+      "indépendant": { tr: "независимый", pos: "adj" },
+      "auteur": { tr: "автор; авторское кино", pos: "noun" },
+      "soutien": { tr: "поддержка", pos: "noun" },
+      "studios": { tr: "студии (studio)", pos: "noun" },
+      "streaming": { tr: "стриминг", pos: "noun" },
+      "représente": { tr: "представляет (représenter)", pos: "verb" },
+      "défi": { tr: "вызов, испытание", pos: "noun" },
+      "majeur": { tr: "главный, крупный", pos: "adj" },
+      "attachés": { tr: "привязанные (s'attacher)", pos: "adj" },
+      "collective": { tr: "коллективный", pos: "adj" },
+      "écran": { tr: "экран", pos: "noun" },
+      "rituel": { tr: "ритуал", pos: "noun" },
+      "surtout": { tr: "особенно", pos: "adverb" },
+      "premières": { tr: "премьеры (première)", pos: "noun" },
+      "attendus": { tr: "ожидаемые (attendre)", pos: "adj" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Pourquoi la France est-elle appelée « le pays du septième art » ?",
+        options: [
+          "Parce qu'elle a le plus de cinémas en Europe",
+          "Parce que les frères Lumière y ont inventé le cinéma",
+          "Parce que ses films remportent le plus de prix à Cannes",
+          "Parce que les Français vont le plus souvent au cinéma",
+        ],
+        correct: "Parce que les frères Lumière y ont inventé le cinéma",
+        explanation: "«c'est à Paris que les frères Lumière ont inventé le cinéma en 1895»",
+      },
+      {
+        id: "q2",
+        question: "Combien de fois par an les Français vont-ils au cinéma en moyenne ?",
+        options: ["Deux fois", "Trois fois", "Cinq fois", "Sept fois"],
+        correct: "Cinq fois",
+        explanation: "«les Français vont en moyenne cinq fois au cinéma»",
+      },
+      {
+        id: "q3",
+        question: "À quoi sert l'argent des recettes des films américains en France ?",
+        options: [
+          "À construire de nouvelles salles de cinéma",
+          "À organiser le festival de Cannes",
+          "À financer le cinéma français indépendant",
+          "À former de nouveaux réalisateurs",
+        ],
+        correct: "À financer le cinéma français indépendant",
+        explanation: "«est reversée au financement du cinéma français indépendant»",
+      },
+      {
+        id: "q4",
+        question: "Selon le texte, quelle est l'attitude des Français face au streaming ?",
+        options: [
+          "Ils ont abandonné les salles de cinéma",
+          "Ils restent attachés à l'expérience collective du cinéma",
+          "Ils préfèrent regarder les films chez eux",
+          "Ils sont indifférents au streaming",
+        ],
+        correct: "Ils restent attachés à l'expérience collective du cinéma",
+        explanation: "«les Français restent attachés à l'expérience collective du cinéma»",
+      },
+    ],
+  },
+
+  {
+    slug: 'b1-jeunes-environnement',
+    title: "Les jeunes et l'environnement",
+    level: 'B1',
+    topic: 'environnement',
+    estimatedMinutes: 5,
+    contentFr: `Une enquête récente montre que 78 % des jeunes Français âgés de 15 à 25 ans se déclarent « très préoccupés » par le changement climatique. Ce chiffre est significativement plus élevé que celui des générations précédentes. Pour beaucoup d'entre eux, la question environnementale est la priorité numéro un de leur époque.
+
+Face à cette anxiété, les jeunes adoptent des comportements concrets. Un tiers d'entre eux a réduit sa consommation de viande, une autre tendance forte étant l'essor du végétarisme et du véganisme. Beaucoup choisissent des moyens de transport plus écologiques : vélo, transports en commun ou covoiturage. Certains refusent même de prendre l'avion par conscience écologique — c'est ce qu'on appelle la « honte de voler » ou flight shame.
+
+Ces jeunes ne se contentent pas d'adapter leurs habitudes personnelles : ils s'engagent aussi politiquement. Les marches pour le climat organisées dans toute l'Europe ont mobilisé des millions de personnes. Des militantes comme Greta Thunberg sont devenues des symboles internationaux de cette génération engagée.
+
+Cependant, les experts soulignent que la responsabilité individuelle ne peut pas remplacer des politiques publiques ambitieuses. Sans réforme des industries les plus polluantes et sans accord international contraignant, les gestes individuels resteront insuffisants face à l'ampleur du défi climatique.`,
+    wordMap: {
+      "enquête": { tr: "опрос, расследование", pos: "noun" },
+      "récente": { tr: "недавний", pos: "adj" },
+      "préoccupés": { tr: "обеспокоенные (se préoccuper)", pos: "adj" },
+      "changement": { tr: "изменение", pos: "noun" },
+      "climatique": { tr: "климатический", pos: "adj" },
+      "significativement": { tr: "значительно", pos: "adverb" },
+      "générations": { tr: "поколения (génération)", pos: "noun" },
+      "précédentes": { tr: "предыдущие", pos: "adj" },
+      "époque": { tr: "эпоха, время", pos: "noun" },
+      "anxiété": { tr: "тревога, беспокойство", pos: "noun" },
+      "adoptent": { tr: "принимают (adopter)", pos: "verb" },
+      "comportements": { tr: "поведение (comportement)", pos: "noun" },
+      "concrets": { tr: "конкретные", pos: "adj" },
+      "tiers": { tr: "треть", pos: "noun" },
+      "consommation": { tr: "потребление", pos: "noun" },
+      "tendance": { tr: "тенденция", pos: "noun" },
+      "essor": { tr: "подъём, рост", pos: "noun" },
+      "végétarisme": { tr: "вегетарианство", pos: "noun" },
+      "véganisme": { tr: "веганство", pos: "noun" },
+      "écologiques": { tr: "экологические", pos: "adj" },
+      "covoiturage": { tr: "совместные поездки, карпулинг", pos: "noun" },
+      "avion": { tr: "самолёт", pos: "noun" },
+      "conscience": { tr: "совесть, осознанность", pos: "noun" },
+      "honte": { tr: "стыд", pos: "noun" },
+      "contenter": { tr: "довольствоваться", pos: "verb" },
+      "habitudes": { tr: "привычки (habitude)", pos: "noun" },
+      "s'engagent": { tr: "вовлекаются (s'engager)", pos: "verb" },
+      "marches": { tr: "марши, походы", pos: "noun" },
+      "mobilisé": { tr: "мобилизовали (mobiliser)", pos: "verb" },
+      "militantes": { tr: "активистки (militant)", pos: "noun" },
+      "symboles": { tr: "символы (symbole)", pos: "noun" },
+      "soulignent": { tr: "подчёркивают (souligner)", pos: "verb" },
+      "responsabilité": { tr: "ответственность", pos: "noun" },
+      "individuelle": { tr: "индивидуальная", pos: "adj" },
+      "remplacer": { tr: "заменить", pos: "verb" },
+      "ambitieuses": { tr: "амбициозные", pos: "adj" },
+      "polluantes": { tr: "загрязняющие (polluer)", pos: "adj" },
+      "contraignant": { tr: "обязывающий", pos: "adj" },
+      "insuffisants": { tr: "недостаточные", pos: "adj" },
+      "ampleur": { tr: "масштаб", pos: "noun" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Quelle proportion de jeunes Français se disent très préoccupés par le climat ?",
+        options: ["58 %", "68 %", "78 %", "88 %"],
+        correct: "78 %",
+        explanation: "«78 % des jeunes Français âgés de 15 à 25 ans se déclarent 'très préoccupés'»",
+      },
+      {
+        id: "q2",
+        question: "Qu'est-ce que la « honte de voler » mentionnée dans le texte ?",
+        options: [
+          "La peur de prendre l'avion",
+          "Le refus de prendre l'avion par conscience écologique",
+          "La honte de dépenser trop d'argent en voyages",
+          "Le sentiment de voler le travail des autres",
+        ],
+        correct: "Le refus de prendre l'avion par conscience écologique",
+        explanation: "«Certains refusent même de prendre l'avion par conscience écologique — c'est ce qu'on appelle la 'honte de voler'»",
+      },
+      {
+        id: "q3",
+        question: "Quelle limite des gestes individuels le texte souligne-t-il ?",
+        options: [
+          "Ils coûtent trop cher",
+          "Ils sont difficiles à maintenir dans le temps",
+          "Ils ne peuvent pas remplacer des politiques publiques ambitieuses",
+          "Ils ne sont pas reconnus par les gouvernements",
+        ],
+        correct: "Ils ne peuvent pas remplacer des politiques publiques ambitieuses",
+        explanation: "«la responsabilité individuelle ne peut pas remplacer des politiques publiques ambitieuses»",
+      },
+      {
+        id: "q4",
+        question: "Parmi les comportements cités, lequel n'est PAS mentionné dans le texte ?",
+        options: [
+          "Réduire la consommation de viande",
+          "Utiliser le covoiturage",
+          "Acheter uniquement des produits locaux",
+          "Refuser de prendre l'avion",
+        ],
+        correct: "Acheter uniquement des produits locaux",
+        explanation: "Le texte mentionne la viande, les transports et l'avion, mais pas les achats locaux.",
+      },
+    ],
+  },
+
+  {
+    slug: 'b1-travailler-etranger',
+    title: "Travailler à l'étranger",
+    level: 'B1',
+    topic: 'travail',
+    estimatedMinutes: 5,
+    contentFr: `De plus en plus de jeunes diplômés français choisissent de commencer leur carrière à l'étranger. Selon une étude publiée en 2023, près de 40 % des étudiants en master envisagent de travailler hors de France après leurs études. Quelles sont leurs motivations, et quels défis attendent ces expatriés en herbe ?
+
+Les raisons de ce phénomène sont multiples. Premièrement, la mondialisation du marché du travail offre aujourd'hui des opportunités dans de nombreux pays. Les secteurs de la technologie, de la finance et de la recherche sont particulièrement demandeurs de profils internationaux. Deuxièmement, les conditions salariales à l'étranger peuvent être nettement meilleures qu'en France, notamment dans les pays anglophones comme le Royaume-Uni, le Canada ou l'Australie.
+
+Mais l'aventure n'est pas sans difficultés. La barrière de la langue reste un obstacle majeur malgré les progrès de l'enseignement des langues étrangères en France. L'adaptation culturelle est également un défi : les modes de communication, la culture d'entreprise et les relations hiérarchiques varient considérablement d'un pays à l'autre.
+
+Sur le plan administratif, la reconnaissance des diplômes français à l'étranger peut poser des problèmes. Certains métiers réglementés, comme les professions médicales ou juridiques, exigent des procédures de validation supplémentaires.
+
+Malgré ces obstacles, la majorité des expatriés interrogés affirment que l'expérience internationale a enrichi leur parcours professionnel et personnel. Beaucoup reviennent en France avec un regard neuf sur leur pays et des compétences renforcées.`,
+    wordMap: {
+      "diplômés": { tr: "выпускники с дипломом", pos: "noun" },
+      "carrière": { tr: "карьера", pos: "noun" },
+      "étude": { tr: "исследование; учёба", pos: "noun" },
+      "envisagent": { tr: "планируют (envisager)", pos: "verb" },
+      "hors": { tr: "за пределами", pos: "prep" },
+      "expatriés": { tr: "эмигранты, экспаты (expatrié)", pos: "noun" },
+      "herbe": { tr: "трава; en herbe = начинающий", pos: "noun" },
+      "motivations": { tr: "мотивации (motivation)", pos: "noun" },
+      "mondialisation": { tr: "глобализация", pos: "noun" },
+      "opportunités": { tr: "возможности (opportunité)", pos: "noun" },
+      "secteurs": { tr: "секторы, отрасли (secteur)", pos: "noun" },
+      "recherche": { tr: "исследование, поиск", pos: "noun" },
+      "demandeurs": { tr: "востребующие", pos: "adj" },
+      "profils": { tr: "профили (profil)", pos: "noun" },
+      "salariales": { tr: "зарплатные (salarial)", pos: "adj" },
+      "nettement": { tr: "значительно, явно", pos: "adverb" },
+      "anglophones": { tr: "англоязычный", pos: "adj" },
+      "barrière": { tr: "барьер", pos: "noun" },
+      "obstacle": { tr: "препятствие", pos: "noun" },
+      "enseignement": { tr: "обучение, образование", pos: "noun" },
+      "adaptation": { tr: "адаптация", pos: "noun" },
+      "culturelle": { tr: "культурный", pos: "adj" },
+      "communication": { tr: "общение, коммуникация", pos: "noun" },
+      "entreprise": { tr: "предприятие, компания", pos: "noun" },
+      "hiérarchiques": { tr: "иерархические", pos: "adj" },
+      "varient": { tr: "различаются (varier)", pos: "verb" },
+      "considérablement": { tr: "значительно", pos: "adverb" },
+      "administratif": { tr: "административный", pos: "adj" },
+      "reconnaissance": { tr: "признание", pos: "noun" },
+      "diplômes": { tr: "дипломы (diplôme)", pos: "noun" },
+      "réglementés": { tr: "регулируемые", pos: "adj" },
+      "juridiques": { tr: "юридические", pos: "adj" },
+      "exigent": { tr: "требуют (exiger)", pos: "verb" },
+      "procédures": { tr: "процедуры (procédure)", pos: "noun" },
+      "validation": { tr: "подтверждение, аттестация", pos: "noun" },
+      "expatriés interrogés": { tr: "опрошенные экспаты", pos: "noun" },
+      "affirment": { tr: "утверждают (affirmer)", pos: "verb" },
+      "enrichi": { tr: "обогатил (enrichir)", pos: "verb" },
+      "parcours": { tr: "путь, маршрут (карьерный)", pos: "noun" },
+      "compétences": { tr: "компетенции, навыки", pos: "noun" },
+      "renforcées": { tr: "усиленные (renforcer)", pos: "adj" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Quelle proportion d'étudiants en master envisage de travailler à l'étranger ?",
+        options: ["Près de 20 %", "Près de 30 %", "Près de 40 %", "Près de 50 %"],
+        correct: "Près de 40 %",
+        explanation: "«près de 40 % des étudiants en master envisagent de travailler hors de France»",
+      },
+      {
+        id: "q2",
+        question: "Quels pays sont cités comme offrant de meilleures conditions salariales ?",
+        options: [
+          "L'Allemagne, la Suisse et les Pays-Bas",
+          "Le Royaume-Uni, le Canada et l'Australie",
+          "Les États-Unis, le Japon et la Corée du Sud",
+          "Le Luxembourg, l'Irlande et Singapour",
+        ],
+        correct: "Le Royaume-Uni, le Canada et l'Australie",
+        explanation: "«dans les pays anglophones comme le Royaume-Uni, le Canada ou l'Australie»",
+      },
+      {
+        id: "q3",
+        question: "Quel problème administratif peut rencontrer un expatrié français ?",
+        options: [
+          "Obtenir un visa de travail",
+          "Faire reconnaître son diplôme français",
+          "Payer ses impôts en France depuis l'étranger",
+          "Trouver un logement abordable",
+        ],
+        correct: "Faire reconnaître son diplôme français",
+        explanation: "«la reconnaissance des diplômes français à l'étranger peut poser des problèmes»",
+      },
+      {
+        id: "q4",
+        question: "Comment la plupart des expatriés jugent-ils leur expérience internationale ?",
+        options: [
+          "Comme une période difficile dont ils ne regrettent pas la fin",
+          "Comme une expérience enrichissante pour leur parcours",
+          "Comme une erreur qu'ils ne referaient pas",
+          "Comme une expérience sans impact sur leur carrière",
+        ],
+        correct: "Comme une expérience enrichissante pour leur parcours",
+        explanation: "«l'expérience internationale a enrichi leur parcours professionnel et personnel»",
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // B2
+  // ═══════════════════════════════════════════════════════════════
+
+  {
+    slug: 'b2-intelligence-artificielle',
+    title: "L'intelligence artificielle au quotidien",
+    level: 'B2',
+    topic: 'technologie',
+    estimatedMinutes: 7,
+    contentFr: `L'intelligence artificielle (IA) n'est plus confinée aux laboratoires de recherche ou aux films de science-fiction. Elle s'est discrètement immiscée dans notre vie quotidienne au point que nous en dépendons souvent sans le savoir. Des algorithmes de recommandation de Netflix aux assistants vocaux comme Siri ou Google Assistant, en passant par les systèmes de détection de fraude bancaire, l'IA est omniprésente.
+
+Ce déploiement massif soulève des questions fondamentales sur la société que nous voulons construire. D'un côté, l'IA promet des gains d'efficacité spectaculaires : en médecine, des algorithmes diagnostiquent certains cancers avec une précision supérieure à celle des radiologues humains. En agriculture, ils optimisent l'irrigation et réduisent le gaspillage de ressources. Dans le domaine judiciaire, certains pays utilisent des outils prédictifs pour évaluer le risque de récidive.
+
+De l'autre côté, ces avancées s'accompagnent de risques réels. Le biais algorithmique — la tendance des IA à reproduire et amplifier les préjugés présents dans leurs données d'entraînement — a été documenté dans de nombreux contextes. Des études ont montré que certains systèmes de reconnaissance faciale présentent des taux d'erreur significativement plus élevés pour les personnes à peau noire. Des algorithmes de recrutement ont été accusés de défavoriser les femmes.
+
+La question de la responsabilité juridique pose également problème : quand une IA prend une mauvaise décision médicale ou provoque un accident de voiture autonome, qui est responsable — le développeur, l'utilisateur, ou le fabricant ? Ces zones grises juridiques restent largement non résolues à ce jour.
+
+Face à ces défis, l'Union européenne a adopté en 2024 le premier cadre réglementaire mondial complet sur l'IA, l'AI Act. Ce texte interdit certaines applications jugées inacceptables, comme la notation sociale des citoyens ou la reconnaissance faciale dans les espaces publics. Il représente une tentative ambitieuse d'encadrer une technologie en évolution rapide tout en préservant l'innovation européenne.`,
+    wordMap: {
+      "confinée": { tr: "ограниченная (confiner)", pos: "adj" },
+      "discrètement": { tr: "незаметно", pos: "adverb" },
+      "immiscée": { tr: "проникла (s'immiscer)", pos: "verb" },
+      "quotidienne": { tr: "повседневный", pos: "adj" },
+      "dépendons": { tr: "зависим (dépendre)", pos: "verb" },
+      "algorithmes": { tr: "алгоритмы (algorithme)", pos: "noun" },
+      "recommandation": { tr: "рекомендация", pos: "noun" },
+      "détection": { tr: "обнаружение", pos: "noun" },
+      "fraude": { tr: "мошенничество", pos: "noun" },
+      "omniprésente": { tr: "вездесущий", pos: "adj" },
+      "déploiement": { tr: "развёртывание, распространение", pos: "noun" },
+      "soulève": { tr: "поднимает (soulever)", pos: "verb" },
+      "fondamentales": { tr: "фундаментальные", pos: "adj" },
+      "efficacité": { tr: "эффективность", pos: "noun" },
+      "spectaculaires": { tr: "впечатляющие", pos: "adj" },
+      "diagnostiquent": { tr: "диагностируют (diagnostiquer)", pos: "verb" },
+      "précision": { tr: "точность", pos: "noun" },
+      "radiologues": { tr: "рентгенологи (radiologue)", pos: "noun" },
+      "irrigation": { tr: "орошение", pos: "noun" },
+      "gaspillage": { tr: "расточительность, отходы", pos: "noun" },
+      "judiciaire": { tr: "судебный", pos: "adj" },
+      "prédictifs": { tr: "предсказательные", pos: "adj" },
+      "récidive": { tr: "рецидив", pos: "noun" },
+      "avancées": { tr: "достижения", pos: "noun" },
+      "biais": { tr: "предвзятость, смещение", pos: "noun" },
+      "algorithmique": { tr: "алгоритмический", pos: "adj" },
+      "amplifier": { tr: "усиливать", pos: "verb" },
+      "préjugés": { tr: "предрассудки (préjugé)", pos: "noun" },
+      "entraînement": { tr: "обучение (модели)", pos: "noun" },
+      "documenté": { tr: "задокументированный", pos: "adj" },
+      "reconnaissance": { tr: "распознавание; признание", pos: "noun" },
+      "significativement": { tr: "значительно", pos: "adverb" },
+      "recrutement": { tr: "набор персонала", pos: "noun" },
+      "défavoriser": { tr: "ставить в невыгодное положение", pos: "verb" },
+      "responsabilité": { tr: "ответственность", pos: "noun" },
+      "juridique": { tr: "юридический", pos: "adj" },
+      "autonome": { tr: "автономный, беспилотный", pos: "adj" },
+      "fabricant": { tr: "производитель", pos: "noun" },
+      "réglementaire": { tr: "нормативный, регуляторный", pos: "adj" },
+      "interdit": { tr: "запрещает (interdire)", pos: "verb" },
+      "inacceptables": { tr: "неприемлемые", pos: "adj" },
+      "notation": { tr: "рейтингование, оценка", pos: "noun" },
+      "citoyens": { tr: "граждане (citoyen)", pos: "noun" },
+      "tentative": { tr: "попытка", pos: "noun" },
+      "encadrer": { tr: "регулировать, ограничивать рамками", pos: "verb" },
+      "préservant": { tr: "сохраняя (préserver)", pos: "verb" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Selon le texte, quelle est la performance de l'IA dans le diagnostic du cancer ?",
+        options: [
+          "Elle est inférieure à celle des médecins",
+          "Elle est équivalente à celle des médecins",
+          "Elle est supérieure à celle des radiologues",
+          "Elle est encore au stade expérimental",
+        ],
+        correct: "Elle est supérieure à celle des radiologues",
+        explanation: "«des algorithmes diagnostiquent certains cancers avec une précision supérieure à celle des radiologues humains»",
+      },
+      {
+        id: "q2",
+        question: "Que désigne le « biais algorithmique » selon le texte ?",
+        options: [
+          "La lenteur des algorithmes dans le traitement des données",
+          "La tendance des IA à reproduire et amplifier les préjugés de leurs données",
+          "L'incapacité des IA à traiter les données en temps réel",
+          "Le coût excessif du développement des IA",
+        ],
+        correct: "La tendance des IA à reproduire et amplifier les préjugés de leurs données",
+        explanation: "«la tendance des IA à reproduire et amplifier les préjugés présents dans leurs données d'entraînement»",
+      },
+      {
+        id: "q3",
+        question: "Quelle application l'AI Act interdit-il explicitement ?",
+        options: [
+          "L'utilisation de l'IA dans les hôpitaux",
+          "La reconnaissance faciale dans les espaces publics",
+          "Les algorithmes de recommandation sur Internet",
+          "L'automatisation des chaînes de production",
+        ],
+        correct: "La reconnaissance faciale dans les espaces publics",
+        explanation: "«Il interdit certaines applications... comme la notation sociale des citoyens ou la reconnaissance faciale dans les espaces publics»",
+      },
+      {
+        id: "q4",
+        question: "Quel problème non résolu le texte souligne-t-il concernant l'IA ?",
+        options: [
+          "Le manque de données pour entraîner les modèles",
+          "La consommation énergétique excessive des IA",
+          "La question de la responsabilité juridique en cas d'erreur",
+          "L'incapacité des IA à comprendre le langage naturel",
+        ],
+        correct: "La question de la responsabilité juridique en cas d'erreur",
+        explanation: "«La question de la responsabilité juridique pose également problème... Ces zones grises juridiques restent largement non résolues»",
+      },
+      {
+        id: "q5",
+        question: "Vrai ou faux : Le texte affirme que l'AI Act est le premier cadre réglementaire mondial complet sur l'IA.",
+        options: ["Vrai", "Faux", "Non mentionné dans le texte"],
+        correct: "Vrai",
+        explanation: "«l'Union européenne a adopté en 2024 le premier cadre réglementaire mondial complet sur l'IA»",
+      },
+    ],
+  },
+
+  {
+    slug: 'b2-laicite-france',
+    title: 'La laïcité en France',
+    level: 'B2',
+    topic: 'societe',
+    estimatedMinutes: 7,
+    contentFr: `La laïcité est souvent présentée comme l'un des piliers fondateurs de la République française. Inscrite dans la loi de 1905 sur la séparation des Églises et de l'État, elle garantit la liberté de conscience et la neutralité de l'État en matière religieuse. Pourtant, ce principe, longtemps considéré comme consensuel, est aujourd'hui au cœur de vifs débats dans la société française.
+
+Historiquement, la laïcité a émergé d'un conflit profond entre l'Église catholique et l'État républicain au XIXe siècle. La loi de 1905 a mis fin au Concordat napoléonien et établi une séparation nette entre les institutions religieuses et les institutions publiques. Les agents de l'État doivent dès lors exercer leurs fonctions sans manifester leurs convictions religieuses, tandis que les citoyens jouissent d'une liberté totale dans leur vie privée.
+
+La question s'est complexifiée avec l'essor de l'islam en France, qui compte aujourd'hui entre cinq et six millions de musulmans, soit la deuxième communauté religieuse du pays. Des polémiques récurrentes autour du voile islamique à l'école, du halal dans les cantines scolaires ou de la construction de mosquées ont ravivé les tensions. Certains défenseurs d'une laïcité stricte voient dans toute manifestation religieuse dans l'espace public une remise en cause du modèle républicain.
+
+D'autres, en revanche, plaident pour une laïcité « ouverte » ou « inclusive », qui distinguerait plus clairement la neutralité de l'État de la liberté religieuse des individus. Ils font valoir que l'interdiction de signes religieux ostensibles dans les établissements scolaires publics, si elle s'applique à tous les cultes en théorie, frappe en pratique majoritairement les femmes musulmanes voilées.
+
+Ce débat révèle une tension plus profonde dans la société française : celle entre l'universalisme républicain — l'idée que la citoyenneté transcende les particularismes culturels ou religieux — et la reconnaissance croissante du pluralisme comme réalité sociale.`,
+    wordMap: {
+      "laïcité": { tr: "светскость, лаицизм", pos: "noun" },
+      "piliers": { tr: "столпы (pilier)", pos: "noun" },
+      "fondateurs": { tr: "основополагающие", pos: "adj" },
+      "inscrite": { tr: "закреплённая (inscrire)", pos: "adj" },
+      "séparation": { tr: "разделение", pos: "noun" },
+      "garantit": { tr: "гарантирует (garantir)", pos: "verb" },
+      "conscience": { tr: "совесть; сознание", pos: "noun" },
+      "neutralité": { tr: "нейтралитет", pos: "noun" },
+      "matière": { tr: "в области (en matière de)", pos: "noun" },
+      "consensuel": { tr: "консенсусный", pos: "adj" },
+      "vifs": { tr: "острые, живые", pos: "adj" },
+      "émergé": { tr: "возникла (émerger)", pos: "verb" },
+      "concordat": { tr: "конкордат", pos: "noun" },
+      "napoléonien": { tr: "наполеоновский", pos: "adj" },
+      "établi": { tr: "установил (établir)", pos: "verb" },
+      "nette": { tr: "чёткая, явная", pos: "adj" },
+      "agents": { tr: "сотрудники, агенты", pos: "noun" },
+      "manifester": { tr: "проявлять, манифестировать", pos: "verb" },
+      "convictions": { tr: "убеждения (conviction)", pos: "noun" },
+      "jouissent": { tr: "пользуются (jouir de)", pos: "verb" },
+      "complexifiée": { tr: "усложнилась", pos: "verb" },
+      "essor": { tr: "рост, развитие", pos: "noun" },
+      "islam": { tr: "ислам", pos: "noun" },
+      "musulmans": { tr: "мусульмане (musulman)", pos: "noun" },
+      "polémiques": { tr: "полемика, споры", pos: "noun" },
+      "récurrentes": { tr: "повторяющиеся", pos: "adj" },
+      "voile": { tr: "вуаль, хиджаб", pos: "noun" },
+      "halal": { tr: "халяль", pos: "adj" },
+      "cantines": { tr: "столовые (cantine)", pos: "noun" },
+      "mosquées": { tr: "мечети (mosquée)", pos: "noun" },
+      "ravivé": { tr: "возобновили (raviver)", pos: "verb" },
+      "défenseurs": { tr: "защитники (défenseur)", pos: "noun" },
+      "manifestation": { tr: "проявление; демонстрация", pos: "noun" },
+      "remise en cause": { tr: "оспаривание", pos: "noun" },
+      "plaident": { tr: "выступают за (plaider)", pos: "verb" },
+      "distinguerait": { tr: "различала бы (distinguer)", pos: "verb" },
+      "interdiction": { tr: "запрет", pos: "noun" },
+      "signes": { tr: "знаки (signe)", pos: "noun" },
+      "ostensibles": { tr: "демонстративные", pos: "adj" },
+      "établissements": { tr: "учреждения (établissement)", pos: "noun" },
+      "cultes": { tr: "культы, вероисповедания (culte)", pos: "noun" },
+      "révèle": { tr: "раскрывает (révéler)", pos: "verb" },
+      "universalisme": { tr: "универсализм", pos: "noun" },
+      "transcende": { tr: "преодолевает (transcender)", pos: "verb" },
+      "particularismes": { tr: "особенности, партикуляризм", pos: "noun" },
+      "pluralisme": { tr: "плюрализм", pos: "noun" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Quelle est l'origine historique de la laïcité en France ?",
+        options: [
+          "Elle vient de la Révolution française de 1789",
+          "Elle résulte d'un conflit entre l'Église et l'État au XIXe siècle",
+          "Elle a été introduite après la Seconde Guerre mondiale",
+          "Elle est une création des philosophes des Lumières",
+        ],
+        correct: "Elle résulte d'un conflit entre l'Église et l'État au XIXe siècle",
+        explanation: "«la laïcité a émergé d'un conflit profond entre l'Église catholique et l'État républicain au XIXe siècle»",
+      },
+      {
+        id: "q2",
+        question: "Quelle obligation s'impose aux agents de l'État selon le texte ?",
+        options: [
+          "Déclarer leur appartenance religieuse",
+          "Ne pas manifester leurs convictions religieuses dans leurs fonctions",
+          "Pratiquer obligatoirement une religion",
+          "Participer aux célébrations religieuses nationales",
+        ],
+        correct: "Ne pas manifester leurs convictions religieuses dans leurs fonctions",
+        explanation: "«Les agents de l'État doivent exercer leurs fonctions sans manifester leurs convictions religieuses»",
+      },
+      {
+        id: "q3",
+        question: "Quelle critique les partisans d'une laïcité « ouverte » formulent-ils ?",
+        options: [
+          "La loi de 1905 est trop favorable aux religions",
+          "L'interdiction des signes religieux touche en pratique surtout les femmes musulmanes",
+          "La laïcité nuit à l'identité culturelle française",
+          "Le nombre de musulmans en France est surestimé",
+        ],
+        correct: "L'interdiction des signes religieux touche en pratique surtout les femmes musulmanes",
+        explanation: "«frappe en pratique majoritairement les femmes musulmanes voilées»",
+      },
+      {
+        id: "q4",
+        question: "Quelle tension profonde le débat sur la laïcité révèle-t-il ?",
+        options: [
+          "Entre droite et gauche politique",
+          "Entre la France et ses voisins européens",
+          "Entre l'universalisme républicain et la reconnaissance du pluralisme",
+          "Entre les générations plus jeunes et plus âgées",
+        ],
+        correct: "Entre l'universalisme républicain et la reconnaissance du pluralisme",
+        explanation: "«entre l'universalisme républicain... et la reconnaissance croissante du pluralisme»",
+      },
+      {
+        id: "q5",
+        question: "Vrai, faux, ou non mentionné : L'islam est la première communauté religieuse de France.",
+        options: ["Vrai", "Faux", "Non mentionné dans le texte"],
+        correct: "Faux",
+        explanation: "Le texte précise que l'islam est «la deuxième communauté religieuse du pays»",
+      },
+    ],
+  },
+
+  {
+    slug: 'b2-tourisme-durable',
+    title: 'Le tourisme durable',
+    level: 'B2',
+    topic: 'environnement',
+    estimatedMinutes: 6,
+    contentFr: `Avec 2,1 milliards de voyages internationaux effectués en 2023 — un record historique —, le secteur touristique mondial s'interroge sur sa trajectoire. Le tourisme représente environ 8 % des émissions mondiales de gaz à effet de serre, dont une large part est imputable au transport aérien. Face à ce constat, un nouveau paradigme émerge : le tourisme durable, ou éco-tourisme, qui cherche à concilier le désir de découverte avec la préservation des écosystèmes et le respect des communautés locales.
+
+Le modèle traditionnel du tourisme de masse a montré ses limites de façon spectaculaire ces dernières années. À Venise, Barcelone ou Dubrovnik, les habitants se révoltent contre la surtourisme : commerces de proximité remplacés par des boutiques de souvenirs, loyers inaccessibles, patrimoine historique dégradé par des flux de visiteurs incontrôlables. Le phénomène de « venise-isation » des centres historiques est désormais documenté dans des dizaines de villes à travers le monde.
+
+Le tourisme durable propose une alternative fondée sur plusieurs principes. D'abord, réduire l'empreinte carbone en privilégiant des modes de transport moins polluants : train plutôt qu'avion pour les trajets européens, ou compensation carbone pour les longs voyages. Ensuite, favoriser les hébergements locaux et indépendants plutôt que les grands groupes hôteliers internationaux, afin que l'argent des touristes bénéficie effectivement aux économies locales. Enfin, limiter la durée et intensifier la qualité : voyager moins souvent mais de façon plus immersive et respectueuse.
+
+Des certifications comme l'écolabel européen ou le label « Rainforest Alliance » tentent de guider les voyageurs vers des prestataires responsables. Cependant, le risque de greenwashing est réel : certaines entreprises affichent des valeurs environnementales sans réellement modifier leurs pratiques.
+
+La question de l'équité se pose également : le tourisme durable, souvent plus coûteux, reste largement accessible aux seules classes aisées. Démocratiser ces pratiques sans pour autant augmenter le volume global des voyages constitue l'un des défis majeurs de la décennie.`,
+    wordMap: {
+      "milliards": { tr: "миллиарды (milliard)", pos: "noun" },
+      "internationaux": { tr: "международные", pos: "adj" },
+      "effectués": { tr: "совершённые (effectuer)", pos: "adj" },
+      "trajectoire": { tr: "траектория, курс", pos: "noun" },
+      "émissions": { tr: "выбросы (émission)", pos: "noun" },
+      "gaz à effet de serre": { tr: "парниковые газы", pos: "noun" },
+      "imputable": { tr: "приписываемый", pos: "adj" },
+      "aérien": { tr: "воздушный, авиационный", pos: "adj" },
+      "paradigme": { tr: "парадигма", pos: "noun" },
+      "émerge": { tr: "возникает (émerger)", pos: "verb" },
+      "concilier": { tr: "согласовать, примирить", pos: "verb" },
+      "découverte": { tr: "открытие", pos: "noun" },
+      "préservation": { tr: "сохранение", pos: "noun" },
+      "écosystèmes": { tr: "экосистемы (écosystème)", pos: "noun" },
+      "communautés": { tr: "сообщества (communauté)", pos: "noun" },
+      "masse": { tr: "масса; в массе", pos: "noun" },
+      "surtourisme": { tr: "сверхтуризм, overtourism", pos: "noun" },
+      "commerces": { tr: "магазины (commerce)", pos: "noun" },
+      "proximité": { tr: "близость; рядом", pos: "noun" },
+      "souvenirs": { tr: "сувениры (souvenir)", pos: "noun" },
+      "loyers": { tr: "аренда (loyer)", pos: "noun" },
+      "patrimoine": { tr: "наследие", pos: "noun" },
+      "dégradé": { tr: "деградированный (dégrader)", pos: "adj" },
+      "flux": { tr: "потоки (flux)", pos: "noun" },
+      "incontrôlables": { tr: "неконтролируемые", pos: "adj" },
+      "empreinte": { tr: "след, отпечаток", pos: "noun" },
+      "carbone": { tr: "углерод, углеродный", pos: "noun" },
+      "privilégiant": { tr: "отдавая предпочтение (privilégier)", pos: "verb" },
+      "polluants": { tr: "загрязняющие", pos: "adj" },
+      "trajets": { tr: "маршруты (trajet)", pos: "noun" },
+      "compensation": { tr: "компенсация", pos: "noun" },
+      "hébergements": { tr: "жильё, размещение", pos: "noun" },
+      "indépendants": { tr: "независимые", pos: "adj" },
+      "hôteliers": { tr: "гостиничные", pos: "adj" },
+      "bénéficie": { tr: "выигрывает (bénéficier)", pos: "verb" },
+      "immersive": { tr: "погружающий, иммерсивный", pos: "adj" },
+      "certifications": { tr: "сертификаты (certification)", pos: "noun" },
+      "écolabel": { tr: "экомаркировка", pos: "noun" },
+      "prestataires": { tr: "поставщики услуг (prestataire)", pos: "noun" },
+      "greenwashing": { tr: "гринвошинг (экологический обман)", pos: "noun" },
+      "équité": { tr: "справедливость, равенство", pos: "noun" },
+      "aisées": { tr: "состоятельные", pos: "adj" },
+      "démocratiser": { tr: "демократизировать", pos: "verb" },
+      "décennie": { tr: "десятилетие", pos: "noun" },
+    },
+    questions: [
+      {
+        id: "q1",
+        question: "Quelle part des émissions mondiales de CO2 le tourisme représente-t-il ?",
+        options: ["Environ 2 %", "Environ 5 %", "Environ 8 %", "Environ 15 %"],
+        correct: "Environ 8 %",
+        explanation: "«Le tourisme représente environ 8 % des émissions mondiales de gaz à effet de serre»",
+      },
+      {
+        id: "q2",
+        question: "Que désigne le phénomène de « venise-isation » selon le texte ?",
+        options: [
+          "La transformation des villes grâce au tourisme culturel",
+          "La dégradation des centres historiques due au surtourisme",
+          "La politique de préservation du patrimoine à Venise",
+          "L'interdiction des bateaux de croisière dans les ports",
+        ],
+        correct: "La dégradation des centres historiques due au surtourisme",
+        explanation: "«Le phénomène de 'venise-isation' des centres historiques est désormais documenté dans des dizaines de villes»",
+      },
+      {
+        id: "q3",
+        question: "Selon le texte, pourquoi vaut-il mieux choisir des hébergements locaux ?",
+        options: [
+          "Parce qu'ils sont moins chers que les hôtels internationaux",
+          "Parce qu'ils offrent une meilleure qualité de service",
+          "Pour que l'argent des touristes bénéficie aux économies locales",
+          "Pour réduire son empreinte carbone",
+        ],
+        correct: "Pour que l'argent des touristes bénéficie aux économies locales",
+        explanation: "«afin que l'argent des touristes bénéficie effectivement aux économies locales»",
+      },
+      {
+        id: "q4",
+        question: "Quel problème de justice sociale le texte soulève-t-il ?",
+        options: [
+          "Le tourisme durable est inaccessible aux classes défavorisées",
+          "Les certifications favorisent les grandes entreprises",
+          "Le greenwashing nuit aux voyageurs honnêtes",
+          "Les pays pauvres ne profitent pas du tourisme",
+        ],
+        correct: "Le tourisme durable est inaccessible aux classes défavorisées",
+        explanation: "«le tourisme durable, souvent plus coûteux, reste largement accessible aux seules classes aisées»",
+      },
+      {
+        id: "q5",
+        question: "Vrai, faux ou non mentionné : Le texte recommande d'arrêter complètement les voyages en avion.",
+        options: ["Vrai", "Faux", "Non mentionné dans le texte"],
+        correct: "Faux",
+        explanation: "Le texte suggère de préférer le train ou de compenser le carbone pour les longs voyages, sans recommander un arrêt total.",
+      },
+    ],
+  },
+];
