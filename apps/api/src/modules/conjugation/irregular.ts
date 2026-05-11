@@ -309,7 +309,7 @@ export const IRREGULAR_VERBS: Record<string, TenseSet> = {
     passeCompose: ['ai suivi', 'as suivi', 'a suivi', 'avons suivi', 'avez suivi', 'ont suivi'],
     imparfait:    ['suivais', 'suivais', 'suivait', 'suivions', 'suiviez', 'suivaient'],
     futurSimple:  ['suivrai', 'suivras', 'suivra', 'suivrons', 'suivrez', 'suivront'],
-    conditionnel: ['suivrais', 'suivrais', 'suivrait', 'suivrions', 'suiviez', 'suivraient'],
+    conditionnel: ['suivrais', 'suivrais', 'suivrait', 'suivrions', 'suivriez', 'suivraient'],
     subjonctif:   ['suive', 'suives', 'suive', 'suivions', 'suiviez', 'suivent'],
     imperatif:    ['suis', 'suivons', 'suivez'],
   },

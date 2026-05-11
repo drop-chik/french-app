@@ -191,4 +191,73 @@ describe('IRREGULAR_VERBS table integrity', () => {
       expect(have, `missing irregular: ${v}`).toContain(v);
     }
   });
+
+  // ── Structural validation: every conjugation table must respect the
+  //    canonical endings for each tense, otherwise we know there's a typo.
+
+  it('imparfait endings are always -ais / -ais / -ait / -ions / -iez / -aient', () => {
+    for (const name of listIrregularVerbs()) {
+      const t = conjugate(name)!.tenses.imparfait;
+      expect(t[0].endsWith('ais'),    `${name} imparfait je`).toBe(true);
+      expect(t[1].endsWith('ais'),    `${name} imparfait tu`).toBe(true);
+      expect(t[2].endsWith('ait'),    `${name} imparfait il`).toBe(true);
+      expect(t[3].endsWith('ions'),   `${name} imparfait nous`).toBe(true);
+      expect(t[4].endsWith('iez'),    `${name} imparfait vous`).toBe(true);
+      expect(t[5].endsWith('aient'),  `${name} imparfait ils`).toBe(true);
+    }
+  });
+
+  it('futur simple endings are always -ai / -as / -a / -ons / -ez / -ont', () => {
+    for (const name of listIrregularVerbs()) {
+      const t = conjugate(name)!.tenses.futurSimple;
+      expect(t[0].endsWith('ai'),  `${name} futur je`).toBe(true);
+      expect(t[1].endsWith('as'),  `${name} futur tu`).toBe(true);
+      expect(t[2].endsWith('a'),   `${name} futur il`).toBe(true);
+      expect(t[3].endsWith('ons'), `${name} futur nous`).toBe(true);
+      expect(t[4].endsWith('ez'),  `${name} futur vous`).toBe(true);
+      expect(t[5].endsWith('ont'), `${name} futur ils`).toBe(true);
+    }
+  });
+
+  it('conditionnel endings are always -ais / -ais / -ait / -ions / -iez / -aient', () => {
+    for (const name of listIrregularVerbs()) {
+      const t = conjugate(name)!.tenses.conditionnel;
+      expect(t[0].endsWith('ais'),    `${name} cond je`).toBe(true);
+      expect(t[1].endsWith('ais'),    `${name} cond tu`).toBe(true);
+      expect(t[2].endsWith('ait'),    `${name} cond il`).toBe(true);
+      expect(t[3].endsWith('ions'),   `${name} cond nous`).toBe(true);
+      expect(t[4].endsWith('iez'),    `${name} cond vous`).toBe(true);
+      expect(t[5].endsWith('aient'),  `${name} cond ils`).toBe(true);
+    }
+  });
+
+  it('conditionnel and futur share the same stem in every person', () => {
+    // Each pair (futur_person, cond_person) must share the same stem.
+    // Drop the canonical ending from each form and compare.
+    const futurEndings = ['ai', 'as', 'a', 'ons', 'ez', 'ont'];
+    const condEndings  = ['ais', 'ais', 'ait', 'ions', 'iez', 'aient'];
+    for (const name of listIrregularVerbs()) {
+      const fut = conjugate(name)!.tenses.futurSimple;
+      const cond = conjugate(name)!.tenses.conditionnel;
+      for (let i = 0; i < 6; i++) {
+        const stemFut  = fut[i]!.slice(0, -futurEndings[i]!.length);
+        const stemCond = cond[i]!.slice(0, -condEndings[i]!.length);
+        expect(stemCond, `${name} cond[${i}] (${cond[i]}) stem must match futur[${i}] (${fut[i]})`).toBe(stemFut);
+      }
+    }
+  });
+
+  it('subjonctif present endings are always -e / -es / -e / -ions / -iez / -ent (with avoir/être exceptions)', () => {
+    const exceptions = new Set(['avoir', 'être']); // aie, sois etc.
+    for (const name of listIrregularVerbs()) {
+      if (exceptions.has(name)) continue;
+      const t = conjugate(name)!.tenses.subjonctif;
+      expect(t[0].endsWith('e'),    `${name} subj je`).toBe(true);
+      expect(t[1].endsWith('es'),   `${name} subj tu`).toBe(true);
+      expect(t[2].endsWith('e'),    `${name} subj il`).toBe(true);
+      expect(t[3].endsWith('ions'), `${name} subj nous`).toBe(true);
+      expect(t[4].endsWith('iez'),  `${name} subj vous`).toBe(true);
+      expect(t[5].endsWith('ent'),  `${name} subj ils`).toBe(true);
+    }
+  });
 });
