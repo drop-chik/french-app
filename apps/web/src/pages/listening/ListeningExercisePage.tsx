@@ -176,15 +176,28 @@ export function ListeningExercisePage({ id }: Props) {
     }
   }, [audioReady, playbackRate]);
 
-  // Split transcript into sentences once; each sentence gets a fractional
-  // start time based on its index (we don't have real per-sentence timestamps,
-  // but evenly distributing the duration is close enough for jump-to navigation).
+  // Split transcript into sentences once. Each sentence gets a fractional
+  // start time *weighted by word count*, not by index — long sentences take
+  // longer to read than short ones. This is still an approximation (we don't
+  // have real per-sentence timestamps), but it's much closer than uniform
+  // division. A small lead-in offset on jump compensates for the residual error.
   const sentences = useMemo(() => exercise ? splitSentences(exercise.transcript) : [], [exercise]);
   const sentenceTimes = useMemo(() => {
     if (!exercise || sentences.length === 0) return [] as number[];
     const total = duration || exercise.durationSec;
-    return sentences.map((_, i) => (i / sentences.length) * total);
+    const wordCounts = sentences.map((s) => s.split(/\s+/).filter(Boolean).length || 1);
+    const totalWords = wordCounts.reduce((a, b) => a + b, 0);
+    const out: number[] = [];
+    let acc = 0;
+    for (let i = 0; i < sentences.length; i++) {
+      out.push((acc / totalWords) * total);
+      acc += wordCounts[i] ?? 1;
+    }
+    return out;
   }, [sentences, duration, exercise]);
+  // Tiny lead-in: jump 0.4s earlier than the estimate so we don't miss the
+  // first syllable when the estimate is slightly late.
+  const JUMP_LEAD_SEC = 0.4;
 
   // Which sentence is currently being read (by clock position)
   const activeSentenceIdx = useMemo(() => {
@@ -201,8 +214,9 @@ export function ListeningExercisePage({ id }: Props) {
     const audio = audioRef.current;
     const t = sentenceTimes[idx];
     if (!audio || t === undefined) return;
-    audio.currentTime = t;
-    setCurrentTime(t);
+    const target = Math.max(0, t - JUMP_LEAD_SEC);
+    audio.currentTime = target;
+    setCurrentTime(target);
     if (!isPlaying) {
       audio.play().catch(() => null);
       setIsPlaying(true);
