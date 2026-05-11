@@ -12,6 +12,10 @@
  *   pnpm --filter @french-app/api streak-reminder
  *
  * Required env: DATABASE_URL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
+ *
+ * Debug: set STREAK_REMINDER_DEBUG=1 to bypass the date filter and push to
+ * every user with at least one push subscription. Useful as a one-off test
+ * after deployment — unset (or remove) for normal cron runs.
  */
 import 'dotenv/config';
 import { sql } from 'drizzle-orm';
@@ -24,29 +28,34 @@ interface CandidateRow {
   [key: string]: unknown;
 }
 
-const startedAt = Date.now();
-console.log(`[streak-reminder] start at ${new Date().toISOString()}`);
+const debug = process.env['STREAK_REMINDER_DEBUG'] === '1';
 
-// One query: users with at least one push subscription, who studied yesterday
-// (UTC) but not today. That's exactly the population whose streak is alive and
-// about to break if they don't open the app.
-const candidates = await db.execute<CandidateRow>(sql`
-  SELECT u.id, u.name
-  FROM users u
-  WHERE EXISTS (
-    SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = u.id
-  )
-  AND EXISTS (
-    SELECT 1 FROM word_progress wp
-    WHERE wp.user_id = u.id
-      AND DATE(wp.last_reviewed AT TIME ZONE 'UTC') = (CURRENT_DATE AT TIME ZONE 'UTC') - INTERVAL '1 day'
-  )
-  AND NOT EXISTS (
-    SELECT 1 FROM word_progress wp
-    WHERE wp.user_id = u.id
-      AND DATE(wp.last_reviewed AT TIME ZONE 'UTC') = (CURRENT_DATE AT TIME ZONE 'UTC')
-  )
-`);
+const startedAt = Date.now();
+console.log(`[streak-reminder] start at ${new Date().toISOString()}${debug ? ' (DEBUG mode — all subscribed users)' : ''}`);
+
+const candidates = debug
+  ? await db.execute<CandidateRow>(sql`
+      SELECT DISTINCT u.id, u.name
+      FROM users u
+      JOIN push_subscriptions ps ON ps.user_id = u.id
+    `)
+  : await db.execute<CandidateRow>(sql`
+      SELECT u.id, u.name
+      FROM users u
+      WHERE EXISTS (
+        SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = u.id
+      )
+      AND EXISTS (
+        SELECT 1 FROM word_progress wp
+        WHERE wp.user_id = u.id
+          AND DATE(wp.last_reviewed AT TIME ZONE 'UTC') = (CURRENT_DATE AT TIME ZONE 'UTC') - INTERVAL '1 day'
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM word_progress wp
+        WHERE wp.user_id = u.id
+          AND DATE(wp.last_reviewed AT TIME ZONE 'UTC') = (CURRENT_DATE AT TIME ZONE 'UTC')
+      )
+    `);
 
 const rows = (candidates as { rows: CandidateRow[] }).rows ?? [];
 console.log(`[streak-reminder] candidates: ${rows.length}`);
