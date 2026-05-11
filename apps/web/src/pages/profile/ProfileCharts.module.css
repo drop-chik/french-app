@@ -3,6 +3,7 @@
   --chart-incorrect: #ef4444;
   --chart-line: #6366f1;
   --chart-area: rgba(99, 102, 241, 0.12);
+  --cell: 12px;
 }
 
 .charts {
@@ -32,28 +33,55 @@
   padding: var(--space-4) 0;
 }
 
-/* Activity heatmap */
+/* ── GitHub-style heatmap ── */
 .heatmapWrapper {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
+.heatmapOuter {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+/* Day-of-week labels (Mon, Wed, Fri) */
+.heatmapDayLabels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.heatmapDayLabel {
+  height: var(--cell);
+  font-size: 8px;
+  line-height: var(--cell);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  white-space: nowrap;
+  text-align: right;
+  min-width: 14px;
+}
+
+/* Grid: rows = days of week, columns auto-generated per week */
 .heatmapGrid {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 4px;
+  grid-template-rows: repeat(7, var(--cell));
+  grid-auto-flow: column;
+  gap: 3px;
 }
 
 .heatmapCell {
-  aspect-ratio: 1;
-  border-radius: 3px;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 2px;
   transition: opacity 0.1s;
 }
 
-.heatmapCell:hover {
-  opacity: 0.75;
-}
+.heatmapCell:hover { opacity: 0.75; }
 
 .heatmapCellToday {
   box-shadow: 0 0 0 2px var(--color-brand);
@@ -61,14 +89,12 @@
 
 .heatmapMeta {
   font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
   margin: 0;
 }
 
-/* SVG charts */
-.svgWrapper {
-  width: 100%;
-}
+/* ── SVG charts ── */
+.svgWrapper { width: 100%; }
 
 .svg {
   width: 100%;
@@ -78,9 +104,9 @@
 }
 
 /* Activity bars */
-.barCorrect { fill: var(--chart-correct); opacity: 0.85; }
+.barCorrect   { fill: var(--chart-correct); opacity: 0.85; }
 .barIncorrect { fill: var(--chart-incorrect); opacity: 0.7; }
-.barEmpty { fill: var(--color-border); }
+.barEmpty     { fill: var(--color-border); }
 
 .barLabels {
   display: flex;
@@ -113,15 +139,25 @@
   color: var(--color-text-secondary);
 }
 
-/* Line chart */
+/* ── Accuracy line chart ── */
 .gridLine {
   stroke: var(--color-border);
   stroke-width: 0.5;
 }
 
-.areaFill {
-  fill: var(--chart-area);
+.avgLine {
+  stroke: var(--color-text-tertiary, var(--color-text-secondary));
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.6;
 }
+
+.avgLabel {
+  font-size: 8px;
+  fill: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+.areaFill { fill: var(--chart-area); }
 
 .linePath {
   stroke: var(--chart-line);
@@ -130,9 +166,7 @@
   stroke-linecap: round;
 }
 
-.linePoint {
-  fill: var(--chart-line);
-}
+.linePoint { fill: var(--chart-line); }
 
 .pointLabel {
   font-size: 9px;
@@ -150,7 +184,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Donut */
+/* ── Donut ── */
 .donutWrapper {
   display: flex;
   align-items: center;
@@ -167,9 +201,7 @@
   transition: opacity 0.15s;
 }
 
-.donutSlice:hover {
-  opacity: 0.8;
-}
+.donutSlice:hover { opacity: 0.8; }
 
 .donutTotal {
   font-size: 18px;

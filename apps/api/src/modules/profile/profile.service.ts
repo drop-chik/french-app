@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { eq, count, sql, gte, and, asc, inArray } from 'drizzle-orm';
+import { eq, count, sql, gte, lt, and, asc, inArray } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, words, wordProgress, grammarTopics, grammarProgress, listeningExercises, listeningProgress, conversationSessions } from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
@@ -136,11 +136,35 @@ export async function getStats(db: DB, userId: string) {
     .from(conversationSessions)
     .where(eq(conversationSessions.userId, userId));
 
-  // Correct answers total
-  const [correctResult] = await db
-    .select({ total: sql<number>`coalesce(sum(${wordProgress.correctCount}), 0)` })
-    .from(wordProgress)
-    .where(eq(wordProgress.userId, userId));
+  // Correct / incorrect answers total
+  const [[correctResult], [incorrectResult]] = await Promise.all([
+    db.select({ total: sql<number>`coalesce(sum(${wordProgress.correctCount}), 0)` })
+      .from(wordProgress).where(eq(wordProgress.userId, userId)),
+    db.select({ total: sql<number>`coalesce(sum(${wordProgress.incorrectCount}), 0)` })
+      .from(wordProgress).where(eq(wordProgress.userId, userId)),
+  ]);
+
+  // Weekly trend: words reviewed this week vs previous week
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  const [thisWeekResult, lastWeekResult] = await Promise.all([
+    db.select({ cnt: count() }).from(wordProgress)
+      .where(and(eq(wordProgress.userId, userId), gte(wordProgress.lastReviewed, weekAgo))),
+    db.select({ cnt: count() }).from(wordProgress)
+      .where(and(
+        eq(wordProgress.userId, userId),
+        gte(wordProgress.lastReviewed, twoWeeksAgo),
+        lt(wordProgress.lastReviewed, weekAgo),
+      )),
+  ]);
+
+  const thisWeek = Number(thisWeekResult[0]?.cnt ?? 0);
+  const lastWeek = Number(lastWeekResult[0]?.cnt ?? 0);
+  const weekTrend: number | null = lastWeek > 0
+    ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100)
+    : (thisWeek > 0 ? 100 : null);
 
   return {
     words: {
@@ -158,6 +182,9 @@ export async function getStats(db: DB, userId: string) {
     },
     conversations: Number(convResult?.total ?? 0),
     correctAnswers: Number(correctResult?.total ?? 0),
+    incorrectAnswers: Number(incorrectResult?.total ?? 0),
+    weekReviews: thisWeek,
+    weekTrend,
   };
 }
 
@@ -279,10 +306,10 @@ export async function repairStreak(db: DB, userId: string): Promise<{ ok: boolea
   return { ok: true, newStreak: savedStreak };
 }
 
-// Charts data: last 30 days of activity
+// Charts data: last 90 days of activity
 export async function getCharts(db: DB, userId: string) {
   const since = new Date();
-  since.setDate(since.getDate() - 29);
+  since.setDate(since.getDate() - 89);
   since.setHours(0, 0, 0, 0);
 
   // Daily reviews: group by date of lastReviewed
@@ -302,11 +329,11 @@ export async function getCharts(db: DB, userId: string) {
     )
     .groupBy(sql`to_char(${wordProgress.lastReviewed}, 'YYYY-MM-DD')`);
 
-  // Build 30-day array
+  // Build 90-day array
   const activityMap = new Map(reviewRows.map((r) => [r.day, r]));
   const activity: Array<{ date: string; reviewed: number; correct: number; incorrect: number }> = [];
 
-  for (let i = 29; i >= 0; i--) {
+  for (let i = 89; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);

@@ -16,12 +16,11 @@ export function ProfileCharts() {
 
   const { activity, statusBreakdown, weekly } = data;
   const hasActivity = activity.some((d) => d.reviewed > 0);
-
   const activeDays = activity.filter((d) => d.reviewed > 0).length;
 
   return (
     <div className={styles.charts}>
-      {/* Activity heatmap */}
+      {/* Activity heatmap — GitHub-style 90 days */}
       <div className={styles.chartCard}>
         <h3 className={styles.chartTitle}>{t.profile.chartHeatmap}</h3>
         <ActivityHeatmap activity={activity} activeDays={activeDays} t={t} />
@@ -56,28 +55,71 @@ export function ProfileCharts() {
   );
 }
 
-// ---- Activity heatmap (30 days calendar grid) ----
-function ActivityHeatmap({ activity, activeDays, t }: { activity: { date: string; reviewed: number }[]; activeDays: number; t: any }) {
-  function getColor(reviewed: number): string {
-    if (reviewed === 0) return 'var(--color-bg-tertiary)';
-    if (reviewed <= 5) return 'rgba(249,115,22,0.3)';
-    if (reviewed <= 20) return 'rgba(249,115,22,0.65)';
-    return 'var(--color-brand)';
+// ── GitHub-style 90-day activity heatmap ─────────────────────────────────────
+
+const DAYS_SHORT = ['', 'Пн', '', 'Ср', '', 'Пт', ''];
+
+function getHeatColor(reviewed: number): string {
+  if (reviewed === 0) return 'var(--color-border)';
+  if (reviewed <= 3)  return 'rgba(249,115,22,0.25)';
+  if (reviewed <= 10) return 'rgba(249,115,22,0.55)';
+  if (reviewed <= 25) return 'rgba(249,115,22,0.80)';
+  return 'var(--color-brand)';
+}
+
+function ActivityHeatmap({
+  activity,
+  activeDays,
+  t,
+}: {
+  activity: { date: string; reviewed: number }[];
+  activeDays: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: any;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Determine the day-of-week for the first activity entry (Mon=0 … Sun=6)
+  const firstDate = new Date(activity[0]!.date + 'T12:00:00');
+  const firstDow = (firstDate.getDay() + 6) % 7; // convert Sun=0 to Mon=0
+
+  // Pad the start so the first real cell lands on the correct weekday
+  const cells: ({ date: string; reviewed: number } | null)[] = [
+    ...Array<null>(firstDow).fill(null),
+    ...activity,
+  ];
+
+  // Pad the end to complete the last week
+  const remainder = cells.length % 7;
+  if (remainder > 0) {
+    for (let i = 0; i < 7 - remainder; i++) cells.push(null);
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const numWeeks = cells.length / 7;
 
   return (
     <div className={styles.heatmapWrapper}>
-      <div className={styles.heatmapGrid}>
-        {activity.map((d) => (
-          <div
-            key={d.date}
-            className={`${styles.heatmapCell} ${d.date === today ? styles.heatmapCellToday : ''}`}
-            style={{ background: getColor(d.reviewed) }}
-            title={`${d.date}: ${d.reviewed} ${t.profile.heatmapWords}`}
-          />
-        ))}
+      <div className={styles.heatmapOuter}>
+        {/* Day-of-week labels */}
+        <div className={styles.heatmapDayLabels}>
+          {DAYS_SHORT.map((d, i) => (
+            <span key={i} className={styles.heatmapDayLabel}>{d}</span>
+          ))}
+        </div>
+        {/* Grid */}
+        <div
+          className={styles.heatmapGrid}
+          style={{ gridTemplateColumns: `repeat(${numWeeks}, var(--cell))` }}
+        >
+          {cells.map((d, i) => (
+            <div
+              key={i}
+              className={`${styles.heatmapCell} ${d?.date === today ? styles.heatmapCellToday : ''}`}
+              style={{ background: d ? getHeatColor(d.reviewed) : 'transparent' }}
+              title={d ? `${d.date}: ${d.reviewed} ${t.profile.heatmapWords}` : ''}
+            />
+          ))}
+        </div>
       </div>
       <p className={styles.heatmapMeta}>
         {String(t.profile.heatmapActive).replace('{n}', String(activeDays))}
@@ -86,16 +128,21 @@ function ActivityHeatmap({ activity, activeDays, t }: { activity: { date: string
   );
 }
 
-// ---- Activity bar chart (30 days) ----
-function ActivityChart({ activity, t }: { activity: { date: string; reviewed: number; correct: number; incorrect: number }[]; t: any }) {
+// ── Activity bar chart (90 days) ─────────────────────────────────────────────
+
+function ActivityChart({
+  activity,
+  t,
+}: {
+  activity: { date: string; reviewed: number; correct: number; incorrect: number }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: any;
+}) {
   const maxVal = Math.max(...activity.map((d) => d.reviewed), 1);
   const chartH = 80;
-  const barW = 8;
-  const gap = 3;
+  const barW = 5;
+  const gap = 2;
   const totalW = activity.length * (barW + gap) - gap;
-
-  // Show only every 5th label
-  const labelDates = activity.filter((_, i) => i % 5 === 0 || i === activity.length - 1);
 
   return (
     <div className={styles.svgWrapper}>
@@ -107,23 +154,14 @@ function ActivityChart({ activity, t }: { activity: { date: string; reviewed: nu
           const incorrectH = barH - correctH;
           return (
             <g key={d.date}>
-              {/* Incorrect (bottom part) */}
               {incorrectH > 0 && (
-                <rect
-                  x={x} y={chartH - barH} width={barW} height={incorrectH}
-                  className={styles.barIncorrect}
-                  rx={barW / 4}
-                />
+                <rect x={x} y={chartH - barH} width={barW} height={incorrectH}
+                  className={styles.barIncorrect} rx={1} />
               )}
-              {/* Correct (top part) */}
               {correctH > 0 && (
-                <rect
-                  x={x} y={chartH - barH + incorrectH} width={barW} height={correctH}
-                  className={styles.barCorrect}
-                  rx={barW / 4}
-                />
+                <rect x={x} y={chartH - barH + incorrectH} width={barW} height={correctH}
+                  className={styles.barCorrect} rx={1} />
               )}
-              {/* Empty bar placeholder */}
               {d.reviewed === 0 && (
                 <rect x={x} y={chartH - 2} width={barW} height={2} className={styles.barEmpty} rx={1} />
               )}
@@ -131,14 +169,12 @@ function ActivityChart({ activity, t }: { activity: { date: string; reviewed: nu
           );
         })}
       </svg>
-      {/* Date labels */}
       <div className={styles.barLabels}>
         {activity.map((d, i) => {
-          const showLabel = i % 7 === 0 || i === activity.length - 1;
-          const label = showLabel ? d.date.slice(5) : ''; // MM-DD
+          const showLabel = i % 14 === 0 || i === activity.length - 1;
           return (
             <span key={d.date} className={styles.barLabel} style={{ flex: 1, textAlign: 'center' }}>
-              {label}
+              {showLabel ? d.date.slice(5) : ''}
             </span>
           );
         })}
@@ -153,47 +189,57 @@ function ActivityChart({ activity, t }: { activity: { date: string; reviewed: nu
   );
 }
 
-// ---- Weekly accuracy line chart ----
-function AccuracyChart({ weekly, t }: { weekly: { week: string; accuracy: number; correct: number; incorrect: number }[]; t: any }) {
+// ── Weekly accuracy line chart ────────────────────────────────────────────────
+
+function AccuracyChart({
+  weekly,
+  t,
+}: {
+  weekly: { week: string; accuracy: number; correct: number; incorrect: number }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: any;
+}) {
   const W = 280;
   const H = 80;
   const pad = 10;
 
   if (weekly.length === 0) return <p className={styles.empty}>{t.profile.chartNoData}</p>;
 
+  const avgAccuracy = Math.round(weekly.reduce((s, w) => s + w.accuracy, 0) / weekly.length);
+
   const pts = weekly.map((w, i) => ({
     x: weekly.length === 1 ? W / 2 : pad + (i / (weekly.length - 1)) * (W - pad * 2),
     y: H - pad - (w.accuracy / 100) * (H - pad * 2),
     acc: w.accuracy,
     week: w.week,
-    correct: w.correct,
-    incorrect: w.incorrect,
   }));
 
   const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const areaD = `${pathD} L${pts[pts.length - 1]!.x.toFixed(1)},${H} L${pts[0]!.x.toFixed(1)},${H} Z`;
 
+  // Average line y-position
+  const avgY = (H - pad - (avgAccuracy / 100) * (H - pad * 2)).toFixed(1);
+
   return (
     <div className={styles.svgWrapper}>
       <svg viewBox={`0 0 ${W} ${H}`} className={styles.svg}>
-        {/* Grid lines */}
         {[0, 25, 50, 75, 100].map((pct) => {
           const y = H - pad - (pct / 100) * (H - pad * 2);
-          return (
-            <line key={pct} x1={pad} y1={y} x2={W - pad} y2={y} className={styles.gridLine} />
-          );
+          return <line key={pct} x1={pad} y1={y} x2={W - pad} y2={y} className={styles.gridLine} />;
         })}
-        {/* Area fill */}
+        {/* Average dashed line */}
+        <line
+          x1={pad} y1={avgY} x2={W - pad} y2={avgY}
+          className={styles.avgLine}
+        />
+        <text x={W - pad + 2} y={Number(avgY) + 3} className={styles.avgLabel}>ø{avgAccuracy}%</text>
         <path d={areaD} className={styles.areaFill} />
-        {/* Line */}
         <path d={pathD} className={styles.linePath} fill="none" />
-        {/* Points */}
         {pts.map((p) => (
-          <circle key={p.week} cx={p.x} cy={p.y} r={4} className={styles.linePoint} />
+          <circle key={p.week} cx={p.x} cy={p.y} r={3.5} className={styles.linePoint} />
         ))}
-        {/* Labels */}
         {pts.map((p) => (
-          <text key={`lbl-${p.week}`} x={p.x} y={p.y - 8} className={styles.pointLabel} textAnchor="middle">
+          <text key={`lbl-${p.week}`} x={p.x} y={p.y - 7} className={styles.pointLabel} textAnchor="middle">
             {p.acc}%
           </text>
         ))}
@@ -207,7 +253,8 @@ function AccuracyChart({ weekly, t }: { weekly: { week: string; accuracy: number
   );
 }
 
-// ---- Word status donut ----
+// ── Word status donut ─────────────────────────────────────────────────────────
+
 const STATUS_COLORS: Record<string, string> = {
   new: '#94a3b8',
   learning: '#3b82f6',
@@ -215,7 +262,14 @@ const STATUS_COLORS: Record<string, string> = {
   mastered: '#22c55e',
 };
 
-function WordDonut({ breakdown, t }: { breakdown: Record<string, number>; t: any }) {
+function WordDonut({
+  breakdown,
+  t,
+}: {
+  breakdown: Record<string, number>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: any;
+}) {
   const statuses = ['new', 'learning', 'review', 'mastered'];
   const labels: Record<string, string> = {
     new: t.profile.wordStatusNew,
@@ -225,11 +279,8 @@ function WordDonut({ breakdown, t }: { breakdown: Record<string, number>; t: any
   };
   const total = statuses.reduce((s, k) => s + (breakdown[k] ?? 0), 0);
 
-  if (total === 0) {
-    return <p className={styles.empty}>{t.profile.chartNoData}</p>;
-  }
+  if (total === 0) return <p className={styles.empty}>{t.profile.chartNoData}</p>;
 
-  // SVG donut
   const R = 50; const r = 32; const cx = 65; const cy = 65;
   let cumAngle = -Math.PI / 2;
 
@@ -241,7 +292,7 @@ function WordDonut({ breakdown, t }: { breakdown: Record<string, number>; t: any
     return { key: k, val, angle, startAngle, endAngle: cumAngle };
   }).filter((s) => s.val > 0);
 
-  function arc(s: typeof slices[0]) {
+  function arc(s: (typeof slices)[0]) {
     const x1 = cx + R * Math.cos(s.startAngle);
     const y1 = cy + R * Math.sin(s.startAngle);
     const x2 = cx + R * Math.cos(s.endAngle);
@@ -264,15 +315,15 @@ function WordDonut({ breakdown, t }: { breakdown: Record<string, number>; t: any
         <text x={cx} y={cy + 10} textAnchor="middle" className={styles.donutTotalLabel}>{t.profile.heatmapWords}</text>
       </svg>
       <div className={styles.donutLegend}>
-        {statuses.map((k) => (
+        {statuses.map((k) =>
           breakdown[k] ? (
             <div key={k} className={styles.donutLegendItem}>
               <span className={styles.donutDot} style={{ background: STATUS_COLORS[k] }} />
               <span className={styles.donutLabel}>{labels[k]}</span>
               <span className={styles.donutVal}>{breakdown[k]}</span>
             </div>
-          ) : null
-        ))}
+          ) : null,
+        )}
       </div>
     </div>
   );

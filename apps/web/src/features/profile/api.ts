@@ -18,6 +18,9 @@ export interface LearningStats {
   listening: { completed: number };
   conversations: number;
   correctAnswers: number;
+  incorrectAnswers: number;
+  weekReviews: number;
+  weekTrend: number | null;
 }
 
 export interface DayActivity {
