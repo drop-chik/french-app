@@ -20,6 +20,12 @@ export const en: Translations = {
     unlockedOf: 'Unlocked {n} of {total}',
     level: 'Level',
   },
+  pwa: {
+    title: 'Install FrenchUp',
+    subtitle: 'Use it like a native app',
+    install: 'Install',
+    dismiss: 'Dismiss',
+  },
   conjugation: {
     title: 'Verb Conjugation',
     subtitle: 'Enter an infinitive — see every form across every tense',

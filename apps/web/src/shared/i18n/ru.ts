@@ -21,6 +21,12 @@ export const ru: DeepRecord = {
     unlockedOf: 'Открыто {n} из {total}',
     level: 'Уровень',
   },
+  pwa: {
+    title: 'Установить FrenchUp',
+    subtitle: 'Открывай как обычное приложение',
+    install: 'Установить',
+    dismiss: 'Закрыть',
+  },
   conjugation: {
     title: 'Спряжение глаголов',
     subtitle: 'Введите инфинитив — увидите все формы во всех временах',
