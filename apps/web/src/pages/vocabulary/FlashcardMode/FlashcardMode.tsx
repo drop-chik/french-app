@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2 } from 'lucide-react';
 import type { WordData } from '../../../features/words/api';
@@ -40,8 +40,9 @@ export function FlashcardMode({ words, onComplete }: Props) {
     if (!isAnimating) setFlipped((f) => !f);
   }, [isAnimating]);
 
-  const playAudio = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Core audio playback, no UI dependency — used by the audio button and by
+  // the auto-play effect when a new card appears.
+  const playWordAudio = useCallback(async () => {
     if (!current || loadingAudio) return;
     if (current.audioUrl) {
       new Audio(current.audioUrl).play().catch(() => null);
@@ -60,6 +61,39 @@ export function FlashcardMode({ words, onComplete }: Props) {
       setLoadingAudio(false);
     }
   }, [current, loadingAudio]);
+
+  const playAudio = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    void playWordAudio();
+  }, [playWordAudio]);
+
+  // ── Auto-pronounce when a new card is shown ─────────────────────────────
+  // Browsers gate audio behind a user gesture, but by the time the user
+  // reaches the flashcard mode they've already clicked through several
+  // screens — autoplay generally works. We deliberately don't replay on flip.
+  const lastSpokenIndex = useRef<number>(-1);
+  useEffect(() => {
+    if (!current) return;
+    if (lastSpokenIndex.current === index) return;
+    lastSpokenIndex.current = index;
+    // Small delay so the card-slide animation isn't competing with the TTS network call
+    const timer = setTimeout(() => { void playWordAudio(); }, 200);
+    return () => clearTimeout(timer);
+  }, [index, current, playWordAudio]);
+
+  // ── Global keyboard: Space / Enter flips even without the card focused ─
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== ' ' && e.key !== 'Enter') return;
+      const target = e.target as HTMLElement | null;
+      // Don't hijack typing in inputs / textareas / contenteditable
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      e.preventDefault();
+      flip();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [flip]);
 
   const handleGrade = useCallback(
     async (grade: number) => {
@@ -103,9 +137,6 @@ export function FlashcardMode({ words, onComplete }: Props) {
           exit={{ x: -55, opacity: 0 }}
           transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
           onClick={!flipped ? flip : undefined}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') ? flip() : null}
           aria-label={t.flashcard.flipHint}
         >
         <motion.div
