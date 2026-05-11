@@ -1,14 +1,24 @@
 import { Link } from '@tanstack/react-router';
-import { Zap, CheckCircle2 } from 'lucide-react';
+import { Zap, CheckCircle2, ArrowRight, BookOpen, Headphones, MessageSquare } from 'lucide-react';
 import { useCountUp } from './useCountUp';
 import styles from './InsightGrid.module.css';
+
+interface NextItem {
+  slug?: string;
+  id?: string;
+  title: string;
+}
 
 interface InsightGridProps {
   wordsBreakdown: Record<string, number>;
   wordsDueToday: number;
   grammarCompleted: number;
+  grammarTotal: number;
   listeningCompleted: number;
+  listeningTotal: number;
   conversations: number;
+  nextGrammar: { slug: string; title: string; status: string } | null;
+  nextListening: { id: string; title: string; durationSec: number } | null;
   weekReviews: number;
   weekActivity: number[];
   labels: {
@@ -19,10 +29,11 @@ interface InsightGridProps {
     reviewSub: string;
     reviewCta: string;
     reviewDone: string;
-    skillsTitle: string;
-    skillsGrammar: string;
-    skillsListening: string;
-    skillsConversations: string;
+    continueTitle: string;
+    continueGrammar: string;
+    continueListening: string;
+    continueConversation: string;
+    continueAllDone: string;
     weekTitle: string;
     weekSub: string;
   };
@@ -46,14 +57,21 @@ export function InsightGrid(props: InsightGridProps) {
           done: props.labels.reviewDone,
         }}
       />
-      <SkillsInsight
-        grammar={props.grammarCompleted}
-        listening={props.listeningCompleted}
+      <ContinueLearningInsight
+        nextGrammar={props.nextGrammar}
+        nextListening={props.nextListening}
+        grammarCompleted={props.grammarCompleted}
+        grammarTotal={props.grammarTotal}
+        listeningCompleted={props.listeningCompleted}
+        listeningTotal={props.listeningTotal}
         conversations={props.conversations}
-        title={props.labels.skillsTitle}
-        grammarLabel={props.labels.skillsGrammar}
-        listeningLabel={props.labels.skillsListening}
-        conversationsLabel={props.labels.skillsConversations}
+        labels={{
+          title: props.labels.continueTitle,
+          grammar: props.labels.continueGrammar,
+          listening: props.labels.continueListening,
+          conversation: props.labels.continueConversation,
+          allDone: props.labels.continueAllDone,
+        }}
       />
       <WeekInsight
         total={props.weekReviews}
@@ -170,66 +188,126 @@ function ReviewTodayInsight({
   );
 }
 
-// ── 3) Skills insight — three mini bars ──────────────────────────────────────
+// ── 3) Continue Learning — actionable next steps with progress ───────────────
 
-function SkillsInsight({
-  grammar,
-  listening,
+function ContinueLearningInsight({
+  nextGrammar,
+  nextListening,
+  grammarCompleted,
+  grammarTotal,
+  listeningCompleted,
+  listeningTotal,
   conversations,
-  title,
-  grammarLabel,
-  listeningLabel,
-  conversationsLabel,
+  labels,
 }: {
-  grammar: number;
-  listening: number;
+  nextGrammar: { slug: string; title: string; status: string } | null;
+  nextListening: { id: string; title: string; durationSec: number } | null;
+  grammarCompleted: number;
+  grammarTotal: number;
+  listeningCompleted: number;
+  listeningTotal: number;
   conversations: number;
-  title: string;
-  grammarLabel: string;
-  listeningLabel: string;
-  conversationsLabel: string;
+  labels: {
+    title: string;
+    grammar: string;
+    listening: string;
+    conversation: string;
+    allDone: string;
+  };
 }) {
-  const animG = useCountUp(grammar);
-  const animL = useCountUp(listening);
-  const animC = useCountUp(conversations);
-  const max = Math.max(grammar, listening, conversations, 1);
+  const grammarPct = grammarTotal > 0 ? (grammarCompleted / grammarTotal) * 100 : 0;
+  const listeningPct = listeningTotal > 0 ? (listeningCompleted / listeningTotal) * 100 : 0;
+
+  const allDone = !nextGrammar && !nextListening;
 
   return (
     <div className={styles.card}>
-      <h3 className={styles.cardTitle}>{title}</h3>
-      <div className={styles.skills}>
-        <SkillRow icon="📝" label={grammarLabel} value={animG} pct={(grammar / max) * 100} color="#8b5cf6" />
-        <SkillRow icon="🎧" label={listeningLabel} value={animL} pct={(listening / max) * 100} color="#3b82f6" />
-        <SkillRow icon="💬" label={conversationsLabel} value={animC} pct={(conversations / max) * 100} color="#ec4899" />
-      </div>
+      <h3 className={styles.cardTitle}>{labels.title}</h3>
+
+      {allDone ? (
+        <div className={styles.doneWrap}>
+          <CheckCircle2 size={40} className={styles.doneIcon} />
+          <p className={styles.doneText}>{labels.allDone}</p>
+        </div>
+      ) : (
+        <div className={styles.continueList}>
+          {nextGrammar && (
+            <ContinueRow
+              icon={<BookOpen size={16} />}
+              category={labels.grammar}
+              title={nextGrammar.title}
+              progress={grammarPct}
+              progressText={`${grammarCompleted}/${grammarTotal}`}
+              color="#8b5cf6"
+              to={`/grammar/${nextGrammar.slug}` as const}
+            />
+          )}
+          {nextListening && (
+            <ContinueRow
+              icon={<Headphones size={16} />}
+              category={labels.listening}
+              title={nextListening.title}
+              progress={listeningPct}
+              progressText={`${listeningCompleted}/${listeningTotal}`}
+              color="#3b82f6"
+              to={`/listening/${nextListening.id}` as const}
+            />
+          )}
+          <ContinueRow
+            icon={<MessageSquare size={16} />}
+            category={labels.conversation}
+            title={`${conversations}`}
+            color="#ec4899"
+            to="/conversations"
+            standalone
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-function SkillRow({
+function ContinueRow({
   icon,
-  label,
-  value,
-  pct,
+  category,
+  title,
+  progress,
+  progressText,
   color,
+  to,
+  standalone,
 }: {
-  icon: string;
-  label: string;
-  value: number;
-  pct: number;
+  icon: React.ReactNode;
+  category: string;
+  title: string;
+  progress?: number;
+  progressText?: string;
   color: string;
+  to: string;
+  standalone?: boolean;
 }) {
   return (
-    <div className={styles.skillRow}>
-      <div className={styles.skillHead}>
-        <span className={styles.skillIcon}>{icon}</span>
-        <span className={styles.skillLabel}>{label}</span>
-        <span className={styles.skillValue}>{value}</span>
+    <Link to={to} className={styles.continueRow}>
+      <div className={styles.continueIcon} style={{ color, background: `${color}1a` }}>
+        {icon}
       </div>
-      <div className={styles.skillTrack}>
-        <div className={styles.skillFill} style={{ width: `${pct}%`, background: color }} />
+      <div className={styles.continueText}>
+        <span className={styles.continueCategory}>{category}</span>
+        <span className={styles.continueTitle}>{title}</span>
+        {!standalone && progress !== undefined && (
+          <div className={styles.continueProgress}>
+            <div className={styles.continueTrack}>
+              <div
+                className={styles.continueFill}
+                style={{ width: `${progress}%`, background: color }}
+              />
+            </div>
+            {progressText && <span className={styles.continueProgressText}>{progressText}</span>}
+          </div>
+        )}
       </div>
-    </div>
+      <ArrowRight size={16} className={styles.continueArrow} />
+    </Link>
   );
 }
 

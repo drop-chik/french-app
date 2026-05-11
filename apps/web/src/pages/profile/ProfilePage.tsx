@@ -41,6 +41,11 @@ export function ProfilePage() {
     queryFn: profileApi.getCharts,
   });
 
+  const { data: homeData } = useQuery({
+    queryKey: ['profile-home'],
+    queryFn: profileApi.getHomeData,
+  });
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
@@ -275,9 +280,13 @@ export function ProfilePage() {
       <InsightGrid
         wordsBreakdown={chartsData?.statusBreakdown ?? {}}
         wordsDueToday={stats?.wordsDueToday ?? 0}
-        grammarCompleted={stats?.grammar.completed ?? 0}
-        listeningCompleted={stats?.listening.completed ?? 0}
+        grammarCompleted={homeData?.levelProgress.completedGrammar ?? 0}
+        grammarTotal={homeData?.levelProgress.totalGrammar ?? 0}
+        listeningCompleted={homeData?.levelProgress.completedListening ?? 0}
+        listeningTotal={homeData?.levelProgress.totalListening ?? 0}
         conversations={stats?.conversations ?? 0}
+        nextGrammar={homeData?.todayPlan.nextGrammar ?? null}
+        nextListening={homeData?.todayPlan.nextListening ?? null}
         weekReviews={stats?.weekReviews ?? 0}
         weekActivity={weekActivity}
         labels={{
@@ -293,10 +302,11 @@ export function ProfilePage() {
           reviewSub: t.profile.insightReviewSub,
           reviewCta: t.profile.insightReviewCta,
           reviewDone: t.profile.insightReviewDone,
-          skillsTitle: t.profile.insightSkillsTitle,
-          skillsGrammar: t.profile.insightSkillsGrammar,
-          skillsListening: t.profile.insightSkillsListening,
-          skillsConversations: t.profile.insightSkillsConversations,
+          continueTitle: t.profile.insightContinueTitle,
+          continueGrammar: t.profile.insightContinueGrammar,
+          continueListening: t.profile.insightContinueListening,
+          continueConversation: t.profile.insightContinueConversation,
+          continueAllDone: t.profile.insightContinueAllDone,
           weekTitle: t.profile.insightWeekTitle,
           weekSub: t.profile.insightWeekSub,
         }}
@@ -312,6 +322,10 @@ export function ProfilePage() {
             more: t.profile.activityLegendMore,
             activeDays: t.profile.activityActiveDays,
             words: t.profile.heatmapWords,
+            bestDay: t.profile.activityBestDay,
+            avgPerDay: t.profile.activityAvgPerDay,
+            longestStreak: t.profile.activityLongestStreak,
+            noData: t.profile.activityNoData,
           }}
           lang={lang}
         />

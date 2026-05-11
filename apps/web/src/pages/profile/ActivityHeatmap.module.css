@@ -1,5 +1,5 @@
 .section {
-  --cell-h: 22px;
+  --cell: 18px;
   --cell-gap: 4px;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
@@ -12,7 +12,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
   flex-wrap: wrap;
 }
 
@@ -31,25 +31,32 @@
   font-weight: 500;
 }
 
-/* Full-width heatmap layout — no centering, cells stretch */
-.heatmapOuter {
+/* ── Body: heatmap left + stats right ── */
+.body {
   display: flex;
-  align-items: stretch;
-  gap: var(--space-3);
-  width: 100%;
+  align-items: flex-start;
+  gap: var(--space-6);
+  flex-wrap: wrap;
 }
 
-/* ── Day-of-week labels (left column) ── */
+.heatmapOuter {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* ── Day-of-week labels ── */
 .dayLabels {
   display: grid;
-  grid-template-rows: 20px repeat(7, var(--cell-h));
+  grid-template-rows: 20px repeat(7, var(--cell));
   row-gap: var(--cell-gap);
   flex-shrink: 0;
 }
 
 .dayLabel {
   font-size: 10px;
-  line-height: var(--cell-h);
+  line-height: var(--cell);
   color: var(--color-text-tertiary, var(--color-text-secondary));
   font-weight: 500;
   text-align: right;
@@ -57,10 +64,8 @@
   min-width: 22px;
 }
 
-/* ── Grid area (month labels + cells) — flex:1 fills remaining width ── */
+/* ── Grid area ── */
 .gridArea {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--cell-gap);
@@ -84,26 +89,88 @@
 
 .grid {
   display: grid;
-  grid-template-rows: repeat(7, var(--cell-h));
+  grid-template-rows: repeat(7, var(--cell));
   gap: var(--cell-gap);
 }
 
 .cell {
-  height: var(--cell-h);
+  width: var(--cell);
+  height: var(--cell);
   border-radius: 4px;
   transition: transform 0.12s, outline 0.12s;
   outline: 1px solid transparent;
   outline-offset: -1px;
-  min-width: 0;
 }
 
 .cell:hover {
-  transform: scale(1.12);
+  transform: scale(1.2);
   outline-color: var(--color-text-secondary);
 }
 
 .cellToday {
   box-shadow: 0 0 0 2px var(--color-brand);
+}
+
+/* ── Stats panel ── */
+.stats {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--color-border);
+  align-self: stretch;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.statIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.statText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.statValueLine {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.statValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSub {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
 }
 
 /* ── Legend ── */
@@ -126,18 +193,37 @@
 }
 
 .legendCell {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 3px;
 }
 
 /* ── Responsive ── */
+@media (max-width: 900px) {
+  .body { flex-direction: column; }
+  .stats {
+    flex: 0;
+    padding-left: 0;
+    padding-top: var(--space-4);
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+  }
+  .statRow { flex: 1; min-width: 0; }
+}
+
 @media (max-width: 768px) {
   .section {
-    --cell-h: 16px;
+    --cell: 14px;
     --cell-gap: 3px;
     padding: var(--space-5);
   }
   .dayLabel { font-size: 9px; min-width: 20px; }
   .monthLabel { font-size: 10px; }
+}
+
+@media (max-width: 480px) {
+  .stats { flex-direction: column; gap: var(--space-3); }
 }
