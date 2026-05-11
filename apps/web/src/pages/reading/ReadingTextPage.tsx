@@ -246,21 +246,8 @@ export function ReadingTextPage({ slug }: Props) {
 
 // ── Interactive text with clickable words ────────────────────────────────────
 
-// French stopwords that are too common/short to be useful
-const STOPWORDS = new Set([
-  'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'on',
-  'me', 'te', 'se', 'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'd',
-  'et', 'ou', 'mais', 'donc', 'or', 'ni', 'car',
-  'que', 'qui', 'qu', 'quoi', 'dont', 'où',
-  'à', 'au', 'aux', 'en', 'y', 'par', 'pour', 'sur', 'sous', 'dans', 'avec',
-  'ce', 'cet', 'cette', 'ces', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes',
-  'son', 'sa', 'ses', 'notre', 'votre', 'leur', 'leurs',
-  'est', 'es', 'suis', 'êtes', 'sont', 'être',
-  'a', 'ont', 'ai', 'as', 'avez', 'avoir',
-  'ne', 'pas', 'plus', 'très', 'bien', 'aussi', 'encore', 'toujours',
-  'je', 'l', 'j', 'm', 'n', 's', 'c',
-  'il', 'y',
-]);
+// Only skip pure punctuation / single-char tokens and digits
+const SKIP_TOKEN = /^[\d\s.,!?;:()\[\]«»""''—–\-]+$/;
 
 function cleanWord(token: string): string {
   return token
@@ -274,6 +261,25 @@ function cleanWord(token: string): string {
     .replace(/^[jJ]'/, '')
     .replace(/^[cC]'/, '');
 }
+
+// Parse "живём (habiter)" → { main: "живём", base: "habiter" }
+function parseTranslation(tr: string): { main: string; base: string | null } {
+  const match = tr.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+  if (match) return { main: match[1]!.trim(), base: match[2]!.trim() };
+  return { main: tr, base: null };
+}
+
+const POS_LABELS: Record<string, { label: string; color: string }> = {
+  verb:   { label: 'глагол',          color: '#3b82f6' },
+  noun:   { label: 'существительное', color: '#8b5cf6' },
+  adj:    { label: 'прилагательное',  color: '#10b981' },
+  adverb: { label: 'наречие',         color: '#f59e0b' },
+  number: { label: 'числительное',    color: '#6366f1' },
+  pron:   { label: 'местоимение',     color: '#ec4899' },
+  prep:   { label: 'предлог',         color: '#64748b' },
+  conj:   { label: 'союз',            color: '#64748b' },
+  art:    { label: 'артикль',         color: '#64748b' },
+};
 
 interface PopupState {
   rawWord: string;
@@ -313,7 +319,7 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
   const handleWordClick = useCallback(async (token: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const clean = cleanWord(token);
-    if (!clean || clean.length < 2 || STOPWORDS.has(clean)) return;
+    if (!clean || clean.length < 1) return;
 
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const containerRect = containerRef.current?.getBoundingClientRect();
@@ -343,7 +349,9 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
 
     try {
       const res = await readingApi.translate(clean);
-      const entry = res.result ? { tr: res.result.tr, pos: res.result.pos } : null;
+      const entry = res.result
+        ? { tr: res.result.tr, pos: res.result.pos, baseForm: res.result.baseForm }
+        : null;
       translationCache.current.set(clean, entry);
       setPopup((prev) => prev?.cleanWord === clean
         ? { ...prev, entry, loading: false, notFound: !entry }
@@ -366,18 +374,16 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
         <p key={pi} className={styles.paragraph}>
           {para.split(/(\s+)/).map((token, ti) => {
             if (/^\s+$/.test(token)) return <span key={ti}>{token}</span>;
+            // Skip pure punctuation / digits
+            if (SKIP_TOKEN.test(token)) return <span key={ti}>{token}</span>;
             const clean = cleanWord(token);
-            const isClickable = clean.length >= 2 && !STOPWORDS.has(clean);
+            if (!clean || clean.length < 1) return <span key={ti}>{token}</span>;
             const hasMapEntry = !!wordMap[clean];
             return (
               <span
                 key={ti}
-                className={isClickable
-                  ? hasMapEntry
-                    ? styles.wordClickable
-                    : styles.wordClickableAny
-                  : undefined}
-                onClick={isClickable ? (e) => void handleWordClick(token, e) : undefined}
+                className={hasMapEntry ? styles.wordClickable : styles.wordClickableAny}
+                onClick={(e) => void handleWordClick(token, e)}
               >
                 {token}
               </span>
@@ -387,38 +393,96 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
       ))}
 
       {popup && (
-        <div
-          className={styles.popup}
-          style={{ left: popup.x, top: popup.y }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className={styles.popupWord}>{popup.cleanWord}</div>
-          {popup.loading && (
-            <div className={styles.popupLoading}><Loader2 size={14} className={styles.spinner} /></div>
-          )}
-          {!popup.loading && popup.entry && (
-            <>
-              {popup.entry.pos && <div className={styles.popupPos}>{popup.entry.pos}</div>}
-              <div className={styles.popupTr}>{popup.entry.tr}</div>
-            </>
-          )}
-          {!popup.loading && popup.notFound && (
-            <div className={styles.popupNotFound}>Нет перевода</div>
-          )}
-          {!popup.loading && popup.entry && (
-            <button
-              className={`${styles.popupSaveBtn} ${saveStatus[popup.cleanWord] === 'saved' || wordsSaved.has(popup.cleanWord) ? styles.popupSaveBtnDone : ''}`}
-              onClick={() => onSaveWord(popup.cleanWord)}
-              disabled={!!saveStatus[popup.cleanWord]}
+        <PopupCard
+          popup={popup}
+          saveStatus={saveStatus}
+          wordsSaved={wordsSaved}
+          onSave={onSaveWord}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Word popup ────────────────────────────────────────────────────────────────
+
+function PopupCard({
+  popup,
+  saveStatus,
+  wordsSaved,
+  onSave,
+}: {
+  popup: PopupState;
+  saveStatus: Record<string, string>;
+  wordsSaved: Set<string>;
+  onSave: (word: string) => void;
+}) {
+  const posInfo = popup.entry?.pos ? POS_LABELS[popup.entry.pos] : null;
+  const parsed = popup.entry ? parseTranslation(popup.entry.tr) : null;
+  // baseForm comes from DB lemmatization or is parsed from translation string
+  const baseForm = popup.entry?.baseForm ?? parsed?.base ?? null;
+  const mainTr = parsed?.main ?? popup.entry?.tr ?? '';
+  const status = saveStatus[popup.cleanWord];
+  const isSaved = status === 'saved' || wordsSaved.has(popup.cleanWord);
+
+  return (
+    <div
+      className={styles.popup}
+      style={{ left: popup.x, top: popup.y }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Word being looked up */}
+      <div className={styles.popupWord}>{popup.cleanWord}</div>
+
+      {/* Loading */}
+      {popup.loading && (
+        <div className={styles.popupLoading}><Loader2 size={14} className={styles.spinner} /></div>
+      )}
+
+      {/* Translation found */}
+      {!popup.loading && popup.entry && (
+        <>
+          {/* POS badge */}
+          {posInfo && (
+            <span
+              className={styles.posTag}
+              style={{ background: `${posInfo.color}22`, color: posInfo.color, borderColor: `${posInfo.color}44` }}
             >
-              {saveStatus[popup.cleanWord] === 'saving' ? '...' :
-                saveStatus[popup.cleanWord] === 'saved' || wordsSaved.has(popup.cleanWord) ? <><Check size={13} /> Добавлено</> :
-                saveStatus[popup.cleanWord] === 'exists' ? 'Уже в словаре' :
-                saveStatus[popup.cleanWord] === 'not_found' ? 'Нет в словаре' :
-                <><BookPlus size={13} /> В словарь</>}
-            </button>
+              {posInfo.label}
+            </span>
           )}
-        </div>
+
+          {/* Main translation */}
+          <div className={styles.popupTrMain}>{mainTr}</div>
+
+          {/* Base form (infinitive / lemma) — shown when verb is conjugated */}
+          {baseForm && baseForm !== popup.cleanWord && (
+            <div className={styles.popupBase}>
+              <span className={styles.popupBaseArrow}>→</span>
+              <span className={styles.popupBaseWord}>{baseForm}</span>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Not found */}
+      {!popup.loading && popup.notFound && (
+        <div className={styles.popupNotFound}>Нет перевода</div>
+      )}
+
+      {/* Save to vocab */}
+      {!popup.loading && popup.entry && (
+        <button
+          className={`${styles.popupSaveBtn} ${isSaved ? styles.popupSaveBtnDone : ''}`}
+          onClick={() => onSave(popup.cleanWord)}
+          disabled={!!status}
+        >
+          {status === 'saving' ? '...' :
+            isSaved ? <><Check size={13} /> Добавлено</> :
+            status === 'exists' ? 'Уже в словаре' :
+            status === 'not_found' ? 'Нет в словаре' :
+            <><BookPlus size={13} /> В словарь</>}
+        </button>
       )}
     </div>
   );

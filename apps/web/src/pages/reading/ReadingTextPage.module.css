@@ -179,6 +179,42 @@
   color: var(--color-text-primary);
 }
 
+.posTag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  border: 1px solid;
+  letter-spacing: 0.03em;
+  width: fit-content;
+}
+
+.popupTrMain {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.popupBase {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.popupBaseArrow {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.popupBaseWord {
+  font-size: var(--text-xs);
+  color: var(--color-brand);
+  font-weight: 600;
+  font-style: italic;
+}
+
 .popupPos {
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);

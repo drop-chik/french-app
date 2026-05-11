@@ -11,6 +11,7 @@ export interface ReadingQuestion {
 export interface WordEntry {
   tr: string;
   pos: string;
+  baseForm?: string | null;
 }
 
 export interface ReadingTextSummary {
@@ -76,7 +77,7 @@ export const readingApi = {
     }),
 
   translate: (word: string) =>
-    apiRequest<{ result: { fr: string; tr: string; pos: string; level: string } | null }>(
+    apiRequest<{ result: { fr: string; tr: string; pos: string; level: string; baseForm: string | null } | null }>(
       `/reading/translate?word=${encodeURIComponent(word)}`,
     ),
 };

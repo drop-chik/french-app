@@ -1,4 +1,4 @@
-import { eq, and, desc, ilike, or } from 'drizzle-orm';
+import { eq, and, desc, ilike, or, inArray } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { readingTexts, readingProgress, words, wordProgress } from '../../db/schema/index.js';
 
@@ -163,42 +163,87 @@ export async function saveWordToVocab(db: DB, userId: string, wordFr: string) {
   return { added: true, wordId: word.id };
 }
 
+// Simple French verb lemmatization — tries common endings to find the infinitive
+function tryVerbStem(word: string): string[] {
+  const candidates: string[] = [];
+
+  // Present -er (parle, parles, parlons, parlez, parlent)
+  if (word.endsWith('ons'))   candidates.push(word.slice(0, -3) + 'er');
+  if (word.endsWith('ez'))    candidates.push(word.slice(0, -2) + 'er');
+  if (word.endsWith('ent'))   candidates.push(word.slice(0, -3) + 'er');
+  if (word.endsWith('es'))    candidates.push(word.slice(0, -2) + 'er');
+  if (word.endsWith('e') && word.length > 3) candidates.push(word.slice(0, -1) + 'er');
+
+  // Passé composé -é (aimé → aimer)
+  if (word.endsWith('é') || word.endsWith('ée') || word.endsWith('és') || word.endsWith('ées'))
+    candidates.push(word.replace(/é[es]?$/, 'er'));
+
+  // Present -ir regular (finit, finis → finir; finissons → finir)
+  if (word.endsWith('issons')) candidates.push(word.slice(0, -6) + 'ir');
+  if (word.endsWith('issez'))  candidates.push(word.slice(0, -5) + 'ir');
+  if (word.endsWith('issent')) candidates.push(word.slice(0, -6) + 'ir');
+  if (word.endsWith('it'))     candidates.push(word.slice(0, -2) + 'ir');
+  if (word.endsWith('is'))     candidates.push(word.slice(0, -2) + 'ir');
+
+  // Imparfait -er (aimais, aimait, aimions, aimiez, aimaient)
+  if (word.endsWith('aient')) candidates.push(word.slice(0, -5) + 'er');
+  if (word.endsWith('ais'))   candidates.push(word.slice(0, -3) + 'er');
+  if (word.endsWith('ait'))   candidates.push(word.slice(0, -3) + 'er');
+  if (word.endsWith('ions'))  candidates.push(word.slice(0, -4) + 'er');
+
+  // Futur proche: vais/va/allons/allez/vont + inf — skip (handled by compound lookup)
+
+  // Deduplicate and filter too short
+  return [...new Set(candidates)].filter(c => c.length >= 4 && c !== word);
+}
+
 export async function translateWord(db: DB, wordFr: string) {
   const clean = wordFr.toLowerCase().trim();
 
-  // Try exact match first
-  let word = await db.query.words.findFirst({
-    where: eq(words.french, clean),
-  });
+  // 1. Exact match
+  let word = await db.query.words.findFirst({ where: eq(words.french, clean) });
 
-  // Try with definite articles stripped (le/la/l'/les)
+  // 2. ilike match (handles accents mismatch)
   if (!word) {
-    const stripped = clean
-      .replace(/^l[e']\s*/i, '')
-      .replace(/^la\s*/i, '')
-      .replace(/^les\s*/i, '');
+    word = await db.query.words.findFirst({ where: ilike(words.french, clean) });
+  }
+
+  // 3. Try stripping articles (le chat → chat)
+  if (!word) {
+    const stripped = clean.replace(/^(?:le|la|les|l'|un|une|des|du|de la)\s+/i, '');
     if (stripped !== clean) {
-      word = await db.query.words.findFirst({
-        where: ilike(words.french, stripped),
-      });
+      word = await db.query.words.findFirst({ where: ilike(words.french, stripped) });
     }
   }
 
-  // Try ilike match
-  if (!word) {
-    word = await db.query.words.findFirst({
-      where: ilike(words.french, clean),
-    });
+  if (word) {
+    return {
+      fr: word.french,
+      tr: word.translation,
+      pos: word.partOfSpeech ?? '',
+      level: word.level,
+      baseForm: null as string | null,
+    };
   }
 
-  if (!word) return null;
+  // 4. Verb lemmatization — try to find infinitive
+  const verbCandidates = tryVerbStem(clean);
+  for (const infinitive of verbCandidates) {
+    const match = await db.query.words.findFirst({
+      where: or(eq(words.french, infinitive), ilike(words.french, infinitive)),
+    });
+    if (match) {
+      return {
+        fr: match.french,
+        tr: match.translation,
+        pos: match.partOfSpeech ?? 'verb',
+        level: match.level,
+        baseForm: match.french,
+      };
+    }
+  }
 
-  return {
-    fr: word.french,
-    tr: word.translation,
-    pos: word.partOfSpeech ?? '',
-    level: word.level,
-  };
+  return null;
 }
 
 export async function getUserStats(db: DB, userId: string) {
