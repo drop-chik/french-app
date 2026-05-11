@@ -86,6 +86,7 @@ import { grammarTopicsB2Extra2 } from './grammar-b2-extra2.js';
 import { grammarExercisesA1 } from './grammar-exercises-a1.js';
 import { grammarExercisesA1Extra } from './grammar-exercises-a1-extra.js';
 import { grammarExercisesA1Extra2 } from './grammar-exercises-a1-extra2.js';
+import { grammarExercisesA1Extra3 } from './grammar-exercises-a1-extra3.js';
 import { grammarExercisesA2 } from './grammar-exercises-a2.js';
 import { grammarExercisesA2Extra } from './grammar-exercises-a2-extra.js';
 import { grammarExercisesA2Extra2 } from './grammar-exercises-a2-extra2.js';
@@ -548,12 +549,19 @@ async function seed() {
   const topicRows = await db.select({ id: grammarTopics.id, slug: grammarTopics.slug }).from(grammarTopics);
   const slugToId = new Map(topicRows.map((r) => [r.slug, r.id]));
 
-  await seedGrammarExercises(grammarExercisesA1, slugToId, 'A1 exercises');
-  await seedGrammarExercises(grammarExercisesA1Extra, slugToId, 'A1 extra exercises');
-  await seedGrammarExercises(grammarExercisesA1Extra2, slugToId, 'A1 extra2 exercises');
-  await seedGrammarExercises(grammarExercisesA2, slugToId, 'A2 exercises');
-  await seedGrammarExercises(grammarExercisesA2Extra, slugToId, 'A2 extra exercises');
-  await seedGrammarExercises(grammarExercisesA2Extra2, slugToId, 'A2 extra2 exercises');
+  // Merge all batches per level — seedGrammarExercises deletes-then-inserts
+  // by topic, so a topic appearing in multiple batches would lose its earlier
+  // exercises. Single combined call avoids that.
+  await seedGrammarExercises(
+    [...grammarExercisesA1, ...grammarExercisesA1Extra, ...grammarExercisesA1Extra2, ...grammarExercisesA1Extra3],
+    slugToId,
+    'A1 exercises (combined)',
+  );
+  await seedGrammarExercises(
+    [...grammarExercisesA2, ...grammarExercisesA2Extra, ...grammarExercisesA2Extra2],
+    slugToId,
+    'A2 exercises (combined)',
+  );
 
   console.log('\nSeeding grammar topics B1...');
   await seedGrammarTopics([...grammarTopicsB1, ...grammarTopicsB1Extra], 'B1');
@@ -564,8 +572,11 @@ async function seed() {
   const slugToIdB1 = new Map(topicRowsB1.map((r) => [r.slug, r.id]));
 
   console.log('\nSeeding grammar exercises B1...');
-  await seedGrammarExercises(grammarExercisesB1, slugToIdB1, 'B1 exercises');
-  await seedGrammarExercises(grammarExercisesB1Extra, slugToIdB1, 'B1 extra exercises');
+  await seedGrammarExercises(
+    [...grammarExercisesB1, ...grammarExercisesB1Extra],
+    slugToIdB1,
+    'B1 exercises (combined)',
+  );
 
   console.log('\nSeeding grammar topics B2...');
   await seedGrammarTopics([...grammarTopicsB2, ...grammarTopicsB2Extra, ...grammarTopicsB2Extra2], 'B2');
@@ -576,9 +587,11 @@ async function seed() {
   const slugToIdB2 = new Map(topicRowsB2.map((r) => [r.slug, r.id]));
 
   console.log('\nSeeding grammar exercises B2...');
-  await seedGrammarExercises(grammarExercisesB2, slugToIdB2, 'B2 exercises');
-  await seedGrammarExercises(grammarExercisesB2Extra, slugToIdB2, 'B2 extra exercises');
-  await seedGrammarExercises(grammarExercisesB2Extra2, slugToIdB2, 'B2 extra2 exercises');
+  await seedGrammarExercises(
+    [...grammarExercisesB2, ...grammarExercisesB2Extra, ...grammarExercisesB2Extra2],
+    slugToIdB2,
+    'B2 exercises (combined)',
+  );
 
   // ===== Listening Exercises =====
   console.log('\nSeeding listening exercises A1...');
