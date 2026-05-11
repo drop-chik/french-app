@@ -163,7 +163,7 @@ export async function saveWordToVocab(db: DB, userId: string, wordFr: string) {
   return { added: true, wordId: word.id };
 }
 
-// Simple French verb lemmatization — tries common endings to find the infinitive
+// French verb lemmatization — tries common endings to find the infinitive
 function tryVerbStem(word: string): string[] {
   const candidates: string[] = [];
 
@@ -174,9 +174,15 @@ function tryVerbStem(word: string): string[] {
   if (word.endsWith('es'))    candidates.push(word.slice(0, -2) + 'er');
   if (word.endsWith('e') && word.length > 3) candidates.push(word.slice(0, -1) + 'er');
 
-  // Passé composé -é (aimé → aimer)
-  if (word.endsWith('é') || word.endsWith('ée') || word.endsWith('és') || word.endsWith('ées'))
-    candidates.push(word.replace(/é[es]?$/, 'er'));
+  // Passé composé -é/-ée/-és/-ées (aimé → aimer)
+  if (/é[es]?$/.test(word))  candidates.push(word.replace(/é[es]?$/, 'er'));
+
+  // Present participle -ant → try -er and -ir (marchant → marcher)
+  if (word.endsWith('issant')) candidates.push(word.slice(0, -6) + 'ir');
+  if (word.endsWith('ant') && word.length > 5) {
+    candidates.push(word.slice(0, -3) + 'er');
+    candidates.push(word.slice(0, -3) + 'ir');
+  }
 
   // Present -ir regular (finit, finis → finir; finissons → finir)
   if (word.endsWith('issons')) candidates.push(word.slice(0, -6) + 'ir');
@@ -191,10 +197,42 @@ function tryVerbStem(word: string): string[] {
   if (word.endsWith('ait'))   candidates.push(word.slice(0, -3) + 'er');
   if (word.endsWith('ions'))  candidates.push(word.slice(0, -4) + 'er');
 
-  // Futur proche: vais/va/allons/allez/vont + inf — skip (handled by compound lookup)
-
-  // Deduplicate and filter too short
   return [...new Set(candidates)].filter(c => c.length >= 4 && c !== word);
+}
+
+// French noun/adjective lemmatization — strips plural/feminine endings to find base form
+function tryNounStem(word: string): string[] {
+  const candidates: string[] = [];
+
+  // Plural -eaux → singular -eau (tableaux → tableau)
+  if (word.endsWith('eaux'))  candidates.push(word.slice(0, -1));        // →tableaux→tableau
+  // Plural -aux → singular -al (journaux → journal)
+  if (word.endsWith('aux') && !word.endsWith('eaux'))
+    candidates.push(word.slice(0, -3) + 'al');
+  // Plural -s → singular (problèmes→problème, mots→mot)
+  if (word.endsWith('s') && word.length > 3)
+    candidates.push(word.slice(0, -1));
+  // Plural -es → singular without -s (langues→langue)
+  if (word.endsWith('es') && word.length > 4)
+    candidates.push(word.slice(0, -1));
+
+  // Feminine adjective patterns → masculine base
+  if (word.endsWith('elles'))  candidates.push(word.slice(0, -5) + 'el');   // traditionnelles→traditionnel
+  if (word.endsWith('elle'))   candidates.push(word.slice(0, -4) + 'el');   // culturelle→culturel
+  if (word.endsWith('ives'))   candidates.push(word.slice(0, -4) + 'if');   // créatives→créatif
+  if (word.endsWith('ive'))    candidates.push(word.slice(0, -3) + 'if');   // créative→créatif
+  if (word.endsWith('ières'))  candidates.push(word.slice(0, -5) + 'ier');  // premières→premier
+  if (word.endsWith('ière'))   candidates.push(word.slice(0, -4) + 'ier');  // première→premier
+  if (word.endsWith('euses'))  candidates.push(word.slice(0, -5) + 'eur');  // heureuses→heureux
+  if (word.endsWith('euse'))   candidates.push(word.slice(0, -4) + 'eur');  // heureuse→heureux
+  if (word.endsWith('rices'))  candidates.push(word.slice(0, -5) + 'eur');  // actrices→acteur
+  if (word.endsWith('rice'))   candidates.push(word.slice(0, -4) + 'eur');  // actrice→acteur
+  if (word.endsWith('iques'))  candidates.push(word.slice(0, -1));           // islamiques→islamique
+  if (word.endsWith('ales'))   candidates.push(word.slice(0, -5) + 'al');   // nationales→national
+  if (word.endsWith('ale'))    candidates.push(word.slice(0, -3) + 'al');   // nationale→national
+  if (word.endsWith('aux'))    candidates.push(word.slice(0, -3) + 'al');   // nationaux→national
+
+  return [...new Set(candidates)].filter(c => c.length >= 3 && c !== word);
 }
 
 // Inline translation table for French function words not in the vocabulary DB.
@@ -443,6 +481,63 @@ const FUNCTION_WORDS: Record<string, { tr: string; pos: string; level: string; b
   'vraiment':   { tr: 'действительно, правда',       pos: 'adverb', level: 'A1' },
   'autrement':  { tr: 'иначе, по-другому',           pos: 'adverb', level: 'B1' },
   'davantage':  { tr: 'больше, более',               pos: 'adverb', level: 'B1' },
+  'longtemps':  { tr: 'долго, давно',                pos: 'adverb', level: 'A2' },
+  'désormais':  { tr: 'отныне, теперь',              pos: 'adverb', level: 'B1' },
+  'dorénavant': { tr: 'отныне, впредь',              pos: 'adverb', level: 'B1' },
+  'quasiment':  { tr: 'почти, практически',          pos: 'adverb', level: 'B1' },
+  'directement':{ tr: 'прямо, напрямую',             pos: 'adverb', level: 'A2' },
+  'clairement': { tr: 'ясно, чётко',                 pos: 'adverb', level: 'A2' },
+  'simplement': { tr: 'просто, попросту',             pos: 'adverb', level: 'A2' },
+  'rapidement': { tr: 'быстро',                      pos: 'adverb', level: 'A2' },
+  'généralement': { tr: 'обычно, в целом',           pos: 'adverb', level: 'B1' },
+  'actuellement': { tr: 'в настоящее время, сейчас', pos: 'adverb', level: 'B1' },
+  'particulièrement': { tr: 'особенно, особым образом', pos: 'adverb', level: 'B1' },
+  'progressivement': { tr: 'постепенно',             pos: 'adverb', level: 'B2' },
+  'réellement':  { tr: 'реально, по-настоящему',     pos: 'adverb', level: 'B1' },
+  'forcément':   { tr: 'обязательно, непременно',    pos: 'adverb', level: 'B1' },
+  'également':   { tr: 'также, тоже, одинаково',     pos: 'adverb', level: 'B1' },
+  'ensemble':    { tr: 'вместе',                     pos: 'adverb', level: 'A1' },
+  'bientôt':     { tr: 'скоро',                      pos: 'adverb', level: 'A1' },
+  'partout':     { tr: 'везде, повсюду',              pos: 'adverb', level: 'A2' },
+  'ailleurs':    { tr: 'в другом месте, кстати',     pos: 'adverb', level: 'B1' },
+  'abord':       { tr: 'сначала, прежде всего (d\'abord)', pos: 'adverb', level: 'A1' },
+  'autant':      { tr: 'столько же, так же много',   pos: 'adverb', level: 'A2' },
+  'autour':      { tr: 'вокруг',                     pos: 'adverb', level: 'A2' },
+  'combien':     { tr: 'сколько',                    pos: 'adverb', level: 'A1' },
+  'lors':        { tr: 'тогда, во время (lors de)',  pos: 'adverb', level: 'B1' },
+  'dès':         { tr: 'с (момента), как только',    pos: 'prep',   level: 'B1' },
+  'voilà':       { tr: 'вот, пожалуйста',            pos: 'adverb', level: 'A1' },
+  'voici':       { tr: 'вот (что)',                   pos: 'adverb', level: 'A1' },
+  // ── Indefinite pronouns / determiners ────────────────────────────────────────
+  'eux':        { tr: 'они, их (ударная форма)',      pos: 'pron', level: 'A1' },
+  'chaque':     { tr: 'каждый, каждая',               pos: 'det',  level: 'A1' },
+  'plusieurs':  { tr: 'несколько',                    pos: 'det',  level: 'A1' },
+  'autre':      { tr: 'другой, другая',               pos: 'det',  level: 'A1' },
+  'autres':     { tr: 'другие',                       pos: 'det',  level: 'A1' },
+  'chacun':     { tr: 'каждый (по отдельности)',      pos: 'pron', level: 'A2' },
+  'chacune':    { tr: 'каждая (по отдельности)',      pos: 'pron', level: 'A2' },
+  'certains':   { tr: 'некоторые (м.р.)',             pos: 'det',  level: 'A2' },
+  'certaines':  { tr: 'некоторые (ж.р.)',             pos: 'det',  level: 'A2' },
+  'certain':    { tr: 'некоторый, определённый',      pos: 'det',  level: 'A2' },
+  'certaine':   { tr: 'некоторая, определённая',      pos: 'det',  level: 'A2' },
+  'tous':       { tr: 'все (м.р. мн.ч.)',             pos: 'det',  level: 'A1' },
+  'toute':      { tr: 'вся, вся (ж.р.)',              pos: 'det',  level: 'A1' },
+  'toutes':     { tr: 'все (ж.р. мн.ч.)',             pos: 'det',  level: 'A1' },
+  'quel':       { tr: 'какой, который',               pos: 'det',  level: 'A1' },
+  'quelle':     { tr: 'какая, которая',               pos: 'det',  level: 'A1' },
+  'quels':      { tr: 'какие (м.р.)',                 pos: 'det',  level: 'A1' },
+  'quelles':    { tr: 'какие (ж.р.)',                 pos: 'det',  level: 'A1' },
+  'tel':        { tr: 'такой, подобный',              pos: 'det',  level: 'A2' },
+  'telle':      { tr: 'такая, подобная',              pos: 'det',  level: 'A2' },
+  'tels':       { tr: 'такие (м.р.)',                 pos: 'det',  level: 'A2' },
+  'telles':     { tr: 'такие (ж.р.)',                 pos: 'det',  level: 'A2' },
+  'tout':       { tr: 'весь, всё, очень',             pos: 'det',  level: 'A1' },
+  'fois':       { tr: 'раз (une fois = однажды)',      pos: 'noun', level: 'A1' },
+  'chose':      { tr: 'вещь, дело, нечто',            pos: 'noun', level: 'A1' },
+  'celui':      { tr: 'тот, тот который',             pos: 'pron', level: 'A2' },
+  'celle':      { tr: 'та, та которая',               pos: 'pron', level: 'A2' },
+  'ceux':       { tr: 'те, те которые (м.р.)',         pos: 'pron', level: 'A2' },
+  'celles':     { tr: 'те, те которые (ж.р.)',         pos: 'pron', level: 'A2' },
   // ── Demonstrative determiners ─────────────────────────────────────────────────
   'ce':    { tr: 'этот, тот (перед согл.)',    pos: 'det', level: 'A1' },
   'cet':   { tr: 'этот, тот (перед гласн.)',   pos: 'det', level: 'A1' },
@@ -513,6 +608,23 @@ export async function translateWord(db: DB, wordFr: string) {
         pos: match.partOfSpeech ?? 'verb',
         level: match.level,
         baseForm: match.french,
+      };
+    }
+  }
+
+  // 5. Noun/adjective lemmatization — strip plural/feminine endings
+  const nounCandidates = tryNounStem(clean);
+  for (const base of nounCandidates) {
+    const match = await db.query.words.findFirst({
+      where: or(eq(words.french, base), ilike(words.french, base)),
+    });
+    if (match) {
+      return {
+        fr: match.french,
+        tr: match.translation,
+        pos: match.partOfSpeech ?? '',
+        level: match.level,
+        baseForm: match.french !== clean ? match.french : null,
       };
     }
   }

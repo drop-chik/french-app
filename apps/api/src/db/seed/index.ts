@@ -103,6 +103,7 @@ import { drillsData } from './drills.js';
 import { drillsData2 } from './drills2.js';
 import { writingPromptsData } from './writing-prompts.js';
 import { readingTextsData } from './reading.js';
+import { wordsReading } from './words-reading.js';
 
 type WordInput = {
   french: string;
@@ -784,6 +785,25 @@ async function seed() {
       });
   }
   console.log(`Writing prompts done! Total: ${writingPromptsData.length}`);
+
+  // ===== Reading vocabulary (words found in reading texts, missing from main DB) =====
+  console.log('\nSeeding reading vocabulary...');
+  let readingWordsAdded = 0;
+  for (const w of wordsReading) {
+    const result = await db
+      .insert(words)
+      .values({
+        french: w.french,
+        translation: w.translation,
+        level: w.level,
+        category: 'vocabulary',
+        partOfSpeech: w.partOfSpeech,
+        gender: w.gender ?? null,
+      })
+      .onConflictDoNothing();
+    if ((result.rowCount ?? 0) > 0) readingWordsAdded++;
+  }
+  console.log(`  Reading vocabulary: ${readingWordsAdded} new words added (${wordsReading.length} total)`);
 
   // ===== Reading texts =====
   console.log('\nSeeding reading texts...');
