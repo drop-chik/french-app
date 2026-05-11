@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ChevronLeft, BookPlus, Check, X, RotateCcw } from 'lucide-react';
+import { ChevronLeft, BookPlus, Check, X, RotateCcw, Loader2 } from 'lucide-react';
 import { readingApi, type ReadingQuestion, type WordEntry } from '../../features/reading/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './ReadingTextPage.module.css';
@@ -246,6 +246,45 @@ export function ReadingTextPage({ slug }: Props) {
 
 // ── Interactive text with clickable words ────────────────────────────────────
 
+// French stopwords that are too common/short to be useful
+const STOPWORDS = new Set([
+  'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'on',
+  'me', 'te', 'se', 'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'd',
+  'et', 'ou', 'mais', 'donc', 'or', 'ni', 'car',
+  'que', 'qui', 'qu', 'quoi', 'dont', 'où',
+  'à', 'au', 'aux', 'en', 'y', 'par', 'pour', 'sur', 'sous', 'dans', 'avec',
+  'ce', 'cet', 'cette', 'ces', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes',
+  'son', 'sa', 'ses', 'notre', 'votre', 'leur', 'leurs',
+  'est', 'es', 'suis', 'êtes', 'sont', 'être',
+  'a', 'ont', 'ai', 'as', 'avez', 'avoir',
+  'ne', 'pas', 'plus', 'très', 'bien', 'aussi', 'encore', 'toujours',
+  'je', 'l', 'j', 'm', 'n', 's', 'c',
+  'il', 'y',
+]);
+
+function cleanWord(token: string): string {
+  return token
+    .toLowerCase()
+    .replace(/^[«»""''.,!?;:()[\]—–\-]+/, '')
+    .replace(/[«»""''.,!?;:()[\]—–\-]+$/, '')
+    .replace(/^[lLdD]'/, '')
+    .replace(/^[mM]'/, '')
+    .replace(/^[sS]'/, '')
+    .replace(/^[nN]'/, '')
+    .replace(/^[jJ]'/, '')
+    .replace(/^[cC]'/, '');
+}
+
+interface PopupState {
+  rawWord: string;
+  cleanWord: string;
+  entry: WordEntry | null;
+  loading: boolean;
+  notFound: boolean;
+  x: number;
+  y: number;
+}
+
 interface InteractiveTextProps {
   content: string;
   wordMap: Record<string, WordEntry>;
@@ -256,10 +295,11 @@ interface InteractiveTextProps {
 }
 
 function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, wordsSaved }: InteractiveTextProps) {
-  const [popup, setPopup] = useState<{ word: string; entry: WordEntry; x: number; y: number } | null>(null);
+  const [popup, setPopup] = useState<PopupState | null>(null);
+  // Cache DB lookups for this session
+  const translationCache = useRef<Map<string, WordEntry | null>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close popup on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -270,25 +310,53 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleWordClick = (word: string, e: React.MouseEvent) => {
-    const clean = word.toLowerCase().replace(/[«»""''.,!?;:()\[\]]/g, '');
-    const entry = wordMap[clean];
-    if (!entry) return;
-
-    onLookup(clean);
+  const handleWordClick = useCallback(async (token: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const clean = cleanWord(token);
+    if (!clean || clean.length < 2 || STOPWORDS.has(clean)) return;
 
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const containerRect = containerRef.current?.getBoundingClientRect();
     if (!containerRect) return;
+    const x = rect.left - containerRect.left + rect.width / 2;
+    const y = rect.bottom - containerRect.top + 4;
 
-    setPopup({
-      word: clean,
-      entry,
-      x: rect.left - containerRect.left + rect.width / 2,
-      y: rect.bottom - containerRect.top + 4,
-    });
-    e.stopPropagation();
-  };
+    // 1. Check wordMap first (instant)
+    const mapEntry = wordMap[clean];
+    if (mapEntry) {
+      onLookup(clean);
+      setPopup({ rawWord: token, cleanWord: clean, entry: mapEntry, loading: false, notFound: false, x, y });
+      return;
+    }
+
+    // 2. Check session cache
+    if (translationCache.current.has(clean)) {
+      const cached = translationCache.current.get(clean) ?? null;
+      onLookup(clean);
+      setPopup({ rawWord: token, cleanWord: clean, entry: cached, loading: false, notFound: !cached, x, y });
+      return;
+    }
+
+    // 3. Fetch from DB
+    onLookup(clean);
+    setPopup({ rawWord: token, cleanWord: clean, entry: null, loading: true, notFound: false, x, y });
+
+    try {
+      const res = await readingApi.translate(clean);
+      const entry = res.result ? { tr: res.result.tr, pos: res.result.pos } : null;
+      translationCache.current.set(clean, entry);
+      setPopup((prev) => prev?.cleanWord === clean
+        ? { ...prev, entry, loading: false, notFound: !entry }
+        : prev,
+      );
+    } catch {
+      translationCache.current.set(clean, null);
+      setPopup((prev) => prev?.cleanWord === clean
+        ? { ...prev, loading: false, notFound: true }
+        : prev,
+      );
+    }
+  }, [wordMap, onLookup]);
 
   const paragraphs = content.split('\n').filter((line) => line.trim().length > 0);
 
@@ -298,13 +366,18 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
         <p key={pi} className={styles.paragraph}>
           {para.split(/(\s+)/).map((token, ti) => {
             if (/^\s+$/.test(token)) return <span key={ti}>{token}</span>;
-            const clean = token.toLowerCase().replace(/[«»""''.,!?;:()\[\]]/g, '');
-            const hasEntry = !!wordMap[clean];
+            const clean = cleanWord(token);
+            const isClickable = clean.length >= 2 && !STOPWORDS.has(clean);
+            const hasMapEntry = !!wordMap[clean];
             return (
               <span
                 key={ti}
-                className={hasEntry ? styles.wordClickable : undefined}
-                onClick={hasEntry ? (e) => handleWordClick(token, e) : undefined}
+                className={isClickable
+                  ? hasMapEntry
+                    ? styles.wordClickable
+                    : styles.wordClickableAny
+                  : undefined}
+                onClick={isClickable ? (e) => void handleWordClick(token, e) : undefined}
               >
                 {token}
               </span>
@@ -319,20 +392,32 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
           style={{ left: popup.x, top: popup.y }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className={styles.popupWord}>{popup.word}</div>
-          <div className={styles.popupPos}>{popup.entry.pos}</div>
-          <div className={styles.popupTr}>{popup.entry.tr}</div>
-          <button
-            className={`${styles.popupSaveBtn} ${saveStatus[popup.word] === 'saved' || wordsSaved.has(popup.word) ? styles.popupSaveBtnDone : ''}`}
-            onClick={() => onSaveWord(popup.word)}
-            disabled={!!saveStatus[popup.word]}
-          >
-            {saveStatus[popup.word] === 'saving' ? '...' :
-              saveStatus[popup.word] === 'saved' || wordsSaved.has(popup.word) ? <><Check size={13} /> Добавлено</> :
-              saveStatus[popup.word] === 'exists' ? 'Уже в словаре' :
-              saveStatus[popup.word] === 'not_found' ? 'Нет в словаре' :
-              <><BookPlus size={13} /> В словарь</>}
-          </button>
+          <div className={styles.popupWord}>{popup.cleanWord}</div>
+          {popup.loading && (
+            <div className={styles.popupLoading}><Loader2 size={14} className={styles.spinner} /></div>
+          )}
+          {!popup.loading && popup.entry && (
+            <>
+              {popup.entry.pos && <div className={styles.popupPos}>{popup.entry.pos}</div>}
+              <div className={styles.popupTr}>{popup.entry.tr}</div>
+            </>
+          )}
+          {!popup.loading && popup.notFound && (
+            <div className={styles.popupNotFound}>Нет перевода</div>
+          )}
+          {!popup.loading && popup.entry && (
+            <button
+              className={`${styles.popupSaveBtn} ${saveStatus[popup.cleanWord] === 'saved' || wordsSaved.has(popup.cleanWord) ? styles.popupSaveBtnDone : ''}`}
+              onClick={() => onSaveWord(popup.cleanWord)}
+              disabled={!!saveStatus[popup.cleanWord]}
+            >
+              {saveStatus[popup.cleanWord] === 'saving' ? '...' :
+                saveStatus[popup.cleanWord] === 'saved' || wordsSaved.has(popup.cleanWord) ? <><Check size={13} /> Добавлено</> :
+                saveStatus[popup.cleanWord] === 'exists' ? 'Уже в словаре' :
+                saveStatus[popup.cleanWord] === 'not_found' ? 'Нет в словаре' :
+                <><BookPlus size={13} /> В словарь</>}
+            </button>
+          )}
         </div>
       )}
     </div>

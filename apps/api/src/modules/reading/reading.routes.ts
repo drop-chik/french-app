@@ -6,6 +6,7 @@ import {
   saveProgress,
   saveWordToVocab,
   getUserStats,
+  translateWord,
 } from './reading.service.js';
 
 const progressSchema = z.object({
@@ -75,6 +76,18 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
 
       const result = await saveWordToVocab(fastify.db, request.user.userId, parsed.data.word);
       reply.send(result);
+    },
+  );
+
+  // GET /reading/translate?word=xxx — look up a word in the vocabulary DB
+  fastify.get(
+    '/translate',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const { word } = request.query as { word?: string };
+      if (!word) return reply.status(400).send({ error: 'word is required' });
+      const result = await translateWord(fastify.db, word);
+      reply.send({ result });
     },
   );
 

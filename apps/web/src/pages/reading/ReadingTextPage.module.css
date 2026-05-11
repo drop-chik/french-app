@@ -139,6 +139,23 @@
   background: color-mix(in srgb, var(--color-brand) 10%, transparent);
 }
 
+/* Words not in wordMap but still clickable (look up on demand) */
+.wordClickableAny {
+  cursor: pointer;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, var(--color-text-tertiary) 60%, transparent);
+  text-underline-offset: 3px;
+  border-radius: 2px;
+  padding: 0 1px;
+  transition: color var(--transition-fast);
+}
+
+.wordClickableAny:hover {
+  text-decoration-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 6%, transparent);
+}
+
 /* Word popup */
 .popup {
   position: absolute;
@@ -172,6 +189,28 @@
 .popupTr {
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.popupLoading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-1) 0;
+  color: var(--color-text-tertiary);
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.popupNotFound {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
   font-style: italic;
 }
 

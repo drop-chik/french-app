@@ -74,4 +74,9 @@ export const readingApi = {
       method: 'POST',
       body: JSON.stringify({ word }),
     }),
+
+  translate: (word: string) =>
+    apiRequest<{ result: { fr: string; tr: string; pos: string; level: string } | null }>(
+      `/reading/translate?word=${encodeURIComponent(word)}`,
+    ),
 };

@@ -163,6 +163,44 @@ export async function saveWordToVocab(db: DB, userId: string, wordFr: string) {
   return { added: true, wordId: word.id };
 }
 
+export async function translateWord(db: DB, wordFr: string) {
+  const clean = wordFr.toLowerCase().trim();
+
+  // Try exact match first
+  let word = await db.query.words.findFirst({
+    where: eq(words.french, clean),
+  });
+
+  // Try with definite articles stripped (le/la/l'/les)
+  if (!word) {
+    const stripped = clean
+      .replace(/^l[e']\s*/i, '')
+      .replace(/^la\s*/i, '')
+      .replace(/^les\s*/i, '');
+    if (stripped !== clean) {
+      word = await db.query.words.findFirst({
+        where: ilike(words.french, stripped),
+      });
+    }
+  }
+
+  // Try ilike match
+  if (!word) {
+    word = await db.query.words.findFirst({
+      where: ilike(words.french, clean),
+    });
+  }
+
+  if (!word) return null;
+
+  return {
+    fr: word.french,
+    tr: word.translation,
+    pos: word.partOfSpeech ?? '',
+    level: word.level,
+  };
+}
+
 export async function getUserStats(db: DB, userId: string) {
   const completed = await db
     .select({ textId: readingProgress.textId, score: readingProgress.score, totalQuestions: readingProgress.totalQuestions })
