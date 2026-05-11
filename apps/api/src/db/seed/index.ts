@@ -417,6 +417,8 @@ async function seedGrammarTopics(
   topics: typeof grammarTopicsA1,
   level: 'A1' | 'A2' | 'B1' | 'B2',
 ) {
+  // Upsert by slug — re-seeding overwrites titles/content/order, but keeps
+  // user-progress rows (they reference topic_id, which is preserved).
   for (const topic of topics) {
     await db
       .insert(grammarTopics)
@@ -431,7 +433,19 @@ async function seedGrammarTopics(
         content: topic.content,
         contentEn: topic.contentEn ?? null,
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: grammarTopics.slug,
+        set: {
+          titleRu: topic.titleRu,
+          titleEn: topic.titleEn,
+          titleFr: topic.titleFr,
+          level,
+          category: topic.category,
+          orderNum: topic.orderNum,
+          content: topic.content,
+          contentEn: topic.contentEn ?? null,
+        },
+      });
     console.log(`  Topic: ${topic.slug}`);
   }
 }
