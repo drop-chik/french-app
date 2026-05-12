@@ -135,6 +135,76 @@
 .levelPill:hover { border-color: var(--color-brand); color: var(--color-brand); }
 .levelPillActive { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
 
+/* ── Filter / sort bar (list view & search) ── */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.filterChips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.filterChip {
+  padding: 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+  white-space: nowrap;
+}
+.filterChip:hover { border-color: var(--color-brand); color: var(--color-brand); }
+.filterChipActive {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.sortWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+.sortBtn:hover { border-color: var(--color-brand); color: var(--color-brand); }
+
+.sortSelect {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding-right: var(--space-1);
+}
+.sortSelect:focus { outline: none; }
+
 /* ── Category grid ── */
 .catGrid {
   display: grid;

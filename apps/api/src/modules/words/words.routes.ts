@@ -212,6 +212,8 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
             lang:     { type: 'string', enum: ['ru', 'en'], default: 'ru' },
             offset:   { type: 'integer', minimum: 0, default: 0 },
             limit:    { type: 'integer', minimum: 1, maximum: 500, default: 100 },
+            sortBy:   { type: 'string', enum: ['alphabet', 'level', 'frequency', 'status', 'recent'], default: 'frequency' },
+            statusFilter: { type: 'string', enum: ['all', 'not-started', 'in-progress', 'mastered', 'mine'], default: 'all' },
           },
         },
       },
@@ -232,7 +234,13 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const q = query.q ? String(query.q).trim() : null;
       const offset = Math.max(0, parseInt(String(query.offset ?? '0'), 10) || 0);
       const limit = Math.min(500, Math.max(1, parseInt(String(query.limit ?? '100'), 10) || 100));
-      const result = await browseWords(fastify.db, request.user.userId, level, category, lang, limit, offset, q, tag);
+      const sortBy = (query.sortBy ? String(query.sortBy) : 'frequency') as
+        'alphabet' | 'level' | 'frequency' | 'status' | 'recent';
+      const statusFilter = (query.statusFilter ? String(query.statusFilter) : 'all') as
+        'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine';
+      const result = await browseWords(
+        fastify.db, request.user.userId, level, category, lang, limit, offset, q, tag, sortBy, statusFilter,
+      );
       reply.send(result);
     },
   );

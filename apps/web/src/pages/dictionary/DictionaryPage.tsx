@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, RotateCcw } from 'lucide-react';
+import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, RotateCcw, ArrowUpDown } from 'lucide-react';
 import { wordsApi, type BrowseWord, type WordCategory, type WordData } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -330,6 +330,68 @@ function Drawer({ category, level, lang, t, onClose, onMark, onOpen, markingId, 
   );
 }
 
+// ── Filter / sort bar ─────────────────────────────────────────────────────────
+
+type SortBy = 'alphabet' | 'level' | 'frequency' | 'status' | 'recent';
+type StatusFilter = 'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine';
+
+interface FilterBarProps {
+  t: Translations;
+  sortBy: SortBy;
+  statusFilter: StatusFilter;
+  onSortChange: (s: SortBy) => void;
+  onFilterChange: (f: StatusFilter) => void;
+}
+
+function FilterBar({ t, sortBy, statusFilter, onSortChange, onFilterChange }: FilterBarProps) {
+  const filters: { id: StatusFilter; label: string }[] = [
+    { id: 'all', label: t.dictionary.filterAll },
+    { id: 'not-started', label: t.dictionary.filterNotStarted },
+    { id: 'in-progress', label: t.dictionary.filterInProgress },
+    { id: 'mastered', label: t.dictionary.filterMastered },
+    { id: 'mine', label: t.dictionary.filterMine },
+  ];
+  const sortOptions: { id: SortBy; label: string }[] = [
+    { id: 'alphabet', label: t.dictionary.sortAlphabet },
+    { id: 'frequency', label: t.dictionary.sortFrequency },
+    { id: 'level', label: t.dictionary.sortLevel },
+    { id: 'status', label: t.dictionary.sortStatus },
+    { id: 'recent', label: t.dictionary.sortRecent },
+  ];
+
+  return (
+    <div className={styles.filterBar}>
+      <div className={styles.filterChips}>
+        {filters.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            className={`${styles.filterChip} ${statusFilter === f.id ? styles.filterChipActive ?? '' : ''}`}
+            onClick={() => onFilterChange(f.id)}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+      <div className={styles.sortWrap}>
+        <label className={styles.sortBtn}>
+          <ArrowUpDown size={13} />
+          <select
+            className={styles.sortSelect}
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value as SortBy)}
+            aria-label={t.dictionary.sort}
+          >
+            {sortOptions.map((o) => (
+              <option key={o.id} value={o.id}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function DictionaryPage() {
@@ -359,6 +421,11 @@ export function DictionaryPage() {
   // checks rows to add to selectedIds, then chooses an action from the toolbar.
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // List-view sort + filter — server-side via /words/browse query params.
+  // Sort defaults to alphabet for a "dictionary" feel; users on the
+  // frequency-sorted seed reorder via the dropdown.
+  const [sortBy, setSortBy] = useState<'alphabet' | 'level' | 'frequency' | 'status' | 'recent'>('alphabet');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine'>('all');
   const searchRef = useRef<HTMLInputElement>(null);
 
   function toggleSelected(id: string) {
@@ -382,16 +449,16 @@ export function DictionaryPage() {
   });
 
   const { data: listData, isLoading: listLoading } = useQuery({
-    queryKey: ['browse-words', level, null, lang, ''],
-    queryFn: () => wordsApi.browse(level, null, 0, 200),
+    queryKey: ['browse-words', level, null, lang, '', sortBy, statusFilter],
+    queryFn: () => wordsApi.browse(level, null, 0, 200, undefined, sortBy, statusFilter),
     enabled: viewMode === 'list',
     staleTime: 2 * 60_000,
   });
 
   const debouncedQuery = useDebounce(query, 280);
   const { data: searchData, isLoading: searchLoading } = useQuery({
-    queryKey: ['browse-search', searchScope, searchScope === 'level' ? level : 'all', debouncedQuery, lang],
-    queryFn: () => wordsApi.browse(searchScope === 'all' ? 'all' : level, null, 0, 80, debouncedQuery),
+    queryKey: ['browse-search', searchScope, searchScope === 'level' ? level : 'all', debouncedQuery, lang, sortBy, statusFilter],
+    queryFn: () => wordsApi.browse(searchScope === 'all' ? 'all' : level, null, 0, 80, debouncedQuery, sortBy, statusFilter),
     enabled: searchActive && debouncedQuery.length >= 2,
     staleTime: 30_000,
   });
@@ -596,6 +663,17 @@ export function DictionaryPage() {
             </button>
           ))}
         </div>
+      )}
+
+      {/* ── Filter chips + sort dropdown (only in list view / search) ── */}
+      {(viewMode === 'list' || showSearch) && (
+        <FilterBar
+          t={t}
+          sortBy={sortBy}
+          statusFilter={statusFilter}
+          onSortChange={setSortBy}
+          onFilterChange={setStatusFilter}
+        />
       )}
 
       {/* ── Search results ── */}

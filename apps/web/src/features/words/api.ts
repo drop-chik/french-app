@@ -90,11 +90,21 @@ export const wordsApi = {
   getCategories: (level: string) =>
     apiRequest<{ categories: WordCategory[] }>(`/words/categories?level=${level}`),
 
-  browse: (level: string | 'all', category: string | null, offset = 0, limit = 100, q?: string) => {
+  browse: (
+    level: string | 'all',
+    category: string | null,
+    offset = 0,
+    limit = 100,
+    q?: string,
+    sortBy?: 'alphabet' | 'level' | 'frequency' | 'status' | 'recent',
+    statusFilter?: 'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine',
+  ) => {
     const cat = category ? `&category=${encodeURIComponent(category)}` : '';
     const search = q ? `&q=${encodeURIComponent(q)}` : '';
+    const sort = sortBy ? `&sortBy=${sortBy}` : '';
+    const filter = statusFilter ? `&statusFilter=${statusFilter}` : '';
     return apiRequest<{ words: BrowseWord[]; total: number }>(
-      `/words/browse?level=${level}&lang=${getLang()}${cat}${search}&offset=${offset}&limit=${limit}`,
+      `/words/browse?level=${level}&lang=${getLang()}${cat}${search}${sort}${filter}&offset=${offset}&limit=${limit}`,
     );
   },
 

@@ -337,6 +337,9 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
 }
 
 // Browse all words for a level with optional category filter + user's progress status
+export type BrowseSortBy = 'alphabet' | 'level' | 'frequency' | 'status' | 'recent';
+export type BrowseStatusFilter = 'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine';
+
 export async function browseWords(
   db: DB,
   userId: string,
@@ -347,8 +350,23 @@ export async function browseWords(
   offset: number,
   q: string | null = null,
   grammarTag: string | null = null,
+  sortBy: BrowseSortBy = 'frequency',
+  statusFilter: BrowseStatusFilter = 'all',
 ) {
   const pattern = q ? `%${q.toLowerCase()}%` : null;
+
+  // Status filter is applied via SQL after the LEFT JOIN. For "not-started"
+  // we need progress to be NULL; for the others we match progress.status.
+  // "mine" is owner filter on words.created_by_user_id.
+  const statusCond = (() => {
+    if (statusFilter === 'all') return undefined;
+    if (statusFilter === 'mine') return eq(words.createdByUserId, userId);
+    if (statusFilter === 'not-started') return isNull(wordProgress.userId);
+    if (statusFilter === 'mastered') return eq(wordProgress.status, 'mastered');
+    // in-progress = anything that's been touched but not yet mastered
+    return and(isNotNull(wordProgress.userId), sql`${wordProgress.status} <> 'mastered'`);
+  })();
+
   const baseWhere = and(
     level ? eq(words.level, level) : undefined,
     eq(words.isActive, true),
@@ -361,7 +379,27 @@ export async function browseWords(
           sql`lower(${words.translation}) LIKE ${pattern}`,
         )
       : undefined,
+    statusCond,
   );
+
+  // Sort columns. Words without progress sort last for status/recent so
+  // active rows surface first.
+  const orderBy = (() => {
+    switch (sortBy) {
+      case 'alphabet':
+        return [asc(words.french)];
+      case 'level':
+        return [asc(words.level), asc(words.frequencyRank)];
+      case 'status':
+        // mastered → review → learning → null. NULLS LAST.
+        return [sql`${wordProgress.status} ASC NULLS LAST`, asc(words.frequencyRank)];
+      case 'recent':
+        return [sql`${wordProgress.lastReviewed} DESC NULLS LAST`, asc(words.frequencyRank)];
+      case 'frequency':
+      default:
+        return [asc(words.frequencyRank)];
+    }
+  })();
 
   const [rows, totalRow] = await Promise.all([
     db
@@ -372,10 +410,17 @@ export async function browseWords(
         and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
       )
       .where(baseWhere)
-      .orderBy(asc(words.frequencyRank))
+      .orderBy(...orderBy)
       .limit(limit)
       .offset(offset),
-    db.select({ total: count() }).from(words).where(baseWhere),
+    db
+      .select({ total: count() })
+      .from(words)
+      .leftJoin(
+        wordProgress,
+        and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
+      )
+      .where(baseWhere),
   ]);
 
   return {
