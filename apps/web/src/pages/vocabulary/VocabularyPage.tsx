@@ -18,6 +18,7 @@ import { SpeedRoundMode } from './SpeedRoundMode/SpeedRoundMode';
 import { ContextBuilderMode } from './ContextBuilderMode/ContextBuilderMode';
 import { ListeningRecallMode } from './ListeningRecallMode/ListeningRecallMode';
 import { SmartSessionMode } from './SmartSessionMode/SmartSessionMode';
+import { SmartLearnFlow } from './SmartLearnFlow/SmartLearnFlow';
 import { SessionComplete } from './SessionComplete/SessionComplete';
 import type { SessionResult } from './FlashcardMode/FlashcardMode';
 import styles from './VocabularyPage.module.css';
@@ -202,8 +203,12 @@ export function VocabularyPage() {
   }
 
   // — режимы —
+  // 'smart' uses the new interleaved multi-stage flow (Intro → MC → Spelling
+  // per word). The old SmartSessionMode is kept for callers that select it
+  // explicitly elsewhere — not used from this page anymore.
   if (activeMode === 'smart' && sessionWords.length > 0) {
-    return withBack(<SmartSessionMode words={sessionWords} onComplete={handleComplete} />);
+    void SmartSessionMode; // keep import referenced
+    return withBack(<SmartLearnFlow words={sessionWords} onComplete={handleComplete} />);
   }
   if (activeMode === 'flashcard' && sessionWords.length > 0) {
     return withBack(<FlashcardMode words={sessionWords} onComplete={handleComplete} />);
