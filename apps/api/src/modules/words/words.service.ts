@@ -600,21 +600,25 @@ export async function dismissWord(db: DB, userId: string, wordId: string) {
   });
   const now = new Date();
   if (!existing) {
+    // First time the user has touched this word — create a minimal "new"
+    // progress row with dismissedAt set. We intentionally do NOT set
+    // status='mastered' here: dismissed is its own dimension, not progress.
     const farFuture = new Date(now.getTime() + 365 * 24 * 3_600_000);
     await db.insert(wordProgress).values({
       userId,
       wordId,
-      status: 'mastered',
+      status: 'new',
       easinessFactor: '2.50',
-      interval: 365,
-      repetitions: 10,
+      interval: 0,
+      repetitions: 0,
       nextReview: farFuture,
-      lastReviewed: now,
-      correctCount: 10,
+      lastReviewed: null,
+      correctCount: 0,
       incorrectCount: 0,
       dismissedAt: now,
     });
   } else {
+    // Already has progress — just stamp dismissedAt, preserve status.
     await db
       .update(wordProgress)
       .set({ dismissedAt: now })

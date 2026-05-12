@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { X, Volume2, Plus, Check, EyeOff, Eye, BookOpen, ArrowRight, Hash, RotateCcw } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
@@ -37,6 +37,7 @@ const LEVEL_COLOR: Record<string, string> = {
 export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [audioLoading, setAudioLoading] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -45,6 +46,14 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
     staleTime: 60_000,
   });
   const word = data?.word;
+
+  // After any mutation, the modal must refetch this word so the action
+  // buttons reflect the new state (otherwise user sees stale Dismiss / Restart
+  // / Undismiss buttons even after pressing them).
+  function handleMutated() {
+    queryClient.invalidateQueries({ queryKey: ['word-details', wordId] });
+    onMutated();
+  }
 
   // Lock background scroll while open
   useEffect(() => {
@@ -64,19 +73,19 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
 
   const markMutation = useMutation({
     mutationFn: (action: 'study' | 'mastered') => wordsApi.markWord(wordId, action),
-    onSuccess: () => onMutated(),
+    onSuccess: handleMutated,
   });
   const dismissMutation = useMutation({
     mutationFn: () => wordsApi.dismissWord(wordId),
-    onSuccess: () => onMutated(),
+    onSuccess: handleMutated,
   });
   const undismissMutation = useMutation({
     mutationFn: () => wordsApi.undismissWord(wordId),
-    onSuccess: () => onMutated(),
+    onSuccess: handleMutated,
   });
   const restartMutation = useMutation({
     mutationFn: () => wordsApi.restartWord(wordId),
-    onSuccess: () => onMutated(),
+    onSuccess: handleMutated,
   });
 
   async function playAudio() {
@@ -151,7 +160,14 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
 
             {/* Meta strip — status, frequency, grammar tag */}
             <div className={styles.metaRow}>
-              {status && (
+              {/* Dismissed wins over status — showing both is confusing
+                  ("освоено" + "скрыто" suggests the word is in rotation but
+                  marked done, when actually it's just hidden). */}
+              {isDismissed ? (
+                <span className={`${styles.metaChip} ${styles.metaChipDismissed}`}>
+                  <EyeOff size={11} /> {t.dictionary.dismissedLabel}
+                </span>
+              ) : status ? (
                 <span
                   className={styles.metaChip}
                   style={{
@@ -161,12 +177,8 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
                 >
                   {t.dictionary.status[STATUS_LABEL[status] as keyof typeof t.dictionary.status] ?? status}
                 </span>
-              )}
-              {!status && <span className={styles.metaChipMuted}>{t.dictionary.notStudied}</span>}
-              {isDismissed && (
-                <span className={`${styles.metaChip} ${styles.metaChipDismissed}`}>
-                  <EyeOff size={11} /> {t.dictionary.dismissedLabel}
-                </span>
+              ) : (
+                <span className={styles.metaChipMuted}>{t.dictionary.notStudied}</span>
               )}
               {word.frequencyRank !== null && word.frequencyRank !== undefined && (
                 <span className={styles.metaChipMuted}>
@@ -197,55 +209,63 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions — laid out as mutually-exclusive primary + secondary.
+                Dismissed words ALWAYS show "bring back" as primary because
+                that's the only sensible action while the word is hidden. */}
             <div className={styles.actions}>
-              {!status && (
-                <button
-                  className={styles.btnPrimary}
-                  onClick={() => markMutation.mutate('study')}
-                  disabled={isWorking}
-                >
-                  <Plus size={16} /> {t.dictionary.markStudy}
-                </button>
-              )}
-              {status && status !== 'mastered' && (
-                <button
-                  className={styles.btnPrimary}
-                  onClick={() => markMutation.mutate('mastered')}
-                  disabled={isWorking}
-                >
-                  <Check size={16} /> {t.dictionary.markMastered}
-                </button>
-              )}
-              {/* Mastered → bring back to learning. Common ask: user marked
-                  something mastered too eagerly, wants to revisit */}
-              {status === 'mastered' && (
-                <button
-                  className={styles.btnSecondary}
-                  onClick={() => restartMutation.mutate()}
-                  disabled={isWorking}
-                >
-                  <RotateCcw size={16} /> {t.dictionary.restartLearning}
-                </button>
-              )}
               {isDismissed ? (
+                /* Dismissed → primary action is to bring it back. No other
+                   buttons (mark/restart) make sense while word is hidden. */
                 <button
-                  className={styles.btnSecondary}
+                  className={styles.btnPrimary}
                   onClick={() => undismissMutation.mutate()}
                   disabled={isWorking}
                 >
                   <Eye size={16} /> {t.dictionary.undismiss}
                 </button>
               ) : (
-                <button
-                  className={styles.btnSecondary}
-                  onClick={() => {
-                    if (confirm(t.dictionary.dismissConfirm)) dismissMutation.mutate();
-                  }}
-                  disabled={isWorking}
-                >
-                  <EyeOff size={16} /> {t.dictionary.dismiss}
-                </button>
+                <>
+                  {/* No progress yet → "Учить" */}
+                  {!status && (
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => markMutation.mutate('study')}
+                      disabled={isWorking}
+                    >
+                      <Plus size={16} /> {t.dictionary.markStudy}
+                    </button>
+                  )}
+                  {/* Has progress but not mastered → "Знаю" finalises it */}
+                  {status && status !== 'mastered' && (
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => markMutation.mutate('mastered')}
+                      disabled={isWorking}
+                    >
+                      <Check size={16} /> {t.dictionary.markMastered}
+                    </button>
+                  )}
+                  {/* Mastered → bring it back into the rotation */}
+                  {status === 'mastered' && (
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => restartMutation.mutate()}
+                      disabled={isWorking}
+                    >
+                      <RotateCcw size={16} /> {t.dictionary.restartLearning}
+                    </button>
+                  )}
+                  {/* Hide from rotation — always available when NOT dismissed */}
+                  <button
+                    className={styles.btnSecondary}
+                    onClick={() => {
+                      if (confirm(t.dictionary.dismissConfirm)) dismissMutation.mutate();
+                    }}
+                    disabled={isWorking}
+                  >
+                    <EyeOff size={16} /> {t.dictionary.dismiss}
+                  </button>
+                </>
               )}
               {word.grammarTag && (
                 <button
