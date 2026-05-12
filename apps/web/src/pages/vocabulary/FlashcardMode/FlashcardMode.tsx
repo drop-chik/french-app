@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2 } from 'lucide-react';
+import { Volume2, EyeOff } from 'lucide-react';
 import type { WordData } from '../../../features/words/api';
 import { wordsApi } from '../../../features/words/api';
 import { listeningApi } from '../../../features/listening/api';
@@ -116,6 +116,28 @@ export function FlashcardMode({ words, onComplete }: Props) {
     [current, index, isAnimating, results, words.length, onComplete],
   );
 
+  // "I already know this word, never show me again" — soft confirm then
+  // dismiss + advance. We record a grade of 5 locally so the session ends
+  // gracefully with this word counted as known.
+  const handleDismiss = useCallback(() => {
+    if (!current || isAnimating) return;
+    if (!confirm(t.dictionary.dismissConfirm)) return;
+    setIsAnimating(true);
+    wordsApi.dismissWord(current.id).catch(console.error);
+    const newResults = [...results, { wordId: current.id, grade: 5 }];
+    setResults(newResults);
+    if (index + 1 >= words.length) {
+      onComplete(newResults);
+      return;
+    }
+    setTimeout(() => {
+      setFlipped(false);
+      setIndex((i) => i + 1);
+      setImageError(false);
+      setIsAnimating(false);
+    }, 90);
+  }, [current, index, isAnimating, results, words.length, onComplete, t.dictionary.dismissConfirm]);
+
   if (!current) return null;
 
   const progress = (index / words.length) * 100;
@@ -167,6 +189,14 @@ export function FlashcardMode({ words, onComplete }: Props) {
               disabled={loadingAudio}
             >
               <Volume2 size={18} />
+            </button>
+            <button
+              className={styles.dismissBtn}
+              onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
+              aria-label={t.dictionary.dismiss}
+              title={t.dictionary.dismiss}
+            >
+              <EyeOff size={16} />
             </button>
             <div className={styles.flipHint}>{t.flashcard.flipHint}</div>
           </div>

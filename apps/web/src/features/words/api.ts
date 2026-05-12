@@ -58,6 +58,11 @@ export const wordsApi = {
   getByGrammarTag: (tag: string) =>
     apiRequest<{ words: WordData[]; total: number }>(`/words/by-tag/${encodeURIComponent(tag)}?lang=${getLang()}`),
 
+  // Words in a vocabulary category. Powers the Dictionary drawer's
+  // "practice this category" button.
+  getByCategory: (category: string) =>
+    apiRequest<{ words: WordData[]; total: number }>(`/words/by-category/${encodeURIComponent(category)}?lang=${getLang()}`),
+
   recordAnswer: (wordId: string, grade: number) =>
     apiRequest<{ nextReview: string; interval: number }>(`/words/${wordId}/answer`, {
       method: 'POST',
@@ -99,4 +104,10 @@ export const wordsApi = {
     apiRequest<{ ok: boolean }>(`/words/${wordId}/dismiss`, { method: 'POST' }),
   undismissWord: (wordId: string) =>
     apiRequest<{ ok: boolean }>(`/words/${wordId}/undismiss`, { method: 'POST' }),
+
+  // Single-word full details — used by the Dictionary modal.
+  getWord: (wordId: string) =>
+    apiRequest<{ word: WordData & { isDismissed: boolean } }>(
+      `/words/${wordId}?lang=${getLang()}`,
+    ),
 };

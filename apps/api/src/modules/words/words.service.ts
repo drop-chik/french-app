@@ -402,6 +402,59 @@ export async function markWord(
   }
 }
 
+// Words by category — used when user lands on /vocabulary from Dictionary
+// drawer's "practice this category" button. Returns full WordData shape with
+// user progress. Filters out dismissed words and inactive ones.
+export async function getWordsByCategory(
+  db: DB,
+  userId: string,
+  category: string,
+  lang: 'ru' | 'en' = 'ru',
+) {
+  const rows = await db
+    .select({ word: words, progress: wordProgress })
+    .from(words)
+    .leftJoin(
+      wordProgress,
+      and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
+    )
+    .where(and(eq(words.category, category), eq(words.isActive, true)))
+    .orderBy(asc(words.frequencyRank));
+
+  return rows
+    .filter((r) => !r.progress?.dismissedAt)
+    .map((r) => ({
+      ...normalizeWord(r.word, lang),
+      progress: r.progress ?? null,
+    }));
+}
+
+// Single-word details — used by the Dictionary modal. Returns the full word
+// row plus the user's current progress (if any) and the dismissed flag.
+export async function getWordDetails(
+  db: DB,
+  userId: string,
+  wordId: string,
+  lang: 'ru' | 'en' = 'ru',
+) {
+  const row = await db
+    .select({ word: words, progress: wordProgress })
+    .from(words)
+    .leftJoin(
+      wordProgress,
+      and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
+    )
+    .where(eq(words.id, wordId))
+    .limit(1);
+  const r = row[0];
+  if (!r) return null;
+  return {
+    ...normalizeWord(r.word, lang),
+    progress: r.progress ?? null,
+    isDismissed: r.progress?.dismissedAt !== null && r.progress?.dismissedAt !== undefined,
+  };
+}
+
 // Dismiss a word permanently — "I already know this, never show me".
 // Creates a progress row if missing, marks dismissedAt timestamp.
 // Filtered out of getStudySession but visible in Dictionary for un-dismissing.

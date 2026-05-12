@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
-import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell } from 'lucide-react';
+import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Target } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import type { UserProfile } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -60,6 +60,9 @@ export function ProfilePage() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [dailyNewLimit, setDailyNewLimit] = useState<number>(10);
+  const [dailyDueLimit, setDailyDueLimit] = useState<number>(20);
+  const [sessionMsg, setSessionMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
@@ -73,14 +76,17 @@ export function ProfilePage() {
     if (profile && !name) {
       setName(profile.name);
       setEmail(profile.email);
+      setDailyNewLimit(profile.dailyNewWordsLimit ?? 10);
+      setDailyDueLimit(profile.dailyDueWordsLimit ?? 20);
     }
   }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateProfileMutation = useMutation({
-    mutationFn: (data: { name: string; email: string }) => profileApi.updateProfile(data),
+    mutationFn: (data: { name?: string; email?: string; dailyNewWordsLimit?: number; dailyDueWordsLimit?: number }) =>
+      profileApi.updateProfile(data),
     onSuccess: (updated) => {
       queryClient.setQueryData<UserProfile>(['profile'], (old) =>
-        old ? { ...old, name: updated.name, email: updated.email } : old,
+        old ? { ...old, ...updated } : old,
       );
       updateUser({ name: updated.name, email: updated.email });
       setProfileMsg({ type: 'ok', text: t.profile.saved });
@@ -419,6 +425,71 @@ export function ProfilePage() {
                 {profileMsg && (
                   <p className={profileMsg.type === 'ok' ? styles.success : styles.error}>
                     {profileMsg.text}
+                  </p>
+                )}
+                <button className={styles.btnPrimary} type="submit" disabled={updateProfileMutation.isPending}>
+                  {updateProfileMutation.isPending ? t.common.loading : t.profile.saveChanges}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className={styles.settingsDivider} />
+
+          {/* — Session size limits — */}
+          <div className={styles.settingsBlock}>
+            <div className={styles.settingsBlockHead}>
+              <div className={`${styles.settingsIconBubble} ${styles.bubbleGreen}`}>
+                <Target size={18} />
+              </div>
+              <div className={styles.settingsBlockTitleWrap}>
+                <h3 className={styles.settingsBlockTitle}>{t.profile.sessionTitle}</h3>
+                <p className={styles.settingsBlockDesc}>{t.profile.sessionDesc}</p>
+              </div>
+            </div>
+            <form
+              className={styles.settingsForm}
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateProfileMutation.mutate(
+                  { dailyNewWordsLimit: dailyNewLimit, dailyDueWordsLimit: dailyDueLimit },
+                  {
+                    onSuccess: () => {
+                      setSessionMsg({ type: 'ok', text: t.profile.saved });
+                      setTimeout(() => setSessionMsg(null), 3000);
+                    },
+                  },
+                );
+              }}
+            >
+              <div className={styles.fieldRow}>
+                <div className={styles.field}>
+                  <label className={styles.label}>{t.profile.dailyNewWords}</label>
+                  <input
+                    className={styles.input}
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={dailyNewLimit}
+                    onChange={(e) => setDailyNewLimit(parseInt(e.target.value, 10) || 10)}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>{t.profile.dailyDueWords}</label>
+                  <input
+                    className={styles.input}
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={dailyDueLimit}
+                    onChange={(e) => setDailyDueLimit(parseInt(e.target.value, 10) || 20)}
+                  />
+                </div>
+              </div>
+              <div className={styles.settingsFooter}>
+                {sessionMsg && (
+                  <p className={sessionMsg.type === 'ok' ? styles.success : styles.error}>
+                    {sessionMsg.text}
                   </p>
                 )}
                 <button className={styles.btnPrimary} type="submit" disabled={updateProfileMutation.isPending}>

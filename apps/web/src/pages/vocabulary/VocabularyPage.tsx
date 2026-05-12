@@ -53,13 +53,24 @@ export function VocabularyPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   // filter=learning|review|mastered comes from Dictionary "Повторить" button
-  const search = useSearch({ strict: false }) as { filter?: string; tag?: string };
+  // tag=… is a grammar topic slug (e.g. "verbes-pronominaux")
+  // category=… is a vocabulary category (e.g. "food", "verbs_basic")
+  const search = useSearch({ strict: false }) as { filter?: string; tag?: string; category?: string };
   const statusFilter = search.filter as string | undefined;
   const grammarTag = search.tag as string | undefined;
+  const category = search.category as string | undefined;
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: grammarTag ? ['words-by-tag', grammarTag, lang] : ['words-session', lang],
-    queryFn: () => grammarTag ? wordsApi.getByGrammarTag(grammarTag) : wordsApi.getSession(),
+    queryKey: grammarTag
+      ? ['words-by-tag', grammarTag, lang]
+      : category
+        ? ['words-by-category', category, lang]
+        : ['words-session', lang],
+    queryFn: () => {
+      if (grammarTag) return wordsApi.getByGrammarTag(grammarTag);
+      if (category) return wordsApi.getByCategory(category);
+      return wordsApi.getSession();
+    },
     staleTime: 0,
   });
 
@@ -250,6 +261,25 @@ export function VocabularyPage() {
             onClick={() => navigate({ to: '/grammar/$slug', params: { slug: grammarTag } })}
           >
             {t.vocabulary.tagFilterBack}
+          </button>
+        </div>
+      )}
+
+      {/* Category filter banner — shown when arrived from the Dictionary drawer */}
+      {category && !grammarTag && (
+        <div className={styles.tagBanner}>
+          <div className={styles.tagBannerInfo}>
+            <span className={styles.tagBannerLabel}>{t.vocabulary.categoryFilterLabel}</span>
+            <span className={styles.tagBannerTitle}>
+              {((t.dictionary.categoryNames as Record<string, string>)[category]) ?? category}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={styles.tagBannerClear}
+            onClick={() => navigate({ to: '/dictionary' })}
+          >
+            {t.vocabulary.categoryFilterBack}
           </button>
         </div>
       )}

@@ -128,6 +128,31 @@
   background-color: var(--color-bg-tertiary);
 }
 
+/* "I already know this word — never show me again" button, top-right of
+   the flashcard front. Subtle by default, brightens on hover. */
+.dismissBtn {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  z-index: 2;
+}
+.dismissBtn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #dc2626;
+}
+
 .flipHint {
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);

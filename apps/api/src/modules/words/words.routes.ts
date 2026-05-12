@@ -10,8 +10,10 @@ import {
   browseWords,
   markWord,
   getWordsByGrammarTag,
+  getWordsByCategory,
   dismissWord,
   undismissWord,
+  getWordDetails,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
@@ -252,6 +254,48 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const tag = request.params.tag;
       const words = await getWordsByGrammarTag(fastify.db, request.user.userId, tag, lang);
       reply.send({ words, total: words.length });
+    },
+  );
+
+  // GET /words/by-category/:category — words filtered by vocab category
+  // (e.g. "food", "verbs_basic") with full WordData + progress
+  fastify.get<{ Params: { category: string } }>(
+    '/by-category/:category',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Words filtered by vocabulary category',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { category: { type: 'string' } } },
+        querystring: { type: 'object', properties: { lang: { type: 'string', enum: ['ru', 'en'] } } },
+      },
+    },
+    async (request, reply) => {
+      const lang = parseLang(request.query as Record<string, unknown>);
+      const result = await getWordsByCategory(fastify.db, request.user.userId, request.params.category, lang);
+      reply.send({ words: result, total: result.length });
+    },
+  );
+
+  // GET /words/:id — full details for the Dictionary modal
+  fastify.get<{ Params: { id: string } }>(
+    '/:id',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Single word details with progress + dismissed flag',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        querystring: { type: 'object', properties: { lang: { type: 'string', enum: ['ru', 'en'] } } },
+      },
+    },
+    async (request, reply) => {
+      const lang = parseLang(request.query as Record<string, unknown>);
+      const word = await getWordDetails(fastify.db, request.user.userId, request.params.id, lang);
+      if (!word) return reply.status(404).send({ error: 'Word not found' });
+      reply.send({ word });
     },
   );
 

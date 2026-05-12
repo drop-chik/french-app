@@ -1,10 +1,13 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check } from 'lucide-react';
+import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2 } from 'lucide-react';
 import { wordsApi, type BrowseWord, type WordCategory } from '../../features/words/api';
+import { listeningApi } from '../../features/listening/api';
+import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
+import { WordDetailsModal } from './WordDetailsModal';
 import styles from './DictionaryPage.module.css';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -64,8 +67,26 @@ interface WordRowProps {
   word: BrowseWord;
   t: Translations;
   onMark: (id: string, action: 'study' | 'mastered') => void;
+  onOpen: (id: string) => void;
   markingId: string | null;
   showLevel?: boolean;
+}
+
+// Play a word out loud via on-demand TTS. Cached briefly to avoid hitting the
+// backend repeatedly for the same word.
+const ttsCache = new Map<string, string>();
+async function playTts(text: string) {
+  let url = ttsCache.get(text);
+  if (!url) {
+    try {
+      const blob = await listeningApi.generateTTS(text);
+      url = URL.createObjectURL(blob);
+      ttsCache.set(text, url);
+    } catch {
+      return;
+    }
+  }
+  new Audio(url).play().catch(() => null);
 }
 
 const LEVEL_TINT: Record<string, string> = {
@@ -75,12 +96,22 @@ const LEVEL_TINT: Record<string, string> = {
   B2: '#8b5cf6',
 };
 
-function WordRow({ word, t, onMark, markingId, showLevel }: WordRowProps) {
+function WordRow({ word, t, onMark, onOpen, markingId, showLevel }: WordRowProps) {
   const status = word.progress?.status ?? null;
   const isBusy = markingId === word.id;
 
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+
   return (
-    <div className={styles.wordRow}>
+    <div className={styles.wordRow} onClick={() => onOpen(word.id)} role="button" tabIndex={0}>
+      <button
+        type="button"
+        className={styles.wordAudioBtn}
+        onClick={(e) => { stop(e); void playTts(word.french); }}
+        title={t.dictionary.listen}
+      >
+        <Volume2 size={14} />
+      </button>
       <div className={styles.wordInfo}>
         <span className={styles.wordFrLine}>
           <span className={styles.wordFr}>{word.french}</span>
@@ -96,7 +127,7 @@ function WordRow({ word, t, onMark, markingId, showLevel }: WordRowProps) {
         <span className={styles.wordRu}>{word.translation}</span>
         {word.exampleFr && <span className={styles.wordEx}>{word.exampleFr}</span>}
       </div>
-      <div className={styles.wordActions}>
+      <div className={styles.wordActions} onClick={stop}>
         <StatusBadge status={status} nextReview={null} t={t} />
         {status === null && (
           <>
@@ -173,11 +204,12 @@ interface DrawerProps {
   t: Translations;
   onClose: () => void;
   onMark: (id: string, action: 'study' | 'mastered') => void;
+  onOpen: (id: string) => void;
   markingId: string | null;
   navigate: ReturnType<typeof useNavigate>;
 }
 
-function Drawer({ category, level, lang, t, onClose, onMark, markingId, navigate }: DrawerProps) {
+function Drawer({ category, level, lang, t, onClose, onMark, onOpen, markingId, navigate }: DrawerProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['browse-words', level, category?.name ?? null, lang, ''],
     queryFn: () => wordsApi.browse(level, category?.name ?? null, 0, 200),
@@ -214,7 +246,10 @@ function Drawer({ category, level, lang, t, onClose, onMark, markingId, navigate
             <button
               className={styles.drawerPracticeBtn}
               style={{ background: color }}
-              onClick={() => { onClose(); navigate({ to: '/vocabulary' }); }}
+              onClick={() => {
+                onClose();
+                navigate({ to: '/vocabulary', search: { category: category.name } as never });
+              }}
             >
               {t.dictionary.drawerPractice}
             </button>
@@ -225,7 +260,7 @@ function Drawer({ category, level, lang, t, onClose, onMark, markingId, navigate
           {isLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
           {!isLoading && words.length === 0 && <p className={styles.loadingText}>{t.dictionary.noWordsInCategory}</p>}
           {words.map((w) => (
-            <WordRow key={w.id} word={w} t={t} onMark={onMark} markingId={markingId} />
+            <WordRow key={w.id} word={w} t={t} onMark={onMark} onOpen={onOpen} markingId={markingId} />
           ))}
         </div>
       </div>
@@ -239,13 +274,21 @@ export function DictionaryPage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const userLevel = useAuthStore((s) => s.user?.level);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [level, setLevel] = useState<Level>('B2');
+  // Default to the user's CEFR level so first-time visitors see their own
+  // vocab, not B2. Falls back to A1 if level is somehow missing.
+  const initialLevel: Level = (userLevel && (ALL_LEVELS as readonly string[]).includes(userLevel))
+    ? userLevel as Level
+    : 'A1';
+  const [level, setLevel] = useState<Level>(initialLevel);
   const [searchActive, setSearchActive] = useState(false);
   const [query, setQuery] = useState('');
+  const [searchScope, setSearchScope] = useState<'level' | 'all'>('level');
   const [selectedCat, setSelectedCat] = useState<WordCategory | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // ── Queries ────────────────────────────────────────────────────────────────
@@ -265,9 +308,8 @@ export function DictionaryPage() {
 
   const debouncedQuery = useDebounce(query, 280);
   const { data: searchData, isLoading: searchLoading } = useQuery({
-    queryKey: ['browse-search', debouncedQuery, lang],
-    // Search ignores the level filter — show matches across all levels.
-    queryFn: () => wordsApi.browse('all', null, 0, 80, debouncedQuery),
+    queryKey: ['browse-search', searchScope, searchScope === 'level' ? level : 'all', debouncedQuery, lang],
+    queryFn: () => wordsApi.browse(searchScope === 'all' ? 'all' : level, null, 0, 80, debouncedQuery),
     enabled: searchActive && debouncedQuery.length >= 2,
     staleTime: 30_000,
   });
@@ -364,17 +406,34 @@ export function DictionaryPage() {
 
       {/* ── Search bar ── */}
       {searchActive && (
-        <div className={styles.searchBar}>
-          <Search size={15} className={styles.searchIcon} />
-          <input
-            ref={searchRef}
-            className={styles.searchInput}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t.dictionary.searchPlaceholder}
-          />
-          {query && <button className={styles.searchClear} onClick={() => setQuery('')}><X size={13} /></button>}
-        </div>
+        <>
+          <div className={styles.searchBar}>
+            <Search size={15} className={styles.searchIcon} />
+            <input
+              ref={searchRef}
+              className={styles.searchInput}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.dictionary.searchPlaceholder}
+            />
+            {query && <button className={styles.searchClear} onClick={() => setQuery('')}><X size={13} /></button>}
+          </div>
+          {/* Scope toggle — search current level only vs all levels */}
+          <div className={styles.searchScope}>
+            <button
+              className={`${styles.searchScopeBtn} ${searchScope === 'level' ? styles.searchScopeActive : ''}`}
+              onClick={() => setSearchScope('level')}
+            >
+              {t.dictionary.searchScopeLevel.replace('{level}', level)}
+            </button>
+            <button
+              className={`${styles.searchScopeBtn} ${searchScope === 'all' ? styles.searchScopeActive : ''}`}
+              onClick={() => setSearchScope('all')}
+            >
+              {t.dictionary.searchScopeAll}
+            </button>
+          </div>
+        </>
       )}
 
       {/* ── Level pills ── */}
@@ -400,7 +459,7 @@ export function DictionaryPage() {
             <p className={styles.emptyText}>{t.dictionary.emptySearch}</p>
           )}
           {searchWords.map((w) => (
-            <WordRow key={w.id} word={w} t={t} onMark={handleMark} markingId={markingId} showLevel />
+            <WordRow key={w.id} word={w} t={t} onMark={handleMark} onOpen={setSelectedWordId} markingId={markingId} showLevel />
           ))}
         </div>
       )}
@@ -434,7 +493,7 @@ export function DictionaryPage() {
         <div className={styles.wordListCard}>
           {listLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
           {!listLoading && listWords.map((w) => (
-            <WordRow key={w.id} word={w} t={t} onMark={handleMark} markingId={markingId} />
+            <WordRow key={w.id} word={w} t={t} onMark={handleMark} onOpen={setSelectedWordId} markingId={markingId} />
           ))}
           {!listLoading && listWords.length === 0 && (
             <p className={styles.emptyText}>{t.dictionary.emptySearch}</p>
@@ -451,8 +510,22 @@ export function DictionaryPage() {
           t={t}
           onClose={() => setSelectedCat(null)}
           onMark={handleMark}
+          onOpen={setSelectedWordId}
           markingId={markingId}
           navigate={navigate}
+        />
+      )}
+
+      {/* ── Word details modal — opens on click of any word row ── */}
+      {selectedWordId && (
+        <WordDetailsModal
+          wordId={selectedWordId}
+          onClose={() => setSelectedWordId(null)}
+          onMutated={() => {
+            queryClient.invalidateQueries({ queryKey: ['browse-words'] });
+            queryClient.invalidateQueries({ queryKey: ['browse-search'] });
+            queryClient.invalidateQueries({ queryKey: ['word-categories'] });
+          }}
         />
       )}
     </div>
