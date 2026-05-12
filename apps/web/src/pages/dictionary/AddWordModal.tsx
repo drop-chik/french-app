@@ -1,33 +1,39 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Plus } from 'lucide-react';
-import { wordsApi } from '../../features/words/api';
+import { X, Plus, Save } from 'lucide-react';
+import { wordsApi, type WordData } from '../../features/words/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './WordDetailsModal.module.css';
 
 interface Props {
   onClose: () => void;
+  // When provided the modal opens in EDIT mode pre-filled with the word's
+  // current values. Submitting calls PATCH /words/:id instead of POST /words.
+  editWord?: WordData | null;
 }
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
 const POS_OPTIONS = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'expression'] as const;
 
-export function AddWordModal({ onClose }: Props) {
+export function AddWordModal({ onClose, editWord }: Props) {
   const { t } = useI18n();
   const userLevel = useAuthStore((s) => s.user?.level);
   const queryClient = useQueryClient();
+  const isEdit = !!editWord;
 
-  const [french, setFrench] = useState('');
-  const [translation, setTranslation] = useState('');
+  const [french, setFrench] = useState(editWord?.french ?? '');
+  const [translation, setTranslation] = useState(editWord?.translation ?? '');
   const [level, setLevel] = useState<string>(
-    (LEVELS as readonly string[]).includes(userLevel ?? '') ? (userLevel as string) : 'A1',
+    editWord?.level ?? ((LEVELS as readonly string[]).includes(userLevel ?? '') ? (userLevel as string) : 'A1'),
   );
-  const [partOfSpeech, setPartOfSpeech] = useState<string>('noun');
-  const [gender, setGender] = useState<'' | 'm' | 'f'>('');
-  const [category, setCategory] = useState<string>('custom');
-  const [exampleFr, setExampleFr] = useState('');
-  const [exampleRu, setExampleRu] = useState('');
+  const [partOfSpeech, setPartOfSpeech] = useState<string>(editWord?.partOfSpeech ?? 'noun');
+  const [gender, setGender] = useState<'' | 'm' | 'f'>(
+    (editWord?.gender as 'm' | 'f' | null) ?? '',
+  );
+  const [category, setCategory] = useState<string>(editWord?.category ?? 'custom');
+  const [exampleFr, setExampleFr] = useState(editWord?.exampleFr ?? '');
+  const [exampleRu, setExampleRu] = useState(editWord?.exampleRu ?? '');
   const [error, setError] = useState<string | null>(null);
 
   // Lock scroll + ESC close
@@ -44,21 +50,31 @@ export function AddWordModal({ onClose }: Props) {
     };
   }, [onClose]);
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      wordsApi.createWord({
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
         french: french.trim(),
         translation: translation.trim(),
         level,
         category: category.trim() || 'custom',
         partOfSpeech,
-        gender: partOfSpeech === 'noun' ? gender : '',
+        gender: partOfSpeech === 'noun' ? gender : '' as 'm' | 'f' | '',
         exampleFr: exampleFr.trim(),
         exampleRu: exampleRu.trim(),
-      }),
+      };
+      if (isEdit) {
+        await wordsApi.updateWord(editWord!.id, payload);
+      } else {
+        await wordsApi.createWord(payload);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['browse-words'] });
+      queryClient.invalidateQueries({ queryKey: ['browse-search'] });
       queryClient.invalidateQueries({ queryKey: ['word-categories'] });
+      if (isEdit) {
+        queryClient.invalidateQueries({ queryKey: ['word-details', editWord!.id] });
+      }
       onClose();
     },
     onError: (err: Error) => {
@@ -66,7 +82,7 @@ export function AddWordModal({ onClose }: Props) {
     },
   });
 
-  const canSubmit = french.trim().length >= 1 && translation.trim().length >= 1 && !createMutation.isPending;
+  const canSubmit = french.trim().length >= 1 && translation.trim().length >= 1 && !saveMutation.isPending;
 
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
@@ -75,14 +91,16 @@ export function AddWordModal({ onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => {
           e.preventDefault();
-          if (canSubmit) createMutation.mutate();
+          if (canSubmit) saveMutation.mutate();
         }}
       >
         <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
           <X size={18} />
         </button>
 
-        <h2 className={styles.french} style={{ marginBottom: 24 }}>{t.dictionary.addWordTitle}</h2>
+        <h2 className={styles.french} style={{ marginBottom: 24 }}>
+          {isEdit ? t.dictionary.editWordTitle : t.dictionary.addWordTitle}
+        </h2>
 
         {/* French + translation — required */}
         <div className={styles.formGrid}>
@@ -184,8 +202,10 @@ export function AddWordModal({ onClose }: Props) {
             className={styles.btnPrimary}
             disabled={!canSubmit}
           >
-            <Plus size={16} />
-            {createMutation.isPending ? t.dictionary.addWordSubmitting : t.dictionary.addWordSubmit}
+            {isEdit ? <Save size={16} /> : <Plus size={16} />}
+            {saveMutation.isPending
+              ? (isEdit ? t.dictionary.editWordSubmitting : t.dictionary.addWordSubmitting)
+              : (isEdit ? t.dictionary.editWordSubmit : t.dictionary.addWordSubmit)}
           </button>
         </div>
       </form>

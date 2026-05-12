@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, RotateCcw } from 'lucide-react';
-import { wordsApi, type BrowseWord, type WordCategory } from '../../features/words/api';
+import { wordsApi, type BrowseWord, type WordCategory, type WordData } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
@@ -352,6 +352,9 @@ export function DictionaryPage() {
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
   const [showAddWord, setShowAddWord] = useState(false);
+  // When set, AddWordModal opens in EDIT mode pre-filled with the word's
+  // current values. Cleared on modal close.
+  const [editingWord, setEditingWord] = useState<WordData | null>(null);
   // Bulk multi-select state. Triggered by toggling the Select button; user
   // checks rows to add to selectedIds, then chooses an action from the toolbar.
   const [bulkMode, setBulkMode] = useState(false);
@@ -680,11 +683,23 @@ export function DictionaryPage() {
             queryClient.invalidateQueries({ queryKey: ['browse-search'] });
             queryClient.invalidateQueries({ queryKey: ['word-categories'] });
           }}
+          onEdit={(word) => {
+            setSelectedWordId(null);
+            setEditingWord(word);
+          }}
         />
       )}
 
-      {/* ── Add custom word modal ── */}
-      {showAddWord && <AddWordModal onClose={() => setShowAddWord(false)} />}
+      {/* ── Add / Edit custom word modal ── */}
+      {(showAddWord || editingWord) && (
+        <AddWordModal
+          editWord={editingWord}
+          onClose={() => {
+            setShowAddWord(false);
+            setEditingWord(null);
+          }}
+        />
+      )}
     </div>
   );
 }

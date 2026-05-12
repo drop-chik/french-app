@@ -16,6 +16,9 @@ export interface WordData {
   exampleRu: string | null;
   audioUrl: string | null;
   imageUrl: string | null;
+  // NULL = ships with the seed; non-NULL = user added it via Dictionary
+  // "+" button. Only owners can edit/delete.
+  createdByUserId?: string | null;
   progress: {
     status: string;
     easinessFactor: string;
@@ -129,6 +132,22 @@ export const wordsApi = {
     apiRequest<{ word: WordData }>('/words', {
       method: 'POST',
       body: JSON.stringify(data),
+    }),
+
+  // Update a custom user-private word. Owner only — server checks.
+  updateWord: (wordId: string, patch: Partial<{
+    french: string;
+    translation: string;
+    level: string;
+    category: string;
+    partOfSpeech: string;
+    gender: 'm' | 'f' | '';
+    exampleFr: string;
+    exampleRu: string;
+  }>) =>
+    apiRequest<{ ok: boolean }>(`/words/${wordId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
     }),
 
   // Delete a custom user-private word. Owner only.

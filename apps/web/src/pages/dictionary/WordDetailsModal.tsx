@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { X, Volume2, Plus, Check, BookOpen, ArrowRight, Hash, RotateCcw } from 'lucide-react';
-import { wordsApi } from '../../features/words/api';
+import { X, Volume2, Plus, Check, BookOpen, ArrowRight, Hash, RotateCcw, Pencil, Trash2 } from 'lucide-react';
+import { wordsApi, type WordData } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
+import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './WordDetailsModal.module.css';
 
@@ -11,6 +12,7 @@ interface Props {
   wordId: string;
   onClose: () => void;
   onMutated: () => void;
+  onEdit?: (word: WordData) => void;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -34,10 +36,11 @@ const LEVEL_COLOR: Record<string, string> = {
   B2: '#a855f7',
 };
 
-export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
+export function WordDetailsModal({ wordId, onClose, onMutated, onEdit }: Props) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const currentUserId = useAuthStore((s) => s.user?.id);
   const [audioLoading, setAudioLoading] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -78,6 +81,23 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
     mutationFn: () => wordsApi.restartWord(wordId),
     onSuccess: handleMutated,
   });
+  const deleteMutation = useMutation({
+    mutationFn: () => wordsApi.deleteWord(wordId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['browse-words'] });
+      queryClient.invalidateQueries({ queryKey: ['browse-search'] });
+      queryClient.invalidateQueries({ queryKey: ['word-categories'] });
+      onMutated();
+      onClose();
+    },
+  });
+
+  function handleDelete() {
+    // eslint-disable-next-line no-alert
+    if (window.confirm(t.dictionary.deleteWordConfirm)) {
+      deleteMutation.mutate();
+    }
+  }
 
   async function playAudio() {
     if (!word) return;
@@ -94,7 +114,8 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
   }
 
   const status = word?.progress?.status ?? null;
-  const isWorking = markMutation.isPending || restartMutation.isPending;
+  const isOwner = !!word?.createdByUserId && word.createdByUserId === currentUserId;
+  const isWorking = markMutation.isPending || restartMutation.isPending || deleteMutation.isPending;
 
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
@@ -150,6 +171,9 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
 
             {/* Meta strip — status, frequency, grammar tag */}
             <div className={styles.metaRow}>
+              {isOwner && (
+                <span className={styles.metaChipOwn}>{t.dictionary.ownWordBadge}</span>
+              )}
               {status ? (
                 <span
                   className={styles.metaChip}
@@ -232,6 +256,27 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
                   {t.dictionary.practiceRelated}
                   <ArrowRight size={14} />
                 </button>
+              )}
+              {isOwner && (
+                <div className={styles.ownerActions}>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => onEdit?.(word)}
+                    disabled={isWorking}
+                  >
+                    <Pencil size={14} /> {t.dictionary.editWord}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnDanger}
+                    onClick={handleDelete}
+                    disabled={isWorking}
+                  >
+                    <Trash2 size={14} />
+                    {deleteMutation.isPending ? t.dictionary.deleting : t.dictionary.deleteWord}
+                  </button>
+                </div>
               )}
             </div>
           </>

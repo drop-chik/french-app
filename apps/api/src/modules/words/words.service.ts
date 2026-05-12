@@ -532,6 +532,43 @@ export async function createUserWord(
   return created;
 }
 
+// Update a custom user-private word. Same whitelist as create. Owner-only.
+export async function updateUserWord(
+  db: DB,
+  userId: string,
+  wordId: string,
+  patch: {
+    french?: string;
+    translation?: string;
+    level?: LanguageLevel | undefined;
+    category?: string | undefined;
+    partOfSpeech?: string | undefined;
+    gender?: string | null | undefined;
+    exampleFr?: string | null | undefined;
+    exampleRu?: string | null | undefined;
+  },
+) {
+  const target = await db.query.words.findFirst({
+    where: eq(words.id, wordId),
+    columns: { createdByUserId: true },
+  });
+  if (!target) throw new Error('Word not found');
+  if (target.createdByUserId !== userId) throw new Error('Not authorized');
+
+  const updates: Record<string, unknown> = {};
+  if (patch.french      !== undefined) updates['french']      = patch.french.trim().slice(0, 255);
+  if (patch.translation !== undefined) updates['translation'] = patch.translation.trim().slice(0, 255);
+  if (patch.level       !== undefined) updates['level']       = patch.level;
+  if (patch.category    !== undefined) updates['category']    = patch.category.trim().slice(0, 100);
+  if (patch.partOfSpeech !== undefined) updates['partOfSpeech'] = patch.partOfSpeech;
+  if (patch.gender      !== undefined) updates['gender']      = patch.gender;
+  if (patch.exampleFr   !== undefined) updates['exampleFr']   = patch.exampleFr;
+  if (patch.exampleRu   !== undefined) updates['exampleRu']   = patch.exampleRu;
+
+  if (Object.keys(updates).length === 0) return;
+  await db.update(words).set(updates).where(eq(words.id, wordId));
+}
+
 // Delete a custom user-private word. Only owners can delete their own.
 export async function deleteUserWord(db: DB, userId: string, wordId: string) {
   const target = await db.query.words.findFirst({

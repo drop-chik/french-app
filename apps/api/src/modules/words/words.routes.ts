@@ -15,6 +15,7 @@ import {
   getWordDetails,
   bulkApplyAction,
   createUserWord,
+  updateUserWord,
   deleteUserWord,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
@@ -348,6 +349,61 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
         exampleRu: body.exampleRu ?? null,
       });
       reply.send({ word: created });
+    },
+  );
+
+  // PATCH /words/:id — update a custom user-private word (owner only)
+  fastify.patch<{ Params: { id: string } }>(
+    '/:id',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Update a custom user-private word (owner only)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        body: {
+          type: 'object',
+          properties: {
+            french:       { type: 'string', minLength: 1, maxLength: 255 },
+            translation:  { type: 'string', minLength: 1, maxLength: 255 },
+            level:        { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            category:     { type: 'string', minLength: 1, maxLength: 100 },
+            partOfSpeech: { type: 'string', maxLength: 20 },
+            gender:       { type: 'string', enum: ['m', 'f', ''] },
+            exampleFr:    { type: 'string', maxLength: 500 },
+            exampleRu:    { type: 'string', maxLength: 500 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as {
+        french?: string;
+        translation?: string;
+        level?: LanguageLevel;
+        category?: string;
+        partOfSpeech?: string;
+        gender?: string;
+        exampleFr?: string;
+        exampleRu?: string;
+      };
+      try {
+        await updateUserWord(fastify.db, request.user.userId, request.params.id, {
+          ...(body.french !== undefined && { french: body.french }),
+          ...(body.translation !== undefined && { translation: body.translation }),
+          ...(body.level !== undefined && { level: body.level }),
+          ...(body.category !== undefined && { category: body.category }),
+          ...(body.partOfSpeech !== undefined && { partOfSpeech: body.partOfSpeech }),
+          ...(body.gender !== undefined && { gender: body.gender === '' ? null : body.gender }),
+          ...(body.exampleFr !== undefined && { exampleFr: body.exampleFr }),
+          ...(body.exampleRu !== undefined && { exampleRu: body.exampleRu }),
+        });
+        reply.send({ ok: true });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed';
+        return reply.status(403).send({ error: msg });
+      }
     },
   );
 
