@@ -191,6 +191,19 @@
   font-family: var(--font-mono, monospace);
 }
 
+.tagBannerTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.tagBannerFr {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
 .tagBannerClear {
   padding: var(--space-1) var(--space-3);
   background: transparent;

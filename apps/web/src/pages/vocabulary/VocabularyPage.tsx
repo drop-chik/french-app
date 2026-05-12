@@ -7,6 +7,7 @@ import type { SRSGrade } from '@french-app/srs-engine';
 import { Play, CheckCircle } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
+import { grammarApi } from '../../features/grammar/api';
 import { useI18n } from '../../shared/i18n';
 import { FlashcardMode } from './FlashcardMode/FlashcardMode';
 import { MultipleChoiceMode } from './MultipleChoiceMode/MultipleChoiceMode';
@@ -61,6 +62,17 @@ export function VocabularyPage() {
     queryFn: () => grammarTag ? wordsApi.getByGrammarTag(grammarTag) : wordsApi.getSession(),
     staleTime: 0,
   });
+
+  // When arrived via /vocabulary?tag=… fetch the grammar topic title so the
+  // banner shows a human-readable name instead of the raw slug.
+  const { data: topicData } = useQuery({
+    queryKey: ['grammar-topic-meta', grammarTag, lang],
+    queryFn: () => grammarApi.getTopic(grammarTag as string),
+    enabled: !!grammarTag,
+    staleTime: 10 * 60 * 1000,
+  });
+  const tagTitle = topicData?.topic.title ?? grammarTag ?? '';
+  const tagTitleFr = topicData?.topic.titleFr ?? '';
 
   const { data: streakData } = useQuery({
     queryKey: ['streak'],
@@ -229,14 +241,15 @@ export function VocabularyPage() {
         <div className={styles.tagBanner}>
           <div className={styles.tagBannerInfo}>
             <span className={styles.tagBannerLabel}>{t.vocabulary.tagFilterLabel}</span>
-            <span className={styles.tagBannerSlug}>{grammarTag}</span>
+            <span className={styles.tagBannerTitle}>{tagTitle}</span>
+            {tagTitleFr && <span className={styles.tagBannerFr}>{tagTitleFr}</span>}
           </div>
           <button
             type="button"
             className={styles.tagBannerClear}
-            onClick={() => navigate({ to: '/vocabulary' })}
+            onClick={() => navigate({ to: '/grammar/$slug', params: { slug: grammarTag } })}
           >
-            {t.vocabulary.tagFilterClear}
+            {t.vocabulary.tagFilterBack}
           </button>
         </div>
       )}
@@ -291,7 +304,9 @@ export function VocabularyPage() {
       )}
 
       {!isLoading && !error && sessionWords.length === 0 && words.length === 0 && (
-        <div className={styles.allDoneBanner}>{t.vocabulary.allDone}</div>
+        <div className={styles.allDoneBanner}>
+          {grammarTag ? t.vocabulary.tagEmpty : t.vocabulary.allDone}
+        </div>
       )}
 
       {!isLoading && !error && sessionWords.length === 0 && words.length > 0 && statusFilter && (
