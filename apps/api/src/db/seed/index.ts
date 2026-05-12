@@ -407,6 +407,10 @@ async function seedWordsBatch(
         category: sql`excluded.category`,
         translationEn: sql`excluded.translation_en`,
         exampleEn: sql`excluded.example_en`,
+        // Also keep frequencyRank and grammarTag in sync so re-seeding picks
+        // up new tags / ranks added to the seed files.
+        frequencyRank: sql`excluded.frequency_rank`,
+        grammarTag: sql`excluded.grammar_tag`,
       },
     });
     inserted += batch.length;
