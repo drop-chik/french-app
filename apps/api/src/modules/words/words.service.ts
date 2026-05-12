@@ -1,12 +1,13 @@
 import { eq, and, lte, inArray, sql, or, isNull, asc, isNotNull, count } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
-import { words, wordProgress } from '../../db/schema/index.js';
+import { words, wordProgress, users } from '../../db/schema/index.js';
 import { calculateNextReview, getStatus, createCard } from '@french-app/srs-engine';
 import type { SRSGrade } from '@french-app/srs-engine';
 import type { LanguageLevel } from '@french-app/shared-types';
 
-const MAX_NEW_PER_SESSION = 20;
-const MAX_DUE_PER_SESSION = 100;
+// Defaults — overridden per-user via users.dailyNewWordsLimit / dailyDueWordsLimit
+const DEFAULT_MAX_NEW_PER_SESSION = 10;
+const DEFAULT_MAX_DUE_PER_SESSION = 20;
 
 const LEVEL_ORDER: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 function levelsUpTo(level: LanguageLevel): LanguageLevel[] {
@@ -27,6 +28,8 @@ function normalizeWord(word: typeof words.$inferSelect, lang: 'ru' | 'en') {
 
 // Get today's study session: due reviews + new words
 // Uses a single LEFT JOIN query — safe at 10 000+ words.
+// Limits come from the user's profile (daily_new_words_limit /
+// daily_due_words_limit) — defaults 10 / 20.
 export async function getStudySession(
   db: DB,
   userId: string,
@@ -36,7 +39,15 @@ export async function getStudySession(
   const allowedLevels = levelsUpTo(level);
   const now = new Date();
 
-  // ── Due words: have a progress row and nextReview <= now ──────────────
+  // Per-user session size limits
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { dailyNewWordsLimit: true, dailyDueWordsLimit: true },
+  });
+  const maxNew = user?.dailyNewWordsLimit ?? DEFAULT_MAX_NEW_PER_SESSION;
+  const maxDue = user?.dailyDueWordsLimit ?? DEFAULT_MAX_DUE_PER_SESSION;
+
+  // ── Due words: have a progress row, nextReview <= now, NOT dismissed ──
   const dueRows = await db
     .select({ word: words, progress: wordProgress })
     .from(words)
@@ -46,6 +57,7 @@ export async function getStudySession(
         eq(wordProgress.wordId, words.id),
         eq(wordProgress.userId, userId),
         lte(wordProgress.nextReview, now),
+        isNull(wordProgress.dismissedAt),
       ),
     )
     .where(
@@ -55,10 +67,11 @@ export async function getStudySession(
       ),
     )
     .orderBy(asc(wordProgress.nextReview))
-    .limit(MAX_DUE_PER_SESSION);
+    .limit(maxDue);
 
-  // ── New words: no progress row yet, ordered by frequencyRank ─────────
-  // Subquery: word IDs the user already has progress for
+  // ── New words: no progress row yet (or dismissed), ordered by frequencyRank
+  // Subquery: word IDs the user already has progress for (incl. dismissed —
+  // we don't want to re-introduce dismissed words as "new").
   const seenIds = await db
     .select({ wordId: wordProgress.wordId })
     .from(wordProgress)
@@ -76,11 +89,11 @@ export async function getStudySession(
       ),
     )
     .orderBy(asc(words.frequencyRank))
-    .limit(MAX_NEW_PER_SESSION * 5); // over-fetch then filter unseen
+    .limit(maxNew * 5); // over-fetch then filter unseen
 
   const newWords = newRows
     .filter((w) => !seenSet.has(w.id))
-    .slice(0, MAX_NEW_PER_SESSION);
+    .slice(0, maxNew);
 
   // ── Merge: shuffle due words, keep new words in frequencyRank order ──
   const progressMap = new Map(dueRows.map((r) => [r.word.id, r.progress]));
@@ -387,6 +400,46 @@ export async function markWord(
         .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
     }
   }
+}
+
+// Dismiss a word permanently — "I already know this, never show me".
+// Creates a progress row if missing, marks dismissedAt timestamp.
+// Filtered out of getStudySession but visible in Dictionary for un-dismissing.
+export async function dismissWord(db: DB, userId: string, wordId: string) {
+  const existing = await db.query.wordProgress.findFirst({
+    where: and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)),
+  });
+  const now = new Date();
+  if (!existing) {
+    const farFuture = new Date(now.getTime() + 365 * 24 * 3_600_000);
+    await db.insert(wordProgress).values({
+      userId,
+      wordId,
+      status: 'mastered',
+      easinessFactor: '2.50',
+      interval: 365,
+      repetitions: 10,
+      nextReview: farFuture,
+      lastReviewed: now,
+      correctCount: 10,
+      incorrectCount: 0,
+      dismissedAt: now,
+    });
+  } else {
+    await db
+      .update(wordProgress)
+      .set({ dismissedAt: now })
+      .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
+  }
+}
+
+// Un-dismiss — bring the word back into rotation (clears dismissedAt).
+// Does NOT reset progress — if user previously studied it, that history stays.
+export async function undismissWord(db: DB, userId: string, wordId: string) {
+  await db
+    .update(wordProgress)
+    .set({ dismissedAt: null })
+    .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
 }
 
 // Request image generation for a word

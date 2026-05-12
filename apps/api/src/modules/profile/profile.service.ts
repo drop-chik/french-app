@@ -17,6 +17,8 @@ export async function getProfile(db: DB, userId: string) {
       avatarUrl: true,
       uiLanguage: true,
       placementTestDone: true,
+      dailyNewWordsLimit: true,
+      dailyDueWordsLimit: true,
       createdAt: true,
     },
   });
@@ -27,7 +29,13 @@ export async function getProfile(db: DB, userId: string) {
 export async function updateProfile(
   db: DB,
   userId: string,
-  data: { name?: string; email?: string; uiLanguage?: string },
+  data: {
+    name?: string;
+    email?: string;
+    uiLanguage?: string;
+    dailyNewWordsLimit?: number;
+    dailyDueWordsLimit?: number;
+  },
 ) {
   // Check email uniqueness if changing
   if (data.email) {
@@ -38,12 +46,22 @@ export async function updateProfile(
     if (existing && existing.id !== userId) throw new Error('EMAIL_TAKEN');
   }
 
+  // Clamp session limits to sensible bounds: 1..100 new, 1..200 due
+  const newLimit = data.dailyNewWordsLimit !== undefined
+    ? Math.max(1, Math.min(100, Math.round(data.dailyNewWordsLimit)))
+    : undefined;
+  const dueLimit = data.dailyDueWordsLimit !== undefined
+    ? Math.max(1, Math.min(200, Math.round(data.dailyDueWordsLimit)))
+    : undefined;
+
   const [updated] = await db
     .update(users)
     .set({
       ...(data.name !== undefined && { name: data.name }),
       ...(data.email !== undefined && { email: data.email }),
       ...(data.uiLanguage !== undefined && { uiLanguage: data.uiLanguage }),
+      ...(newLimit !== undefined && { dailyNewWordsLimit: newLimit }),
+      ...(dueLimit !== undefined && { dailyDueWordsLimit: dueLimit }),
       updatedAt: new Date(),
     })
     .where(eq(users.id, userId))
@@ -55,6 +73,8 @@ export async function updateProfile(
       avatarUrl: users.avatarUrl,
       uiLanguage: users.uiLanguage,
       placementTestDone: users.placementTestDone,
+      dailyNewWordsLimit: users.dailyNewWordsLimit,
+      dailyDueWordsLimit: users.dailyDueWordsLimit,
     });
 
   if (!updated) throw new Error('USER_NOT_FOUND');

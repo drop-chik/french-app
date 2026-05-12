@@ -91,4 +91,12 @@ export const wordsApi = {
       method: 'POST',
       body: JSON.stringify({ action }),
     }),
+
+  // "I already know this, never show me again" — kept as a separate endpoint
+  // from `mark` because the semantics differ (mastered = passed SRS, dismissed
+  // = manually excluded). Backend records a dismissed_at timestamp.
+  dismissWord: (wordId: string) =>
+    apiRequest<{ ok: boolean }>(`/words/${wordId}/dismiss`, { method: 'POST' }),
+  undismissWord: (wordId: string) =>
+    apiRequest<{ ok: boolean }>(`/words/${wordId}/undismiss`, { method: 'POST' }),
 };

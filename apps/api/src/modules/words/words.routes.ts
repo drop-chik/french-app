@@ -10,6 +10,8 @@ import {
   browseWords,
   markWord,
   getWordsByGrammarTag,
+  dismissWord,
+  undismissWord,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
@@ -250,6 +252,42 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const tag = request.params.tag;
       const words = await getWordsByGrammarTag(fastify.db, request.user.userId, tag, lang);
       reply.send({ words, total: words.length });
+    },
+  );
+
+  // POST /words/:id/dismiss — "I already know this, never show it again"
+  fastify.post<{ Params: { id: string } }>(
+    '/:id/dismiss',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Permanently dismiss a word from future study sessions',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (request, reply) => {
+      await dismissWord(fastify.db, request.user.userId, request.params.id);
+      reply.send({ ok: true });
+    },
+  );
+
+  // POST /words/:id/undismiss — bring a dismissed word back into rotation
+  fastify.post<{ Params: { id: string } }>(
+    '/:id/undismiss',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Bring a dismissed word back into the study rotation',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (request, reply) => {
+      await undismissWord(fastify.db, request.user.userId, request.params.id);
+      reply.send({ ok: true });
     },
   );
 

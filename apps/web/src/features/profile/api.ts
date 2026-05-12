@@ -9,6 +9,8 @@ export interface UserProfile {
   avatarUrl: string | null;
   uiLanguage: string;
   placementTestDone: boolean;
+  dailyNewWordsLimit: number;
+  dailyDueWordsLimit: number;
   createdAt: string;
 }
 
@@ -75,7 +77,13 @@ export interface LevelProgressData {
 export const profileApi = {
   getProfile: () => apiRequest<UserProfile>('/profile'),
 
-  updateProfile: (data: { name?: string; email?: string; uiLanguage?: string }) =>
+  updateProfile: (data: {
+    name?: string;
+    email?: string;
+    uiLanguage?: string;
+    dailyNewWordsLimit?: number;
+    dailyDueWordsLimit?: number;
+  }) =>
     apiRequest<UserProfile>('/profile', {
       method: 'PATCH',
       body: JSON.stringify(data),

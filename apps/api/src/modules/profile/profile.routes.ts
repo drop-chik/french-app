@@ -38,21 +38,29 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     preHandler: [fastify.authenticate],
     schema: {
       tags: ['profile'],
-      summary: 'Update profile (name, email, uiLanguage)',
+      summary: 'Update profile (name, email, uiLanguage, daily session limits)',
       security: authorizedSecurity,
       body: {
         type: 'object',
         properties: {
-          name:       { type: 'string', minLength: 1 },
-          email:      { type: 'string', format: 'email' },
-          uiLanguage: { type: 'string', enum: ['ru', 'en'] },
+          name:                 { type: 'string', minLength: 1 },
+          email:                { type: 'string', format: 'email' },
+          uiLanguage:           { type: 'string', enum: ['ru', 'en'] },
+          dailyNewWordsLimit:   { type: 'integer', minimum: 1, maximum: 100 },
+          dailyDueWordsLimit:   { type: 'integer', minimum: 1, maximum: 200 },
         },
       },
       response: { 200: userSchema, 409: errorSchema },
     },
   }, async (request, reply) => {
     const { userId } = request.user;
-    const body = request.body as { name?: string; email?: string; uiLanguage?: string };
+    const body = request.body as {
+      name?: string;
+      email?: string;
+      uiLanguage?: string;
+      dailyNewWordsLimit?: number;
+      dailyDueWordsLimit?: number;
+    };
     try {
       const updated = await updateProfile(fastify.db, userId, body);
       reply.send(updated);

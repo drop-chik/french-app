@@ -42,6 +42,9 @@ export const users = pgTable('users', {
   streakRepairUsedAt: timestamp('streak_repair_used_at'),
   streakRepairSavedValue: integer('streak_repair_saved_value').default(0),
   xp: integer('xp').default(0).notNull(),
+  // Per-user session size — defaults match Anki/Memrise common practice.
+  dailyNewWordsLimit: integer('daily_new_words_limit').default(10).notNull(),
+  dailyDueWordsLimit: integer('daily_due_words_limit').default(20).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -155,6 +158,9 @@ export const wordProgress = pgTable(
     lastReviewed: timestamp('last_reviewed'),
     correctCount: integer('correct_count').default(0).notNull(),
     incorrectCount: integer('incorrect_count').default(0).notNull(),
+    // User explicitly said "I already know this, never show it again".
+    // Filtered out of getStudySession but kept here so user can un-dismiss.
+    dismissedAt: timestamp('dismissed_at'),
   },
   (t) => [
     unique().on(t.userId, t.wordId),
