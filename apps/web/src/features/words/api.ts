@@ -40,7 +40,12 @@ export interface BrowseWord {
   partOfSpeech: string;
   exampleFr: string | null;
   exampleRu: string | null;
-  progress: { status: string } | null;
+  progress: {
+    status: string;
+    interval: number;
+    repetitions: number;
+    dismissed: boolean;
+  } | null;
 }
 
 export interface WordCategory {

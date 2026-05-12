@@ -41,6 +41,32 @@ function daysUntil(date: string): number {
   return Math.ceil((new Date(date).getTime() - Date.now()) / 86_400_000);
 }
 
+// Word "strength" 0-100 — visual proxy for how solid the user has the word.
+// Driven by SRS status + interval. Doesn't have to match the SRS engine
+// exactly; it's a UI hint, not a scientific measurement.
+//
+//   new       →   0
+//   learning  →  25
+//   review    →  50-80 (longer interval → higher, capped at 30-day interval)
+//   mastered  → 100
+function strengthFromProgress(p: BrowseWord['progress']): number {
+  if (!p) return 0;
+  if (p.status === 'mastered') return 100;
+  if (p.status === 'new') return 0;
+  if (p.status === 'learning') return 25;
+  // review — scale 50→80 by interval (0d = 50%, 30d+ = 80%)
+  const intervalBonus = Math.min(p.interval / 30, 1) * 30;
+  return Math.round(50 + intervalBonus);
+}
+
+function strengthColor(strength: number): string {
+  if (strength === 0) return '#9ca3af';      // grey — untouched
+  if (strength < 30) return '#ef4444';        // red — fresh learning
+  if (strength < 60) return '#f59e0b';        // amber — getting there
+  if (strength < 85) return '#3b82f6';        // blue — solid review
+  return '#22c55e';                            // green — mastered
+}
+
 // ── Status badge ──────────────────────────────────────────────────────────────
 
 interface StatusBadgeProps {
@@ -99,6 +125,8 @@ const LEVEL_TINT: Record<string, string> = {
 function WordRow({ word, t, onMark, onOpen, markingId, showLevel }: WordRowProps) {
   const status = word.progress?.status ?? null;
   const isBusy = markingId === word.id;
+  const strength = strengthFromProgress(word.progress);
+  const isDismissed = word.progress?.dismissed ?? false;
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -123,9 +151,24 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel }: WordRowProps
               {word.level}
             </span>
           )}
+          {isDismissed && (
+            <span className={styles.wordDismissedFlag} title={t.dictionary.dismissedLabel}>
+              ✕
+            </span>
+          )}
         </span>
         <span className={styles.wordRu}>{word.translation}</span>
         {word.exampleFr && <span className={styles.wordEx}>{word.exampleFr}</span>}
+        {/* Strength bar — visual proxy for how solid the user has the word.
+            0 (grey) → red → amber → blue → green (100). Hidden for never-studied. */}
+        {strength > 0 && (
+          <div className={styles.wordStrengthTrack} aria-label={`${strength}%`}>
+            <div
+              className={styles.wordStrengthFill}
+              style={{ width: `${strength}%`, background: strengthColor(strength) }}
+            />
+          </div>
+        )}
       </div>
       <div className={styles.wordActions} onClick={stop}>
         <StatusBadge status={status} nextReview={null} t={t} />

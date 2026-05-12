@@ -344,7 +344,16 @@ export async function browseWords(
   return {
     words: rows.map((r) => ({
       ...normalizeWord(r.word, lang),
-      progress: r.progress ? { status: r.progress.status } : null,
+      // Expose interval + repetitions so frontend can compute a "strength" %
+      // for the visual bar on each row. Status alone is too coarse.
+      progress: r.progress
+        ? {
+            status: r.progress.status,
+            interval: r.progress.interval,
+            repetitions: r.progress.repetitions,
+            dismissed: r.progress.dismissedAt !== null,
+          }
+        : null,
     })),
     total: Number(totalRow[0]?.total ?? 0),
   };

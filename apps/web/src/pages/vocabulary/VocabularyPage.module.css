@@ -292,6 +292,117 @@
   background-color: var(--color-border);
 }
 
+/* ── Weekly history block ── */
+.weekBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.weekHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.weekIcon {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.weekTitle {
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+}
+
+.weekStats {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+}
+
+.weekStats strong {
+  color: var(--color-brand);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekStatsSep {
+  margin: 0 var(--space-2);
+  color: var(--color-text-tertiary);
+}
+
+.weekBars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-2);
+  height: 56px;
+  align-items: flex-end;
+}
+
+.weekBar {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  cursor: default;
+}
+
+.weekBarFill {
+  width: 100%;
+  background: var(--color-border);
+  border-radius: var(--radius-md);
+  transition: height 0.4s ease, background-color 0.3s ease;
+  min-height: 4px;
+}
+
+.weekBarActive .weekBarFill {
+  background: linear-gradient(180deg, var(--color-brand) 0%, #6366f1 100%);
+}
+
+.weekBarToday .weekBarFill {
+  background: linear-gradient(180deg, #f59e0b 0%, #f97316 100%);
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+/* Other-modes block + toggle */
+.otherModesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.otherModesToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  align-self: center;
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.otherModesToggle:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
 /* Modes grid */
 .modes {
   display: grid;

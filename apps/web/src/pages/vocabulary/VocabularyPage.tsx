@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { calculateNextReview, getStatus, createCard, orderByFrequency } from '@french-app/srs-engine';
 import type { SRSGrade } from '@french-app/srs-engine';
-import { Play, CheckCircle } from 'lucide-react';
+import { Play, CheckCircle, ChevronDown, ChevronUp, History } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
 import { grammarApi } from '../../features/grammar/api';
@@ -49,6 +49,9 @@ const MODE_IDS = [
 export function VocabularyPage() {
   const [activeMode, setActiveMode] = useState<ActiveMode>('menu');
   const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
+  // Other-modes accordion — collapsed by default. Most users just want to
+  // hit "Начать занятие" and not pick between 8 modes themselves.
+  const [showOtherModes, setShowOtherModes] = useState(false);
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -103,6 +106,38 @@ export function VocabularyPage() {
     queryFn: profileApi.getStats,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Last-7-days activity for the weekly summary block at the bottom of the
+  // page. Reuses the existing /profile/charts endpoint (TanStack Query dedupes
+  // with the Profile page's call, so no extra request when both open).
+  const { data: chartsData } = useQuery({
+    queryKey: ['profile-charts'],
+    queryFn: profileApi.getCharts,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Build 7-day rolling window — pad missing days with zeros so the bar chart
+  // always has 7 bars.
+  const weekActivity = useMemo(() => {
+    const map = new Map<string, { reviewed: number; correct: number; incorrect: number }>();
+    for (const day of chartsData?.activity ?? []) {
+      map.set(day.date, { reviewed: day.reviewed, correct: day.correct, incorrect: day.incorrect });
+    }
+    const days: Array<{ date: string; reviewed: number; isToday: boolean }> = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const entry = map.get(key);
+      days.push({ date: key, reviewed: entry?.reviewed ?? 0, isToday: i === 0 });
+    }
+    return days;
+  }, [chartsData]);
+
+  const weekTotal = weekActivity.reduce((s, d) => s + d.reviewed, 0);
+  const weekDaysActive = weekActivity.filter((d) => d.reviewed > 0).length;
+  const weekMax = Math.max(1, ...weekActivity.map((d) => d.reviewed));
 
   const words = data?.words ?? [];
   const dueCount = words.filter(
@@ -343,33 +378,73 @@ export function VocabularyPage() {
         <div className={styles.allDoneBanner}>{t.dictionary.noWords}</div>
       )}
 
-      {/* Divider */}
-      {!isLoading && (
-        <>
-          <div className={styles.divider}>
-            <span>{t.vocabulary.practiceLabel}</span>
+      {/* Weekly history — small bar chart + 2-stat strip showing how the user
+          did over the last 7 days. Hidden when there's been zero activity. */}
+      {!isLoading && weekTotal > 0 && (
+        <div className={styles.weekBlock}>
+          <div className={styles.weekHeader}>
+            <History size={14} className={styles.weekIcon} />
+            <span className={styles.weekTitle}>{t.vocabulary.weekTitle}</span>
+            <span className={styles.weekStats}>
+              <strong>{weekTotal}</strong> {t.vocabulary.weekStatsWords}
+              <span className={styles.weekStatsSep}>·</span>
+              <strong>{weekDaysActive}</strong> {t.vocabulary.weekStatsDays}
+            </span>
           </div>
-
-          <div className={styles.modes}>
-            {MODE_IDS.map((mode) => {
-              const modeT = t.vocabulary.modes[mode.id as keyof typeof t.vocabulary.modes];
-              const isDisabled = !mode.ready || words.length === 0;
+          <div className={styles.weekBars}>
+            {weekActivity.map((d) => {
+              const heightPct = d.reviewed > 0 ? Math.max(8, (d.reviewed / weekMax) * 100) : 4;
               return (
-                <button
-                  key={mode.id}
-                  className={`${styles.modeCard} ${isDisabled ? styles.modeCardDisabled : ''}`}
-                  onClick={() => !isDisabled && setActiveMode(mode.id as ActiveMode)}
-                  disabled={isDisabled}
+                <div
+                  key={d.date}
+                  className={`${styles.weekBar} ${d.isToday ? styles.weekBarToday : ''} ${d.reviewed > 0 ? styles.weekBarActive : ''}`}
+                  title={`${d.date}: ${d.reviewed}`}
                 >
-                  <span className={styles.modeIcon}>{mode.icon}</span>
-                  <span className={styles.modeName}>{modeT.name}</span>
-                  <span className={styles.modeDesc}>{modeT.description}</span>
-                  {!mode.ready && <span className={styles.soon}>{t.vocabulary.soon}</span>}
-                </button>
+                  <div className={styles.weekBarFill} style={{ height: `${heightPct}%` }} />
+                </div>
               );
             })}
           </div>
-        </>
+        </div>
+      )}
+
+      {/* Other modes — collapsed by default. Power-users can expand to pick
+          a specific mode (Spelling only, Speed-round only, etc.). Most users
+          should just use the smart session. */}
+      {!isLoading && words.length > 0 && (
+        <div className={styles.otherModesBlock}>
+          <button
+            type="button"
+            className={styles.otherModesToggle}
+            onClick={() => setShowOtherModes((v) => !v)}
+            aria-expanded={showOtherModes}
+          >
+            <span>{t.vocabulary.otherModesToggle}</span>
+            {showOtherModes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {showOtherModes && (
+            <div className={styles.modes}>
+              {MODE_IDS.map((mode) => {
+                const modeT = t.vocabulary.modes[mode.id as keyof typeof t.vocabulary.modes];
+                const isDisabled = !mode.ready || words.length === 0;
+                return (
+                  <button
+                    key={mode.id}
+                    className={`${styles.modeCard} ${isDisabled ? styles.modeCardDisabled : ''}`}
+                    onClick={() => !isDisabled && setActiveMode(mode.id as ActiveMode)}
+                    disabled={isDisabled}
+                  >
+                    <span className={styles.modeIcon}>{mode.icon}</span>
+                    <span className={styles.modeName}>{modeT.name}</span>
+                    <span className={styles.modeDesc}>{modeT.description}</span>
+                    {!mode.ready && <span className={styles.soon}>{t.vocabulary.soon}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
