@@ -110,6 +110,19 @@ export const wordsApi = {
   undismissWord: (wordId: string) =>
     apiRequest<{ ok: boolean }>(`/words/${wordId}/undismiss`, { method: 'POST' }),
 
+  // Reset SRS progress and bring a mastered/dismissed word back to active
+  // learning. Used by the "Учить заново" button in WordDetailsModal.
+  restartWord: (wordId: string) =>
+    apiRequest<{ ok: boolean }>(`/words/${wordId}/restart`, { method: 'POST' }),
+
+  // Apply the same action to many words at once. Used by Dictionary's
+  // multi-select toolbar.
+  bulkAction: (action: 'study' | 'mastered' | 'dismiss' | 'restart', wordIds: string[]) =>
+    apiRequest<{ ok: number; failed: number }>('/words/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ action, wordIds }),
+    }),
+
   // Single-word full details — used by the Dictionary modal.
   getWord: (wordId: string) =>
     apiRequest<{ word: WordData & { isDismissed: boolean } }>(

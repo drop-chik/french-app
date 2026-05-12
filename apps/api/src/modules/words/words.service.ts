@@ -113,6 +113,35 @@ export async function getStudySession(
   }));
 }
 
+// Bulk action — apply the same action to N words at once. Used by the
+// multi-select UI in Dictionary. Implemented as a loop over individual
+// service calls so the SRS-aware bookkeeping (markWord/dismiss/restart)
+// stays consistent. Up to 200 ids per call.
+export async function bulkApplyAction(
+  db: DB,
+  userId: string,
+  action: 'study' | 'mastered' | 'dismiss' | 'restart',
+  wordIds: string[],
+): Promise<{ ok: number; failed: number }> {
+  let ok = 0;
+  let failed = 0;
+  for (const id of wordIds.slice(0, 200)) {
+    try {
+      if (action === 'dismiss') {
+        await dismissWord(db, userId, id);
+      } else if (action === 'restart') {
+        await restartWord(db, userId, id);
+      } else {
+        await markWord(db, userId, id, action);
+      }
+      ok++;
+    } catch {
+      failed++;
+    }
+  }
+  return { ok, failed };
+}
+
 // Get words tagged with a specific grammar topic — used by the
 // "practice this topic's vocabulary" CTA on GrammarTopicPage. Returns the
 // same WordData shape as getStudySession so the existing modes work unchanged.
@@ -462,6 +491,45 @@ export async function getWordDetails(
     progress: r.progress ?? null,
     isDismissed: r.progress?.dismissedAt !== null && r.progress?.dismissedAt !== undefined,
   };
+}
+
+// Restart a word — reset its SRS progress so it re-enters the learning
+// rotation. Used for mastered words the user wants to revisit, and for
+// formerly-dismissed words via the same code path.
+export async function restartWord(db: DB, userId: string, wordId: string) {
+  const existing = await db.query.wordProgress.findFirst({
+    where: and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)),
+  });
+  const now = new Date();
+  if (!existing) {
+    // No progress yet — same as `study`.
+    await db.insert(wordProgress).values({
+      userId,
+      wordId,
+      status: 'learning',
+      easinessFactor: '2.50',
+      interval: 1,
+      repetitions: 0,
+      nextReview: now,
+      lastReviewed: now,
+      correctCount: 0,
+      incorrectCount: 0,
+    });
+    return;
+  }
+  // Reset SRS state. Preserve historical counters (correct/incorrect) so
+  // we keep an honest progress trail; status moves back to learning.
+  await db
+    .update(wordProgress)
+    .set({
+      status: 'learning',
+      easinessFactor: '2.50',
+      interval: 1,
+      repetitions: 0,
+      nextReview: now,
+      dismissedAt: null,
+    })
+    .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
 }
 
 // Dismiss a word permanently — "I already know this, never show me".

@@ -455,7 +455,10 @@ export const ru: DeepRecord = {
     dismiss: 'Я уже знаю',
     dismissConfirm: 'Слово больше не будет появляться в сессиях. Уверен?',
     undismiss: 'Вернуть в обучение',
+    restartLearning: 'Учить заново',
     practiceRelated: 'Тренировать связанные слова',
+    bulkSelectToggle: 'Выбрать несколько',
+    bulkSelected: 'выбрано',
     status: {
       new: 'Новые',
       learning: 'Учится',

@@ -13,7 +13,9 @@ import {
   getWordsByCategory,
   dismissWord,
   undismissWord,
+  restartWord,
   getWordDetails,
+  bulkApplyAction,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
@@ -331,6 +333,54 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       await undismissWord(fastify.db, request.user.userId, request.params.id);
+      reply.send({ ok: true });
+    },
+  );
+
+  // POST /words/bulk — apply the same action to many words at once.
+  // Body: { action: 'study' | 'mastered' | 'dismiss' | 'restart', wordIds: string[] }
+  fastify.post(
+    '/bulk',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Apply an action to up to 200 words at once',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['action', 'wordIds'],
+          properties: {
+            action: { type: 'string', enum: ['study', 'mastered', 'dismiss', 'restart'] },
+            wordIds: { type: 'array', items: { type: 'string', format: 'uuid' }, maxItems: 200 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as { action: 'study' | 'mastered' | 'dismiss' | 'restart'; wordIds: string[] };
+      if (!Array.isArray(body.wordIds) || body.wordIds.length === 0) {
+        return reply.status(400).send({ error: 'wordIds must be a non-empty array' });
+      }
+      const result = await bulkApplyAction(fastify.db, request.user.userId, body.action, body.wordIds);
+      reply.send(result);
+    },
+  );
+
+  // POST /words/:id/restart — reset SRS progress, put back into learning rotation
+  fastify.post<{ Params: { id: string } }>(
+    '/:id/restart',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Reset SRS progress and bring a mastered/dismissed word back to learning',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (request, reply) => {
+      await restartWord(fastify.db, request.user.userId, request.params.id);
       reply.send({ ok: true });
     },
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { X, Volume2, Plus, Check, EyeOff, Eye, BookOpen, ArrowRight, Hash } from 'lucide-react';
+import { X, Volume2, Plus, Check, EyeOff, Eye, BookOpen, ArrowRight, Hash, RotateCcw } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
@@ -74,6 +74,10 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
     mutationFn: () => wordsApi.undismissWord(wordId),
     onSuccess: () => onMutated(),
   });
+  const restartMutation = useMutation({
+    mutationFn: () => wordsApi.restartWord(wordId),
+    onSuccess: () => onMutated(),
+  });
 
   async function playAudio() {
     if (!word) return;
@@ -91,7 +95,7 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
 
   const status = word?.progress?.status ?? null;
   const isDismissed = (word as { isDismissed?: boolean } | undefined)?.isDismissed ?? false;
-  const isWorking = markMutation.isPending || dismissMutation.isPending || undismissMutation.isPending;
+  const isWorking = markMutation.isPending || dismissMutation.isPending || undismissMutation.isPending || restartMutation.isPending;
 
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
@@ -211,6 +215,17 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
                   disabled={isWorking}
                 >
                   <Check size={16} /> {t.dictionary.markMastered}
+                </button>
+              )}
+              {/* Mastered → bring back to learning. Common ask: user marked
+                  something mastered too eagerly, wants to revisit */}
+              {status === 'mastered' && (
+                <button
+                  className={styles.btnSecondary}
+                  onClick={() => restartMutation.mutate()}
+                  disabled={isWorking}
+                >
+                  <RotateCcw size={16} /> {t.dictionary.restartLearning}
                 </button>
               )}
               {isDismissed ? (

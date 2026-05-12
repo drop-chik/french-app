@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2 } from 'lucide-react';
+import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, EyeOff, RotateCcw } from 'lucide-react';
 import { wordsApi, type BrowseWord, type WordCategory } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -96,6 +96,11 @@ interface WordRowProps {
   onOpen: (id: string) => void;
   markingId: string | null;
   showLevel?: boolean;
+  // Bulk-select state — when true the row click toggles selection instead
+  // of opening the details modal, and a checkbox is rendered up front.
+  bulkMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 // Play a word out loud via on-demand TTS. Cached briefly to avoid hitting the
@@ -122,16 +127,35 @@ const LEVEL_TINT: Record<string, string> = {
   B2: '#8b5cf6',
 };
 
-function WordRow({ word, t, onMark, onOpen, markingId, showLevel }: WordRowProps) {
+function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSelected, onToggleSelect }: WordRowProps) {
   const status = word.progress?.status ?? null;
   const isBusy = markingId === word.id;
   const strength = strengthFromProgress(word.progress);
   const isDismissed = word.progress?.dismissed ?? false;
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
+  const handleRowClick = () => {
+    if (bulkMode && onToggleSelect) onToggleSelect(word.id);
+    else onOpen(word.id);
+  };
 
   return (
-    <div className={styles.wordRow} onClick={() => onOpen(word.id)} role="button" tabIndex={0}>
+    <div
+      className={`${styles.wordRow} ${bulkMode && isSelected ? styles.wordRowSelected : ''}`}
+      onClick={handleRowClick}
+      role="button"
+      tabIndex={0}
+    >
+      {bulkMode && (
+        <button
+          type="button"
+          className={styles.wordCheckbox}
+          onClick={(e) => { stop(e); onToggleSelect?.(word.id); }}
+          aria-pressed={isSelected}
+        >
+          {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+        </button>
+      )}
       <button
         type="button"
         className={styles.wordAudioBtn}
@@ -332,7 +356,23 @@ export function DictionaryPage() {
   const [selectedCat, setSelectedCat] = useState<WordCategory | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
+  // Bulk multi-select state. Triggered by toggling the Select button; user
+  // checks rows to add to selectedIds, then chooses an action from the toolbar.
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const searchRef = useRef<HTMLInputElement>(null);
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  function clearSelection() {
+    setSelectedIds(new Set());
+    setBulkMode(false);
+  }
 
   // ── Queries ────────────────────────────────────────────────────────────────
 
@@ -376,6 +416,17 @@ export function DictionaryPage() {
   const handleMark = useCallback((id: string, action: 'study' | 'mastered') => {
     markWordMutate({ id, action });
   }, [markWordMutate]);
+
+  const { mutate: bulkActionMutate, isPending: bulkBusy } = useMutation({
+    mutationFn: ({ action, ids }: { action: 'study' | 'mastered' | 'dismiss' | 'restart'; ids: string[] }) =>
+      wordsApi.bulkAction(action, ids),
+    onSettled: () => {
+      clearSelection();
+      queryClient.invalidateQueries({ queryKey: ['browse-words'] });
+      queryClient.invalidateQueries({ queryKey: ['browse-search'] });
+      queryClient.invalidateQueries({ queryKey: ['word-categories'] });
+    },
+  });
 
   // ── Stats strip ────────────────────────────────────────────────────────────
 
@@ -427,7 +478,7 @@ export function DictionaryPage() {
             <>
               <button
                 className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive ?? '' : ''}`}
-                onClick={() => setViewMode('grid')}
+                onClick={() => { setViewMode('grid'); clearSelection(); }}
                 title={t.dictionary.gridView}
               >
                 <LayoutGrid size={17} />
@@ -439,6 +490,16 @@ export function DictionaryPage() {
               >
                 <List size={17} />
               </button>
+              {/* Bulk-mode toggle — only sensible in list view */}
+              {viewMode === 'list' && (
+                <button
+                  className={`${styles.iconBtn} ${bulkMode ? styles.iconBtnActive ?? '' : ''}`}
+                  onClick={() => bulkMode ? clearSelection() : setBulkMode(true)}
+                  title={t.dictionary.bulkSelectToggle}
+                >
+                  <CheckSquare size={17} />
+                </button>
+              )}
             </>
           )}
           <button className={styles.iconBtn} onClick={searchActive ? closeSearch : openSearch}>
@@ -446,6 +507,50 @@ export function DictionaryPage() {
           </button>
         </div>
       </div>
+
+      {/* Bulk-action toolbar — sticky at top of list, only visible when at
+          least one row is selected. Apply an action to all selected words. */}
+      {bulkMode && selectedIds.size > 0 && (
+        <div className={styles.bulkToolbar}>
+          <div className={styles.bulkToolbarInfo}>
+            <span className={styles.bulkToolbarCount}>{selectedIds.size}</span>
+            <span className={styles.bulkToolbarLabel}>{t.dictionary.bulkSelected}</span>
+          </div>
+          <div className={styles.bulkToolbarActions}>
+            <button
+              className={styles.bulkBtn}
+              onClick={() => bulkActionMutate({ action: 'study', ids: Array.from(selectedIds) })}
+              disabled={bulkBusy}
+            >
+              <Plus size={14} /> {t.dictionary.markStudy}
+            </button>
+            <button
+              className={styles.bulkBtn}
+              onClick={() => bulkActionMutate({ action: 'mastered', ids: Array.from(selectedIds) })}
+              disabled={bulkBusy}
+            >
+              <Check size={14} /> {t.dictionary.markMastered}
+            </button>
+            <button
+              className={styles.bulkBtn}
+              onClick={() => bulkActionMutate({ action: 'restart', ids: Array.from(selectedIds) })}
+              disabled={bulkBusy}
+            >
+              <RotateCcw size={14} /> {t.dictionary.restartLearning}
+            </button>
+            <button
+              className={styles.bulkBtn}
+              onClick={() => bulkActionMutate({ action: 'dismiss', ids: Array.from(selectedIds) })}
+              disabled={bulkBusy}
+            >
+              <EyeOff size={14} /> {t.dictionary.dismiss}
+            </button>
+            <button className={styles.bulkBtnCancel} onClick={clearSelection}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Search bar ── */}
       {searchActive && (
@@ -536,7 +641,17 @@ export function DictionaryPage() {
         <div className={styles.wordListCard}>
           {listLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
           {!listLoading && listWords.map((w) => (
-            <WordRow key={w.id} word={w} t={t} onMark={handleMark} onOpen={setSelectedWordId} markingId={markingId} />
+            <WordRow
+              key={w.id}
+              word={w}
+              t={t}
+              onMark={handleMark}
+              onOpen={setSelectedWordId}
+              markingId={markingId}
+              bulkMode={bulkMode}
+              isSelected={selectedIds.has(w.id)}
+              onToggleSelect={toggleSelected}
+            />
           ))}
           {!listLoading && listWords.length === 0 && (
             <p className={styles.emptyText}>{t.dictionary.emptySearch}</p>

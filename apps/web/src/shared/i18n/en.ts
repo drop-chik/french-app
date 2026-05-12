@@ -454,7 +454,10 @@ export const en: Translations = {
     dismiss: "I already know it",
     dismissConfirm: 'This word will no longer appear in your sessions. Sure?',
     undismiss: 'Bring back to learning',
+    restartLearning: 'Learn again',
     practiceRelated: 'Practice related words',
+    bulkSelectToggle: 'Multi-select',
+    bulkSelected: 'selected',
     status: {
       new: 'New',
       learning: 'Learning',
