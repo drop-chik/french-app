@@ -44,7 +44,6 @@ export interface BrowseWord {
     status: string;
     interval: number;
     repetitions: number;
-    dismissed: boolean;
   } | null;
 }
 
@@ -102,22 +101,14 @@ export const wordsApi = {
       body: JSON.stringify({ action }),
     }),
 
-  // "I already know this, never show me again" — kept as a separate endpoint
-  // from `mark` because the semantics differ (mastered = passed SRS, dismissed
-  // = manually excluded). Backend records a dismissed_at timestamp.
-  dismissWord: (wordId: string) =>
-    apiRequest<{ ok: boolean }>(`/words/${wordId}/dismiss`, { method: 'POST' }),
-  undismissWord: (wordId: string) =>
-    apiRequest<{ ok: boolean }>(`/words/${wordId}/undismiss`, { method: 'POST' }),
-
-  // Reset SRS progress and bring a mastered/dismissed word back to active
-  // learning. Used by the "Учить заново" button in WordDetailsModal.
+  // Reset SRS progress and bring a mastered word back to active learning.
+  // Used by the "Учить заново" button in WordDetailsModal.
   restartWord: (wordId: string) =>
     apiRequest<{ ok: boolean }>(`/words/${wordId}/restart`, { method: 'POST' }),
 
   // Apply the same action to many words at once. Used by Dictionary's
   // multi-select toolbar.
-  bulkAction: (action: 'study' | 'mastered' | 'dismiss' | 'restart', wordIds: string[]) =>
+  bulkAction: (action: 'study' | 'mastered' | 'restart', wordIds: string[]) =>
     apiRequest<{ ok: number; failed: number }>('/words/bulk', {
       method: 'POST',
       body: JSON.stringify({ action, wordIds }),
@@ -146,7 +137,7 @@ export const wordsApi = {
 
   // Single-word full details — used by the Dictionary modal.
   getWord: (wordId: string) =>
-    apiRequest<{ word: WordData & { isDismissed: boolean } }>(
+    apiRequest<{ word: WordData }>(
       `/words/${wordId}?lang=${getLang()}`,
     ),
 };

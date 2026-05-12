@@ -287,20 +287,6 @@
   transition: width 0.5s ease, background-color 0.3s ease;
 }
 
-.wordDismissedFlag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: rgba(239, 68, 68, 0.15);
-  color: #dc2626;
-  font-size: 9px;
-  font-weight: 700;
-  margin-left: 4px;
-}
-
 /* ── Bulk-select row ── */
 .wordCheckbox {
   width: 28px;

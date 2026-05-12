@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { X, Volume2, Plus, Check, EyeOff, Eye, BookOpen, ArrowRight, Hash, RotateCcw } from 'lucide-react';
+import { X, Volume2, Plus, Check, BookOpen, ArrowRight, Hash, RotateCcw } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
@@ -48,8 +48,7 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
   const word = data?.word;
 
   // After any mutation, the modal must refetch this word so the action
-  // buttons reflect the new state (otherwise user sees stale Dismiss / Restart
-  // / Undismiss buttons even after pressing them).
+  // buttons reflect the new state.
   function handleMutated() {
     queryClient.invalidateQueries({ queryKey: ['word-details', wordId] });
     onMutated();
@@ -75,14 +74,6 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
     mutationFn: (action: 'study' | 'mastered') => wordsApi.markWord(wordId, action),
     onSuccess: handleMutated,
   });
-  const dismissMutation = useMutation({
-    mutationFn: () => wordsApi.dismissWord(wordId),
-    onSuccess: handleMutated,
-  });
-  const undismissMutation = useMutation({
-    mutationFn: () => wordsApi.undismissWord(wordId),
-    onSuccess: handleMutated,
-  });
   const restartMutation = useMutation({
     mutationFn: () => wordsApi.restartWord(wordId),
     onSuccess: handleMutated,
@@ -103,8 +94,7 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
   }
 
   const status = word?.progress?.status ?? null;
-  const isDismissed = (word as { isDismissed?: boolean } | undefined)?.isDismissed ?? false;
-  const isWorking = markMutation.isPending || dismissMutation.isPending || undismissMutation.isPending || restartMutation.isPending;
+  const isWorking = markMutation.isPending || restartMutation.isPending;
 
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
@@ -160,14 +150,7 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
 
             {/* Meta strip — status, frequency, grammar tag */}
             <div className={styles.metaRow}>
-              {/* Dismissed wins over status — showing both is confusing
-                  ("освоено" + "скрыто" suggests the word is in rotation but
-                  marked done, when actually it's just hidden). */}
-              {isDismissed ? (
-                <span className={`${styles.metaChip} ${styles.metaChipDismissed}`}>
-                  <EyeOff size={11} /> {t.dictionary.dismissedLabel}
-                </span>
-              ) : status ? (
+              {status ? (
                 <span
                   className={styles.metaChip}
                   style={{
@@ -209,63 +192,34 @@ export function WordDetailsModal({ wordId, onClose, onMutated }: Props) {
               </div>
             )}
 
-            {/* Actions — laid out as mutually-exclusive primary + secondary.
-                Dismissed words ALWAYS show "bring back" as primary because
-                that's the only sensible action while the word is hidden. */}
+            {/* Single primary action determined by current status. */}
             <div className={styles.actions}>
-              {isDismissed ? (
-                /* Dismissed → primary action is to bring it back. No other
-                   buttons (mark/restart) make sense while word is hidden. */
+              {!status && (
                 <button
                   className={styles.btnPrimary}
-                  onClick={() => undismissMutation.mutate()}
+                  onClick={() => markMutation.mutate('study')}
                   disabled={isWorking}
                 >
-                  <Eye size={16} /> {t.dictionary.undismiss}
+                  <Plus size={16} /> {t.dictionary.markStudy}
                 </button>
-              ) : (
-                <>
-                  {/* No progress yet → "Учить" */}
-                  {!status && (
-                    <button
-                      className={styles.btnPrimary}
-                      onClick={() => markMutation.mutate('study')}
-                      disabled={isWorking}
-                    >
-                      <Plus size={16} /> {t.dictionary.markStudy}
-                    </button>
-                  )}
-                  {/* Has progress but not mastered → "Знаю" finalises it */}
-                  {status && status !== 'mastered' && (
-                    <button
-                      className={styles.btnPrimary}
-                      onClick={() => markMutation.mutate('mastered')}
-                      disabled={isWorking}
-                    >
-                      <Check size={16} /> {t.dictionary.markMastered}
-                    </button>
-                  )}
-                  {/* Mastered → bring it back into the rotation */}
-                  {status === 'mastered' && (
-                    <button
-                      className={styles.btnPrimary}
-                      onClick={() => restartMutation.mutate()}
-                      disabled={isWorking}
-                    >
-                      <RotateCcw size={16} /> {t.dictionary.restartLearning}
-                    </button>
-                  )}
-                  {/* Hide from rotation — always available when NOT dismissed */}
-                  <button
-                    className={styles.btnSecondary}
-                    onClick={() => {
-                      if (confirm(t.dictionary.dismissConfirm)) dismissMutation.mutate();
-                    }}
-                    disabled={isWorking}
-                  >
-                    <EyeOff size={16} /> {t.dictionary.dismiss}
-                  </button>
-                </>
+              )}
+              {status && status !== 'mastered' && (
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => markMutation.mutate('mastered')}
+                  disabled={isWorking}
+                >
+                  <Check size={16} /> {t.dictionary.markMastered}
+                </button>
+              )}
+              {status === 'mastered' && (
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => restartMutation.mutate()}
+                  disabled={isWorking}
+                >
+                  <RotateCcw size={16} /> {t.dictionary.restartLearning}
+                </button>
               )}
               {word.grammarTag && (
                 <button

@@ -149,11 +149,6 @@
   color: var(--color-text-tertiary);
 }
 
-.metaChipDismissed {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-}
-
 .metaChipTag {
   background: var(--color-brand-light);
   color: var(--color-brand);

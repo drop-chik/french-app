@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, EyeOff, RotateCcw } from 'lucide-react';
+import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, RotateCcw } from 'lucide-react';
 import { wordsApi, type BrowseWord, type WordCategory } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -132,7 +132,6 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
   const status = word.progress?.status ?? null;
   const isBusy = markingId === word.id;
   const strength = strengthFromProgress(word.progress);
-  const isDismissed = word.progress?.dismissed ?? false;
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   const handleRowClick = () => {
@@ -174,11 +173,6 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
               style={{ color: LEVEL_TINT[word.level], background: `${LEVEL_TINT[word.level]}1a` }}
             >
               {word.level}
-            </span>
-          )}
-          {isDismissed && (
-            <span className={styles.wordDismissedFlag} title={t.dictionary.dismissedLabel}>
-              ✕
             </span>
           )}
         </span>
@@ -420,7 +414,7 @@ export function DictionaryPage() {
   }, [markWordMutate]);
 
   const { mutate: bulkActionMutate, isPending: bulkBusy } = useMutation({
-    mutationFn: ({ action, ids }: { action: 'study' | 'mastered' | 'dismiss' | 'restart'; ids: string[] }) =>
+    mutationFn: ({ action, ids }: { action: 'study' | 'mastered' | 'restart'; ids: string[] }) =>
       wordsApi.bulkAction(action, ids),
     onSettled: () => {
       clearSelection();
@@ -546,13 +540,6 @@ export function DictionaryPage() {
               disabled={bulkBusy}
             >
               <RotateCcw size={14} /> {t.dictionary.restartLearning}
-            </button>
-            <button
-              className={styles.bulkBtn}
-              onClick={() => bulkActionMutate({ action: 'dismiss', ids: Array.from(selectedIds) })}
-              disabled={bulkBusy}
-            >
-              <EyeOff size={14} /> {t.dictionary.dismiss}
             </button>
             <button className={styles.bulkBtnCancel} onClick={clearSelection}>
               <X size={14} />

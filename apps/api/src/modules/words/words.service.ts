@@ -54,7 +54,7 @@ export async function getStudySession(
   const maxNew = user?.dailyNewWordsLimit ?? DEFAULT_MAX_NEW_PER_SESSION;
   const maxDue = user?.dailyDueWordsLimit ?? DEFAULT_MAX_DUE_PER_SESSION;
 
-  // ── Due words: have a progress row, nextReview <= now, NOT dismissed ──
+  // ── Due words: have a progress row, nextReview <= now ──
   const dueRows = await db
     .select({ word: words, progress: wordProgress })
     .from(words)
@@ -64,7 +64,6 @@ export async function getStudySession(
         eq(wordProgress.wordId, words.id),
         eq(wordProgress.userId, userId),
         lte(wordProgress.nextReview, now),
-        isNull(wordProgress.dismissedAt),
       ),
     )
     .where(
@@ -77,9 +76,7 @@ export async function getStudySession(
     .orderBy(asc(wordProgress.nextReview))
     .limit(maxDue);
 
-  // ── New words: no progress row yet (or dismissed), ordered by frequencyRank
-  // Subquery: word IDs the user already has progress for (incl. dismissed —
-  // we don't want to re-introduce dismissed words as "new").
+  // ── New words: no progress row yet, ordered by frequencyRank ─────────
   const seenIds = await db
     .select({ wordId: wordProgress.wordId })
     .from(wordProgress)
@@ -124,21 +121,19 @@ export async function getStudySession(
 
 // Bulk action — apply the same action to N words at once. Used by the
 // multi-select UI in Dictionary. Implemented as a loop over individual
-// service calls so the SRS-aware bookkeeping (markWord/dismiss/restart)
-// stays consistent. Up to 200 ids per call.
+// service calls so the SRS-aware bookkeeping (markWord/restart) stays
+// consistent. Up to 200 ids per call.
 export async function bulkApplyAction(
   db: DB,
   userId: string,
-  action: 'study' | 'mastered' | 'dismiss' | 'restart',
+  action: 'study' | 'mastered' | 'restart',
   wordIds: string[],
 ): Promise<{ ok: number; failed: number }> {
   let ok = 0;
   let failed = 0;
   for (const id of wordIds.slice(0, 200)) {
     try {
-      if (action === 'dismiss') {
-        await dismissWord(db, userId, id);
-      } else if (action === 'restart') {
+      if (action === 'restart') {
         await restartWord(db, userId, id);
       } else {
         await markWord(db, userId, id, action);
@@ -393,7 +388,6 @@ export async function browseWords(
             status: r.progress.status,
             interval: r.progress.interval,
             repetitions: r.progress.repetitions,
-            dismissed: r.progress.dismissedAt !== null,
           }
         : null,
     })),
@@ -455,7 +449,7 @@ export async function markWord(
 
 // Words by category — used when user lands on /vocabulary from Dictionary
 // drawer's "practice this category" button. Returns full WordData shape with
-// user progress. Filters out dismissed words and inactive ones.
+// user progress.
 export async function getWordsByCategory(
   db: DB,
   userId: string,
@@ -472,16 +466,14 @@ export async function getWordsByCategory(
     .where(and(eq(words.category, category), eq(words.isActive, true), visibleToUser(userId)))
     .orderBy(asc(words.frequencyRank));
 
-  return rows
-    .filter((r) => !r.progress?.dismissedAt)
-    .map((r) => ({
-      ...normalizeWord(r.word, lang),
-      progress: r.progress ?? null,
-    }));
+  return rows.map((r) => ({
+    ...normalizeWord(r.word, lang),
+    progress: r.progress ?? null,
+  }));
 }
 
 // Single-word details — used by the Dictionary modal. Returns the full word
-// row plus the user's current progress (if any) and the dismissed flag.
+// row plus the user's current progress (if any).
 export async function getWordDetails(
   db: DB,
   userId: string,
@@ -502,7 +494,6 @@ export async function getWordDetails(
   return {
     ...normalizeWord(r.word, lang),
     progress: r.progress ?? null,
-    isDismissed: r.progress?.dismissedAt !== null && r.progress?.dismissedAt !== undefined,
   };
 }
 
@@ -553,15 +544,13 @@ export async function deleteUserWord(db: DB, userId: string, wordId: string) {
 }
 
 // Restart a word — reset its SRS progress so it re-enters the learning
-// rotation. Used for mastered words the user wants to revisit, and for
-// formerly-dismissed words via the same code path.
+// rotation. Used for mastered words the user wants to revisit.
 export async function restartWord(db: DB, userId: string, wordId: string) {
   const existing = await db.query.wordProgress.findFirst({
     where: and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)),
   });
   const now = new Date();
   if (!existing) {
-    // No progress yet — same as `study`.
     await db.insert(wordProgress).values({
       userId,
       wordId,
@@ -586,52 +575,7 @@ export async function restartWord(db: DB, userId: string, wordId: string) {
       interval: 1,
       repetitions: 0,
       nextReview: now,
-      dismissedAt: null,
     })
-    .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
-}
-
-// Dismiss a word permanently — "I already know this, never show me".
-// Creates a progress row if missing, marks dismissedAt timestamp.
-// Filtered out of getStudySession but visible in Dictionary for un-dismissing.
-export async function dismissWord(db: DB, userId: string, wordId: string) {
-  const existing = await db.query.wordProgress.findFirst({
-    where: and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)),
-  });
-  const now = new Date();
-  if (!existing) {
-    // First time the user has touched this word — create a minimal "new"
-    // progress row with dismissedAt set. We intentionally do NOT set
-    // status='mastered' here: dismissed is its own dimension, not progress.
-    const farFuture = new Date(now.getTime() + 365 * 24 * 3_600_000);
-    await db.insert(wordProgress).values({
-      userId,
-      wordId,
-      status: 'new',
-      easinessFactor: '2.50',
-      interval: 0,
-      repetitions: 0,
-      nextReview: farFuture,
-      lastReviewed: null,
-      correctCount: 0,
-      incorrectCount: 0,
-      dismissedAt: now,
-    });
-  } else {
-    // Already has progress — just stamp dismissedAt, preserve status.
-    await db
-      .update(wordProgress)
-      .set({ dismissedAt: now })
-      .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
-  }
-}
-
-// Un-dismiss — bring the word back into rotation (clears dismissedAt).
-// Does NOT reset progress — if user previously studied it, that history stays.
-export async function undismissWord(db: DB, userId: string, wordId: string) {
-  await db
-    .update(wordProgress)
-    .set({ dismissedAt: null })
     .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
 }
 

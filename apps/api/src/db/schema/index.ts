@@ -165,9 +165,6 @@ export const wordProgress = pgTable(
     lastReviewed: timestamp('last_reviewed'),
     correctCount: integer('correct_count').default(0).notNull(),
     incorrectCount: integer('incorrect_count').default(0).notNull(),
-    // User explicitly said "I already know this, never show it again".
-    // Filtered out of getStudySession but kept here so user can un-dismiss.
-    dismissedAt: timestamp('dismissed_at'),
   },
   (t) => [
     unique().on(t.userId, t.wordId),

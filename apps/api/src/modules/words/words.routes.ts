@@ -11,8 +11,6 @@ import {
   markWord,
   getWordsByGrammarTag,
   getWordsByCategory,
-  dismissWord,
-  undismissWord,
   restartWord,
   getWordDetails,
   bulkApplyAction,
@@ -289,7 +287,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       preHandler: [fastify.authenticate],
       schema: {
         tags: ['words'],
-        summary: 'Single word details with progress + dismissed flag',
+        summary: 'Single word details with progress',
         security: authorizedSecurity,
         params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
         querystring: { type: 'object', properties: { lang: { type: 'string', enum: ['ru', 'en'] } } },
@@ -300,42 +298,6 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const word = await getWordDetails(fastify.db, request.user.userId, request.params.id, lang);
       if (!word) return reply.status(404).send({ error: 'Word not found' });
       reply.send({ word });
-    },
-  );
-
-  // POST /words/:id/dismiss — "I already know this, never show it again"
-  fastify.post<{ Params: { id: string } }>(
-    '/:id/dismiss',
-    {
-      preHandler: [fastify.authenticate],
-      schema: {
-        tags: ['words'],
-        summary: 'Permanently dismiss a word from future study sessions',
-        security: authorizedSecurity,
-        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
-      },
-    },
-    async (request, reply) => {
-      await dismissWord(fastify.db, request.user.userId, request.params.id);
-      reply.send({ ok: true });
-    },
-  );
-
-  // POST /words/:id/undismiss — bring a dismissed word back into rotation
-  fastify.post<{ Params: { id: string } }>(
-    '/:id/undismiss',
-    {
-      preHandler: [fastify.authenticate],
-      schema: {
-        tags: ['words'],
-        summary: 'Bring a dismissed word back into the study rotation',
-        security: authorizedSecurity,
-        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
-      },
-    },
-    async (request, reply) => {
-      await undismissWord(fastify.db, request.user.userId, request.params.id);
-      reply.send({ ok: true });
     },
   );
 
@@ -413,7 +375,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // POST /words/bulk — apply the same action to many words at once.
-  // Body: { action: 'study' | 'mastered' | 'dismiss' | 'restart', wordIds: string[] }
+  // Body: { action: 'study' | 'mastered' | 'restart', wordIds: string[] }
   fastify.post(
     '/bulk',
     {
@@ -426,14 +388,14 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
           type: 'object',
           required: ['action', 'wordIds'],
           properties: {
-            action: { type: 'string', enum: ['study', 'mastered', 'dismiss', 'restart'] },
+            action: { type: 'string', enum: ['study', 'mastered', 'restart'] },
             wordIds: { type: 'array', items: { type: 'string', format: 'uuid' }, maxItems: 200 },
           },
         },
       },
     },
     async (request, reply) => {
-      const body = request.body as { action: 'study' | 'mastered' | 'dismiss' | 'restart'; wordIds: string[] };
+      const body = request.body as { action: 'study' | 'mastered' | 'restart'; wordIds: string[] };
       if (!Array.isArray(body.wordIds) || body.wordIds.length === 0) {
         return reply.status(400).send({ error: 'wordIds must be a non-empty array' });
       }
@@ -449,7 +411,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       preHandler: [fastify.authenticate],
       schema: {
         tags: ['words'],
-        summary: 'Reset SRS progress and bring a mastered/dismissed word back to learning',
+        summary: 'Reset SRS progress and bring a mastered word back to learning',
         security: authorizedSecurity,
         params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
       },
