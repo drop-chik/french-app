@@ -337,6 +337,19 @@ function MCStage({ word, onAdvance }: { word: WordData; onAdvance: (correct: boo
 
 /* ── Spelling: production — type the French given the translation ── */
 
+// Per-character match check. Returns one of:
+//   'match'    — char at position i in user input matches target
+//   'mismatch' — wrong character typed
+//   'pending'  — user hasn't typed this position yet
+function charState(user: string, target: string, i: number): 'match' | 'mismatch' | 'pending' {
+  if (i >= user.length) return 'pending';
+  const u = user[i] ?? '';
+  const t = target[i] ?? '';
+  // Same normalize as elsewhere — accent/case insensitive
+  if (normalize(u) === normalize(t)) return 'match';
+  return 'mismatch';
+}
+
 function SpellingStage({ word, onAdvance }: { word: WordData; onAdvance: (correct: boolean) => void }) {
   const { t } = useI18n();
   const [value, setValue] = useState('');
@@ -346,6 +359,20 @@ function SpellingStage({ word, onAdvance }: { word: WordData; onAdvance: (correc
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Live char-by-char comparison — drives the visual slots below.
+  const target = word.french;
+  const slots = useMemo(() => {
+    return Array.from(target).map((ch, i) => ({
+      ch,
+      state: charState(value, target, i),
+      isSpace: ch === ' ' || ch === '-' || ch === '\'',
+    }));
+  }, [value, target]);
+
+  // User has typed exactly the right length AND every position matches — auto-allow submit.
+  const fullyCorrect = value.length === target.length && slots.every((s) => s.state === 'match');
+  const anyMismatch = slots.some((s) => s.state === 'mismatch');
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -360,6 +387,27 @@ function SpellingStage({ word, onAdvance }: { word: WordData; onAdvance: (correc
       <p className={styles.cardLabel}>{t.learn.typeFrench}</p>
       <p className={styles.spellingPrompt}>{word.translation}</p>
       {word.exampleRu && <p className={styles.exampleRu}>{word.exampleRu}</p>}
+
+      {/* Per-character visual feedback — each slot reflects what's typed in
+          that position. Lets the user see opechatki в реальном времени без
+          submit-наказания. */}
+      <div className={styles.spellingSlots} aria-hidden>
+        {slots.map((s, i) => (
+          <span
+            key={i}
+            className={[
+              styles.spellingSlot,
+              s.state === 'match' && styles.spellingSlotMatch,
+              s.state === 'mismatch' && styles.spellingSlotMismatch,
+              s.state === 'pending' && styles.spellingSlotPending,
+              s.isSpace && styles.spellingSlotSep,
+            ].filter(Boolean).join(' ')}
+          >
+            {s.state === 'pending' ? (s.isSpace ? s.ch : '_') : (value[i] ?? s.ch)}
+          </span>
+        ))}
+      </div>
+
       <div className={styles.mcHeader}>
         <input
           ref={inputRef}
@@ -371,6 +419,7 @@ function SpellingStage({ word, onAdvance }: { word: WordData; onAdvance: (correc
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
+          maxLength={target.length + 5}
           className={`${styles.spellingInput} ${state === 'correct' ? styles.spellingInputOk : ''} ${state === 'wrong' ? styles.spellingInputBad : ''}`}
           placeholder="..."
         />
@@ -382,8 +431,12 @@ function SpellingStage({ word, onAdvance }: { word: WordData; onAdvance: (correc
         </p>
       )}
       {state === 'input' && (
-        <button type="submit" className={styles.btnPrimary} disabled={value.trim().length === 0}>
-          {t.learn.check}
+        <button
+          type="submit"
+          className={styles.btnPrimary}
+          disabled={value.trim().length === 0 || (anyMismatch && !fullyCorrect)}
+        >
+          {fullyCorrect ? '✓ ' : ''}{t.learn.check}
         </button>
       )}
     </form>

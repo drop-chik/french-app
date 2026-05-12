@@ -229,6 +229,63 @@
   text-align: center;
 }
 
+/* ── Per-character visual feedback slots ── */
+.spellingSlots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: var(--space-3) 0;
+  font-family: var(--font-mono, monospace);
+}
+
+.spellingSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 36px;
+  padding: 0 4px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  border: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.spellingSlotPending {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+  border-color: var(--color-border);
+}
+
+.spellingSlotMatch {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+  border-color: #22c55e;
+}
+
+.spellingSlotMismatch {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  border-color: #ef4444;
+  animation: shakeChar 0.25s ease;
+}
+
+@keyframes shakeChar {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-2px); }
+  75%      { transform: translateX(2px); }
+}
+
+/* Spaces / hyphens / apostrophes — no border, semi-transparent */
+.spellingSlotSep {
+  background: transparent;
+  border-color: transparent;
+  opacity: 0.5;
+  min-width: 12px;
+}
+
 .spellingInput {
   width: 100%;
   padding: var(--space-4);
