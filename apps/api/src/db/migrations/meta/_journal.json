@@ -92,6 +92,13 @@
       "when": 1778600000000,
       "tag": "0012_push_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778700000000,
+      "tag": "0013_session_limits_and_dismiss",
+      "breakpoints": true
     }
   ]
 }
