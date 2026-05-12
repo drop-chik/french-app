@@ -8,6 +8,7 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
 import { WordDetailsModal } from './WordDetailsModal';
+import { AddWordModal } from './AddWordModal';
 import styles from './DictionaryPage.module.css';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -356,6 +357,7 @@ export function DictionaryPage() {
   const [selectedCat, setSelectedCat] = useState<WordCategory | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
+  const [showAddWord, setShowAddWord] = useState(false);
   // Bulk multi-select state. Triggered by toggling the Select button; user
   // checks rows to add to selectedIds, then chooses an action from the toolbar.
   const [bulkMode, setBulkMode] = useState(false);
@@ -502,6 +504,13 @@ export function DictionaryPage() {
               )}
             </>
           )}
+          <button
+            className={styles.iconBtn}
+            onClick={() => setShowAddWord(true)}
+            title={t.dictionary.addWordTitle}
+          >
+            <Plus size={17} />
+          </button>
           <button className={styles.iconBtn} onClick={searchActive ? closeSearch : openSearch}>
             {searchActive ? <X size={17} /> : <Search size={17} />}
           </button>
@@ -686,6 +695,9 @@ export function DictionaryPage() {
           }}
         />
       )}
+
+      {/* ── Add custom word modal ── */}
+      {showAddWord && <AddWordModal onClose={() => setShowAddWord(false)} />}
     </div>
   );
 }

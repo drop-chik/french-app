@@ -15,6 +15,13 @@ function levelsUpTo(level: LanguageLevel): LanguageLevel[] {
   return LEVEL_ORDER.slice(0, idx + 1);
 }
 
+// Visibility filter — every listing query must scope to: global words (NULL
+// owner) OR words owned by the current user. Otherwise users would see each
+// other's custom additions.
+function visibleToUser(userId: string) {
+  return or(isNull(words.createdByUserId), eq(words.createdByUserId, userId));
+}
+
 function normalizeWord(word: typeof words.$inferSelect, lang: 'ru' | 'en') {
   if (lang === 'en') {
     return {
@@ -64,6 +71,7 @@ export async function getStudySession(
       and(
         or(...allowedLevels.map((l) => eq(words.level, l))),
         eq(words.isActive, true),
+        visibleToUser(userId),
       ),
     )
     .orderBy(asc(wordProgress.nextReview))
@@ -86,6 +94,7 @@ export async function getStudySession(
       and(
         or(...allowedLevels.map((l) => eq(words.level, l))),
         eq(words.isActive, true),
+        visibleToUser(userId),
       ),
     )
     .orderBy(asc(words.frequencyRank))
@@ -158,7 +167,7 @@ export async function getWordsByGrammarTag(
       wordProgress,
       and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
     )
-    .where(and(eq(words.grammarTag, tag), eq(words.isActive, true)))
+    .where(and(eq(words.grammarTag, tag), eq(words.isActive, true), visibleToUser(userId)))
     .orderBy(asc(words.frequencyRank));
 
   return rows.map((r) => ({
@@ -266,7 +275,8 @@ export async function getDistractors(
   const bandMin = Math.max(1, rank - 300);
   const bandMax = rank + 300;
 
-  // Prefer same part-of-speech, within frequency band
+  // Prefer same part-of-speech, within frequency band. Use GLOBAL words only
+  // — distractors from another user's custom dictionary would leak content.
   const candidates = await db
     .select()
     .from(words)
@@ -274,6 +284,7 @@ export async function getDistractors(
       and(
         or(...allowedLevels.map((l) => eq(words.level, l))),
         eq(words.isActive, true),
+        isNull(words.createdByUserId),
         eq(words.partOfSpeech, target.partOfSpeech),
         sql`${words.frequencyRank} BETWEEN ${bandMin} AND ${bandMax}`,
       ),
@@ -295,6 +306,7 @@ export async function getDistractors(
       and(
         or(...allowedLevels.map((l) => eq(words.level, l))),
         eq(words.isActive, true),
+        isNull(words.createdByUserId),
       ),
     )
     .orderBy(sql`RANDOM()`)
@@ -319,7 +331,7 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
       wordProgress,
       and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
     )
-    .where(and(eq(words.level, level), eq(words.isActive, true)))
+    .where(and(eq(words.level, level), eq(words.isActive, true), visibleToUser(userId)))
     .groupBy(words.category)
     .orderBy(asc(words.category));
   return rows.map((r) => ({
@@ -345,6 +357,7 @@ export async function browseWords(
   const baseWhere = and(
     level ? eq(words.level, level) : undefined,
     eq(words.isActive, true),
+    visibleToUser(userId),
     category ? eq(words.category, category) : undefined,
     grammarTag ? eq(words.grammarTag, grammarTag) : undefined,
     pattern
@@ -456,7 +469,7 @@ export async function getWordsByCategory(
       wordProgress,
       and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
     )
-    .where(and(eq(words.category, category), eq(words.isActive, true)))
+    .where(and(eq(words.category, category), eq(words.isActive, true), visibleToUser(userId)))
     .orderBy(asc(words.frequencyRank));
 
   return rows
@@ -482,7 +495,7 @@ export async function getWordDetails(
       wordProgress,
       and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
     )
-    .where(eq(words.id, wordId))
+    .where(and(eq(words.id, wordId), visibleToUser(userId)))
     .limit(1);
   const r = row[0];
   if (!r) return null;
@@ -491,6 +504,52 @@ export async function getWordDetails(
     progress: r.progress ?? null,
     isDismissed: r.progress?.dismissedAt !== null && r.progress?.dismissedAt !== undefined,
   };
+}
+
+// Create a custom user-private word. Limited to a small whitelist of safe
+// fields — users can't backfill arbitrary translations into the global set.
+export async function createUserWord(
+  db: DB,
+  userId: string,
+  input: {
+    french: string;
+    translation: string;
+    level?: LanguageLevel | undefined;
+    category?: string | undefined;
+    partOfSpeech?: string | undefined;
+    gender?: string | null | undefined;
+    exampleFr?: string | null | undefined;
+    exampleRu?: string | null | undefined;
+  },
+) {
+  const [created] = await db
+    .insert(words)
+    .values({
+      french: input.french.trim().slice(0, 255),
+      translation: input.translation.trim().slice(0, 255),
+      level: input.level ?? 'A1',
+      category: (input.category ?? 'custom').trim().slice(0, 100),
+      partOfSpeech: input.partOfSpeech ?? 'noun',
+      gender: input.gender ?? null,
+      exampleFr: input.exampleFr ?? null,
+      exampleRu: input.exampleRu ?? null,
+      isActive: true,
+      createdByUserId: userId,
+    })
+    .returning();
+  if (!created) throw new Error('Failed to create word');
+  return created;
+}
+
+// Delete a custom user-private word. Only owners can delete their own.
+export async function deleteUserWord(db: DB, userId: string, wordId: string) {
+  const target = await db.query.words.findFirst({
+    where: eq(words.id, wordId),
+    columns: { createdByUserId: true },
+  });
+  if (!target) throw new Error('Word not found');
+  if (target.createdByUserId !== userId) throw new Error('Not authorized');
+  await db.delete(words).where(eq(words.id, wordId));
 }
 
 // Restart a word — reset its SRS progress so it re-enters the learning

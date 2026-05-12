@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
@@ -11,6 +12,7 @@ import {
   jsonb,
   index,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 // Enums
@@ -126,10 +128,15 @@ export const words = pgTable(
     audioUrl: varchar('audio_url', { length: 500 }),
     imageUrl: varchar('image_url', { length: 500 }),
     imageGenerating: boolean('image_generating').default(false).notNull(),
+    // NULL = global content from the seed; non-NULL = a user's private word.
+    // Queries that list words filter to NULL OR equals current user.
+    createdByUserId: uuid('created_by_user_id').references(() => users.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [
-    unique('uq_words_french').on(t.french),
+    // Uniqueness applies only to GLOBAL words (NULL owner). Custom user words
+    // can collide with global french entries.
+    uniqueIndex('uq_words_french_global').on(t.french).where(sql`${t.createdByUserId} IS NULL`),
     index('idx_words_level_category').on(t.level, t.category),
     index('idx_words_level_pos').on(t.level, t.partOfSpeech),
     index('idx_words_frequency').on(t.level, t.frequencyRank),

@@ -16,6 +16,8 @@ import {
   restartWord,
   getWordDetails,
   bulkApplyAction,
+  createUserWord,
+  deleteUserWord,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
@@ -334,6 +336,79 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       await undismissWord(fastify.db, request.user.userId, request.params.id);
       reply.send({ ok: true });
+    },
+  );
+
+  // POST /words — create a custom user-private word
+  fastify.post(
+    '/',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Create a custom user-private word',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['french', 'translation'],
+          properties: {
+            french:       { type: 'string', minLength: 1, maxLength: 255 },
+            translation:  { type: 'string', minLength: 1, maxLength: 255 },
+            level:        { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            category:     { type: 'string', minLength: 1, maxLength: 100 },
+            partOfSpeech: { type: 'string', maxLength: 20 },
+            gender:       { type: 'string', enum: ['m', 'f', ''] },
+            exampleFr:    { type: 'string', maxLength: 500 },
+            exampleRu:    { type: 'string', maxLength: 500 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as {
+        french: string;
+        translation: string;
+        level?: LanguageLevel;
+        category?: string;
+        partOfSpeech?: string;
+        gender?: string;
+        exampleFr?: string;
+        exampleRu?: string;
+      };
+      const created = await createUserWord(fastify.db, request.user.userId, {
+        french: body.french,
+        translation: body.translation,
+        level: body.level,
+        category: body.category,
+        partOfSpeech: body.partOfSpeech,
+        gender: body.gender && body.gender !== '' ? body.gender : null,
+        exampleFr: body.exampleFr ?? null,
+        exampleRu: body.exampleRu ?? null,
+      });
+      reply.send({ word: created });
+    },
+  );
+
+  // DELETE /words/:id — delete a custom user-private word (only the owner)
+  fastify.delete<{ Params: { id: string } }>(
+    '/:id',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Delete a custom user-private word (owner only)',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (request, reply) => {
+      try {
+        await deleteUserWord(fastify.db, request.user.userId, request.params.id);
+        reply.send({ ok: true });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed';
+        return reply.status(403).send({ error: msg });
+      }
     },
   );
 

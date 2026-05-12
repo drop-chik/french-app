@@ -123,6 +123,27 @@ export const wordsApi = {
       body: JSON.stringify({ action, wordIds }),
     }),
 
+  // Custom user-private word — added via Dictionary's "+" button. Only the
+  // creator sees it. Behaves like any other word in SRS sessions.
+  createWord: (data: {
+    french: string;
+    translation: string;
+    level?: string;
+    category?: string;
+    partOfSpeech?: string;
+    gender?: 'm' | 'f' | '';
+    exampleFr?: string;
+    exampleRu?: string;
+  }) =>
+    apiRequest<{ word: WordData }>('/words', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Delete a custom user-private word. Owner only.
+  deleteWord: (wordId: string) =>
+    apiRequest<{ ok: boolean }>(`/words/${wordId}`, { method: 'DELETE' }),
+
   // Single-word full details — used by the Dictionary modal.
   getWord: (wordId: string) =>
     apiRequest<{ word: WordData & { isDismissed: boolean } }>(
