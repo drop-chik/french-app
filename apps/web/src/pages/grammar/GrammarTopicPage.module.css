@@ -206,6 +206,122 @@
   background-color: var(--color-brand-light);
 }
 
+/* ── Related vocabulary block ── */
+.relatedWords {
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-brand) 4%, transparent), transparent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.relatedHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.relatedIcon {
+  color: var(--color-brand);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.relatedTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.relatedHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.relatedCount {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-brand);
+  background: var(--color-brand-light);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.relatedList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.relatedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+}
+
+.relatedFr {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.relatedSep {
+  color: var(--color-text-tertiary);
+}
+
+.relatedRu {
+  color: var(--color-text-secondary);
+}
+
+.relatedMore {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px var(--space-3);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.relatedCta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 12px -4px rgba(99, 102, 241, 0.5);
+}
+
+.relatedCta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -4px rgba(99, 102, 241, 0.6);
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: var(--text-xl);
@@ -218,4 +334,12 @@
   .theoryActions {
     justify-content: stretch;
   }
+
+  .relatedWords { padding: var(--space-4); }
+  .relatedCount {
+    align-self: flex-start;
+    margin-left: 0;
+  }
+  .relatedHeader { flex-wrap: wrap; }
+  .relatedCta { width: 100%; justify-content: center; }
 }

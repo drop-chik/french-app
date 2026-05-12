@@ -52,12 +52,13 @@ export function VocabularyPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   // filter=learning|review|mastered comes from Dictionary "Повторить" button
-  const search = useSearch({ strict: false }) as { filter?: string };
+  const search = useSearch({ strict: false }) as { filter?: string; tag?: string };
   const statusFilter = search.filter as string | undefined;
+  const grammarTag = search.tag as string | undefined;
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['words-session', lang],
-    queryFn: () => wordsApi.getSession(),
+    queryKey: grammarTag ? ['words-by-tag', grammarTag, lang] : ['words-session', lang],
+    queryFn: () => grammarTag ? wordsApi.getByGrammarTag(grammarTag) : wordsApi.getSession(),
     staleTime: 0,
   });
 
@@ -222,6 +223,23 @@ export function VocabularyPage() {
 
       {isLoading && <p className={styles.loading}>{t.vocabulary.loading}</p>}
       {error && <p className={styles.error}>{t.vocabulary.errorLoad}</p>}
+
+      {/* Grammar-tag filter banner — shown when arrived from a grammar topic */}
+      {grammarTag && (
+        <div className={styles.tagBanner}>
+          <div className={styles.tagBannerInfo}>
+            <span className={styles.tagBannerLabel}>{t.vocabulary.tagFilterLabel}</span>
+            <span className={styles.tagBannerSlug}>{grammarTag}</span>
+          </div>
+          <button
+            type="button"
+            className={styles.tagBannerClear}
+            onClick={() => navigate({ to: '/vocabulary' })}
+          >
+            {t.vocabulary.tagFilterClear}
+          </button>
+        </div>
+      )}
 
       {/* Streak repair banner */}
       {repairAvailable && !repairMutation.isSuccess && (

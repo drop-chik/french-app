@@ -9,6 +9,7 @@ import {
   getCategories,
   browseWords,
   markWord,
+  getWordsByGrammarTag,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
@@ -199,6 +200,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             level:    { type: 'string', description: 'A1/A2/B1/B2 or "all"' },
             category: { type: 'string' },
+            tag:      { type: 'string', description: 'Grammar topic slug — matches words.grammar_tag' },
             q:        { type: 'string' },
             lang:     { type: 'string', enum: ['ru', 'en'], default: 'ru' },
             offset:   { type: 'integer', minimum: 0, default: 0 },
@@ -219,11 +221,35 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const levelParam = String(query.level ?? user?.level ?? 'B2');
       const level: LanguageLevel | null = levelParam === 'all' ? null : (levelParam as LanguageLevel);
       const category = query.category ? String(query.category) : null;
+      const tag = query.tag ? String(query.tag) : null;
       const q = query.q ? String(query.q).trim() : null;
       const offset = Math.max(0, parseInt(String(query.offset ?? '0'), 10) || 0);
       const limit = Math.min(500, Math.max(1, parseInt(String(query.limit ?? '100'), 10) || 100));
-      const result = await browseWords(fastify.db, request.user.userId, level, category, lang, limit, offset, q);
+      const result = await browseWords(fastify.db, request.user.userId, level, category, lang, limit, offset, q, tag);
       reply.send(result);
+    },
+  );
+
+  // GET /words/by-tag/:tag — words associated with a grammar topic (used by
+  // the "practice this topic's vocabulary" button on GrammarTopicPage). Returns
+  // the full WordData shape so the existing study modes work unchanged.
+  fastify.get<{ Params: { tag: string } }>(
+    '/by-tag/:tag',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Words tagged with a grammar topic slug',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { tag: { type: 'string' } } },
+        querystring: { type: 'object', properties: { lang: { type: 'string', enum: ['ru', 'en'], default: 'ru' } } },
+      },
+    },
+    async (request, reply) => {
+      const lang = parseLang(request.query as Record<string, unknown>);
+      const tag = request.params.tag;
+      const words = await getWordsByGrammarTag(fastify.db, request.user.userId, tag, lang);
+      reply.send({ words, total: words.length });
     },
   );
 

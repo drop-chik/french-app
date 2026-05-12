@@ -53,6 +53,11 @@ export const wordsApi = {
   getSession: () =>
     apiRequest<{ words: WordData[]; total: number }>(`/words/session?lang=${getLang()}`),
 
+  // Words tagged with a specific grammar topic. Powers the
+  // "practice this topic's vocabulary" CTA on GrammarTopicPage.
+  getByGrammarTag: (tag: string) =>
+    apiRequest<{ words: WordData[]; total: number }>(`/words/by-tag/${encodeURIComponent(tag)}?lang=${getLang()}`),
+
   recordAnswer: (wordId: string, grade: number) =>
     apiRequest<{ nextReview: string; interval: number }>(`/words/${wordId}/answer`, {
       method: 'POST',

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookOpen, Dumbbell, CheckCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Dumbbell, CheckCircle, BookmarkPlus, ArrowRight } from 'lucide-react';
 import { grammarApi } from '../../features/grammar/api';
+import { wordsApi } from '../../features/words/api';
 import { useI18n } from '../../shared/i18n';
 import { ContentRenderer } from './components/ContentRenderer';
 import { ExercisePlayer } from './components/ExercisePlayer';
@@ -35,6 +36,17 @@ export function GrammarTopicPage({ slug }: { slug: string }) {
     queryFn: () => grammarApi.getExercises(slug),
     enabled: tab === 'exercises',
   });
+
+  // Words tagged with this grammar topic — rendered as a section under the
+  // theory. If the topic has no tagged words, the section is hidden entirely
+  // so we don't clutter the UI with an empty card.
+  const { data: relatedWordsData } = useQuery({
+    queryKey: ['words-by-tag', slug, lang],
+    queryFn: () => wordsApi.getByGrammarTag(slug),
+    enabled: tab === 'theory',
+    staleTime: 5 * 60 * 1000,
+  });
+  const relatedWords = relatedWordsData?.words ?? [];
 
   const submitMutation = useMutation({
     mutationFn: ({ score, total }: { score: number; total: number }) =>
@@ -112,6 +124,47 @@ export function GrammarTopicPage({ slug }: { slug: string }) {
       {tab === 'theory' && (
         <div className={styles.content}>
           <ContentRenderer blocks={topic.content as never} />
+
+          {/* Related vocabulary — only rendered when there's at least one
+              tagged word. Otherwise hidden to avoid empty UI. */}
+          {relatedWords.length > 0 && (
+            <div className={styles.relatedWords}>
+              <div className={styles.relatedHeader}>
+                <BookmarkPlus size={16} className={styles.relatedIcon} />
+                <div>
+                  <h3 className={styles.relatedTitle}>{t.grammar.relatedWordsTitle}</h3>
+                  <p className={styles.relatedHint}>{t.grammar.relatedWordsHint}</p>
+                </div>
+                <span className={styles.relatedCount}>
+                  {t.grammar.wordsCount.replace('{n}', String(relatedWords.length))}
+                </span>
+              </div>
+
+              <div className={styles.relatedList}>
+                {relatedWords.slice(0, 6).map((w) => (
+                  <div key={w.id} className={styles.relatedChip}>
+                    <span className={styles.relatedFr}>{w.french}</span>
+                    <span className={styles.relatedSep}>·</span>
+                    <span className={styles.relatedRu}>{w.translation}</span>
+                  </div>
+                ))}
+                {relatedWords.length > 6 && (
+                  <span className={styles.relatedMore}>
+                    +{relatedWords.length - 6}
+                  </span>
+                )}
+              </div>
+
+              <button
+                className={styles.relatedCta}
+                onClick={() => navigate({ to: '/vocabulary', search: { tag: slug } as never })}
+              >
+                {t.grammar.practiceTheseWords}
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
+
           <div className={styles.theoryActions}>
             <button className={styles.startExercisesBtn} onClick={() => setTab('exercises')}>
               {t.grammar.startExercises}

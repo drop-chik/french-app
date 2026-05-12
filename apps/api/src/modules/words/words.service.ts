@@ -100,6 +100,31 @@ export async function getStudySession(
   }));
 }
 
+// Get words tagged with a specific grammar topic — used by the
+// "practice this topic's vocabulary" CTA on GrammarTopicPage. Returns the
+// same WordData shape as getStudySession so the existing modes work unchanged.
+export async function getWordsByGrammarTag(
+  db: DB,
+  userId: string,
+  tag: string,
+  lang: 'ru' | 'en' = 'ru',
+) {
+  const rows = await db
+    .select({ word: words, progress: wordProgress })
+    .from(words)
+    .leftJoin(
+      wordProgress,
+      and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
+    )
+    .where(and(eq(words.grammarTag, tag), eq(words.isActive, true)))
+    .orderBy(asc(words.frequencyRank));
+
+  return rows.map((r) => ({
+    ...normalizeWord(r.word, lang),
+    progress: r.progress ?? null,
+  }));
+}
+
 // Record answer and update SRS progress
 export async function recordAnswer(
   db: DB,
@@ -272,12 +297,14 @@ export async function browseWords(
   limit: number,
   offset: number,
   q: string | null = null,
+  grammarTag: string | null = null,
 ) {
   const pattern = q ? `%${q.toLowerCase()}%` : null;
   const baseWhere = and(
     level ? eq(words.level, level) : undefined,
     eq(words.isActive, true),
     category ? eq(words.category, category) : undefined,
+    grammarTag ? eq(words.grammarTag, grammarTag) : undefined,
     pattern
       ? or(
           sql`lower(${words.french}) LIKE ${pattern}`,
