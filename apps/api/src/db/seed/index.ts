@@ -407,10 +407,11 @@ async function seedWordsBatch(
         category: sql`excluded.category`,
         translationEn: sql`excluded.translation_en`,
         exampleEn: sql`excluded.example_en`,
-        // Also keep frequencyRank and grammarTag in sync so re-seeding picks
-        // up new tags / ranks added to the seed files.
-        frequencyRank: sql`excluded.frequency_rank`,
-        grammarTag: sql`excluded.grammar_tag`,
+        // COALESCE so a later batch without a value doesn't wipe a tag that
+        // an earlier batch set. (Words like "se laver" exist in both A2 and
+        // A1-extra files; without this, the A1 entry would null the tag.)
+        frequencyRank: sql`COALESCE(excluded.frequency_rank, ${words.frequencyRank})`,
+        grammarTag: sql`COALESCE(excluded.grammar_tag, ${words.grammarTag})`,
       },
     });
     inserted += batch.length;
