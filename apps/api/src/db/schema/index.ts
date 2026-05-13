@@ -365,6 +365,11 @@ export const writingPrompts = pgTable(
     maxWords: integer('max_words').notNull(),
     requiredElements: jsonb('required_elements').default([]).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
+    // AI-generated prompt — created on demand by a user via the writing
+    // module. NULL/false = curated content shipped with the seed.
+    isAiGenerated: boolean('is_ai_generated').default(false).notNull(),
+    createdByUserId: uuid('created_by_user_id').references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [
     index('idx_writing_prompts_level').on(t.level, t.writingType),

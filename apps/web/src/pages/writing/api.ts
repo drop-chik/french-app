@@ -16,7 +16,14 @@ export interface WritingPrompt {
   maxWords: number;
   requiredElements: string[];
   isActive: boolean;
+  isAiGenerated?: boolean;
+  createdByUserId?: string | null;
+  createdAt?: string;
 }
+
+export type WritingTypeId =
+  | 'postcard' | 'message' | 'letter_informal' | 'letter_formal'
+  | 'email' | 'description' | 'blog_article' | 'essay' | 'narrative';
 
 export interface WritingSubmission {
   id: string;
@@ -125,4 +132,14 @@ export const writingApi = {
     apiRequest<{ progress: WritingProgress | null; recentSubmissions: WritingSubmission[] }>(
       '/writing/stats',
     ),
+
+  // AI-generated prompts — owned by the calling user only.
+  getAiPrompts: () =>
+    apiRequest<{ prompts: WritingPrompt[] }>('/writing/prompts/ai'),
+
+  generatePrompt: (params: { level: 'A1' | 'A2' | 'B1' | 'B2'; writingType: WritingTypeId; topicHint?: string }) =>
+    apiRequest<{ prompt: WritingPrompt }>('/writing/prompts/generate', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    }),
 };

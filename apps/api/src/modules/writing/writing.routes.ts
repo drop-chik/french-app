@@ -9,6 +9,9 @@ import {
   getSubmissionById,
   generateFeedback,
   getUserStats,
+  generateAiPrompt,
+  getAiPrompts,
+  type WritingType,
 } from './writing.service.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
 
@@ -56,9 +59,67 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const { slug } = request.params as { slug: string };
-      const prompt = await getPromptBySlug(fastify.db, slug);
+      const prompt = await getPromptBySlug(fastify.db, slug, request.user.userId);
       if (!prompt) return reply.status(404).send({ error: 'Prompt not found' });
       reply.send({ prompt });
+    },
+  );
+
+  // GET /writing/prompts/ai — list the user's own AI-generated prompts
+  fastify.get(
+    '/prompts/ai',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: "List the user's AI-generated prompts (private)",
+        security: authorizedSecurity,
+      },
+    },
+    async (request, reply) => {
+      const prompts = await getAiPrompts(fastify.db, request.user.userId);
+      reply.send({ prompts });
+    },
+  );
+
+  // POST /writing/prompts/generate — generate a fresh AI prompt for the user
+  fastify.post(
+    '/prompts/generate',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['writing'],
+        summary: 'Generate a new AI writing prompt for the current user',
+        description: 'Creates a level-constrained prompt via GPT-4o and persists it. Returned immediately for the editor.',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['level', 'writingType'],
+          properties: {
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            writingType: {
+              type: 'string',
+              enum: ['postcard', 'message', 'letter_informal', 'letter_formal', 'email', 'description', 'blog_article', 'essay', 'narrative'],
+            },
+            topicHint: { type: 'string', maxLength: 200 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as { level: 'A1' | 'A2' | 'B1' | 'B2'; writingType: WritingType; topicHint?: string };
+      try {
+        const prompt = await generateAiPrompt(fastify.db, request.user.userId, {
+          level: body.level,
+          writingType: body.writingType,
+          ...(body.topicHint ? { topicHint: body.topicHint } : {}),
+        });
+        reply.status(201).send({ prompt });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'AI generation failed';
+        fastify.log.error({ err }, 'AI prompt generation failed');
+        reply.status(500).send({ error: msg });
+      }
     },
   );
 
@@ -90,7 +151,7 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
 
       const { promptId, content, status, submissionId } = parsed.data;
 
-      const prompt = await getPromptById(fastify.db, promptId);
+      const prompt = await getPromptById(fastify.db, promptId, request.user.userId);
       if (!prompt) return reply.status(404).send({ error: 'Prompt not found' });
 
       const submission = await saveSubmission(

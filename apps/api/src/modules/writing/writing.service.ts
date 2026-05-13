@@ -155,7 +155,12 @@ RÈGLES STRICTES :
 // ── Service functions ─────────────────────────────────────────────────────────
 
 export async function getPrompts(db: DB, level?: string, writingType?: string) {
-  const conditions = [eq(writingPrompts.isActive, true)];
+  // Curated prompts only — AI-generated prompts are listed separately via
+  // getAiPrompts() to keep the curated DELF library uncluttered.
+  const conditions = [
+    eq(writingPrompts.isActive, true),
+    eq(writingPrompts.isAiGenerated, false),
+  ];
   if (level) conditions.push(eq(writingPrompts.level, level as 'A1' | 'A2' | 'B1' | 'B2'));
   if (writingType) conditions.push(eq(writingPrompts.writingType, writingType as 'postcard'));
 
@@ -165,16 +170,36 @@ export async function getPrompts(db: DB, level?: string, writingType?: string) {
   });
 }
 
-export async function getPromptBySlug(db: DB, slug: string) {
-  return db.query.writingPrompts.findFirst({
-    where: eq(writingPrompts.slug, slug),
+// User's own AI-generated prompts — ordered by most recent first.
+export async function getAiPrompts(db: DB, userId: string) {
+  return db.query.writingPrompts.findMany({
+    where: and(
+      eq(writingPrompts.isAiGenerated, true),
+      eq(writingPrompts.createdByUserId, userId),
+    ),
+    orderBy: [desc(writingPrompts.createdAt)],
   });
 }
 
-export async function getPromptById(db: DB, id: string) {
-  return db.query.writingPrompts.findFirst({
+// AI-generated prompts are user-private. Resolvers below take the caller's
+// userId and refuse to return another user's AI prompt. Curated prompts
+// (isAiGenerated=false) are visible to everyone.
+export async function getPromptBySlug(db: DB, slug: string, userId?: string) {
+  const prompt = await db.query.writingPrompts.findFirst({
+    where: eq(writingPrompts.slug, slug),
+  });
+  if (!prompt) return null;
+  if (prompt.isAiGenerated && prompt.createdByUserId !== userId) return null;
+  return prompt;
+}
+
+export async function getPromptById(db: DB, id: string, userId?: string) {
+  const prompt = await db.query.writingPrompts.findFirst({
     where: eq(writingPrompts.id, id),
   });
+  if (!prompt) return null;
+  if (prompt.isAiGenerated && prompt.createdByUserId !== userId) return null;
+  return prompt;
 }
 
 export async function saveSubmission(
@@ -384,6 +409,196 @@ async function updateWritingProgress(db: DB, userId: string) {
         updatedAt: new Date(),
       },
     });
+}
+
+// ── AI-generated writing prompts ─────────────────────────────────────────────
+
+export type WritingType =
+  | 'postcard' | 'message' | 'letter_informal' | 'letter_formal'
+  | 'email' | 'description' | 'blog_article' | 'essay' | 'narrative';
+
+export interface AiGeneratedPrompt {
+  titleRu: string;
+  titleEn: string;
+  promptFr: string;
+  promptRu: string;
+  promptEn: string;
+  tipsRu: string[];
+  tipsEn: string[];
+  minWords: number;
+  maxWords: number;
+  requiredElements: string[];
+}
+
+// Per-level grammar/length constraints fed into the system prompt so the
+// generator can't drift outside the user's pedagogical envelope.
+const LEVEL_CONSTRAINTS: Record<string, string> = {
+  A1: 'Grammaire: PRÉSENT UNIQUEMENT (jamais de passé composé, ni imparfait). Vocabulaire élémentaire (vie quotidienne, famille, nourriture, lieux simples). Phrases courtes et simples. Longueur typique: 30-70 mots selon le type.',
+  A2: 'Grammaire: présent + passé composé + imparfait + futur proche. Pas de subjonctif, pas de conditionnel passé. Vocabulaire courant. Connecteurs simples (et, mais, parce que, alors). Longueur typique: 80-140 mots selon le type.',
+  B1: 'Grammaire: tous les temps de l\'indicatif + subjonctif présent + conditionnel présent. Argumentation simple permise. Connecteurs variés (cependant, par exemple, en effet). Longueur typique: 150-220 mots selon le type.',
+  B2: 'Grammaire: tous les temps et modes, y compris subjonctif passé, conditionnel passé, plus-que-parfait. Argumentation développée, idiomes, nuances. Connecteurs sophistiqués. Longueur typique: 250-400 mots selon le type.',
+};
+
+// Per-type guidance — what each écrit-type should look like.
+const TYPE_GUIDANCE: Record<WritingType, string> = {
+  postcard: 'Carte postale: ton amical, court, formules « Salut !... Bises ! ». Lieu + activité + émotion.',
+  message: 'Message court (SMS, WhatsApp): très bref, ton familier, but pratique (rendez-vous, info, excuse).',
+  letter_informal: 'Lettre informelle: salutation « Cher / Chère », ton amical, sujet personnel, signature simple.',
+  letter_formal: 'Lettre formelle: « Madame, Monsieur », registre soutenu, formules de politesse obligatoires, signature complète.',
+  email: 'Email: objet implicite, salutation appropriée (formelle ou semi-formelle selon le destinataire), corps clair, closing.',
+  description: 'Description: focus sur les détails sensoriels et caractéristiques (lieu, personne, objet, atmosphère).',
+  blog_article: 'Article de blog: titre accrocheur, ton personnel mais structuré, opinion ou expérience partagée.',
+  essay: 'Essai argumentatif: thèse claire, arguments avec exemples, contre-arguments éventuels, conclusion.',
+  narrative: 'Récit: arc narratif clair (situation, événement, dénouement), temps du passé, voix narrative.',
+};
+
+function buildPromptGeneratorSystemPrompt(level: string, writingType: WritingType, topicHint?: string) {
+  const levelCons = LEVEL_CONSTRAINTS[level] ?? LEVEL_CONSTRAINTS['B1']!;
+  const typeGuide = TYPE_GUIDANCE[writingType];
+  const topicLine = topicHint
+    ? `THÈME IMPOSÉ par l'utilisateur: « ${topicHint} » — respecte ce thème.`
+    : `THÈME: libre — invente un sujet concret, original, ancré dans la vie quotidienne ou l'actualité. Évite les sujets scolaires usés (« mon week-end », « ma famille » sauf au A1).`;
+
+  return `Tu génères une consigne de production écrite pour un étudiant de français langue étrangère.
+
+NIVEAU CEFR: ${level}
+TYPE D'ÉCRIT: ${writingType}
+${typeGuide}
+
+CONTRAINTES NIVEAU ${level}:
+${levelCons}
+
+${topicLine}
+
+Réponds UNIQUEMENT avec ce JSON (sans markdown, sans texte avant/après):
+{
+  "titleRu": "заголовок темы на русском (3-6 слов)",
+  "titleEn": "title in English (3-6 words)",
+  "promptFr": "la consigne complète en français (1-3 phrases claires)",
+  "promptRu": "та же consigne на русском",
+  "promptEn": "the same consigne in English",
+  "tipsRu": ["совет 1 на русском", "совет 2", "совет 3", "совет 4"],
+  "tipsEn": ["tip 1 in English", "tip 2", "tip 3", "tip 4"],
+  "minWords": <число>,
+  "maxWords": <число>,
+  "requiredElements": ["element1", "element2", "element3"]
+}
+
+RÈGLES:
+- 3 à 5 tips. Les tips DOIVENT mentionner des formulations françaises concrètes (entre guillemets) que l'étudiant peut réutiliser.
+- requiredElements: 3-5 mots-clés en anglais snake_case (ex: "greeting", "passé_composé", "opinion") qui décrivent ce que la production doit contenir.
+- minWords/maxWords doivent respecter le niveau et le type. Exemples: postcard A1 = 30-50, essay B2 = 280-400.
+- Le titre doit être ATTRAYANT mais court — pas générique.
+- La consigne doit donner UN scénario clair (qui, quoi, pourquoi, à qui).
+`.trim();
+}
+
+// Validate and sanitize the AI output — guard against malformed JSON,
+// missing fields, and obviously-wrong word ranges.
+function validateAiPrompt(raw: unknown, level: string): AiGeneratedPrompt {
+  if (!raw || typeof raw !== 'object') throw new Error('AI returned invalid JSON');
+  const p = raw as Record<string, unknown>;
+  const requireStr = (k: string): string => {
+    const v = p[k];
+    if (typeof v !== 'string' || !v.trim()) throw new Error(`AI prompt missing or empty: ${k}`);
+    return v.trim();
+  };
+  const requireArrStr = (k: string): string[] => {
+    const v = p[k];
+    if (!Array.isArray(v) || v.length === 0) throw new Error(`AI prompt missing or empty: ${k}`);
+    return v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0);
+  };
+  const requireInt = (k: string, min: number, max: number): number => {
+    const v = Number(p[k]);
+    if (!Number.isFinite(v) || v < min || v > max) {
+      throw new Error(`AI prompt ${k} out of range [${min}, ${max}]: ${String(p[k])}`);
+    }
+    return Math.round(v);
+  };
+
+  const ranges: Record<string, [number, number]> = {
+    A1: [20, 100],
+    A2: [60, 180],
+    B1: [120, 280],
+    B2: [200, 500],
+  };
+  const [minLo, maxHi] = ranges[level] ?? ranges['B1']!;
+
+  const minWords = requireInt('minWords', minLo, maxHi);
+  const maxWords = requireInt('maxWords', minLo, maxHi);
+  if (minWords >= maxWords) {
+    throw new Error(`AI prompt range invalid: min ${minWords} >= max ${maxWords}`);
+  }
+
+  return {
+    titleRu: requireStr('titleRu').slice(0, 200),
+    titleEn: requireStr('titleEn').slice(0, 200),
+    promptFr: requireStr('promptFr'),
+    promptRu: requireStr('promptRu'),
+    promptEn: requireStr('promptEn'),
+    tipsRu: requireArrStr('tipsRu').slice(0, 6),
+    tipsEn: requireArrStr('tipsEn').slice(0, 6),
+    minWords,
+    maxWords,
+    requiredElements: requireArrStr('requiredElements').slice(0, 6),
+  };
+}
+
+// Generate a fresh AI prompt for a user and persist it. Returns the inserted
+// row so the frontend can immediately route to the editor.
+export async function generateAiPrompt(
+  db: DB,
+  userId: string,
+  params: { level: 'A1' | 'A2' | 'B1' | 'B2'; writingType: WritingType; topicHint?: string },
+) {
+  const systemPrompt = buildPromptGeneratorSystemPrompt(params.level, params.writingType, params.topicHint);
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: 'Génère maintenant la consigne en respectant strictement le format JSON demandé.' },
+    ],
+    temperature: 0.8,  // higher = more topical variety
+    response_format: { type: 'json_object' },
+  });
+
+  const rawText = response.choices[0]?.message?.content ?? '{}';
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    throw new Error('AI returned malformed JSON');
+  }
+  const data = validateAiPrompt(parsed, params.level);
+
+  // Slug: "ai-<userShort>-<timestamp>-<random>" — unique enough to never
+  // collide with curated slugs or other users' AI prompts.
+  const slug = `ai-${userId.slice(0, 8)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const [created] = await db
+    .insert(writingPrompts)
+    .values({
+      slug,
+      titleRu: data.titleRu,
+      titleEn: data.titleEn,
+      level: params.level,
+      writingType: params.writingType,
+      promptFr: data.promptFr,
+      promptRu: data.promptRu,
+      promptEn: data.promptEn,
+      tipsRu: data.tipsRu,
+      tipsEn: data.tipsEn,
+      minWords: data.minWords,
+      maxWords: data.maxWords,
+      requiredElements: data.requiredElements,
+      isActive: true,
+      isAiGenerated: true,
+      createdByUserId: userId,
+    })
+    .returning();
+
+  return created;
 }
 
 export async function getUserStats(db: DB, userId: string) {

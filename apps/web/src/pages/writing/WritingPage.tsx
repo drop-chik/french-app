@@ -1,25 +1,146 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { PenLine, Clock, CheckCircle2, ChevronRight } from 'lucide-react';
-import { writingApi, type WritingSubmission } from './api';
+import { Clock, CheckCircle2, ChevronRight, Sparkles, X, Plus } from 'lucide-react';
+import { writingApi, type WritingSubmission, type WritingTypeId } from './api';
+import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './WritingPage.module.css';
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
-const TYPES = ['postcard', 'message', 'letter_informal', 'letter_formal', 'email', 'description', 'blog_article', 'essay', 'narrative'] as const;
+const TYPES: WritingTypeId[] = ['postcard', 'message', 'letter_informal', 'letter_formal', 'email', 'description', 'blog_article', 'essay', 'narrative'];
 
 function LevelBadge({ level }: { level: string }) {
   return <span className={`${styles.badge} ${styles[`badge${level}`]}`}>{level}</span>;
 }
 
+// ── AI prompt generation modal ────────────────────────────────────────────────
+
+interface GenerateModalProps {
+  defaultLevel: 'A1' | 'A2' | 'B1' | 'B2';
+  onClose: () => void;
+  onCreated: (slug: string) => void;
+}
+
+function GenerateModal({ defaultLevel, onClose, onCreated }: GenerateModalProps) {
+  const { t } = useI18n();
+  const tw = t.writing;
+  const [level, setLevel] = useState<'A1' | 'A2' | 'B1' | 'B2'>(defaultLevel);
+  const [writingType, setWritingType] = useState<WritingTypeId>('email');
+  const [topicHint, setTopicHint] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // Lock scroll + ESC close
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  const generate = useMutation({
+    mutationFn: () =>
+      writingApi.generatePrompt({
+        level,
+        writingType,
+        ...(topicHint.trim() ? { topicHint: topicHint.trim() } : {}),
+      }),
+    onSuccess: ({ prompt }) => onCreated(prompt.slug),
+    onError: (err: Error) => setError(err.message ?? 'AI generation failed'),
+  });
+
+  const getTypeLabel = (type: string) => (tw.types as Record<string, string>)[type] ?? type;
+
+  return (
+    <div className={styles.modalBackdrop} onClick={onClose} role="presentation">
+      <form
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setError(null);
+          generate.mutate();
+        }}
+      >
+        <button type="button" className={styles.modalClose} onClick={onClose} aria-label="Close">
+          <X size={18} />
+        </button>
+
+        <div className={styles.modalHeader}>
+          <Sparkles size={20} className={styles.modalHeaderIcon} />
+          <h2 className={styles.modalTitle}>{tw.aiGenerateTitle}</h2>
+        </div>
+        <p className={styles.modalSubtitle}>{tw.aiGenerateSubtitle}</p>
+
+        <div className={styles.modalRow}>
+          <label className={styles.modalField}>
+            <span className={styles.modalLabel}>{tw.filterLevel}</span>
+            <select
+              className={styles.modalInput}
+              value={level}
+              onChange={(e) => setLevel(e.target.value as 'A1' | 'A2' | 'B1' | 'B2')}
+            >
+              {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </label>
+          <label className={styles.modalField}>
+            <span className={styles.modalLabel}>{tw.filterType}</span>
+            <select
+              className={styles.modalInput}
+              value={writingType}
+              onChange={(e) => setWritingType(e.target.value as WritingTypeId)}
+            >
+              {TYPES.map((type) => (
+                <option key={type} value={type}>{getTypeLabel(type)}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <label className={styles.modalField}>
+          <span className={styles.modalLabel}>{tw.aiTopicHint}</span>
+          <input
+            type="text"
+            className={styles.modalInput}
+            value={topicHint}
+            onChange={(e) => setTopicHint(e.target.value)}
+            maxLength={200}
+            placeholder={tw.aiTopicHintPlaceholder}
+          />
+          <span className={styles.modalHint}>{tw.aiTopicHintNote}</span>
+        </label>
+
+        {error && <p className={styles.modalError}>{error}</p>}
+
+        <button
+          type="submit"
+          className={styles.modalSubmit}
+          disabled={generate.isPending}
+        >
+          <Sparkles size={16} />
+          {generate.isPending ? tw.aiGenerating : tw.aiGenerateBtn}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export function WritingPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t, lang } = useI18n();
   const tw = t.writing;
-  const [tab, setTab] = useState<'prompts' | 'history'>('prompts');
+  const userLevel = useAuthStore((s) => s.user?.level);
+  const [tab, setTab] = useState<'prompts' | 'ai' | 'history'>('prompts');
   const [filterLevel, setFilterLevel] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
+  const [showGenerate, setShowGenerate] = useState(false);
 
   const { data: promptsData, isLoading: promptsLoading } = useQuery({
     queryKey: ['writing-prompts', filterLevel, filterType],
@@ -27,11 +148,23 @@ export function WritingPage() {
     enabled: tab === 'prompts',
   });
 
+  const { data: aiPromptsData, isLoading: aiLoading } = useQuery({
+    queryKey: ['writing-prompts-ai'],
+    queryFn: writingApi.getAiPrompts,
+    enabled: tab === 'ai',
+  });
+
   const { data: historyData, isLoading: historyLoading } = useQuery({
     queryKey: ['writing-submissions'],
     queryFn: writingApi.getSubmissions,
     enabled: tab === 'history',
   });
+
+  const aiPrompts = aiPromptsData?.prompts ?? [];
+  const defaultAiLevel: 'A1' | 'A2' | 'B1' | 'B2' =
+    (LEVELS as readonly string[]).includes(userLevel ?? '')
+      ? (userLevel as 'A1' | 'A2' | 'B1' | 'B2')
+      : 'B1';
 
   const prompts = promptsData?.prompts ?? [];
   const submissions = historyData?.submissions ?? [];
@@ -63,6 +196,13 @@ export function WritingPage() {
           onClick={() => setTab('prompts')}
         >
           {tw.tabPrompts}
+        </button>
+        <button
+          className={`${styles.tab} ${tab === 'ai' ? styles.tabActive : ''}`}
+          onClick={() => setTab('ai')}
+        >
+          <Sparkles size={13} className={styles.tabIcon} />
+          {tw.tabAi}
         </button>
         <button
           className={`${styles.tab} ${tab === 'history' ? styles.tabActive : ''}`}
@@ -140,6 +280,78 @@ export function WritingPage() {
             </div>
           )}
         </>
+      )}
+
+      {tab === 'ai' && (
+        <>
+          <div className={styles.aiHero}>
+            <div className={styles.aiHeroText}>
+              <div className={styles.aiHeroTitleRow}>
+                <Sparkles size={18} className={styles.aiHeroIcon} />
+                <h2 className={styles.aiHeroTitle}>{tw.aiTitle}</h2>
+              </div>
+              <p className={styles.aiHeroDesc}>{tw.aiDescription}</p>
+            </div>
+            <button
+              type="button"
+              className={styles.aiGenerateBtn}
+              onClick={() => setShowGenerate(true)}
+            >
+              <Plus size={16} /> {tw.aiGenerateNew}
+            </button>
+          </div>
+
+          {aiLoading ? (
+            <p className={styles.loading}>{tw.loading}</p>
+          ) : aiPrompts.length === 0 ? (
+            <div className={styles.aiEmpty}>
+              <Sparkles size={32} className={styles.aiEmptyIcon} />
+              <p className={styles.aiEmptyTitle}>{tw.aiEmptyTitle}</p>
+              <p className={styles.aiEmptyDesc}>{tw.aiEmptyDesc}</p>
+            </div>
+          ) : (
+            <div className={styles.grid}>
+              {aiPrompts.map((prompt) => (
+                <button
+                  key={prompt.id}
+                  className={`${styles.card} ${styles.cardAi}`}
+                  onClick={() => navigate({ to: '/writing/$slug', params: { slug: prompt.slug } })}
+                >
+                  <div className={styles.cardHeader}>
+                    <LevelBadge level={prompt.level} />
+                    <span className={styles.cardType}>{getTypeLabel(prompt.writingType)}</span>
+                    <span className={styles.aiBadge} title={tw.aiBadge}>
+                      <Sparkles size={11} /> AI
+                    </span>
+                  </div>
+                  <h3 className={styles.cardTitle}>{getTitle(prompt)}</h3>
+                  <p className={styles.cardPrompt}>{getPromptText(prompt)}</p>
+                  <div className={styles.cardFooter}>
+                    <span className={styles.wordRange}>
+                      {tw.wordRange.replace('{min}', String(prompt.minWords)).replace('{max}', String(prompt.maxWords))}
+                    </span>
+                    <span className={styles.cardAction}>
+                      {tw.startWriting}
+                      <ChevronRight size={14} />
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {showGenerate && (
+        <GenerateModal
+          defaultLevel={defaultAiLevel}
+          onClose={() => setShowGenerate(false)}
+          onCreated={(slug) => {
+            setShowGenerate(false);
+            queryClient.invalidateQueries({ queryKey: ['writing-prompts-ai'] });
+            navigate({ to: '/writing/$slug', params: { slug } });
+          }}
+        />
       )}
 
       {tab === 'history' && (
