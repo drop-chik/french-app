@@ -19,6 +19,7 @@ import { ContextBuilderMode } from './ContextBuilderMode/ContextBuilderMode';
 import { ListeningRecallMode } from './ListeningRecallMode/ListeningRecallMode';
 import { SmartSessionMode } from './SmartSessionMode/SmartSessionMode';
 import { SmartLearnFlow } from './SmartLearnFlow/SmartLearnFlow';
+import { AdaptiveLearnFlow } from './AdaptiveLearnFlow/AdaptiveLearnFlow';
 import { SessionComplete } from './SessionComplete/SessionComplete';
 import type { SessionResult } from './FlashcardMode/FlashcardMode';
 import styles from './VocabularyPage.module.css';
@@ -262,12 +263,13 @@ export function VocabularyPage() {
   }
 
   // — режимы —
-  // 'smart' uses the new interleaved multi-stage flow (Intro → MC → Spelling
-  // per word). The old SmartSessionMode is kept for callers that select it
-  // explicitly elsewhere — not used from this page anymore.
+  // 'smart' теперь использует AdaptiveLearnFlow — четыре стадии (Intro → MC →
+  // Cloze → Spell) с растущими интервалами Pimsleur, финальный speed-mix.
+  // Старый SmartLearnFlow остаётся в репо как fallback для отладки.
   if (activeMode === 'smart' && sessionWords.length > 0) {
-    void SmartSessionMode; // keep import referenced
-    return withBack(<SmartLearnFlow words={sessionWords} onComplete={handleComplete} />);
+    void SmartLearnFlow;     // legacy fallback — kept imported but unused
+    void SmartSessionMode;   // even older fallback
+    return withBack(<AdaptiveLearnFlow words={sessionWords} onComplete={handleComplete} />);
   }
   if (activeMode === 'flashcard' && sessionWords.length > 0) {
     return withBack(<FlashcardMode words={sessionWords} onComplete={handleComplete} />);

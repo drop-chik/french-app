@@ -5,9 +5,13 @@ import { calculateNextReview, getStatus, createCard } from '@french-app/srs-engi
 import type { SRSGrade } from '@french-app/srs-engine';
 import type { LanguageLevel } from '@french-app/shared-types';
 
-// Defaults — overridden per-user via users.dailyNewWordsLimit / dailyDueWordsLimit
-const DEFAULT_MAX_NEW_PER_SESSION = 10;
-const DEFAULT_MAX_DUE_PER_SESSION = 20;
+// Defaults — overridden per-user via users.dailyNewWordsLimit / dailyDueWordsLimit.
+// Lowered after the adaptive-flow rebuild: research (Nation, Webb, Pimsleur)
+// converges on 5-7 new words per session as the working-memory ceiling.
+// Higher values are technically supported (per-user override) but the default
+// keeps new learners within the productive range.
+const DEFAULT_MAX_NEW_PER_SESSION = 6;
+const DEFAULT_MAX_DUE_PER_SESSION = 14;
 
 const LEVEL_ORDER: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 function levelsUpTo(level: LanguageLevel): LanguageLevel[] {

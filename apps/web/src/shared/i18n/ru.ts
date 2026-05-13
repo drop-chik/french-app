@@ -276,8 +276,12 @@ export const ru: DeepRecord = {
   learn: {
     stageIntro: 'Знакомство',
     stageRecognise: 'Узнать',
+    stageCloze: 'В контексте',
     stageWrite: 'Написать',
     stageQuick: 'Быстро',
+    adaptiveLabel: 'Адаптивная сессия',
+    speedMixLabel: 'Финальная проверка',
+    clozeHint: 'Впиши пропущенное слово в предложение',
     newWord: 'Новое слово',
     gotIt: 'Понял',
     pickTranslation: 'Выбери перевод',

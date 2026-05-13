@@ -275,8 +275,12 @@ export const en: Translations = {
   learn: {
     stageIntro: 'Intro',
     stageRecognise: 'Recognise',
+    stageCloze: 'In context',
     stageWrite: 'Write',
     stageQuick: 'Quick',
+    adaptiveLabel: 'Adaptive session',
+    speedMixLabel: 'Final check',
+    clozeHint: 'Fill in the missing word',
     newWord: 'New word',
     gotIt: 'Got it',
     pickTranslation: 'Pick the translation',
