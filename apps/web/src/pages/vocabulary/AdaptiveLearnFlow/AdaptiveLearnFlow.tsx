@@ -45,48 +45,62 @@ interface Props {
   onComplete: (results: SessionResult[]) => void;
 }
 
-type Box = 0 | 1 | 2 | 3 | 4;
 type Stage = 'intro' | 'mc' | 'cloze' | 'spell' | 'speedmix';
 
-interface WordState {
-  word: WordData;
-  box: Box;
-  dueStep: number;
-  mistakes: number;
-  encounters: number;
-}
-
-// Gaps after a successful stage. Adapted from Pimsleur (1967), scaled for
-// a 5-10 min in-app session. The numbers are measured in "queue steps" —
-// at ~10 sec per step they translate to roughly 10s / 30s / 50s real time.
-const GAP_AFTER_BOX: Record<Box, number> = {
-  0: 1, // after Intro, MC comes after 1 other word
-  1: 3, // after MC ok, Cloze comes after 3 others
-  2: 5, // after Cloze ok, Spell comes after 5 others
-  3: 8, // after Spell ok, word is graduated; gap > total session, won't reappear
-  4: 999,
+// Each word starts at a stage determined by its current SRS status.
+// 'new' goes through the full 4-stage funnel; words already learned
+// can skip earlier stages.
+const STAGES_FOR_STATUS: Record<string, Stage[]> = {
+  new:      ['intro', 'mc', 'cloze', 'spell'],
+  learning: ['mc', 'cloze', 'spell'],
+  review:   ['cloze', 'spell'],
+  mastered: ['spell'],
 };
 
-// Starting box depends on the user's existing SRS state for the word.
-// Words at "review" or "mastered" already have form-meaning links — they
-// don't need Intro, can skip directly to recall stages.
-function initialBox(word: WordData): Box {
-  const status = word.progress?.status ?? 'new';
-  if (status === 'new') return 0;
-  if (status === 'learning') return 1; // skip Intro, start at MC
-  if (status === 'review') return 2;   // skip MC too, start at Cloze
-  if (status === 'mastered') return 3; // only Spell as quick check
-  return 0;
+const STAGE_RANK: Record<Stage, number> = {
+  intro: 0,
+  mc: 1,
+  cloze: 2,
+  spell: 3,
+  speedmix: 4,
+};
+
+interface ScheduleItem {
+  wordId: string;
+  stage: Stage;
+  // Logical round in the wave; later collapsed into a sequential index.
+  round: number;
 }
 
-function stageFor(box: Box): Stage {
-  switch (box) {
-    case 0: return 'intro';
-    case 1: return 'mc';
-    case 2: return 'cloze';
-    case 3: return 'spell';
-    case 4: return 'speedmix';
+// Build a "wave" / diagonal schedule. For word i (0-indexed in batch order)
+// and stage position k (0..len-1) in its remaining stages, place the card
+// at round `i + k * 2`. Result:
+//
+//   word A: rounds 0, 2, 4, 6  → stages Intro, MC, Cloze, Spell
+//   word B: rounds 1, 3, 5, 7
+//   word C: rounds 2, 4, 6, 8
+//   ...
+//
+// Within a round, higher-stage items go first (so SPELL of word 0 plays
+// before INTRO of word N). Per-word gaps between same-word stages are
+// 2 → 4 → 6 cards — strictly growing (Pimsleur intervals), enforced by
+// the formula itself, not by a fragile dynamic queue.
+function buildSchedule(words: WordData[]): ScheduleItem[] {
+  const items: ScheduleItem[] = [];
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i]!;
+    const status = w.progress?.status ?? 'new';
+    const stages = STAGES_FOR_STATUS[status] ?? STAGES_FOR_STATUS['new']!;
+    for (let k = 0; k < stages.length; k++) {
+      items.push({ wordId: w.id, stage: stages[k]!, round: i + k * 2 });
+    }
   }
+  // Sort: earlier round first; within same round, higher stage first
+  // (so words that are deeper in their journey advance before fresh ones).
+  items.sort((a, b) =>
+    a.round - b.round || STAGE_RANK[b.stage] - STAGE_RANK[a.stage],
+  );
+  return items;
 }
 
 // Accent / case insensitive comparison for typing answers.
@@ -139,53 +153,47 @@ async function playAudio(text: string, audioUrl?: string | null) {
 export function AdaptiveLearnFlow({ words, onComplete }: Props) {
   const { t } = useI18n();
 
-  // Persistent session state — array of word boxes. We mutate via setState
-  // by reconstructing; useRef tracks the latest snapshot for callbacks.
-  const [states, setStates] = useState<WordState[]>(() =>
-    words.map((w, i) => ({
-      word: w,
-      box: initialBox(w),
-      dueStep: i, // initial order = textual position
-      mistakes: 0,
-      encounters: 0,
-    })),
-  );
-  const [step, setStep] = useState(0);
-  // After all words reach box 4, we run the final speed-mix.
+  // Precomputed schedule — wave/diagonal interleaving. See buildSchedule.
+  // Cast to mutable copy so we can splice in retry items after wrong answers.
+  const [schedule, setSchedule] = useState<ScheduleItem[]>(() => buildSchedule(words));
+  const [index, setIndex] = useState(0);
+
+  // Per-word state: how far each word has progressed in its stage sequence.
+  // Used for the dot-progress UI and for early termination of further stages
+  // if the user dismisses or completes a word early.
+  const [completedStages, setCompletedStages] = useState<Map<string, Set<Stage>>>(() => new Map());
+
+  // After main schedule is finished, run a SpeedMix over all words.
   const [speedMixQueue, setSpeedMixQueue] = useState<WordData[] | null>(null);
   const [speedIndex, setSpeedIndex] = useState(0);
+
   // Per-word tally for final SRS grade.
   const tallyRef = useRef<Map<string, { ok: number; bad: number; total: number }>>(new Map());
 
-  // Pick the next eligible word: the one with the lowest dueStep ≤ current
-  // step, ties broken by lowest box (so Intros get priority over MCs).
-  const current = useMemo(() => {
-    const eligible = states
-      .filter((s) => s.box < 4 && s.dueStep <= step)
-      .sort((a, b) => a.dueStep - b.dueStep || a.box - b.box);
-    if (eligible.length > 0) return eligible[0]!;
-    // No one due yet — pick the closest one due in the future
-    const all = states.filter((s) => s.box < 4).sort((a, b) => a.dueStep - b.dueStep);
-    return all[0] ?? null;
-  }, [states, step]);
+  const wordById = useMemo(() => {
+    const m = new Map<string, WordData>();
+    for (const w of words) m.set(w.id, w);
+    return m;
+  }, [words]);
 
-  // Once everyone graduates to box 4, build the speed-mix queue and run it.
-  const allGraduated = states.every((s) => s.box >= 4);
+  const current = schedule[index] ?? null;
+  const currentWord = current ? wordById.get(current.wordId) ?? null : null;
 
+  // When main schedule is done, build the speed-mix queue.
+  const mainDone = !current;
   useEffect(() => {
-    if (allGraduated && !speedMixQueue) {
+    if (mainDone && !speedMixQueue) {
       const shuffled = [...words].sort(() => Math.random() - 0.5);
       setSpeedMixQueue(shuffled);
     }
-  }, [allGraduated, speedMixQueue, words]);
+  }, [mainDone, speedMixQueue, words]);
 
   // Pre-play audio when a new card appears.
   useEffect(() => {
-    const w = current?.word;
-    if (!w || speedMixQueue) return;
-    const timer = setTimeout(() => { void playAudio(w.french, w.audioUrl); }, 200);
+    if (!currentWord || speedMixQueue) return;
+    const timer = setTimeout(() => { void playAudio(currentWord.french, currentWord.audioUrl); }, 200);
     return () => clearTimeout(timer);
-  }, [current?.word.id, current?.box, speedMixQueue]);
+  }, [currentWord?.id, current?.stage, speedMixQueue]);
 
   const recordStageResult = useCallback((wordId: string, correct: boolean) => {
     const prev = tallyRef.current.get(wordId) ?? { ok: 0, bad: 0, total: 0 };
@@ -198,9 +206,9 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
 
   const finishSession = useCallback(() => {
     const results: SessionResult[] = [];
-    for (const [wordId, t] of tallyRef.current.entries()) {
-      if (t.total === 0) continue;
-      const ratio = t.ok / t.total;
+    for (const [wordId, ta] of tallyRef.current.entries()) {
+      if (ta.total === 0) continue;
+      const ratio = ta.ok / ta.total;
       let grade = 3;
       if (ratio === 1) grade = 5;
       else if (ratio >= 0.6) grade = 4;
@@ -213,28 +221,29 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
     onComplete(results);
   }, [onComplete]);
 
-  // Apply a stage outcome to the current word and advance the queue.
-  const handleStageResult = useCallback((wordId: string, correct: boolean) => {
+  // Advance to next schedule item. Insert a retry copy ~2 items later for
+  // wrong answers (errorful learning with immediate-ish recovery, Kornell-
+  // Bjork 2008: the recovery shouldn't be immediate or the user just memorises
+  // the latest hint — needs a tiny gap to force real retrieval).
+  const handleStageResult = useCallback((wordId: string, stage: Stage, correct: boolean) => {
     recordStageResult(wordId, correct);
-    setStates((prev) => prev.map((s) => {
-      if (s.word.id !== wordId) return s;
-      let newBox: Box = s.box;
-      if (correct) {
-        newBox = Math.min(4, s.box + 1) as Box;
-      } else {
-        newBox = Math.max(0, s.box - 1) as Box;
-      }
-      const gap = correct ? GAP_AFTER_BOX[newBox] : 1; // wrong → fast retry
-      return {
-        ...s,
-        box: newBox,
-        dueStep: step + 1 + gap,
-        encounters: s.encounters + 1,
-        mistakes: s.mistakes + (correct ? 0 : 1),
-      };
-    }));
-    setStep((s) => s + 1);
-  }, [recordStageResult, step]);
+    setCompletedStages((prev) => {
+      const next = new Map(prev);
+      const set = new Set(next.get(wordId) ?? []);
+      if (correct) set.add(stage);
+      next.set(wordId, set);
+      return next;
+    });
+    if (!correct && stage !== 'intro') {
+      setSchedule((prev) => {
+        const next = [...prev];
+        const insertAt = Math.min(index + 2, next.length);
+        next.splice(insertAt, 0, { wordId, stage, round: -1 });
+        return next;
+      });
+    }
+    setIndex((i) => i + 1);
+  }, [index, recordStageResult]);
 
   // Speed-mix outcome
   const handleSpeedResult = useCallback((wordId: string, correct: boolean) => {
@@ -246,10 +255,14 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
     }
   }, [recordStageResult, speedMixQueue, speedIndex, finishSession]);
 
-  // Overall session progress
-  const totalEncounters = states.reduce((sum, s) => sum + (s.box as number), 0);
-  const maxEncounters = states.length * 4;
-  const learnProgress = (totalEncounters / maxEncounters) * 100;
+  // Overall session progress — share of stages completed so far.
+  const totalDone = useMemo(() => {
+    let n = 0;
+    for (const set of completedStages.values()) n += set.size;
+    return n;
+  }, [completedStages]);
+  const totalStages = schedule.length;
+  const learnProgress = totalStages > 0 ? (totalDone / totalStages) * 100 : 0;
 
   // ── Speed-mix mode ──
   if (speedMixQueue) {
@@ -285,7 +298,7 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
     );
   }
 
-  if (!current) return null;
+  if (!current || !currentWord) return null;
 
   return (
     <div className={styles.container}>
@@ -294,41 +307,41 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
       </div>
       <div className={styles.counter}>
         {t.learn.adaptiveLabel}
-        <span className={styles.stageBadge}>{stageLabel(stageFor(current.box), t)}</span>
+        <span className={styles.stageBadge}>{stageLabel(current.stage, t)}</span>
       </div>
-      <BoxesProgress states={states} />
+      <BoxesProgress words={words} completedStages={completedStages} />
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={`${current.word.id}-${current.box}-${step}`}
+          key={`${currentWord.id}-${current.stage}-${index}`}
           className={styles.stageWrap}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.2 }}
         >
-          {current.box === 0 && (
+          {current.stage === 'intro' && (
             <IntroStage
-              word={current.word}
-              onAdvance={() => handleStageResult(current.word.id, true)}
+              word={currentWord}
+              onAdvance={() => handleStageResult(currentWord.id, 'intro', true)}
             />
           )}
-          {current.box === 1 && (
+          {current.stage === 'mc' && (
             <MCStage
-              word={current.word}
-              onAdvance={(correct) => handleStageResult(current.word.id, correct)}
+              word={currentWord}
+              onAdvance={(correct) => handleStageResult(currentWord.id, 'mc', correct)}
             />
           )}
-          {current.box === 2 && (
+          {current.stage === 'cloze' && (
             <ClozeStage
-              word={current.word}
-              onAdvance={(correct) => handleStageResult(current.word.id, correct)}
+              word={currentWord}
+              onAdvance={(correct) => handleStageResult(currentWord.id, 'cloze', correct)}
             />
           )}
-          {current.box === 3 && (
+          {current.stage === 'spell' && (
             <SpellingStage
-              word={current.word}
-              onAdvance={(correct) => handleStageResult(current.word.id, correct)}
+              word={currentWord}
+              onAdvance={(correct) => handleStageResult(currentWord.id, 'spell', correct)}
             />
           )}
         </motion.div>
@@ -352,23 +365,33 @@ function stageLabel(stage: Stage, t: Translations): string {
    keeps coming back.
 ═══════════════════════════════════════════════ */
 
-function BoxesProgress({ states }: { states: WordState[] }) {
+function BoxesProgress({
+  words,
+  completedStages,
+}: {
+  words: WordData[];
+  completedStages: Map<string, Set<Stage>>;
+}) {
+  const stagesInOrder: Stage[] = ['intro', 'mc', 'cloze', 'spell'];
   return (
     <div className={styles.boxesRow}>
-      {states.map((s) => (
-        <div
-          key={s.word.id}
-          className={styles.boxItem}
-          title={`${s.word.french} · box ${s.box}/4`}
-        >
-          {[0, 1, 2, 3].map((b) => (
-            <span
-              key={b}
-              className={`${styles.boxDot} ${s.box > b ? styles.boxDotFilled : ''}`}
-            />
-          ))}
-        </div>
-      ))}
+      {words.map((w) => {
+        const done = completedStages.get(w.id) ?? new Set<Stage>();
+        return (
+          <div
+            key={w.id}
+            className={styles.boxItem}
+            title={`${w.french} · ${done.size}/4`}
+          >
+            {stagesInOrder.map((stage) => (
+              <span
+                key={stage}
+                className={`${styles.boxDot} ${done.has(stage) ? styles.boxDotFilled : ''}`}
+              />
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
