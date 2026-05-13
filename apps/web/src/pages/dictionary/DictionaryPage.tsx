@@ -141,7 +141,7 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
 
   return (
     <div
-      className={`${styles.wordRow} ${bulkMode && isSelected ? styles.wordRowSelected : ''}`}
+      className={`${styles.wordRow} ${bulkMode && isSelected ? styles.wordRowSelected : ''} ${status === 'mastered' ? styles.wordRowMastered : ''}`}
       onClick={handleRowClick}
       role="button"
       tabIndex={0}
@@ -156,6 +156,18 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
           {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
         </button>
       )}
+
+      {/* A 3px coloured strip on the left shows status at a glance. The
+          existing badge still appears in the action column for screen readers
+          and explicit text. */}
+      {status && (
+        <span
+          className={styles.wordStatusStrip}
+          style={{ background: STATUS_STRIP_COLOR[status] }}
+          aria-hidden
+        />
+      )}
+
       <button
         type="button"
         className={styles.wordAudioBtn}
@@ -165,7 +177,7 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
         <Volume2 size={14} />
       </button>
       <div className={styles.wordInfo}>
-        <span className={styles.wordFrLine}>
+        <span className={styles.wordMainLine}>
           <span className={styles.wordFr}>{word.french}</span>
           {showLevel && word.level && (
             <span
@@ -175,12 +187,15 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
               {word.level}
             </span>
           )}
+          <span className={styles.wordSep}>—</span>
+          <span className={styles.wordRu}>{word.translation}</span>
         </span>
-        <span className={styles.wordRu}>{word.translation}</span>
-        {word.exampleFr && <span className={styles.wordEx}>{word.exampleFr}</span>}
-        {/* Strength bar — visual proxy for how solid the user has the word.
-            0 (grey) → red → amber → blue → green (100). Hidden for never-studied. */}
-        {strength > 0 && (
+        {/* Example — only shown when present, single line, small grey. The
+            tap-to-open modal shows the full block. */}
+        {word.exampleFr && <span className={styles.wordEx}>«{word.exampleFr}»</span>}
+        {/* Strength bar — only for words the user has actively encountered.
+            Hidden for new / never-studied / mastered (full bar would be noise). */}
+        {strength > 0 && status !== 'mastered' && (
           <div className={styles.wordStrengthTrack} aria-label={`${strength}%`}>
             <div
               className={styles.wordStrengthFill}
@@ -226,6 +241,14 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
   );
 }
 
+// 3px coloured strip on the left of each word row — quick visual status hint.
+const STATUS_STRIP_COLOR: Record<string, string> = {
+  new: '#9ca3af',
+  learning: '#f59e0b',
+  review: '#3b82f6',
+  mastered: '#22c55e',
+};
+
 // ── Category card ─────────────────────────────────────────────────────────────
 
 interface CategoryCardProps {
@@ -235,23 +258,55 @@ interface CategoryCardProps {
   onClick: () => void;
 }
 
+// Small SVG progress ring used by category cards. Sized 36-44px so it sits
+// neatly next to the category name without dominating.
+function CatRing({ percent, color, size = 40 }: { percent: number; color: string; size?: number }) {
+  const stroke = 4;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, percent));
+  const offset = c - (clamped / 100) * c;
+  return (
+    <div className={styles.catRing} style={{ width: size, height: size }}>
+      <svg width={size} height={size} aria-hidden>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-bg-secondary)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+        />
+      </svg>
+      <span className={styles.catRingPct} style={{ color }}>{clamped}<span className={styles.catRingPctSign}>%</span></span>
+    </div>
+  );
+}
+
 function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
   const pct = cat.count > 0 ? Math.round((cat.masteredCount / cat.count) * 100) : 0;
+  const hasProgress = cat.masteredCount > 0;
   return (
-    <button className={styles.catCard} onClick={onClick} style={{ '--cat-color': color } as React.CSSProperties}>
-      <div className={styles.catCardAccent} />
-      <div className={styles.catCardBody}>
-        <div className={styles.catCardTop}>
+    <button
+      className={`${styles.catCard} ${hasProgress ? styles.catCardActive : ''}`}
+      onClick={onClick}
+      style={{ '--cat-color': color } as React.CSSProperties}
+    >
+      <div className={styles.catCardHead}>
+        <CatRing percent={pct} color={color} />
+        <div className={styles.catCardHeadText}>
           <span className={styles.catCardName}>{label}</span>
-          <ChevronRight size={14} className={styles.catCardArrow} />
+          <span className={styles.catCardCount}>
+            {cat.masteredCount > 0 ? `${cat.masteredCount} / ${cat.count}` : `${cat.count} слов`}
+          </span>
         </div>
-        <span className={styles.catCardCount}>{cat.count} слов</span>
-        <div className={styles.catProgressWrap}>
-          <div className={styles.catProgressBar}>
-            <div className={styles.catProgressFill} style={{ width: `${pct}%`, background: color }} />
-          </div>
-          <span className={styles.catProgressPct}>{pct}%</span>
-        </div>
+        <ChevronRight size={14} className={styles.catCardArrow} />
       </div>
     </button>
   );
@@ -344,6 +399,9 @@ interface FilterBarProps {
 }
 
 function FilterBar({ t, sortBy, statusFilter, onSortChange, onFilterChange }: FilterBarProps) {
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+
   const filters: { id: StatusFilter; label: string }[] = [
     { id: 'all', label: t.dictionary.filterAll },
     { id: 'not-started', label: t.dictionary.filterNotStarted },
@@ -358,6 +416,24 @@ function FilterBar({ t, sortBy, statusFilter, onSortChange, onFilterChange }: Fi
     { id: 'status', label: t.dictionary.sortStatus },
     { id: 'recent', label: t.dictionary.sortRecent },
   ];
+  const activeSort = sortOptions.find((o) => o.id === sortBy)?.label ?? t.dictionary.sort;
+
+  // Close popup on outside-click + Escape.
+  useEffect(() => {
+    if (!sortOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (!sortRef.current?.contains(e.target as Node)) setSortOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setSortOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [sortOpen]);
 
   return (
     <div className={styles.filterBar}>
@@ -373,20 +449,33 @@ function FilterBar({ t, sortBy, statusFilter, onSortChange, onFilterChange }: Fi
           </button>
         ))}
       </div>
-      <div className={styles.sortWrap}>
-        <label className={styles.sortBtn}>
+      <div className={styles.sortWrap} ref={sortRef}>
+        <button
+          type="button"
+          className={styles.sortBtn}
+          onClick={() => setSortOpen((v) => !v)}
+          aria-expanded={sortOpen}
+          aria-label={t.dictionary.sort}
+        >
           <ArrowUpDown size={13} />
-          <select
-            className={styles.sortSelect}
-            value={sortBy}
-            onChange={(e) => onSortChange(e.target.value as SortBy)}
-            aria-label={t.dictionary.sort}
-          >
+          <span>{activeSort}</span>
+        </button>
+        {sortOpen && (
+          <div className={styles.sortMenu} role="menu">
             {sortOptions.map((o) => (
-              <option key={o.id} value={o.id}>{o.label}</option>
+              <button
+                key={o.id}
+                type="button"
+                role="menuitem"
+                className={`${styles.sortMenuItem} ${sortBy === o.id ? styles.sortMenuItemActive ?? '' : ''}`}
+                onClick={() => { onSortChange(o.id); setSortOpen(false); }}
+              >
+                {o.label}
+                {sortBy === o.id && <Check size={14} />}
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        )}
       </div>
     </div>
   );
