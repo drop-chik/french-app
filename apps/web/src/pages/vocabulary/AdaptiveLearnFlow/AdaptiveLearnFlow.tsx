@@ -31,7 +31,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, ArrowRight, Check, X as XIcon, Sparkles } from 'lucide-react';
+import { Volume2, ArrowRight, Check, X as XIcon } from 'lucide-react';
 import type { WordData } from '../../../features/words/api';
 import { wordsApi } from '../../../features/words/api';
 import { listeningApi } from '../../../features/listening/api';
@@ -163,10 +163,6 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
   // if the user dismisses or completes a word early.
   const [completedStages, setCompletedStages] = useState<Map<string, Set<Stage>>>(() => new Map());
 
-  // After main schedule is finished, run a SpeedMix over all words.
-  const [speedMixQueue, setSpeedMixQueue] = useState<WordData[] | null>(null);
-  const [speedIndex, setSpeedIndex] = useState(0);
-
   // Per-word tally for final SRS grade.
   const tallyRef = useRef<Map<string, { ok: number; bad: number; total: number }>>(new Map());
 
@@ -178,22 +174,14 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
 
   const current = schedule[index] ?? null;
   const currentWord = current ? wordById.get(current.wordId) ?? null : null;
-
-  // When main schedule is done, build the speed-mix queue.
   const mainDone = !current;
-  useEffect(() => {
-    if (mainDone && !speedMixQueue) {
-      const shuffled = [...words].sort(() => Math.random() - 0.5);
-      setSpeedMixQueue(shuffled);
-    }
-  }, [mainDone, speedMixQueue, words]);
 
   // Pre-play audio when a new card appears.
   useEffect(() => {
-    if (!currentWord || speedMixQueue) return;
+    if (!currentWord) return;
     const timer = setTimeout(() => { void playAudio(currentWord.french, currentWord.audioUrl); }, 200);
     return () => clearTimeout(timer);
-  }, [currentWord?.id, current?.stage, speedMixQueue]);
+  }, [currentWord?.id, current?.stage]);
 
   const recordStageResult = useCallback((wordId: string, correct: boolean) => {
     const prev = tallyRef.current.get(wordId) ?? { ok: 0, bad: 0, total: 0 };
@@ -245,15 +233,15 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
     setIndex((i) => i + 1);
   }, [index, recordStageResult]);
 
-  // Speed-mix outcome
-  const handleSpeedResult = useCallback((wordId: string, correct: boolean) => {
-    recordStageResult(wordId, correct);
-    if (speedMixQueue && speedIndex + 1 < speedMixQueue.length) {
-      setSpeedIndex((i) => i + 1);
-    } else {
-      finishSession();
-    }
-  }, [recordStageResult, speedMixQueue, speedIndex, finishSession]);
+  // Once the schedule is exhausted, finish immediately. No tail SpeedMix:
+  // a self-reported "knew / didn't know" right after the user just typed the
+  // word from scratch (Spell) is theatre — Bjork's research actually warns
+  // against easy retrieval right after hard retrieval (it weakens the trace).
+  // Fluency practice over already-mastered words deserves its own mode, not
+  // a tail on the learning session.
+  useEffect(() => {
+    if (mainDone) finishSession();
+  }, [mainDone, finishSession]);
 
   // Overall session progress — share of stages completed so far.
   const totalDone = useMemo(() => {
@@ -263,40 +251,6 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
   }, [completedStages]);
   const totalStages = schedule.length;
   const learnProgress = totalStages > 0 ? (totalDone / totalStages) * 100 : 0;
-
-  // ── Speed-mix mode ──
-  if (speedMixQueue) {
-    const speedWord = speedMixQueue[speedIndex];
-    if (!speedWord) {
-      // Should not happen given the indexing, but safeguard.
-      finishSession();
-      return null;
-    }
-    const speedProgress = ((speedIndex + 1) / speedMixQueue.length) * 100;
-    return (
-      <div className={styles.container}>
-        <div className={styles.progressBar}>
-          <div className={styles.progressFill} style={{ width: `${speedProgress}%`, background: 'linear-gradient(90deg, #f59e0b, #f97316)' }} />
-        </div>
-        <div className={styles.counter}>
-          <Sparkles size={14} /> {t.learn.speedMixLabel}
-          <span className={styles.stageBadge}>{speedIndex + 1} / {speedMixQueue.length}</span>
-        </div>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`speed-${speedIndex}`}
-            className={styles.stageWrap}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.18 }}
-          >
-            <SpeedStage word={speedWord} onAdvance={(correct) => handleSpeedResult(speedWord.id, correct)} />
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    );
-  }
 
   if (!current || !currentWord) return null;
 
@@ -734,24 +688,3 @@ function SpellingStage({ word, onAdvance }: { word: WordData; onAdvance: (correc
   );
 }
 
-function SpeedStage({ word, onAdvance }: { word: WordData; onAdvance: (correct: boolean) => void }) {
-  const { t } = useI18n();
-  return (
-    <div className={styles.card}>
-      <p className={styles.cardLabel}>{t.learn.quickCheck}</p>
-      <div className={styles.mcHeader}>
-        <h2 className={styles.bigFrench}>{word.french}</h2>
-        <AudioBtn word={word} />
-      </div>
-      <p className={styles.bigTranslation}>{word.translation}</p>
-      <div className={styles.speedActions}>
-        <button type="button" className={styles.btnWrong} onClick={() => onAdvance(false)}>
-          <XIcon size={16} /> {t.learn.didntKnow}
-        </button>
-        <button type="button" className={styles.btnOk} onClick={() => onAdvance(true)}>
-          <Check size={16} /> {t.learn.knew}
-        </button>
-      </div>
-    </div>
-  );
-}
