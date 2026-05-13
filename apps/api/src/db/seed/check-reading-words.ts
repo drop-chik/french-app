@@ -1,18 +1,33 @@
 /**
- * Scans all reading texts, finds words missing from the function-word dict AND
- * from the `words` DB table, then prints a seed-ready array of missing entries.
+ * Audit reading-text vocabulary coverage.
+ *
+ * For every word that appears in any reading text, simulate the FULL lookup
+ * chain the frontend uses:
+ *   1. text wordMap (per-text curated dict)
+ *   2. inline FUNCTION_WORDS dict (the reading service's hard-coded common words)
+ *   3. words DB — exact match
+ *   4. words DB — ilike (case/accent fold)
+ *   5. words DB — strip leading article
+ *   6. verb lemmatization via tryVerbStem
+ *   7. noun/adjective lemmatization via tryNounStem
+ *
+ * Anything still missing is what the user sees as "перевода нет" in the UI.
+ * Output is grouped by level + writing type, sorted by frequency.
  *
  * Run:
- *   $env:DATABASE_URL = (railway variables --json | ConvertFrom-Json).DATABASE_PUBLIC_URL
- *   npx tsx src/db/seed/check-reading-words.ts
+ *   $env:DATABASE_URL = "<postgres URL>"
+ *   npx tsx src/db/seed/check-reading-words.ts > missing.txt
  */
 import 'dotenv/config';
 import { eq, ilike, or } from 'drizzle-orm';
 import { db } from '../index.js';
 import { words } from '../schema/index.js';
 import { readingTextsData } from './reading.js';
+import { tryVerbStem, tryNounStem } from '../../modules/reading/reading.service.js';
 
-// ── Replicate the function-word dict from reading.service.ts ─────────────────
+// Replicates FUNCTION_WORDS from reading.service.ts. Keep in sync if the
+// service's dict gains new entries — drift means the audit will report
+// false positives.
 const FUNCTION_WORDS = new Set([
   'être','suis','es','est','sommes','êtes','sont','étais','était','étions','étiez','étaient',
   'serai','seras','sera','serons','serez','seront','soit','soient','étant','été',
@@ -67,43 +82,143 @@ function extractWords(text: string): Set<string> {
       if (SKIP.test(token)) continue;
       const clean = cleanWord(token);
       if (!clean || clean.length < 2) continue;
+      // Skip tokens that look like a proper noun the wordMap or text writer
+      // probably already covers (capitalized in source but lowercased here is
+      // unreliable — instead skip very short tokens and digits-only).
+      if (/^\d+$/.test(clean)) continue;
       result.add(clean);
     }
   }
   return result;
 }
 
-async function main() {
+// Mirrors the translateWord chain. Returns true if a translation would
+// be found by ANY step in the lookup.
+async function isResolvable(
+  word: string,
+  textWordMap: Record<string, unknown>,
+): Promise<boolean> {
+  // 1. text wordMap (per-text)
+  if (word in textWordMap) return true;
 
-  // Collect all unique words across all reading texts
-  const allWords = new Set<string>();
-  for (const text of readingTextsData) {
-    for (const w of extractWords(text.contentFr)) {
-      allWords.add(w);
-    }
+  // 2. function words
+  if (FUNCTION_WORDS.has(word)) return true;
+
+  // 3+4. exact / ilike on the words table
+  let match = await db.query.words.findFirst({
+    where: or(eq(words.french, word), ilike(words.french, word)),
+  });
+  if (match) return true;
+
+  // 5. strip leading article
+  const stripped = word.replace(/^(?:le|la|les|l'|un|une|des|du|de la)\s+/i, '');
+  if (stripped !== word) {
+    match = await db.query.words.findFirst({
+      where: or(eq(words.french, stripped), ilike(words.french, stripped)),
+    });
+    if (match) return true;
   }
 
-  console.log(`Total unique tokens in reading texts: ${allWords.size}`);
-
-  // Filter out words already covered by function-word dict
-  const needsCheck = [...allWords].filter(w => !FUNCTION_WORDS.has(w));
-  console.log(`After removing function words: ${needsCheck.length} to check in DB\n`);
-
-  // Check each against DB (exact + ilike)
-  const missing: string[] = [];
-  for (const w of needsCheck.sort()) {
-    const found = await db.select({ id: words.id }).from(words)
-      .where(or(eq(words.french, w), ilike(words.french, w)))
-      .limit(1);
-    if (found.length === 0) {
-      missing.push(w);
-    }
+  // 6. verb lemmatization
+  for (const candidate of tryVerbStem(word)) {
+    match = await db.query.words.findFirst({
+      where: or(eq(words.french, candidate), ilike(words.french, candidate)),
+    });
+    if (match) return true;
   }
 
-  console.log(`\n=== MISSING (${missing.length} words not in DB) ===`);
-  for (const w of missing) {
-    console.log(w);
+  // 7. noun / adjective lemmatization
+  for (const candidate of tryNounStem(word)) {
+    match = await db.query.words.findFirst({
+      where: or(eq(words.french, candidate), ilike(words.french, candidate)),
+    });
+    if (match) return true;
   }
+
+  return false;
 }
 
-main().catch(console.error);
+async function main() {
+  // Build per-word stats: how many texts use it, at which levels.
+  const wordTexts = new Map<string, { levels: Set<string>; count: number; sampleSlug: string }>();
+  const textWordMaps = new Map<string, Record<string, unknown>>();
+
+  for (const text of readingTextsData) {
+    textWordMaps.set(text.slug, text.wordMap as Record<string, unknown>);
+    const tokens = extractWords(text.contentFr);
+    for (const w of tokens) {
+      let stat = wordTexts.get(w);
+      if (!stat) {
+        stat = { levels: new Set(), count: 0, sampleSlug: text.slug };
+        wordTexts.set(w, stat);
+      }
+      stat.levels.add(text.level);
+      stat.count += 1;
+    }
+  }
+
+  const allWords = [...wordTexts.keys()].sort();
+  console.error(`Scanning ${allWords.length} unique tokens across ${readingTextsData.length} texts...`);
+
+  // Check each word against the union of its texts' wordMaps + DB chain.
+  // A word is "covered" if at least the text it appears in has it in its
+  // wordMap, OR if the DB chain can resolve it.
+  const missing: Array<{
+    word: string;
+    count: number;
+    levels: string[];
+    sampleSlug: string;
+  }> = [];
+
+  let checked = 0;
+  for (const word of allWords) {
+    checked += 1;
+    if (checked % 100 === 0) console.error(`  ${checked}/${allWords.length}`);
+
+    const stat = wordTexts.get(word)!;
+    // Union of wordMaps across ALL texts that contain this word — if ANY
+    // text covers it locally, treat as covered (frontend would resolve via
+    // the per-text map). For words used in multiple texts, this is generous;
+    // user might still hit a "no translation" in a text whose wordMap lacks
+    // the word but whose siblings cover it. We still need a DB fallback.
+    // To detect those reliably, we check DB only.
+    let covered = false;
+    for (const text of readingTextsData) {
+      if (text.contentFr.toLowerCase().includes(word)) {
+        const map = textWordMaps.get(text.slug)!;
+        if (word in map) {
+          covered = true;
+          break;
+        }
+      }
+    }
+    if (!covered) {
+      // No text covers it in its wordMap — must rely on DB chain
+      const resolvable = await isResolvable(word, {});
+      if (!resolvable) {
+        missing.push({
+          word,
+          count: stat.count,
+          levels: [...stat.levels].sort(),
+          sampleSlug: stat.sampleSlug,
+        });
+      }
+    }
+  }
+
+  missing.sort((a, b) => b.count - a.count || a.word.localeCompare(b.word));
+
+  console.error(`\n=== ${missing.length} words missing from BOTH wordMap and DB ===\n`);
+
+  // Output as TSV: word, count, levels, sample-slug — easy to import
+  console.log('# word\tcount\tlevels\tsample_slug');
+  for (const m of missing) {
+    console.log(`${m.word}\t${m.count}\t${m.levels.join(',')}\t${m.sampleSlug}`);
+  }
+  process.exit(0);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

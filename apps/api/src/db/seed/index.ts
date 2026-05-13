@@ -105,6 +105,7 @@ import { drillsData2 } from './drills2.js';
 import { writingPromptsData } from './writing-prompts.js';
 import { readingTextsData } from './reading.js';
 import { wordsReading } from './words-reading.js';
+import { wordsReadingExtra } from './words-reading-extra.js';
 
 type WordInput = {
   french: string;
@@ -821,7 +822,7 @@ async function seed() {
   // ===== Reading vocabulary (words found in reading texts, missing from main DB) =====
   console.log('\nSeeding reading vocabulary...');
   let readingWordsAdded = 0;
-  for (const w of wordsReading) {
+  for (const w of [...wordsReading, ...wordsReadingExtra]) {
     const result = await db
       .insert(words)
       .values({
@@ -835,7 +836,7 @@ async function seed() {
       .onConflictDoNothing();
     if ((result.rowCount ?? 0) > 0) readingWordsAdded++;
   }
-  console.log(`  Reading vocabulary: ${readingWordsAdded} new words added (${wordsReading.length} total)`);
+  console.log(`  Reading vocabulary: ${readingWordsAdded} new words added (${wordsReading.length + wordsReadingExtra.length} total)`);
 
   // ===== Reading texts =====
   console.log('\nSeeding reading texts...');
