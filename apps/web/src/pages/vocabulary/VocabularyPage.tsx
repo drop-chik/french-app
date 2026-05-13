@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { calculateNextReview, getStatus, createCard, orderByFrequency } from '@french-app/srs-engine';
 import type { SRSGrade } from '@french-app/srs-engine';
-import { Play, CheckCircle, ChevronDown, ChevronUp, History } from 'lucide-react';
+import { Play, CheckCircle, ChevronDown, ChevronUp, Check, Flame, RefreshCw, Sparkles } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
 import { grammarApi } from '../../features/grammar/api';
@@ -35,6 +35,65 @@ type ActiveMode =
   | 'context-builder'
   | 'listening-recall'
   | 'complete';
+
+// SVG progress ring — used inside the hero card. percent 0-100. The unfilled
+// arc is a soft grey; the filled portion uses the brand gradient (or whatever
+// `color` is set to).
+function ProgressRing({
+  percent,
+  size = 104,
+  stroke = 8,
+  color,
+  children,
+}: {
+  percent: number;
+  size?: number;
+  stroke?: number;
+  color?: string | undefined;
+  children?: React.ReactNode;
+}) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, percent));
+  const offset = c - (clamped / 100) * c;
+  return (
+    <div className={styles.ring} style={{ width: size, height: size }}>
+      <svg width={size} height={size} aria-hidden>
+        <defs>
+          <linearGradient id="vocabRingGrad" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-brand)" />
+            <stop offset="100%" stopColor="#6366f1" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--color-border)"
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color ?? 'url(#vocabRingGrad)'}
+          strokeWidth={stroke}
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }}
+        />
+      </svg>
+      <div className={styles.ringInner}>{children}</div>
+    </div>
+  );
+}
+
+// Russian: Mon→Sun in order, indexed by JS getDay() (0=Sun, 1=Mon, ..., 6=Sat).
+const WEEKDAY_LETTER_RU = ['В', 'П', 'В', 'С', 'Ч', 'П', 'С'] as const;
 
 const MODE_IDS = [
   { id: 'flashcard', icon: '🃏', ready: true },
@@ -246,46 +305,87 @@ export function VocabularyPage() {
     );
   }
 
+  // Long-term progress visual for the hero ring. Uses "% of session words
+  // already mastered" as a rough proxy — grows as the user advances through
+  // the level. When today is done, the ring is fully green.
+  const sessionMastered = sessionWords.filter((w) => w.progress?.status === 'mastered').length;
+  const ringPercent = todayCompleted
+    ? 100
+    : sessionWords.length > 0
+      ? Math.round((sessionMastered / sessionWords.length) * 100)
+      : 0;
+
   return (
     <div className={styles.page}>
       {/* Header */}
       <div className={styles.header}>
         <h1 className={styles.title}>{t.vocabulary.title}</h1>
+        {!isLoading && masteredTotal > 0 && (
+          <span className={styles.headerSub}>
+            <Sparkles size={12} /> {masteredTotal} {t.vocabulary.masteredCount}
+          </span>
+        )}
       </div>
-
-      {/* Stats bar */}
-      {!isLoading && !error && (
-        <div className={`${styles.statsBar} ${todayCompleted ? styles.statsBarDone : ''}`}>
-          <div className={styles.statPill}>
-            <span className={styles.statValue}>{dueCount}</span>
-            <span className={styles.statLabel}>{t.vocabulary.dueCount}</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.statPill}>
-            <span className={styles.statValue}>{newCount}</span>
-            <span className={styles.statLabel}>{t.vocabulary.newCount}</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.statPill}>
-            <span className={`${styles.statValue} ${styles.statValueGreen}`}>{masteredTotal}</span>
-            <span className={styles.statLabel}>{t.vocabulary.masteredCount}</span>
-          </div>
-          {streak > 0 && (
-            <>
-              <div className={styles.statDivider} />
-              <div className={styles.statPill}>
-                <span className={`${styles.statValue} ${todayCompleted ? styles.statValueStreakDone : styles.statValueStreak}`}>
-                  🔥 {streak}
-                </span>
-                <span className={styles.statLabel}>{t.vocabulary.streakLabel}</span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
 
       {isLoading && <p className={styles.loading}>{t.vocabulary.loading}</p>}
       {error && <p className={styles.error}>{t.vocabulary.errorLoad}</p>}
+
+      {/* Hero "Today" card — replaces the old stats bar + standalone CTA.
+          A progress ring shows how far the user is through their current
+          session pool; the right side shows what awaits + a single CTA. */}
+      {!isLoading && !error && sessionWords.length > 0 && (
+        <div className={`${styles.hero} ${todayCompleted ? styles.heroDone : ''}`}>
+          <ProgressRing
+            percent={ringPercent}
+            color={todayCompleted ? 'var(--color-success)' : undefined}
+          >
+            {todayCompleted ? (
+              <Check size={32} strokeWidth={3} className={styles.ringDoneIcon} />
+            ) : (
+              <>
+                <span className={styles.ringBigNum}>{sessionWords.length}</span>
+                <span className={styles.ringBigSub}>{t.vocabulary.wordsShort}</span>
+              </>
+            )}
+          </ProgressRing>
+
+          <div className={styles.heroBody}>
+            <span className={styles.heroEyebrow}>
+              {todayCompleted ? t.vocabulary.streakDone : t.vocabulary.weekTitle}
+            </span>
+            <h2 className={styles.heroTitle}>
+              {todayCompleted
+                ? t.vocabulary.allDone
+                : `~${estimatedMin} ${t.vocabulary.minShort}`}
+            </h2>
+            <div className={styles.heroMeta}>
+              {dueCount > 0 && (
+                <span className={styles.heroMetaItem}>
+                  <RefreshCw size={12} /> {dueCount} {t.vocabulary.dueCount}
+                </span>
+              )}
+              {newCount > 0 && (
+                <span className={styles.heroMetaItem}>
+                  <Sparkles size={12} /> {newCount} {t.vocabulary.newCount}
+                </span>
+              )}
+            </div>
+            <button
+              className={`${styles.heroCta} ${todayCompleted ? styles.heroCtaDone : ''}`}
+              onClick={() => setActiveMode('smart')}
+            >
+              {todayCompleted ? <CheckCircle size={18} /> : <Play size={18} />}
+              <span>
+                {statusFilter
+                  ? t.dictionary.status[statusFilter as keyof typeof t.dictionary.status] ?? t.vocabulary.startSession
+                  : todayCompleted
+                  ? t.vocabulary.practiceMore
+                  : t.vocabulary.startSession}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Grammar-tag filter banner — shown when arrived from a grammar topic */}
       {grammarTag && (
@@ -350,62 +450,56 @@ export function VocabularyPage() {
         </div>
       )}
 
-      {/* CTA — primary action */}
-      {!isLoading && !error && sessionWords.length > 0 && (
-        <button
-          className={`${styles.startBtn} ${todayCompleted && !statusFilter ? styles.startBtnDone : ''}`}
-          onClick={() => setActiveMode('smart')}
-        >
-          {todayCompleted && !statusFilter
-            ? <CheckCircle size={18} className={styles.startBtnIcon} />
-            : <Play size={18} className={styles.startBtnIcon} />
-          }
-          <span>
-            {statusFilter
-              ? t.dictionary.status[statusFilter as keyof typeof t.dictionary.status] ?? t.vocabulary.startSession
-              : todayCompleted
-              ? t.vocabulary.practiceMore
-              : t.vocabulary.startSession}
-            <span className={styles.startBtnMeta}>
-              {sessionWords.length} {t.vocabulary.wordsShort} · ~{estimatedMin} {t.vocabulary.minShort}
-            </span>
-          </span>
-        </button>
-      )}
-
       {!isLoading && !error && sessionWords.length === 0 && words.length === 0 && (
-        <div className={styles.allDoneBanner}>
-          {grammarTag ? t.vocabulary.tagEmpty : t.vocabulary.allDone}
+        <div className={styles.allDoneCard}>
+          <div className={styles.allDoneEmoji}>🎉</div>
+          <p className={styles.allDoneTitle}>
+            {grammarTag ? t.vocabulary.tagEmpty : t.vocabulary.allDone}
+          </p>
         </div>
       )}
 
       {!isLoading && !error && sessionWords.length === 0 && words.length > 0 && statusFilter && (
-        <div className={styles.allDoneBanner}>{t.dictionary.noWords}</div>
+        <div className={styles.allDoneCard}>
+          <p className={styles.allDoneTitle}>{t.dictionary.noWords}</p>
+        </div>
       )}
 
-      {/* Weekly history — small bar chart + 2-stat strip showing how the user
-          did over the last 7 days. Hidden when there's been zero activity. */}
-      {!isLoading && weekTotal > 0 && (
-        <div className={styles.weekBlock}>
-          <div className={styles.weekHeader}>
-            <History size={14} className={styles.weekIcon} />
-            <span className={styles.weekTitle}>{t.vocabulary.weekTitle}</span>
-            <span className={styles.weekStats}>
-              <strong>{weekTotal}</strong> {t.vocabulary.weekStatsWords}
-              <span className={styles.weekStatsSep}>·</span>
-              <strong>{weekDaysActive}</strong> {t.vocabulary.weekStatsDays}
-            </span>
+      {/* Streak card — flame + 7-day dots. Replaces the old separate weekBlock
+          and the streak pill that lived inside the stats bar. */}
+      {!isLoading && (streak > 0 || weekTotal > 0) && (
+        <div className={styles.streakCard}>
+          <div className={styles.streakHead}>
+            <div className={`${styles.streakFlame} ${todayCompleted ? styles.streakFlameOn : ''}`}>
+              <Flame size={22} />
+            </div>
+            <div className={styles.streakHeadText}>
+              <span className={styles.streakNumber}>
+                {streak}
+                <span className={styles.streakNumberLabel}> {t.vocabulary.streakLabel}</span>
+              </span>
+              {weekTotal > 0 && (
+                <span className={styles.streakSub}>
+                  {weekDaysActive}/7 {t.vocabulary.weekStatsDays} · {weekTotal} {t.vocabulary.weekStatsWords}
+                </span>
+              )}
+            </div>
           </div>
-          <div className={styles.weekBars}>
+          <div className={styles.weekDots}>
             {weekActivity.map((d) => {
-              const heightPct = d.reviewed > 0 ? Math.max(8, (d.reviewed / weekMax) * 100) : 4;
+              const dayLetter = WEEKDAY_LETTER_RU[new Date(d.date).getDay()];
+              const intensity = d.reviewed === 0
+                ? 0
+                : Math.min(1, d.reviewed / Math.max(weekMax, 1));
               return (
                 <div
                   key={d.date}
-                  className={`${styles.weekBar} ${d.isToday ? styles.weekBarToday : ''} ${d.reviewed > 0 ? styles.weekBarActive : ''}`}
+                  className={`${styles.weekDot} ${d.isToday ? styles.weekDotToday : ''} ${d.reviewed > 0 ? styles.weekDotActive : ''}`}
                   title={`${d.date}: ${d.reviewed}`}
+                  style={d.reviewed > 0 ? { opacity: 0.4 + intensity * 0.6 } : undefined}
                 >
-                  <div className={styles.weekBarFill} style={{ height: `${heightPct}%` }} />
+                  <span className={styles.weekDotInner} />
+                  <span className={styles.weekDotLabel}>{dayLetter}</span>
                 </div>
               );
             })}
