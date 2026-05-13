@@ -1,12 +1,13 @@
-// Узкий сид только для reading_texts. Используется когда полный seed
-// падает на других таблицах (например, на partial unique index у words).
+// Узкий сид для reading_texts + writing_prompts. Используется когда полный
+// seed падает на других таблицах (например, на partial unique index у words).
 // Идемпотентен — onConflictDoUpdate по slug.
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import { readingTexts } from '../schema/index.js';
+import { readingTexts, writingPrompts } from '../schema/index.js';
 import * as schema from '../schema/index.js';
 import { readingTextsData } from './reading.js';
+import { writingPromptsData } from './writing-prompts.js';
 
 const { Pool } = pg;
 
@@ -43,10 +44,46 @@ async function main() {
           estimatedMinutes: rt.estimatedMinutes,
         },
       });
-    console.log(`  ${rt.slug}`);
   }
+  console.log(`  ${readingTextsData.length} reading texts ok.`);
 
-  console.log(`Done — ${readingTextsData.length} reading texts seeded.`);
+  console.log(`Seeding ${writingPromptsData.length} writing prompts...`);
+  for (const p of writingPromptsData) {
+    await db
+      .insert(writingPrompts)
+      .values({
+        slug: p.slug,
+        titleRu: p.titleRu,
+        titleEn: p.titleEn,
+        level: p.level,
+        writingType: p.writingType,
+        promptFr: p.promptFr,
+        promptRu: p.promptRu,
+        promptEn: p.promptEn,
+        tipsRu: p.tipsRu,
+        tipsEn: p.tipsEn,
+        minWords: p.minWords,
+        maxWords: p.maxWords,
+        requiredElements: p.requiredElements,
+      })
+      .onConflictDoUpdate({
+        target: writingPrompts.slug,
+        set: {
+          titleRu: p.titleRu,
+          titleEn: p.titleEn,
+          promptFr: p.promptFr,
+          promptRu: p.promptRu,
+          promptEn: p.promptEn,
+          tipsRu: p.tipsRu,
+          tipsEn: p.tipsEn,
+          minWords: p.minWords,
+          maxWords: p.maxWords,
+        },
+      });
+  }
+  console.log(`  ${writingPromptsData.length} writing prompts ok.`);
+
+  console.log('Done.');
   await pool.end();
 }
 
