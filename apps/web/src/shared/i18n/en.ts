@@ -275,6 +275,12 @@ export const en: Translations = {
   learn: {
     stageIntro: 'Intro',
     stageRecognise: 'Recognise',
+    stageReverse: 'Reverse pick',
+    stageReverseHint: 'Pick the French equivalent',
+    stageListening: 'Listening',
+    stageListeningHint: 'Listen and type the word',
+    stageScramble: 'Unscramble',
+    stageScrambleHint: 'Arrange the letters in order',
     stageCloze: 'In context',
     stageWrite: 'Write',
     stageQuick: 'Quick',

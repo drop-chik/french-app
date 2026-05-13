@@ -45,24 +45,43 @@ interface Props {
   onComplete: (results: SessionResult[]) => void;
 }
 
-type Stage = 'intro' | 'mc' | 'cloze' | 'spell' | 'speedmix';
+type Stage =
+  | 'intro'
+  | 'mc'         // FR → choose RU (receptive recognition)
+  | 'reverse'    // RU → choose FR (productive recognition)
+  | 'listening'  // audio → type FR (auditory recall)
+  | 'scramble'   // letters shuffled → arrange (form practice)
+  | 'cloze'      // sentence with gap → type FR (productive in context)
+  | 'spell';     // RU only → type FR from scratch (productive cold)
 
-// Each word starts at a stage determined by its current SRS status.
-// 'new' goes through the full 4-stage funnel; words already learned
-// can skip earlier stages.
-const STAGES_FOR_STATUS: Record<string, Stage[]> = {
-  new:      ['intro', 'mc', 'cloze', 'spell'],
-  learning: ['mc', 'cloze', 'spell'],
-  review:   ['cloze', 'spell'],
-  mastered: ['spell'],
-};
+// Variety pool for the wild-card slot 3. Each word in a session gets one of
+// these chosen at session start — different words get different variety
+// stages so the user encounters all three within a single session.
+const VARIETY_POOL: Stage[] = ['reverse', 'listening', 'scramble'];
+
+function pickVariety(): Stage {
+  return VARIETY_POOL[Math.floor(Math.random() * VARIETY_POOL.length)]!;
+}
+
+// Build the stage sequence for a word given its current SRS status.
+// 'new' words travel the full 5-stage funnel; partially-known words skip
+// earlier stages. The variety slot is randomised per word.
+function stagesForStatus(status: string): Stage[] {
+  if (status === 'new')      return ['intro', 'mc', pickVariety(), 'cloze', 'spell'];
+  if (status === 'learning') return ['mc', pickVariety(), 'cloze', 'spell'];
+  if (status === 'review')   return ['cloze', 'spell'];
+  if (status === 'mastered') return ['spell'];
+  return ['intro', 'mc', pickVariety(), 'cloze', 'spell'];
+}
 
 const STAGE_RANK: Record<Stage, number> = {
   intro: 0,
   mc: 1,
-  cloze: 2,
-  spell: 3,
-  speedmix: 4,
+  reverse: 2,
+  listening: 2,
+  scramble: 2,
+  cloze: 3,
+  spell: 4,
 };
 
 interface ScheduleItem {
@@ -74,29 +93,28 @@ interface ScheduleItem {
 
 // Build a "wave" / diagonal schedule. For word i (0-indexed in batch order)
 // and stage position k (0..len-1) in its remaining stages, place the card
-// at round `i + k * 2`. Result:
+// at round `i + k * 2`. Result with 5-stage flow:
 //
-//   word A: rounds 0, 2, 4, 6  → stages Intro, MC, Cloze, Spell
-//   word B: rounds 1, 3, 5, 7
-//   word C: rounds 2, 4, 6, 8
+//   word A: rounds 0, 2, 4, 6, 8   → Intro, MC, Variety, Cloze, Spell
+//   word B: rounds 1, 3, 5, 7, 9
+//   word C: rounds 2, 4, 6, 8, 10
 //   ...
 //
-// Within a round, higher-stage items go first (so SPELL of word 0 plays
-// before INTRO of word N). Per-word gaps between same-word stages are
-// 2 → 4 → 6 cards — strictly growing (Pimsleur intervals), enforced by
-// the formula itself, not by a fragile dynamic queue.
+// Within a round, higher-stage items go first. Per-word gaps between
+// same-word stages stay at 2 → 4 → 6 → 8 cards (strictly growing —
+// Pimsleur intervals).
 function buildSchedule(words: WordData[]): ScheduleItem[] {
   const items: ScheduleItem[] = [];
   for (let i = 0; i < words.length; i++) {
     const w = words[i]!;
     const status = w.progress?.status ?? 'new';
-    const stages = STAGES_FOR_STATUS[status] ?? STAGES_FOR_STATUS['new']!;
+    const stages = stagesForStatus(status);
     for (let k = 0; k < stages.length; k++) {
       items.push({ wordId: w.id, stage: stages[k]!, round: i + k * 2 });
     }
   }
   // Sort: earlier round first; within same round, higher stage first
-  // (so words that are deeper in their journey advance before fresh ones).
+  // (so words deeper in their journey advance before fresh ones).
   items.sort((a, b) =>
     a.round - b.round || STAGE_RANK[b.stage] - STAGE_RANK[a.stage],
   );
@@ -286,6 +304,24 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
               onAdvance={(correct) => handleStageResult(currentWord.id, 'mc', correct)}
             />
           )}
+          {current.stage === 'reverse' && (
+            <ReverseMCStage
+              word={currentWord}
+              onAdvance={(correct) => handleStageResult(currentWord.id, 'reverse', correct)}
+            />
+          )}
+          {current.stage === 'listening' && (
+            <ListeningStage
+              word={currentWord}
+              onAdvance={(correct) => handleStageResult(currentWord.id, 'listening', correct)}
+            />
+          )}
+          {current.stage === 'scramble' && (
+            <ScrambleStage
+              word={currentWord}
+              onAdvance={(correct) => handleStageResult(currentWord.id, 'scramble', correct)}
+            />
+          )}
           {current.stage === 'cloze' && (
             <ClozeStage
               word={currentWord}
@@ -307,9 +343,21 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
 function stageLabel(stage: Stage, t: Translations): string {
   if (stage === 'intro') return t.learn.stageIntro;
   if (stage === 'mc') return t.learn.stageRecognise;
+  if (stage === 'reverse') return t.learn.stageReverse;
+  if (stage === 'listening') return t.learn.stageListening;
+  if (stage === 'scramble') return t.learn.stageScramble;
   if (stage === 'cloze') return t.learn.stageCloze;
-  if (stage === 'spell') return t.learn.stageWrite;
-  return t.learn.stageQuick;
+  return t.learn.stageWrite;
+}
+
+// Map any concrete stage to its slot in the per-word progression. Slots 0-4
+// in display order: Intro / Recognise / Variety / Cloze / Spell.
+function stageSlot(stage: Stage): number {
+  if (stage === 'intro') return 0;
+  if (stage === 'mc') return 1;
+  if (stage === 'reverse' || stage === 'listening' || stage === 'scramble') return 2;
+  if (stage === 'cloze') return 3;
+  return 4;
 }
 
 /* ═══════════════════════════════════════════════
@@ -326,21 +374,25 @@ function BoxesProgress({
   words: WordData[];
   completedStages: Map<string, Set<Stage>>;
 }) {
-  const stagesInOrder: Stage[] = ['intro', 'mc', 'cloze', 'spell'];
+  // 5 dots per word — one for each slot in the journey
+  // (Intro / Recognise / Variety / Cloze / Spell).
   return (
     <div className={styles.boxesRow}>
       {words.map((w) => {
         const done = completedStages.get(w.id) ?? new Set<Stage>();
+        const slots = [0, 0, 0, 0, 0];
+        for (const s of done) slots[stageSlot(s)] = 1;
+        const total = slots.reduce((a, b) => a + b, 0);
         return (
           <div
             key={w.id}
             className={styles.boxItem}
-            title={`${w.french} · ${done.size}/4`}
+            title={`${w.french} · ${total}/5`}
           >
-            {stagesInOrder.map((stage) => (
+            {slots.map((filled, i) => (
               <span
-                key={stage}
-                className={`${styles.boxDot} ${done.has(stage) ? styles.boxDotFilled : ''}`}
+                key={i}
+                className={`${styles.boxDot} ${filled ? styles.boxDotFilled : ''}`}
               />
             ))}
           </div>
@@ -685,6 +737,336 @@ function SpellingStage({ word, onAdvance }: { word: WordData; onAdvance: (correc
         </button>
       )}
     </form>
+  );
+}
+
+/* ── Reverse MC: RU → choose FR (productive recognition) ────────────────── */
+
+function ReverseMCStage({ word, onAdvance }: { word: WordData; onAdvance: (correct: boolean) => void }) {
+  const { t } = useI18n();
+  const [options, setOptions] = useState<string[] | null>(null);
+  const [correctIndex, setCorrectIndex] = useState<number>(-1);
+  const [selected, setSelected] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { distractors } = await wordsApi.getDistractors(word.id);
+        // Use OTHER French words as distractors. Filter out current word & dedupe.
+        const wrong = distractors
+          .map((d) => d.french)
+          .filter((x) => x && x !== word.french)
+          .slice(0, 3);
+        // Pad if not enough distractors came back
+        while (wrong.length < 3) wrong.push('—');
+        const all = [...wrong, word.french];
+        for (let i = all.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [all[i], all[j]] = [all[j]!, all[i]!];
+        }
+        if (!cancelled) {
+          setOptions(all);
+          setCorrectIndex(all.indexOf(word.french));
+        }
+      } catch {
+        if (!cancelled) {
+          setOptions([word.french, '—', '—', '—']);
+          setCorrectIndex(0);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [word.id, word.french]);
+
+  const choose = (i: number) => {
+    if (selected !== null) return;
+    setSelected(i);
+    const correct = i === correctIndex;
+    setTimeout(() => onAdvance(correct), correct ? 700 : 1500);
+  };
+
+  return (
+    <div className={styles.card}>
+      <p className={styles.cardLabel}>{t.learn.stageReverseHint}</p>
+      <h2 className={styles.bigTranslation}>{word.translation}</h2>
+      {!options ? (
+        <div className={styles.optionsLoading}>...</div>
+      ) : (
+        <div className={styles.options}>
+          {options.map((opt, i) => {
+            const isCorrect = i === correctIndex;
+            const isPicked = selected === i;
+            const cls = [styles.option];
+            if (selected !== null) {
+              if (isCorrect) cls.push(styles.optionCorrect);
+              else if (isPicked) cls.push(styles.optionWrong);
+            }
+            return (
+              <button
+                key={opt + i}
+                type="button"
+                className={cls.join(' ')}
+                onClick={() => choose(i)}
+                disabled={selected !== null}
+              >
+                {opt}
+                {selected !== null && isCorrect && <Check size={16} className={styles.optionIcon} />}
+                {selected !== null && isPicked && !isCorrect && <XIcon size={16} className={styles.optionIcon} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Listening: hear audio, type the FR word ────────────────────────────── */
+
+function ListeningStage({ word, onAdvance }: { word: WordData; onAdvance: (correct: boolean) => void }) {
+  const { t } = useI18n();
+  const [value, setValue] = useState('');
+  const [state, setState] = useState<'input' | 'correct' | 'wrong'>('input');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-play on mount and focus the input.
+  useEffect(() => {
+    inputRef.current?.focus();
+    const timer = setTimeout(() => { void playAudio(word.french, word.audioUrl); }, 250);
+    return () => clearTimeout(timer);
+  }, [word.id, word.audioUrl, word.french]);
+
+  const target = word.french;
+  const slots = useMemo(() => {
+    return Array.from(target).map((ch, i) => {
+      const u = value[i] ?? '';
+      const tch = target[i] ?? '';
+      let st: 'match' | 'mismatch' | 'pending' = 'pending';
+      if (i < value.length) {
+        st = normalize(u) === normalize(tch) ? 'match' : 'mismatch';
+      }
+      return { ch, state: st, isSpace: ch === ' ' || ch === '-' || ch === '\'' };
+    });
+  }, [value, target]);
+
+  const fullyCorrect = value.length === target.length && slots.every((s) => s.state === 'match');
+  const anyMismatch = slots.some((s) => s.state === 'mismatch');
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (state !== 'input') return;
+    const correct = normalize(value) === normalize(target);
+    setState(correct ? 'correct' : 'wrong');
+    setTimeout(() => onAdvance(correct), correct ? 700 : 2200);
+  };
+
+  return (
+    <form className={styles.card} onSubmit={submit}>
+      <p className={styles.cardLabel}>{t.learn.stageListeningHint}</p>
+
+      <div className={styles.listeningPlay}>
+        <button
+          type="button"
+          className={styles.listeningBigBtn}
+          onClick={() => playAudio(word.french, word.audioUrl)}
+          aria-label="play"
+        >
+          <Volume2 size={32} />
+        </button>
+      </div>
+      <p className={styles.bigTranslation}>{word.translation}</p>
+
+      <div className={styles.spellingSlots} aria-hidden>
+        {slots.map((s, i) => (
+          <span
+            key={i}
+            className={[
+              styles.spellingSlot,
+              s.state === 'match' && styles.spellingSlotMatch,
+              s.state === 'mismatch' && styles.spellingSlotMismatch,
+              s.state === 'pending' && styles.spellingSlotPending,
+              s.isSpace && styles.spellingSlotSep,
+            ].filter(Boolean).join(' ')}
+          >
+            {s.state === 'pending' ? (s.isSpace ? s.ch : '_') : (value[i] ?? s.ch)}
+          </span>
+        ))}
+      </div>
+
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        disabled={state !== 'input'}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        maxLength={target.length + 5}
+        className={`${styles.spellingInput} ${state === 'correct' ? styles.spellingInputOk : ''} ${state === 'wrong' ? styles.spellingInputBad : ''}`}
+        placeholder="..."
+      />
+      {state === 'wrong' && (
+        <p className={styles.spellingCorrectAnswer}>
+          {t.learn.correctAnswer} <strong>{target}</strong>
+        </p>
+      )}
+      {state === 'input' && (
+        <button
+          type="submit"
+          className={styles.btnPrimary}
+          disabled={value.trim().length === 0 || (anyMismatch && !fullyCorrect)}
+        >
+          {fullyCorrect ? '✓ ' : ''}{t.learn.check}
+        </button>
+      )}
+    </form>
+  );
+}
+
+/* ── Scramble: letters shuffled, click to assemble ──────────────────────── */
+
+interface Tile { ch: string; key: number; placedAt: number | null }
+
+function ScrambleStage({ word, onAdvance }: { word: WordData; onAdvance: (correct: boolean) => void }) {
+  const { t } = useI18n();
+  const target = word.french;
+  const [tiles, setTiles] = useState<Tile[]>(() => {
+    const arr = Array.from(target).map((ch, i) => ({ ch, key: i, placedAt: null as number | null }));
+    // Shuffle (Fisher-Yates) for the pool — but anchor punctuation in place
+    // so spaces / hyphens / apostrophes don't drift around.
+    const indices = arr.map((_, i) => i).filter((i) => {
+      const c = arr[i]!.ch;
+      return !(c === ' ' || c === '-' || c === '\'');
+    });
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j]!, indices[i]!];
+    }
+    // Result: tiles in shuffled order. Punctuation tiles are placed
+    // automatically at their target slot.
+    const shuffled: Tile[] = [];
+    let idxNonSpace = 0;
+    for (let pos = 0; pos < arr.length; pos++) {
+      const t = arr[pos]!;
+      if (t.ch === ' ' || t.ch === '-' || t.ch === '\'') {
+        shuffled.push({ ...t, placedAt: pos }); // auto-place
+      } else {
+        const src = indices[idxNonSpace++]!;
+        shuffled.push({ ...arr[src]!, placedAt: null });
+      }
+    }
+    return shuffled;
+  });
+  const [state, setState] = useState<'input' | 'correct' | 'wrong'>('input');
+
+  // Build the current assembled word from placed tiles.
+  const assembled = useMemo(() => {
+    const slots: string[] = Array.from(target).map(() => '');
+    for (const t of tiles) {
+      if (t.placedAt !== null) slots[t.placedAt] = t.ch;
+    }
+    return slots;
+  }, [tiles, target]);
+
+  const allFilled = assembled.every((s) => s !== '');
+  const isCorrect = allFilled && assembled.join('') === target;
+
+  // Click a letter tile from the pool → place at first empty slot.
+  const placeTile = (tileKey: number) => {
+    if (state !== 'input') return;
+    setTiles((prev) => {
+      const next = [...prev];
+      const idx = next.findIndex((t) => t.key === tileKey);
+      if (idx < 0 || next[idx]!.placedAt !== null) return prev;
+      // Find first empty slot
+      const used = new Set(next.filter((t) => t.placedAt !== null).map((t) => t.placedAt));
+      let firstEmpty = -1;
+      for (let i = 0; i < target.length; i++) {
+        if (!used.has(i)) { firstEmpty = i; break; }
+      }
+      if (firstEmpty < 0) return prev;
+      next[idx] = { ...next[idx]!, placedAt: firstEmpty };
+      return next;
+    });
+  };
+
+  // Click a placed letter → send it back to the pool.
+  const unplaceSlot = (slotIdx: number) => {
+    if (state !== 'input') return;
+    setTiles((prev) => prev.map((t) => {
+      if (t.placedAt === slotIdx) {
+        const ch = t.ch;
+        // Anchor punctuation stays in place.
+        if (ch === ' ' || ch === '-' || ch === '\'') return t;
+        return { ...t, placedAt: null };
+      }
+      return t;
+    }));
+  };
+
+  // Check on submit; also auto-evaluate when all slots filled.
+  useEffect(() => {
+    if (state !== 'input' || !allFilled) return;
+    const correct = isCorrect;
+    setState(correct ? 'correct' : 'wrong');
+    setTimeout(() => onAdvance(correct), correct ? 700 : 2200);
+  }, [allFilled, isCorrect, onAdvance, state]);
+
+  // Pool tiles = unplaced ones, in their shuffled order.
+  const poolTiles = tiles.filter((t) => t.placedAt === null);
+
+  return (
+    <div className={styles.card}>
+      <p className={styles.cardLabel}>{t.learn.stageScrambleHint}</p>
+      <p className={styles.bigTranslation}>{word.translation}</p>
+      <AudioBtn word={word} />
+
+      <div className={styles.scrambleSlots}>
+        {assembled.map((ch, i) => {
+          const target_ch = target[i] ?? '';
+          const isSep = target_ch === ' ' || target_ch === '-' || target_ch === '\'';
+          const cls = [styles.scrambleSlot];
+          if (state === 'correct') cls.push(styles.scrambleSlotMatch);
+          else if (state === 'wrong' && ch && ch !== target_ch) cls.push(styles.scrambleSlotMismatch);
+          else if (ch) cls.push(styles.scrambleSlotFilled);
+          if (isSep) cls.push(styles.scrambleSlotSep);
+          return (
+            <button
+              key={i}
+              type="button"
+              className={cls.join(' ')}
+              onClick={() => unplaceSlot(i)}
+              disabled={state !== 'input' || !ch || isSep}
+            >
+              {ch || (isSep ? target_ch : '·')}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={styles.scramblePool}>
+        {poolTiles.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            className={styles.scrambleTile}
+            onClick={() => placeTile(t.key)}
+            disabled={state !== 'input'}
+          >
+            {t.ch}
+          </button>
+        ))}
+      </div>
+
+      {state === 'wrong' && (
+        <p className={styles.spellingCorrectAnswer}>
+          {t.learn.correctAnswer} <strong>{target}</strong>
+        </p>
+      )}
+    </div>
   );
 }
 

@@ -276,6 +276,12 @@ export const ru: DeepRecord = {
   learn: {
     stageIntro: 'Знакомство',
     stageRecognise: 'Узнать',
+    stageReverse: 'Обратный выбор',
+    stageReverseHint: 'Выбери французский эквивалент',
+    stageListening: 'Аудирование',
+    stageListeningHint: 'Послушай и впечатай слово',
+    stageScramble: 'Собери слово',
+    stageScrambleHint: 'Расставь буквы в правильном порядке',
     stageCloze: 'В контексте',
     stageWrite: 'Написать',
     stageQuick: 'Быстро',
