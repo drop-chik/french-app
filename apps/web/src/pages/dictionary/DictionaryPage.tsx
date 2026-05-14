@@ -258,37 +258,6 @@ interface CategoryCardProps {
   onClick: () => void;
 }
 
-// Small SVG progress ring used by category cards. Sized 36-44px so it sits
-// neatly next to the category name without dominating.
-function CatRing({ percent, color, size = 40 }: { percent: number; color: string; size?: number }) {
-  const stroke = 4;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const clamped = Math.max(0, Math.min(100, percent));
-  const offset = c - (clamped / 100) * c;
-  return (
-    <div className={styles.catRing} style={{ width: size, height: size }}>
-      <svg width={size} height={size} aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-bg-secondary)" strokeWidth={stroke} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={stroke}
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-        />
-      </svg>
-      <span className={styles.catRingPct} style={{ color }}>{clamped}<span className={styles.catRingPctSign}>%</span></span>
-    </div>
-  );
-}
-
 function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
   const pct = cat.count > 0 ? Math.round((cat.masteredCount / cat.count) * 100) : 0;
   const hasProgress = cat.masteredCount > 0;
@@ -298,15 +267,19 @@ function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
       onClick={onClick}
       style={{ '--cat-color': color } as React.CSSProperties}
     >
-      <div className={styles.catCardHead}>
-        <CatRing percent={pct} color={color} />
-        <div className={styles.catCardHeadText}>
-          <span className={styles.catCardName}>{label}</span>
-          <span className={styles.catCardCount}>
-            {cat.masteredCount > 0 ? `${cat.masteredCount} / ${cat.count}` : `${cat.count} слов`}
-          </span>
-        </div>
+      <span className={styles.catCardStrip} aria-hidden />
+      <div className={styles.catCardTop}>
+        <span className={styles.catCardName}>{label}</span>
         <ChevronRight size={14} className={styles.catCardArrow} />
+      </div>
+      <span className={styles.catCardCount}>
+        {cat.masteredCount > 0 ? `${cat.masteredCount} / ${cat.count}` : `${cat.count} слов`}
+      </span>
+      <div className={styles.catProgressRow}>
+        <div className={styles.catProgressTrack}>
+          <div className={styles.catProgressFill} style={{ width: `${pct}%` }} />
+        </div>
+        <span className={styles.catProgressPct}>{pct}%</span>
       </div>
     </button>
   );
