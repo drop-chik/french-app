@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { calculateNextReview, getStatus, createCard, orderByFrequency } from '@french-app/srs-engine';
 import type { SRSGrade } from '@french-app/srs-engine';
-import { Play, CheckCircle, ChevronDown, ChevronUp, Check, Flame, RefreshCw, Sparkles } from 'lucide-react';
+import { Play, CheckCircle, ChevronDown, ChevronUp, Check, Flame, RefreshCw, Sparkles, Settings, X as XIcon } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
 import { grammarApi } from '../../features/grammar/api';
@@ -107,12 +107,113 @@ const MODE_IDS = [
   { id: 'listening-recall', icon: '👂', ready: true },
 ] as const;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Compact session-size settings popover triggered by the gear icon in the
+// Vocabulary page header. Edits the same dailyNewWordsLimit /
+// dailyDueWordsLimit fields as before — just no longer buried inside Profile.
+// Closes on outside-click / Escape.
+// ─────────────────────────────────────────────────────────────────────────────
+function SessionSettingsPopover({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: profileApi.getProfile,
+    staleTime: 60_000,
+  });
+
+  const [newLimit, setNewLimit] = useState<number>(5);
+  const [dueLimit, setDueLimit] = useState<number>(5);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile) {
+      setNewLimit(profile.dailyNewWordsLimit ?? 5);
+      setDueLimit(profile.dailyDueWordsLimit ?? 5);
+    }
+  }, [profile]);
+
+  // Close on outside-click and Escape.
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  const mutation = useMutation({
+    mutationFn: () => profileApi.updateProfile({ dailyNewWordsLimit: newLimit, dailyDueWordsLimit: dueLimit }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['words-session'] });
+      setMsg(t.profile.saved);
+      setTimeout(() => { setMsg(null); onClose(); }, 1200);
+    },
+  });
+
+  return (
+    <div className={styles.settingsPopover} ref={ref}>
+      <div className={styles.settingsPopoverHeader}>
+        <span className={styles.settingsPopoverTitle}>{t.profile.sessionTitle}</span>
+        <button type="button" className={styles.settingsPopoverClose} onClick={onClose} aria-label="Close">
+          <XIcon size={14} />
+        </button>
+      </div>
+      <p className={styles.settingsPopoverHint}>{t.profile.sessionDesc}</p>
+      <form
+        className={styles.settingsPopoverForm}
+        onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}
+      >
+        <label className={styles.settingsPopoverField}>
+          <span className={styles.settingsPopoverLabel}>{t.profile.dailyNewWords}</span>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={newLimit}
+            onChange={(e) => setNewLimit(parseInt(e.target.value, 10) || 5)}
+            className={styles.settingsPopoverInput}
+          />
+        </label>
+        <label className={styles.settingsPopoverField}>
+          <span className={styles.settingsPopoverLabel}>{t.profile.dailyDueWords}</span>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={dueLimit}
+            onChange={(e) => setDueLimit(parseInt(e.target.value, 10) || 5)}
+            className={styles.settingsPopoverInput}
+          />
+        </label>
+        {msg && <p className={styles.settingsPopoverMsg}>{msg}</p>}
+        <button
+          type="submit"
+          className={styles.settingsPopoverSubmit}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? t.common.loading : t.profile.saveChanges}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export function VocabularyPage() {
   const [activeMode, setActiveMode] = useState<ActiveMode>('menu');
   const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
   // Other-modes accordion — collapsed by default. Most users just want to
   // hit "Начать занятие" and not pick between 8 modes themselves.
   const [showOtherModes, setShowOtherModes] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -327,6 +428,21 @@ export function VocabularyPage() {
             <Sparkles size={12} /> {masteredTotal} {t.vocabulary.masteredCount}
           </span>
         )}
+        <div className={styles.headerSpacer} />
+        <div className={styles.settingsWrap}>
+          <button
+            type="button"
+            className={styles.settingsBtn}
+            onClick={() => setShowSettings((v) => !v)}
+            aria-label={t.profile.sessionTitle}
+            title={t.profile.sessionTitle}
+          >
+            <Settings size={16} />
+          </button>
+          {showSettings && (
+            <SessionSettingsPopover onClose={() => setShowSettings(false)} />
+          )}
+        </div>
       </div>
 
       {isLoading && <p className={styles.loading}>{t.vocabulary.loading}</p>}

@@ -274,6 +274,7 @@ export const en: Translations = {
   },
   learn: {
     stageIntro: 'Intro',
+    stageMatch: 'Match pairs',
     stageRecognise: 'Recognise',
     stageReverse: 'Reverse pick',
     stageReverseHint: 'Pick the French equivalent',
@@ -287,6 +288,7 @@ export const en: Translations = {
     adaptiveLabel: 'Adaptive session',
     speedMixLabel: 'Final check',
     clozeHint: 'Fill in the missing word',
+    matchingHint: 'Match the French word to its translation',
     newWord: 'New word',
     gotIt: 'Got it',
     pickTranslation: 'Pick the translation',

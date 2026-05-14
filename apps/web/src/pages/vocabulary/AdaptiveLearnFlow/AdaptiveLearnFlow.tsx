@@ -47,6 +47,7 @@ interface Props {
 
 type Stage =
   | 'intro'
+  | 'match'      // group of 4 words: pair FR ↔ RU by clicking (batch stage)
   | 'mc'         // FR → choose RU (receptive recognition)
   | 'reverse'    // RU → choose FR (productive recognition)
   | 'listening'  // audio → type FR (auditory recall)
@@ -63,19 +64,22 @@ function pickVariety(): Stage {
   return VARIETY_POOL[Math.floor(Math.random() * VARIETY_POOL.length)]!;
 }
 
-// Build the stage sequence for a word given its current SRS status.
-// 'new' words travel the full 5-stage funnel; partially-known words skip
-// earlier stages. The variety slot is randomised per word.
+// Per-word stage sequence given its current SRS status. NOTE: for 'new'
+// words the recognition stage is 'match' rather than 'mc' — multiple new
+// words are batched into a 4-pair matching exercise together. The 'match'
+// slot here is a marker; the actual matching cards are inserted as
+// separate batch items in buildSchedule.
 function stagesForStatus(status: string): Stage[] {
-  if (status === 'new')      return ['intro', 'mc', pickVariety(), 'cloze', 'spell'];
+  if (status === 'new')      return ['intro', 'match', pickVariety(), 'cloze', 'spell'];
   if (status === 'learning') return ['mc', pickVariety(), 'cloze', 'spell'];
   if (status === 'review')   return ['cloze', 'spell'];
   if (status === 'mastered') return ['spell'];
-  return ['intro', 'mc', pickVariety(), 'cloze', 'spell'];
+  return ['intro', 'match', pickVariety(), 'cloze', 'spell'];
 }
 
 const STAGE_RANK: Record<Stage, number> = {
   intro: 0,
+  match: 1,
   mc: 1,
   reverse: 2,
   listening: 2,
@@ -84,12 +88,22 @@ const STAGE_RANK: Record<Stage, number> = {
   spell: 4,
 };
 
-interface ScheduleItem {
+// Per-word stage entry (the common case).
+interface PerWordItem {
+  kind: 'word';
   wordId: string;
   stage: Stage;
-  // Logical round in the wave; later collapsed into a sequential index.
   round: number;
 }
+
+// Batch matching entry — 2-4 words on one card.
+interface MatchBatchItem {
+  kind: 'match';
+  wordIds: string[];
+  round: number;
+}
+
+type ScheduleItem = PerWordItem | MatchBatchItem;
 
 // Build the session schedule. TWO phases:
 //
@@ -107,35 +121,71 @@ interface ScheduleItem {
 // matter for retention are between RETRIEVALS, not between intros and
 // first retrieval) while giving the user the familiar "carousel of new
 // words, then quiz" structure.
+// Group items into chunks of N (last chunk may be smaller).
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+const MATCH_CHUNK_SIZE = 4;
+const MATCH_MIN_CHUNK = 2; // smaller chunks get appended to previous one
+
 function buildSchedule(words: WordData[]): ScheduleItem[] {
   const introItems: ScheduleItem[] = [];
+  const matchItems: ScheduleItem[] = [];
   const practiceItems: ScheduleItem[] = [];
+
+  // Words that get matching as their first recall test (new status).
+  const newWordIds: string[] = [];
 
   for (let i = 0; i < words.length; i++) {
     const w = words[i]!;
     const status = w.progress?.status ?? 'new';
     const stages = stagesForStatus(status);
+    if (status === 'new') newWordIds.push(w.id);
 
     let drillIndex = 0;
     for (const stage of stages) {
       if (stage === 'intro') {
-        introItems.push({ wordId: w.id, stage, round: i });
+        introItems.push({ kind: 'word', wordId: w.id, stage, round: i });
+      } else if (stage === 'match') {
+        // skip — matching is batched separately below
+        drillIndex++;
       } else {
-        practiceItems.push({ wordId: w.id, stage, round: i + drillIndex * 2 });
+        practiceItems.push({ kind: 'word', wordId: w.id, stage, round: i + drillIndex * 2 });
         drillIndex++;
       }
     }
   }
 
-  // Intros — in input order.
+  // Build matching batches: chunks of 4. If the last chunk is only 1 word,
+  // merge it into the previous chunk (you can't match with 1 pair).
+  if (newWordIds.length >= MATCH_MIN_CHUNK) {
+    const chunks = chunkArray(newWordIds, MATCH_CHUNK_SIZE);
+    if (chunks.length >= 2 && chunks[chunks.length - 1]!.length < MATCH_MIN_CHUNK) {
+      // merge tiny tail into previous chunk
+      const tail = chunks.pop()!;
+      chunks[chunks.length - 1] = [...chunks[chunks.length - 1]!, ...tail];
+    }
+    for (let c = 0; c < chunks.length; c++) {
+      matchItems.push({ kind: 'match', wordIds: chunks[c]!, round: c });
+    }
+  } else if (newWordIds.length === 1) {
+    // Edge case: only one new word — fall back to a per-word MC stage
+    // so the user still gets a recognition check.
+    const wId = newWordIds[0]!;
+    practiceItems.unshift({ kind: 'word', wordId: wId, stage: 'mc', round: 0 });
+  }
+
   introItems.sort((a, b) => a.round - b.round);
+  matchItems.sort((a, b) => a.round - b.round);
+  practiceItems.sort((a, b) => {
+    if (a.kind !== 'word' || b.kind !== 'word') return a.round - b.round;
+    return a.round - b.round || STAGE_RANK[b.stage] - STAGE_RANK[a.stage];
+  });
 
-  // Practice — by round, ties by stage rank descending (deeper stages first).
-  practiceItems.sort((a, b) =>
-    a.round - b.round || STAGE_RANK[b.stage] - STAGE_RANK[a.stage],
-  );
-
-  return [...introItems, ...practiceItems];
+  return [...introItems, ...matchItems, ...practiceItems];
 }
 
 // Accent / case insensitive comparison for typing answers.
@@ -234,7 +284,9 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
   }, []);
 
   const current = schedule[index] ?? null;
-  const currentWord = current ? wordById.get(current.wordId) ?? null : null;
+  // Per-word stages have a single word; match batches have multiple, so
+  // currentWord is only meaningful for the per-word kind.
+  const currentWord = current && current.kind === 'word' ? wordById.get(current.wordId) ?? null : null;
   const mainDone = !current;
 
   // Pre-play audio when a new card appears — but ONLY for stages where the
@@ -245,15 +297,17 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
   //   - spell:   user must produce the word from the Russian only
   //   - scramble: user must assemble shuffled letters
   //   - listening: this stage owns its own audio playback (and IS the test)
+  //   - match:    multiple words on screen, no auto-play
   // The manual AudioBtn is still available in most of these stages — that's
   // a user-initiated hint, not a free leak.
+  const currentStage = current && current.kind === 'word' ? current.stage : null;
   useEffect(() => {
-    if (!currentWord || !current) return;
-    const autoPlayOk = current.stage === 'intro' || current.stage === 'mc';
+    if (!currentWord || !currentStage) return;
+    const autoPlayOk = currentStage === 'intro' || currentStage === 'mc';
     if (!autoPlayOk) return;
     const timer = setTimeout(() => { void playAudio(currentWord.french, currentWord.audioUrl); }, 200);
     return () => clearTimeout(timer);
-  }, [currentWord?.id, current?.stage]);
+  }, [currentWord?.id, currentStage]);
 
   const recordStageResult = useCallback((wordId: string, correct: boolean) => {
     const prev = tallyRef.current.get(wordId) ?? { ok: 0, bad: 0, total: 0 };
@@ -298,12 +352,29 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
       setSchedule((prev) => {
         const next = [...prev];
         const insertAt = Math.min(index + 2, next.length);
-        next.splice(insertAt, 0, { wordId, stage, round: -1 });
+        next.splice(insertAt, 0, { kind: 'word', wordId, stage, round: -1 });
         return next;
       });
     }
     setIndex((i) => i + 1);
   }, [index, recordStageResult]);
+
+  // Result from a Matching batch — N words, each with correct/incorrect flag.
+  const handleMatchResult = useCallback((results: { wordId: string; correct: boolean }[]) => {
+    setCompletedStages((prev) => {
+      const next = new Map(prev);
+      for (const r of results) {
+        recordStageResult(r.wordId, r.correct);
+        if (r.correct) {
+          const set = new Set(next.get(r.wordId) ?? []);
+          set.add('match');
+          next.set(r.wordId, set);
+        }
+      }
+      return next;
+    });
+    setIndex((i) => i + 1);
+  }, [recordStageResult]);
 
   // Once the schedule is exhausted, finish immediately. No tail SpeedMix:
   // a self-reported "knew / didn't know" right after the user just typed the
@@ -324,7 +395,11 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
   const totalStages = schedule.length;
   const learnProgress = totalStages > 0 ? (totalDone / totalStages) * 100 : 0;
 
-  if (!current || !currentWord) return null;
+  if (!current) return null;
+
+  // Counter label varies by kind: match-batch shows its own label.
+  const counterStageLabel =
+    current.kind === 'match' ? t.learn.stageMatch : stageLabel(current.stage, t);
 
   return (
     <div className={styles.container}>
@@ -333,56 +408,68 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
       </div>
       <div className={styles.counter}>
         {t.learn.adaptiveLabel}
-        <span className={styles.stageBadge}>{stageLabel(current.stage, t)}</span>
+        <span className={styles.stageBadge}>{counterStageLabel}</span>
       </div>
       <BoxesProgress words={words} completedStages={completedStages} />
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={`${currentWord.id}-${current.stage}-${index}`}
+          key={
+            current.kind === 'match'
+              ? `match-${current.wordIds.join(',')}-${index}`
+              : `${current.wordId}-${current.stage}-${index}`
+          }
           className={styles.stageWrap}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.2 }}
         >
-          {current.stage === 'intro' && (
+          {current.kind === 'match' && (
+            <MatchingStage
+              words={current.wordIds
+                .map((id) => wordById.get(id))
+                .filter((w): w is WordData => !!w)}
+              onComplete={handleMatchResult}
+            />
+          )}
+          {current.kind === 'word' && currentWord && current.stage === 'intro' && (
             <IntroStage
               word={currentWord}
               onAdvance={() => handleStageResult(currentWord.id, 'intro', true)}
             />
           )}
-          {current.stage === 'mc' && (
+          {current.kind === 'word' && currentWord && current.stage === 'mc' && (
             <MCStage
               word={currentWord}
               onAdvance={(correct) => handleStageResult(currentWord.id, 'mc', correct)}
             />
           )}
-          {current.stage === 'reverse' && (
+          {current.kind === 'word' && currentWord && current.stage === 'reverse' && (
             <ReverseMCStage
               word={currentWord}
               onAdvance={(correct) => handleStageResult(currentWord.id, 'reverse', correct)}
             />
           )}
-          {current.stage === 'listening' && (
+          {current.kind === 'word' && currentWord && current.stage === 'listening' && (
             <ListeningStage
               word={currentWord}
               onAdvance={(correct) => handleStageResult(currentWord.id, 'listening', correct)}
             />
           )}
-          {current.stage === 'scramble' && (
+          {current.kind === 'word' && currentWord && current.stage === 'scramble' && (
             <ScrambleStage
               word={currentWord}
               onAdvance={(correct) => handleStageResult(currentWord.id, 'scramble', correct)}
             />
           )}
-          {current.stage === 'cloze' && (
+          {current.kind === 'word' && currentWord && current.stage === 'cloze' && (
             <ClozeStage
               word={currentWord}
               onAdvance={(correct) => handleStageResult(currentWord.id, 'cloze', correct)}
             />
           )}
-          {current.stage === 'spell' && (
+          {current.kind === 'word' && currentWord && current.stage === 'spell' && (
             <SpellingStage
               word={currentWord}
               onAdvance={(correct) => handleStageResult(currentWord.id, 'spell', correct)}
@@ -396,6 +483,7 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
 
 function stageLabel(stage: Stage, t: Translations): string {
   if (stage === 'intro') return t.learn.stageIntro;
+  if (stage === 'match') return t.learn.stageMatch;
   if (stage === 'mc') return t.learn.stageRecognise;
   if (stage === 'reverse') return t.learn.stageReverse;
   if (stage === 'listening') return t.learn.stageListening;
@@ -408,7 +496,7 @@ function stageLabel(stage: Stage, t: Translations): string {
 // in display order: Intro / Recognise / Variety / Cloze / Spell.
 function stageSlot(stage: Stage): number {
   if (stage === 'intro') return 0;
-  if (stage === 'mc') return 1;
+  if (stage === 'mc' || stage === 'match') return 1;
   if (stage === 'reverse' || stage === 'listening' || stage === 'scramble') return 2;
   if (stage === 'cloze') return 3;
   return 4;
@@ -1120,6 +1208,133 @@ function ScrambleStage({ word, onAdvance }: { word: WordData; onAdvance: (correc
           {t.learn.correctAnswer} <strong>{target}</strong>
         </p>
       )}
+    </div>
+  );
+}
+
+/* ── Matching: 2-4 pairs of FR ↔ RU, click two cards to match ──────────── */
+
+interface MatchingResult { wordId: string; correct: boolean }
+
+function MatchingStage({
+  words,
+  onComplete,
+}: {
+  words: WordData[];
+  onComplete: (results: MatchingResult[]) => void;
+}) {
+  const { t } = useI18n();
+
+  // Build the two columns in shuffled order — independently. Each card knows
+  // which wordId it represents and what side it lives on.
+  const initialCards = useMemo(() => {
+    const shuffled = <T,>(arr: T[]): T[] => {
+      const out = [...arr];
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [out[i], out[j]] = [out[j]!, out[i]!];
+      }
+      return out;
+    };
+    const left = shuffled(words.map((w) => ({ side: 'fr' as const, wordId: w.id, text: w.french })));
+    const right = shuffled(words.map((w) => ({ side: 'ru' as const, wordId: w.id, text: w.translation })));
+    return { left, right };
+  }, [words]);
+
+  // Selection state — which card the user has currently picked, and which
+  // wordIds have been matched (greyed out / removed).
+  const [selected, setSelected] = useState<{ side: 'fr' | 'ru'; wordId: string } | null>(null);
+  const [matched, setMatched] = useState<Set<string>>(new Set());
+  // Per-word mistake count — anyone who made ≥1 wrong attempt is marked
+  // as 'not first try' in the final results.
+  const mistakesRef = useRef<Map<string, number>>(new Map());
+  // Brief visual flash on wrong attempts so the user sees what they picked
+  // before it's deselected.
+  const [wrongFlash, setWrongFlash] = useState<{ a: string; b: string } | null>(null);
+
+  const handlePick = (side: 'fr' | 'ru', wordId: string) => {
+    if (matched.has(wordId)) return;
+    if (wrongFlash) return; // ignore clicks during the flash window
+    if (!selected) {
+      setSelected({ side, wordId });
+      return;
+    }
+    if (selected.side === side) {
+      // Re-pick within same column — replace selection
+      setSelected({ side, wordId });
+      return;
+    }
+    // Two cards selected — same word? match!
+    if (selected.wordId === wordId) {
+      setMatched((prev) => {
+        const next = new Set(prev);
+        next.add(wordId);
+        return next;
+      });
+      setSelected(null);
+    } else {
+      // Mismatch — count a mistake against BOTH picked words and flash red.
+      const a = selected.wordId;
+      const b = wordId;
+      mistakesRef.current.set(a, (mistakesRef.current.get(a) ?? 0) + 1);
+      mistakesRef.current.set(b, (mistakesRef.current.get(b) ?? 0) + 1);
+      setWrongFlash({ a, b });
+      setTimeout(() => {
+        setWrongFlash(null);
+        setSelected(null);
+      }, 600);
+    }
+  };
+
+  // When all words matched → finalise and report results.
+  useEffect(() => {
+    if (matched.size === words.length && words.length > 0) {
+      const results: MatchingResult[] = words.map((w) => ({
+        wordId: w.id,
+        correct: (mistakesRef.current.get(w.id) ?? 0) === 0,
+      }));
+      // brief delay so user sees the last green flash
+      const t = setTimeout(() => onComplete(results), 600);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [matched, words, onComplete]);
+
+  const isFlashed = (wordId: string) =>
+    wrongFlash && (wrongFlash.a === wordId || wrongFlash.b === wordId);
+
+  function renderCard(card: { side: 'fr' | 'ru'; wordId: string; text: string }) {
+    const isMatched = matched.has(card.wordId);
+    const isSelected = selected?.side === card.side && selected.wordId === card.wordId;
+    const flashed = isFlashed(card.wordId);
+    const cls = [styles.matchCard];
+    if (isMatched) cls.push(styles.matchCardDone);
+    else if (flashed) cls.push(styles.matchCardWrong);
+    else if (isSelected) cls.push(styles.matchCardSelected);
+    return (
+      <button
+        key={card.side + card.wordId}
+        type="button"
+        className={cls.join(' ')}
+        onClick={() => handlePick(card.side, card.wordId)}
+        disabled={isMatched}
+      >
+        {card.text}
+      </button>
+    );
+  }
+
+  return (
+    <div className={styles.card}>
+      <p className={styles.cardLabel}>{t.learn.matchingHint}</p>
+      <div className={styles.matchGrid}>
+        <div className={styles.matchColumn}>
+          {initialCards.left.map(renderCard)}
+        </div>
+        <div className={styles.matchColumn}>
+          {initialCards.right.map(renderCard)}
+        </div>
+      </div>
     </div>
   );
 }

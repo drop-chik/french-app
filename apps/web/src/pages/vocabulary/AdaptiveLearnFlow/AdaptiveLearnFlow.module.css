@@ -607,3 +607,71 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ─────────────────── Matching stage ─────────────────── */
+.matchGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  flex: 1;
+}
+
+.matchColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.matchCard {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  min-height: 56px;
+  transition: all 0.15s ease;
+  word-break: break-word;
+}
+
+.matchCard:hover:not(:disabled) {
+  border-color: var(--color-brand);
+  background: var(--color-brand-light);
+}
+
+.matchCardSelected {
+  border-color: var(--color-brand) !important;
+  background: color-mix(in srgb, var(--color-brand) 18%, var(--color-bg)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 22%, transparent);
+}
+
+.matchCardDone {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #15803d;
+  cursor: default !important;
+  opacity: 0.85;
+}
+
+.matchCardWrong {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #b91c1c;
+  animation: shakeChar 0.25s ease;
+}
+
+@media (max-width: 480px) {
+  .matchGrid {
+    gap: var(--space-2);
+  }
+  .matchCard {
+    font-size: var(--text-sm);
+    padding: var(--space-2) var(--space-3);
+    min-height: 48px;
+  }
+}

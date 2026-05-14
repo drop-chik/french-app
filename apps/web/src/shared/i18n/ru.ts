@@ -275,6 +275,7 @@ export const ru: DeepRecord = {
   },
   learn: {
     stageIntro: 'Знакомство',
+    stageMatch: 'Найти пары',
     stageRecognise: 'Узнать',
     stageReverse: 'Обратный выбор',
     stageReverseHint: 'Выбери французский эквивалент',
@@ -288,6 +289,7 @@ export const ru: DeepRecord = {
     adaptiveLabel: 'Адаптивная сессия',
     speedMixLabel: 'Финальная проверка',
     clozeHint: 'Впиши пропущенное слово в предложение',
+    matchingHint: 'Соедини французское слово с его переводом',
     newWord: 'Новое слово',
     gotIt: 'Понял',
     pickTranslation: 'Выбери перевод',
