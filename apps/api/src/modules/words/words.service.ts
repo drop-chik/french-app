@@ -318,6 +318,36 @@ export async function getDistractors(
 }
 
 // Get distinct categories for a given level with word counts + mastered count
+// Deterministic display order for the Dictionary's category grid. Parts of
+// speech first (one card per type), then noun themes in a pedagogical order
+// (person → daily life → time → city / world → society → mind), with
+// generic noun fallback ('vocabulary') at the very end. Anything not
+// listed here sorts after the listed items, alphabetically.
+const CATEGORY_DISPLAY_ORDER: string[] = [
+  // Parts of speech
+  'verbs', 'adjectives', 'adverbs', 'pronouns', 'prepositions',
+  'conjunctions', 'determiners', 'numbers', 'expressions', 'interjections',
+  // Noun themes — person
+  'family', 'body', 'health', 'emotions',
+  // Noun themes — daily life
+  'food', 'home', 'clothes', 'shopping',
+  // Noun themes — time
+  'time', 'calendar',
+  // Noun themes — city / world
+  'city', 'travel', 'nature', 'weather', 'animals', 'geography',
+  // Noun themes — society
+  'environment', 'sports', 'education', 'work', 'economy', 'politics',
+  'law', 'society', 'arts', 'media',
+  // Noun themes — mind
+  'technology', 'science', 'psychology',
+  // Generic noun fallback — always last
+  'vocabulary',
+];
+
+const CATEGORY_ORDER_INDEX = new Map(
+  CATEGORY_DISPLAY_ORDER.map((c, i) => [c, i]),
+);
+
 export async function getCategories(db: DB, userId: string, level: LanguageLevel) {
   const rows = await db
     .select({
@@ -331,13 +361,25 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
       and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
     )
     .where(and(eq(words.level, level), eq(words.isActive, true), visibleToUser(userId)))
-    .groupBy(words.category)
-    .orderBy(asc(words.category));
-  return rows.map((r) => ({
+    .groupBy(words.category);
+
+  const mapped = rows.map((r) => ({
     name: r.category ?? 'other',
     count: Number(r.cnt),
     masteredCount: Number(r.masteredCnt),
   }));
+
+  // Sort by the explicit display order; anything unknown bubbles to the end
+  // alphabetically.
+  const lastIdx = CATEGORY_DISPLAY_ORDER.length;
+  mapped.sort((a, b) => {
+    const ia = CATEGORY_ORDER_INDEX.get(a.name) ?? lastIdx;
+    const ib = CATEGORY_ORDER_INDEX.get(b.name) ?? lastIdx;
+    if (ia !== ib) return ia - ib;
+    return a.name.localeCompare(b.name);
+  });
+
+  return mapped;
 }
 
 // Browse all words for a level with optional category filter + user's progress status
