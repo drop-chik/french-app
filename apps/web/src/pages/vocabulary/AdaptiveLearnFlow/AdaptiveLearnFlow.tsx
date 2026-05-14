@@ -91,34 +91,51 @@ interface ScheduleItem {
   round: number;
 }
 
-// Build a "wave" / diagonal schedule. For word i (0-indexed in batch order)
-// and stage position k (0..len-1) in its remaining stages, place the card
-// at round `i + k * 2`. Result with 5-stage flow:
+// Build the session schedule. TWO phases:
 //
-//   word A: rounds 0, 2, 4, 6, 8   → Intro, MC, Variety, Cloze, Spell
-//   word B: rounds 1, 3, 5, 7, 9
-//   word C: rounds 2, 4, 6, 8, 10
-//   ...
+// 1. INTRODUCTION — every new word's Intro card plays back-to-back at the
+//    start. Matches the user's mental model (see all the new words first,
+//    then drill them). Words with no Intro stage (status='learning' or
+//    higher) skip this phase.
 //
-// Within a round, higher-stage items go first. Per-word gaps between
-// same-word stages stay at 2 → 4 → 6 → 8 cards (strictly growing —
-// Pimsleur intervals).
+// 2. PRACTICE — wave/diagonal interleaving over the remaining drill stages
+//    (MC → Variety → Cloze → Spell). For word i and its k-th drill stage,
+//    we place it at round `i + k * 2`. Per-word same-stage gaps are
+//    2 → 4 → 6 (strictly growing Pimsleur intervals).
+//
+// The combination keeps Pimsleur's within-session spacing (the gaps that
+// matter for retention are between RETRIEVALS, not between intros and
+// first retrieval) while giving the user the familiar "carousel of new
+// words, then quiz" structure.
 function buildSchedule(words: WordData[]): ScheduleItem[] {
-  const items: ScheduleItem[] = [];
+  const introItems: ScheduleItem[] = [];
+  const practiceItems: ScheduleItem[] = [];
+
   for (let i = 0; i < words.length; i++) {
     const w = words[i]!;
     const status = w.progress?.status ?? 'new';
     const stages = stagesForStatus(status);
-    for (let k = 0; k < stages.length; k++) {
-      items.push({ wordId: w.id, stage: stages[k]!, round: i + k * 2 });
+
+    let drillIndex = 0;
+    for (const stage of stages) {
+      if (stage === 'intro') {
+        introItems.push({ wordId: w.id, stage, round: i });
+      } else {
+        practiceItems.push({ wordId: w.id, stage, round: i + drillIndex * 2 });
+        drillIndex++;
+      }
     }
   }
-  // Sort: earlier round first; within same round, higher stage first
-  // (so words deeper in their journey advance before fresh ones).
-  items.sort((a, b) =>
+
+  // Intros — in input order.
+  introItems.sort((a, b) => a.round - b.round);
+
+  // Practice — by round, ties by stage rank descending (deeper stages first).
+  practiceItems.sort((a, b) =>
     a.round - b.round || STAGE_RANK[b.stage] - STAGE_RANK[a.stage],
   );
-  return items;
+
+  return [...introItems, ...practiceItems];
 }
 
 // Accent / case insensitive comparison for typing answers.
