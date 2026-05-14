@@ -165,8 +165,25 @@ function findWordInExample(fr: string, example: string): { start: number; end: n
   return null;
 }
 
-// One audio cache per session.
+// One audio cache per session — keyed by French text. Acts as the in-memory
+// L2 cache; the server has its own persistent L1 in the tts_cache table.
 const audioCache = new Map<string, string>();
+
+// Fetch the audio bytes and store as a blob URL — but don't play. Used by
+// prefetch on session start so when the user reaches a card, audio is
+// already in memory and plays instantly.
+async function prefetchAudio(text: string, audioUrl?: string | null): Promise<void> {
+  if (audioUrl) return;          // external URL — browser will cache on first play
+  if (audioCache.has(text)) return;
+  try {
+    const blob = await listeningApi.generateTTS(text);
+    const url = URL.createObjectURL(blob);
+    audioCache.set(text, url);
+  } catch {
+    // Silent — playback will simply fall through to a fresh fetch.
+  }
+}
+
 async function playAudio(text: string, audioUrl?: string | null) {
   if (audioUrl) {
     new Audio(audioUrl).play().catch(() => null);
@@ -206,6 +223,15 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
     for (const w of words) m.set(w.id, w);
     return m;
   }, [words]);
+
+  // Prefetch ALL session words' audio in parallel at session start. By the
+  // time the user finishes reading the first Intro card, every subsequent
+  // card's audio is already in memory — eliminates the perceived "lag"
+  // of waiting for OpenAI TTS round-trip.
+  useEffect(() => {
+    void Promise.all(words.map((w) => prefetchAudio(w.french, w.audioUrl)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const current = schedule[index] ?? null;
   const currentWord = current ? wordById.get(current.wordId) ?? null : null;

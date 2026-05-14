@@ -13,7 +13,16 @@ import {
   index,
   unique,
   uniqueIndex,
+  customType,
+  char,
 } from 'drizzle-orm/pg-core';
+
+// Postgres BYTEA — used by tts_cache to store generated MP3 bytes inline.
+// node-postgres returns Buffer for bytea by default; on insert we pass a
+// Buffer and let the driver bind it as bytea.
+const bytea = customType<{ data: Buffer; default: false; notNull: true }>({
+  dataType() { return 'bytea'; },
+});
 
 // Enums
 export const languageLevelEnum = pgEnum('language_level', ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
@@ -480,3 +489,17 @@ export const writingProgress = pgTable('writing_progress', {
   lastWritingAt: timestamp('last_writing_at'),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Server-side cache of OpenAI-generated TTS audio. Key includes voice and
+// model so changing either invalidates without serving stale bytes.
+export const ttsCache = pgTable('tts_cache', {
+  textHash: char('text_hash', { length: 64 }).primaryKey(),
+  text: text('text').notNull(),
+  voice: varchar('voice', { length: 32 }).notNull(),
+  model: varchar('model', { length: 32 }).notNull(),
+  audioData: bytea('audio_data').notNull(),
+  byteSize: integer('byte_size').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  index('idx_tts_cache_text').on(t.text),
+]);
