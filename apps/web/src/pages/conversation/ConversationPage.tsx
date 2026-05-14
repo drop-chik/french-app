@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Send, Plus, MessageSquare, AlertCircle, ChevronDown, Trash2, Menu } from 'lucide-react';
-import { conversationApi, type ConversationSession, type ChatMessage, type Correction } from '../../features/conversation/api';
+import { conversationApi, type ConversationSession, type ChatMessage, type Correction, type CorrectionType } from '../../features/conversation/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
@@ -393,12 +393,40 @@ export function ConversationPage() {
   );
 }
 
-// ── Idea 3: Assistant bubble with fox avatar ──
+// Localised label for each correction type, shown as a coloured chip.
+function correctionTypeLabel(type: CorrectionType | undefined, lang: string): string {
+  const ru: Record<CorrectionType, string> = {
+    grammar: 'Грамматика',
+    vocabulary: 'Лексика',
+    spelling: 'Орфография',
+    word_order: 'Порядок слов',
+    register: 'Стиль',
+    punctuation: 'Пунктуация',
+    language: 'Не на французском',
+  };
+  const en: Record<CorrectionType, string> = {
+    grammar: 'Grammar',
+    vocabulary: 'Vocabulary',
+    spelling: 'Spelling',
+    word_order: 'Word order',
+    register: 'Register',
+    punctuation: 'Punctuation',
+    language: 'Wrong language',
+  };
+  if (!type) return lang === 'ru' ? 'Заметка' : 'Note';
+  return (lang === 'ru' ? ru : en)[type];
+}
+
 function AssistantBubble({ msg, lang }: { msg: ChatMessage; lang: string }) {
   const { t } = useI18n();
   const [showCorrections, setShowCorrections] = useState(false);
   const corrections = msg.corrections ?? [];
-  const count = corrections.length;
+
+  // Separate "language" corrections — they're warnings, not regular mistakes.
+  // They get prominent placement above the message bubble.
+  const langWarning = corrections.find((c) => c.type === 'language');
+  const regular = corrections.filter((c) => c.type !== 'language');
+  const count = regular.length;
 
   const corrLabel = count === 1
     ? t.conversation.corrections.replace('{n}', String(count))
@@ -411,6 +439,23 @@ function AssistantBubble({ msg, lang }: { msg: ChatMessage; lang: string }) {
       </div>
       <div className={styles.assistantContent}>
         <span className={styles.assistantName}>{t.conversation.aiTutor}</span>
+        {langWarning && (
+          <div className={styles.languageWarning}>
+            <AlertCircle size={14} className={styles.languageWarningIcon} />
+            <div className={styles.languageWarningBody}>
+              <div className={styles.languageWarningTitle}>
+                {lang === 'ru' ? 'Пиши по-французски' : 'Please write in French'}
+              </div>
+              <div className={styles.languageWarningText}>{langWarning.explanation}</div>
+              {langWarning.corrected && (
+                <div className={styles.languageWarningSuggest}>
+                  {lang === 'ru' ? 'Попробуй: ' : 'Try: '}
+                  <strong>«{langWarning.corrected}»</strong>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <div className={styles.bubble}>{msg.content}</div>
         {count > 0 && (
           <div className={styles.corrections}>
@@ -424,12 +469,17 @@ function AssistantBubble({ msg, lang }: { msg: ChatMessage; lang: string }) {
             </button>
             {showCorrections && (
               <div className={styles.correctionList}>
-                {corrections.map((c, i) => (
-                  <div key={i} className={styles.correctionItem}>
-                    <span className={styles.correctionWrong}>{c.original}</span>
-                    <span className={styles.correctionArrow}>→</span>
-                    <span className={styles.correctionRight}>{c.corrected}</span>
-                    <span className={styles.correctionNote}>{c.explanation}</span>
+                {regular.map((c, i) => (
+                  <div key={i} className={`${styles.correctionItem} ${styles[`corrType_${c.type ?? 'other'}`] ?? ''}`}>
+                    <div className={styles.correctionTop}>
+                      <span className={`${styles.correctionTypeChip} ${styles[`corrChip_${c.type ?? 'other'}`] ?? ''}`}>
+                        {correctionTypeLabel(c.type, lang)}
+                      </span>
+                      <span className={styles.correctionWrong}>{c.original}</span>
+                      <span className={styles.correctionArrow}>→</span>
+                      <span className={styles.correctionRight}>{c.corrected}</span>
+                    </div>
+                    <div className={styles.correctionNote}>{c.explanation}</div>
                   </div>
                 ))}
               </div>

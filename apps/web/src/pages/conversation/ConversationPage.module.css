@@ -604,11 +604,47 @@
 
 .correctionItem {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--radius-md);
   font-size: var(--text-xs);
 }
+
+.correctionTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.correctionTypeChip {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* Per-type accent: chip + left border colour */
+.corrChip_grammar     { background: rgba(239, 68, 68, 0.14);  color: #b91c1c; }
+.corrType_grammar     { border-left-color: #ef4444; }
+.corrChip_vocabulary  { background: rgba(59, 130, 246, 0.14); color: #1d4ed8; }
+.corrType_vocabulary  { border-left-color: #3b82f6; }
+.corrChip_spelling    { background: rgba(249, 115, 22, 0.14); color: #c2410c; }
+.corrType_spelling    { border-left-color: #f97316; }
+.corrChip_word_order  { background: rgba(168, 85, 247, 0.14); color: #7e22ce; }
+.corrType_word_order  { border-left-color: #a855f7; }
+.corrChip_register    { background: rgba(14, 165, 233, 0.14); color: #0369a1; }
+.corrType_register    { border-left-color: #0ea5e9; }
+.corrChip_punctuation { background: rgba(20, 184, 166, 0.14); color: #0f766e; }
+.corrType_punctuation { border-left-color: #14b8a6; }
 
 .correctionWrong {
   color: var(--color-error);
@@ -625,7 +661,59 @@
 .correctionNote {
   color: var(--color-text-secondary);
   font-style: italic;
-  width: 100%;
+  font-size: 11px;
+  margin-left: 2px;
+}
+
+/* ── Wrong-language warning (banner above the AI bubble) ── */
+.languageWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, #f59e0b 14%, var(--color-surface)),
+    var(--color-surface));
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, var(--color-border));
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+}
+
+.languageWarningIcon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.languageWarningBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.languageWarningTitle {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #b45309;
+}
+
+.languageWarningText {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.languageWarningSuggest {
+  font-size: var(--text-xs);
+  color: var(--color-text-primary);
+  margin-top: 2px;
+}
+
+.languageWarningSuggest strong {
+  color: #b45309;
+  font-style: italic;
 }
 
 /* Input area */

@@ -3,7 +3,12 @@ import { useAuthStore } from '../auth/authStore';
 
 const BASE = '/api';
 
+export type CorrectionType =
+  | 'grammar' | 'vocabulary' | 'spelling' | 'word_order'
+  | 'register' | 'punctuation' | 'language';
+
 export interface Correction {
+  type?: CorrectionType;
   original: string;
   corrected: string;
   explanation: string;
