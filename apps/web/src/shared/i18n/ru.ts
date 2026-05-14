@@ -521,6 +521,7 @@ export const ru: DeepRecord = {
       // ── Части речи (одна категория на тип, кроме существительных) ──
       verbs:        'Глаголы',
       adjectives:   'Прилагательные',
+      colors:       'Цвета',
       adverbs:      'Наречия',
       pronouns:     'Местоимения',
       prepositions: 'Предлоги',

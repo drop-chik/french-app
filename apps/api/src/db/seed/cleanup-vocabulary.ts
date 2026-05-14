@@ -40,6 +40,93 @@ const SHOULD_BE_EXPRESSION = [
   'bon appétit', 'à votre santé',
 ];
 
+// Single-word entries that ended up in 'expressions' but aren't real fixed
+// phrases. Re-tag them by their actual part of speech.
+const SHOULD_BE_INTERJECTION_TOKEN = [
+  'bonjour', 'salut', 'bonsoir', 'bonne nuit', 'au revoir',
+  'merci', 'oui', 'non', 'pardon', 'excusez-moi',
+  'voilà', 'bienvenue', 'félicitations', 'enchanté', 'bravo',
+  'zut', 'mince', 'ouf', 'allô', 'chut',
+];
+
+const SHOULD_BE_ADVERB_TOKEN = [
+  // Frequency / time
+  'aussi', 'beaucoup', 'encore', 'jamais', 'peu', 'quelquefois',
+  'souvent', 'toujours', 'très', 'trop', 'assez', 'tard', 'tôt',
+  'maintenant', 'aujourd\'hui', 'hier', 'demain', 'avant', 'après',
+  // Place
+  'ici', 'là', 'là-bas', 'partout', 'ailleurs', 'dehors', 'dedans',
+  // Interrogative adverbs
+  'où', 'quand', 'comment', 'pourquoi', 'combien',
+  // Other adverbs that ended up tagged as expression
+  'vraiment', 'sûrement', 'probablement', 'peut-être',
+  'ensemble', 'seul', 'bien', 'mal', 'mieux', 'pire',
+];
+
+const SHOULD_BE_PRONOUN_TOKEN = [
+  'qui', 'que', 'quoi', 'dont',
+];
+
+// Colour adjectives — get their own category 'colors' instead of generic
+// 'adjectives'. Includes feminine / plural inflected forms.
+const COLOR_WORDS = new Set([
+  'rouge', 'rouges',
+  'bleu', 'bleue', 'bleus', 'bleues',
+  'vert', 'verte', 'verts', 'vertes',
+  'jaune', 'jaunes',
+  'noir', 'noire', 'noirs', 'noires',
+  'blanc', 'blanche', 'blancs', 'blanches',
+  'orange', 'oranges',
+  'rose', 'roses',
+  'violet', 'violette', 'violets', 'violettes',
+  'gris', 'grise', 'grises',
+  'marron', 'marrons',
+  'beige', 'beiges',
+  'doré', 'dorée', 'dorés', 'dorées',
+  'argenté', 'argentée', 'argentés', 'argentées',
+  'pourpre', 'pourpres',
+  'turquoise', 'turquoises',
+  'kaki', 'écarlate', 'ivoire',
+]);
+
+// Nationality adjectives — pedagogically belong next to country names in
+// the 'geography' category. The DB stores them mostly in the combined form
+// "français / française" so we match by prefix.
+const NATIONALITY_PREFIXES = [
+  'français', 'française', 'francais',
+  'anglais', 'anglaise',
+  'allemand', 'allemande',
+  'italien', 'italienne',
+  'espagnol', 'espagnole',
+  'russe',
+  'chinois', 'chinoise',
+  'japonais', 'japonaise',
+  'américain', 'américaine', 'americain',
+  'canadien', 'canadienne',
+  'brésilien', 'brésilienne', 'bresilien',
+  'mexicain', 'mexicaine',
+  'indien', 'indienne',
+  'portugais', 'portugaise',
+  'européen', 'européenne', 'europeen',
+  'africain', 'africaine',
+  'asiatique', 'asiatiques',
+  'arabe', 'arabes',
+  'belge', 'belges',
+  'suisse', 'suisses',
+  'néerlandais', 'néerlandaise',
+  'australien', 'australienne',
+];
+
+// Ordinal adjectives — currently tagged 'adjective' but really numbers.
+// Fix POS so they end up in 'numbers' via the standard recategorize rule.
+const ORDINAL_NUMBER_WORDS = new Set([
+  'premier', 'première',
+  'deuxième', 'second', 'seconde',
+  'troisième', 'quatrième', 'cinquième', 'sixième',
+  'septième', 'huitième', 'neuvième', 'dixième',
+  'dernier', 'dernière',
+]);
+
 // Specific noun remappings — words that ended up in 'vocabulary' but clearly
 // belong in a thematic noun category. Applied AFTER the broad
 // recategorization, so they survive when we re-run the rule pass.
@@ -112,8 +199,36 @@ const NOUN_THEMATIC = new Set([
   'time', 'calendar', 'vocabulary', 'names',
 ]);
 
-function targetCategory(pos: string | null, currentCategory: string): string {
+function isColorWord(french: string): boolean {
+  const lc = french.toLowerCase();
+  if (COLOR_WORDS.has(lc)) return true;
+  // Combined-form entries like "rouge / rouge" or "bleu (m) / bleue (f)"
+  // — match if any color word appears as a token at start.
+  const firstToken = lc.split(/[\s/(,]/)[0] ?? '';
+  return COLOR_WORDS.has(firstToken);
+}
+
+function isNationalityWord(french: string): boolean {
+  const lc = french.toLowerCase();
+  const firstToken = lc.split(/[\s/(,]/)[0] ?? '';
+  return NATIONALITY_PREFIXES.includes(firstToken);
+}
+
+function isOrdinalWord(french: string): boolean {
+  const lc = french.toLowerCase();
+  if (ORDINAL_NUMBER_WORDS.has(lc)) return true;
+  const firstToken = lc.split(/[\s/(,]/)[0] ?? '';
+  return ORDINAL_NUMBER_WORDS.has(firstToken);
+}
+
+function targetCategory(pos: string | null, currentCategory: string, french: string): string {
   const p = (pos ?? '').toLowerCase().trim();
+
+  // Colours: own category regardless of being adjective (pedagogical group)
+  if ((p === 'adjective' || p === 'adj') && isColorWord(french)) return 'colors';
+  // Nationality adjectives → live alongside country names in 'geography'
+  if ((p === 'adjective' || p === 'adj') && isNationalityWord(french)) return 'geography';
+
   if (p === 'verb') return 'verbs';
   if (p === 'adjective' || p === 'adj') return 'adjectives';
   if (p === 'adverb') return 'adverbs';
@@ -165,6 +280,49 @@ async function main() {
   }
   console.log(`  Fixed ${fixedExp} words to expression.`);
 
+  console.log('\nStep 3b: single-word entries in expressions — split by real POS...');
+  // Interjections (greetings)
+  let cntInterj = 0;
+  for (const fr of SHOULD_BE_INTERJECTION_TOKEN) {
+    const r = await db.update(words).set({ partOfSpeech: 'interjection' })
+      .where(and(eq(words.french, fr), isNull(words.createdByUserId)));
+    if ((r.rowCount ?? 0) > 0) cntInterj += r.rowCount ?? 0;
+  }
+  // Adverbs
+  let cntAdv = 0;
+  for (const fr of SHOULD_BE_ADVERB_TOKEN) {
+    const r = await db.update(words).set({ partOfSpeech: 'adverb' })
+      .where(and(eq(words.french, fr), isNull(words.createdByUserId)));
+    if ((r.rowCount ?? 0) > 0) cntAdv += r.rowCount ?? 0;
+  }
+  // Pronouns
+  let cntPro = 0;
+  for (const fr of SHOULD_BE_PRONOUN_TOKEN) {
+    const r = await db.update(words).set({ partOfSpeech: 'pronoun' })
+      .where(and(eq(words.french, fr), isNull(words.createdByUserId)));
+    if ((r.rowCount ?? 0) > 0) cntPro += r.rowCount ?? 0;
+  }
+  console.log(`  Tagged ${cntInterj} interjections, ${cntAdv} adverbs, ${cntPro} pronouns.`);
+
+  console.log('\nStep 3c: ordinal numbers — currently tagged as adjective...');
+  let cntOrd = 0;
+  for (const fr of ORDINAL_NUMBER_WORDS) {
+    const r = await db.update(words).set({ partOfSpeech: 'number' })
+      .where(and(eq(words.french, fr), isNull(words.createdByUserId)));
+    if ((r.rowCount ?? 0) > 0) cntOrd += r.rowCount ?? 0;
+  }
+  // Also try matching by first-token prefix for combined-form entries
+  // like "premier / première"
+  const adjEntries = await db.select({ id: words.id, french: words.french }).from(words)
+    .where(and(eq(words.partOfSpeech, 'adjective'), isNull(words.createdByUserId)));
+  for (const w of adjEntries) {
+    if (isOrdinalWord(w.french)) {
+      await db.update(words).set({ partOfSpeech: 'number' }).where(eq(words.id, w.id));
+      cntOrd++;
+    }
+  }
+  console.log(`  Fixed ${cntOrd} ordinal-number words.`);
+
   console.log('\nStep 4: deactivate proper nouns...');
   const r4 = await db.update(words)
     .set({ isActive: false })
@@ -181,7 +339,7 @@ async function main() {
 
   let recat = 0;
   for (const w of all) {
-    let next = targetCategory(w.pos, w.category);
+    let next = targetCategory(w.pos, w.category, w.french);
     // Apply specific noun remap for known better fits.
     if ((w.pos === 'noun' || !w.pos) && next === 'vocabulary') {
       const remap = NOUN_REMAP[w.french.toLowerCase()];

@@ -520,6 +520,7 @@ export const en: Translations = {
       // ── Parts of speech (one category per type, except nouns) ──
       verbs:        'Verbs',
       adjectives:   'Adjectives',
+      colors:       'Colours',
       adverbs:      'Adverbs',
       pronouns:     'Pronouns',
       prepositions: 'Prepositions',

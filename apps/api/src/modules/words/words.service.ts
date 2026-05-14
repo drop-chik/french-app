@@ -324,8 +324,9 @@ export async function getDistractors(
 // generic noun fallback ('vocabulary') at the very end. Anything not
 // listed here sorts after the listed items, alphabetically.
 const CATEGORY_DISPLAY_ORDER: string[] = [
-  // Parts of speech
-  'verbs', 'adjectives', 'adverbs', 'pronouns', 'prepositions',
+  // Parts of speech ('colors' is technically adjectives but kept separate
+  // as a pedagogical group)
+  'verbs', 'adjectives', 'colors', 'adverbs', 'pronouns', 'prepositions',
   'conjunctions', 'determiners', 'numbers', 'expressions', 'interjections',
   // Noun themes — person
   'family', 'body', 'health', 'emotions',
