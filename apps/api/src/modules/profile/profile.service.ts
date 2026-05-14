@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { eq, count, sql, gte, lt, lte, and, asc, inArray } from 'drizzle-orm';
+import { eq, count, sql, gte, lt, lte, and, or, asc, inArray } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, words, wordProgress, grammarTopics, grammarProgress, listeningExercises, listeningProgress, conversationSessions } from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
@@ -465,7 +465,19 @@ export async function getHomeData(db: DB, userId: string, level: LanguageLevel, 
   };
 }
 
+// Levels at or below `current` — matches what getStudySession actually
+// includes when picking due reviews. Without this, the sidebar badge
+// would only count due words at the user's current level while sessions
+// pull from all earlier levels too.
+const LEVEL_ORDER: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+function _levelsUpTo(level: LanguageLevel): LanguageLevel[] {
+  const idx = LEVEL_ORDER.indexOf(level);
+  return LEVEL_ORDER.slice(0, idx + 1);
+}
+
 async function _getWordStats(db: DB, userId: string, level: LanguageLevel) {
+  // Total / mastered counts stay scoped to the user's CURRENT level — that's
+  // what the level-progress UI reflects.
   const [totalResult] = await db
     .select({ cnt: count() })
     .from(words)
@@ -477,12 +489,26 @@ async function _getWordStats(db: DB, userId: string, level: LanguageLevel) {
     .innerJoin(words, eq(wordProgress.wordId, words.id))
     .where(and(eq(wordProgress.userId, userId), eq(words.level, level)));
 
+  // Due count is across ALL allowed levels (current and below), so it
+  // matches what a learning session actually pulls. Previously the badge
+  // would show, say, "2" while the session served 14 reviews — confusing.
+  const allowedLevels = _levelsUpTo(level);
+  const dueRowsAll = await db
+    .select({ id: wordProgress.id })
+    .from(wordProgress)
+    .innerJoin(words, eq(wordProgress.wordId, words.id))
+    .where(and(
+      eq(wordProgress.userId, userId),
+      lte(wordProgress.nextReview, new Date()),
+      or(...allowedLevels.map((l) => eq(words.level, l))),
+    ));
+  const due = dueRowsAll.length;
+
   const now = new Date();
   let mastered = 0;
-  let due = 0;
   for (const p of progressAtLevel) {
     if (p.status === 'mastered') mastered++;
-    if (new Date(p.nextReview) <= now) due++;
+    void now;
   }
 
   const totalWords = Number(totalResult?.cnt ?? 0);
