@@ -3,6 +3,13 @@
   flex-direction: column;
   gap: var(--space-3);
   min-height: 500px;
+  /* Cap the width on wide screens. On a 1920px monitor the card was
+     stretching to nearly 1300px wide, dwarfing the actual content
+     (a short French sentence). 720px feels balanced — comparable to
+     a reading-text width. */
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* Progress bar across the whole session — not per phase. */
