@@ -211,9 +211,20 @@ export function AdaptiveLearnFlow({ words, onComplete }: Props) {
   const currentWord = current ? wordById.get(current.wordId) ?? null : null;
   const mainDone = !current;
 
-  // Pre-play audio when a new card appears.
+  // Pre-play audio when a new card appears — but ONLY for stages where the
+  // French word is already on screen as the prompt. Otherwise auto-playing
+  // the audio just hands the user the answer:
+  //   - reverse: prompt is the Russian translation
+  //   - cloze:   user must produce the word from a sentence with a gap
+  //   - spell:   user must produce the word from the Russian only
+  //   - scramble: user must assemble shuffled letters
+  //   - listening: this stage owns its own audio playback (and IS the test)
+  // The manual AudioBtn is still available in most of these stages — that's
+  // a user-initiated hint, not a free leak.
   useEffect(() => {
-    if (!currentWord) return;
+    if (!currentWord || !current) return;
+    const autoPlayOk = current.stage === 'intro' || current.stage === 'mc';
+    if (!autoPlayOk) return;
     const timer = setTimeout(() => { void playAudio(currentWord.french, currentWord.audioUrl); }, 200);
     return () => clearTimeout(timer);
   }, [currentWord?.id, current?.stage]);
