@@ -43,6 +43,18 @@ export const conversationApi = {
       body: JSON.stringify({ topic, level }),
     }),
 
+  // Create a conversation pre-seeded with the just-studied vocabulary.
+  // The AI's opening message is generated server-side and saved as the
+  // first message of the session.
+  createSessionWithPrimer: (params: {
+    words: Array<{ french: string; translation: string }>;
+    level?: string;
+  }) =>
+    apiRequest<{ session: { id: string }; opening: ChatMessage }>(
+      '/conversation/sessions/with-primer',
+      { method: 'POST', body: JSON.stringify(params) },
+    ),
+
   deleteSession: (id: string) =>
     apiRequest<{ ok: boolean }>(`/conversation/sessions/${id}`, { method: 'DELETE' }),
 

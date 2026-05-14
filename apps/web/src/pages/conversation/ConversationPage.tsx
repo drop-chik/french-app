@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearch } from '@tanstack/react-router';
 import { Send, Plus, MessageSquare, AlertCircle, ChevronDown, Trash2, Menu } from 'lucide-react';
 import { conversationApi, type ConversationSession, type ChatMessage, type Correction, type CorrectionType } from '../../features/conversation/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -25,7 +26,12 @@ export function ConversationPage() {
   const queryClient = useQueryClient();
   const { t, lang } = useI18n();
 
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  // Allow ?session=<id> to deep-link a specific session — used by the
+  // "practice in dialogue" flow at the end of a learning session.
+  const search = useSearch({ strict: false }) as { session?: string };
+  const presetSessionId = search.session;
+
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(presetSessionId ?? null);
   const [input, setInput] = useState('');
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -85,6 +91,15 @@ export function ConversationPage() {
       setLocalMessages(sessionData.session.messages);
     }
   }, [sessionData]);
+
+  // If a session id arrives via search param mid-session-list-fetch, switch
+  // to it (handles the case where the user clicks "practice in dialogue"
+  // and lands here before the sessions list has reloaded).
+  useEffect(() => {
+    if (presetSessionId && presetSessionId !== activeSessionId) {
+      setActiveSessionId(presetSessionId);
+    }
+  }, [presetSessionId, activeSessionId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

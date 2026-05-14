@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { createSession, getSessions, getSession, deleteSession, streamReply } from './conversation.service.js';
+import { createSession, createSessionWithPrimer, getSessions, getSession, deleteSession, streamReply } from './conversation.service.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
@@ -57,6 +57,57 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
       const level = (parsed.data.level ?? 'A1') as LanguageLevel;
       const session = await createSession(fastify.db, request.user.userId, parsed.data.topic, level);
       reply.status(201).send({ session });
+    },
+  );
+
+  // POST /conversation/sessions/with-primer — create a session pre-loaded
+  // with the just-studied vocabulary. The AI's opening message is generated
+  // server-side and saved as the first message, so the user lands on a
+  // chat that's already in motion.
+  fastify.post(
+    '/sessions/with-primer',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['conversation'],
+        summary: 'Start a conversation seeded with the just-studied words',
+        description: 'Creates a session, generates an AI opening that naturally uses 2-3 of the supplied words, returns session id + opening message.',
+        security: authorizedSecurity,
+        body: {
+          type: 'object',
+          required: ['words'],
+          properties: {
+            words: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 20,
+              items: {
+                type: 'object',
+                required: ['french', 'translation'],
+                properties: {
+                  french: { type: 'string', minLength: 1, maxLength: 100 },
+                  translation: { type: 'string', minLength: 1, maxLength: 200 },
+                },
+              },
+            },
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as { words: Array<{ french: string; translation: string }>; level?: string };
+      if (!Array.isArray(body.words) || body.words.length === 0) {
+        return reply.status(400).send({ error: 'words is required' });
+      }
+      const level = (body.level ?? 'B1') as LanguageLevel;
+      try {
+        const result = await createSessionWithPrimer(fastify.db, request.user.userId, body.words, level);
+        reply.status(201).send({ session: { id: result.id }, opening: result.opening });
+      } catch (err) {
+        fastify.log.error({ err }, 'createSessionWithPrimer failed');
+        reply.status(500).send({ error: err instanceof Error ? err.message : 'Failed to create primer session' });
+      }
     },
   );
 

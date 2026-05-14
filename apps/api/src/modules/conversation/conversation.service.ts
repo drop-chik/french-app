@@ -99,6 +99,88 @@ export async function createSession(db: DB, userId: string, topic: string, level
   return session;
 }
 
+// Create a conversation session pre-loaded with an AI opening message that
+// references the just-studied vocabulary. Used when the user clicks
+// "practice in dialogue" right after finishing a learning session.
+//
+// The AI greets the user, uses 2-3 of the primer words naturally in a
+// question, and waits for a reply. The user lands on a chat that's already
+// in motion rather than a blank screen.
+export async function createSessionWithPrimer(
+  db: DB,
+  userId: string,
+  words: Array<{ french: string; translation: string }>,
+  level: LanguageLevel,
+) {
+  // Topic carries the words list — the regular SYSTEM_PROMPT will see this
+  // on subsequent turns and keep the conversation focused.
+  const wordList = words.slice(0, 8).map((w) => w.french).join(', ');
+  const topic = `Pratiquer les mots récemment appris (${wordList})`;
+
+  const [session] = await db
+    .insert(conversationSessions)
+    .values({ userId, topic, level, messages: [] })
+    .returning({ id: conversationSessions.id });
+
+  if (!session) throw new Error('Failed to create session');
+
+  // Generate the AI's opening turn. Different system prompt — the regular
+  // one expects an existing user message to correct; here there's none.
+  const primerPrompt = `
+Tu es un tuteur de français bienveillant. Niveau de l'étudiant: ${level}.
+
+L'étudiant vient de terminer une session d'apprentissage. Voici les mots qu'il a étudiés:
+${words.map((w) => `- ${w.french} (${w.translation})`).join('\n')}
+
+Ouvre la conversation par UN seul tour court (1-3 phrases au total) qui:
+1. Salue brièvement.
+2. Utilise NATURELLEMENT 2 ou 3 de ces mots dans le contexte d'une question OUVERTE adressée à l'étudiant.
+3. Reste à un vocabulaire et une grammaire de niveau ${level}.
+
+NE FAIS PAS:
+- Pas de markdown.
+- Pas de liste à puces.
+- Pas de mention "voici les mots étudiés" — utilise-les directement dans la phrase.
+- Pas plus de 3 phrases.
+
+Réponds UNIQUEMENT en JSON: {"message": "ton ouverture en français"}.
+`.trim();
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: primerPrompt },
+      { role: 'user', content: 'Commence.' },
+    ],
+    temperature: 0.7,
+    max_tokens: 250,
+    response_format: { type: 'json_object' },
+  });
+
+  const raw = response.choices[0]?.message?.content ?? '{}';
+  let openingText = '';
+  try {
+    const parsed = JSON.parse(raw) as { message?: string };
+    openingText = parsed.message ?? raw;
+  } catch {
+    openingText = raw;
+  }
+
+  const assistantMsg: ChatMessage = {
+    role: 'assistant',
+    content: openingText.trim(),
+    corrections: [],
+    timestamp: new Date().toISOString(),
+  };
+
+  await db
+    .update(conversationSessions)
+    .set({ messages: [assistantMsg] })
+    .where(eq(conversationSessions.id, session.id));
+
+  return { id: session.id, opening: assistantMsg };
+}
+
 export async function getSession(db: DB, userId: string, sessionId: string) {
   return db.query.conversationSessions.findFirst({
     where: eq(conversationSessions.id, sessionId),

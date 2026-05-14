@@ -7,6 +7,8 @@ import type { SRSGrade } from '@french-app/srs-engine';
 import { Play, CheckCircle, ChevronDown, ChevronUp, Check, Flame, RefreshCw, Sparkles, Settings, X as XIcon } from 'lucide-react';
 import { wordsApi } from '../../features/words/api';
 import { profileApi } from '../../features/profile/api';
+import { conversationApi } from '../../features/conversation/api';
+import { useAuthStore } from '../../features/auth/authStore';
 import { grammarApi } from '../../features/grammar/api';
 import { useI18n } from '../../shared/i18n';
 import { FlashcardMode } from './FlashcardMode/FlashcardMode';
@@ -354,6 +356,33 @@ export function VocabularyPage() {
     setActiveMode('menu');
   }
 
+  // Bridge from the SessionComplete screen → AI conversation. Creates a
+  // primed session: server seeds the AI's opening turn with 2-3 of the
+  // just-studied words so the user lands on a chat that's already in motion.
+  // On failure, falls back to the regular topic-picker page.
+  async function handleStartConversation() {
+    const justLearned = sessionWords.slice(0, 8).map((w) => ({
+      french: w.french,
+      translation: w.translation,
+    }));
+    if (justLearned.length === 0) {
+      navigate({ to: '/conversation' });
+      return;
+    }
+    try {
+      const userLevel = useAuthStore.getState().user?.level ?? sessionWords[0]?.level ?? 'B1';
+      const { session } = await conversationApi.createSessionWithPrimer({
+        words: justLearned,
+        level: userLevel,
+      });
+      queryClient.invalidateQueries({ queryKey: ['conversation-sessions'] });
+      navigate({ to: '/conversation', search: { session: session.id } as never });
+    } catch (err) {
+      console.error('Failed to start primed conversation:', err);
+      navigate({ to: '/conversation' });
+    }
+  }
+
   function withBack(node: React.ReactNode) {
     return (
       <div className={styles.modeContainer}>
@@ -403,7 +432,7 @@ export function VocabularyPage() {
         streak={streak}
         onRestart={handleRestart}
         onBack={() => { setActiveMode('menu'); if (statusFilter) navigate({ to: '/vocabulary' }); }}
-        onConversation={() => navigate({ to: '/conversation' })}
+        onConversation={() => void handleStartConversation()}
       />
     );
   }
