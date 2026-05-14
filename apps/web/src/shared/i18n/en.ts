@@ -517,29 +517,38 @@ export const en: Translations = {
       mastered: 'Mastered',
     },
     categoryNames: {
-      // ── Essentials ──
-      basics:      'Basics',
-      numbers:     'Numbers',
-      time:        'Time',
-      calendar:    'Calendar',
-      // ── People ──
+      // ── Parts of speech (one category per type, except nouns) ──
+      verbs:        'Verbs',
+      adjectives:   'Adjectives',
+      adverbs:      'Adverbs',
+      pronouns:     'Pronouns',
+      prepositions: 'Prepositions',
+      conjunctions: 'Conjunctions',
+      determiners:  'Determiners',
+      numbers:      'Numbers',
+      expressions:  'Expressions & connectors',
+      interjections: 'Interjections',
+      // ── Nouns by theme — People ──
       family:      'Family',
       body:        'Body',
       health:      'Health',
       emotions:    'Emotions & character',
-      // ── Daily life ──
+      // ── Nouns — Daily life ──
       food:        'Food & cooking',
       home:        'Home & daily life',
       clothes:     'Clothes & fashion',
       shopping:    'Shopping',
-      // ── City & world ──
+      // ── Nouns — Time ──
+      time:        'Time',
+      calendar:    'Calendar',
+      // ── Nouns — City & world ──
       city:        'City & places',
       travel:      'Travel & transport',
       nature:      'Nature & landscape',
       weather:     'Weather & climate',
       animals:     'Animals',
       geography:   'Countries & peoples',
-      // ── Society ──
+      // ── Nouns — Society ──
       environment: 'Environment',
       sports:      'Sports & leisure',
       education:   'Education',
@@ -550,16 +559,12 @@ export const en: Translations = {
       society:     'Society',
       arts:        'Arts & culture',
       media:       'Media & communication',
-      // ── Knowledge & mind ──
+      // ── Nouns — Knowledge & mind ──
       technology:  'Technology',
       science:     'Science',
       psychology:  'Psychology',
-      // ── Language tools ──
-      verbs:       'Verbs',
-      adjectives:  'Adjectives',
-      colors:      'Colors',
-      expressions: 'Expressions & connectors',
-      other:       'Other',
+      // ── Nouns — Other ──
+      vocabulary:  'Other nouns',
     },
   },
   grammar: {
