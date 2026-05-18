@@ -17,6 +17,7 @@ export async function getProfile(db: DB, userId: string) {
       avatarUrl: true,
       uiLanguage: true,
       placementTestDone: true,
+      role: true,
       dailyNewWordsLimit: true,
       dailyDueWordsLimit: true,
       createdAt: true,

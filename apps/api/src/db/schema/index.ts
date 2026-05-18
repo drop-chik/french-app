@@ -50,6 +50,8 @@ export const users = pgTable('users', {
   avatarUrl: text('avatar_url'),
   uiLanguage: varchar('ui_language', { length: 10 }).default('ru').notNull(),
   placementTestDone: boolean('placement_test_done').default(false).notNull(),
+  // 'user' (default) | 'admin' — gates the /admin panel and /admin API.
+  role: varchar('role', { length: 20 }).default('user').notNull(),
   streakRepairUsedAt: timestamp('streak_repair_used_at'),
   streakRepairSavedValue: integer('streak_repair_saved_value').default(0),
   xp: integer('xp').default(0).notNull(),

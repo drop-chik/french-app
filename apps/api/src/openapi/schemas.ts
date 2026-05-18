@@ -23,6 +23,7 @@ export const userSchema = {
     avatarUrl:           { type: 'string', nullable: true },
     uiLanguage:          { type: 'string' },
     placementTestDone:   { type: 'boolean' },
+    role:                { type: 'string', enum: ['user', 'admin'] },
     dailyNewWordsLimit:  { type: 'integer' },
     dailyDueWordsLimit:  { type: 'integer' },
     createdAt:           { type: 'string', format: 'date-time' },

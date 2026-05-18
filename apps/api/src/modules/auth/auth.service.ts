@@ -30,6 +30,7 @@ export async function registerUser(db: DB, input: RegisterInput) {
       name: users.name,
       level: users.level,
       placementTestDone: users.placementTestDone,
+      role: users.role,
     });
 
   if (!user) throw new Error('Failed to create user');
@@ -56,5 +57,6 @@ export async function loginUser(db: DB, input: LoginInput) {
     name: user.name,
     level: user.level,
     placementTestDone: user.placementTestDone,
+    role: user.role,
   };
 }
