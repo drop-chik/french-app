@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string;
   name: string;
   level: string;
+  tag: string;
   avatarUrl: string | null;
   uiLanguage: string;
   placementTestDone: boolean;
@@ -81,6 +82,7 @@ export const profileApi = {
     name?: string;
     email?: string;
     uiLanguage?: string;
+    tag?: string;
     dailyNewWordsLimit?: number;
     dailyDueWordsLimit?: number;
   }) =>

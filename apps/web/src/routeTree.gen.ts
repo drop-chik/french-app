@@ -21,6 +21,7 @@ import { Route as AuthProfileRouteImport } from './app/routes/_auth.profile'
 import { Route as AuthPlacementRouteImport } from './app/routes/_auth.placement'
 import { Route as AuthListeningRouteImport } from './app/routes/_auth.listening'
 import { Route as AuthGrammarRouteImport } from './app/routes/_auth.grammar'
+import { Route as AuthFriendsRouteImport } from './app/routes/_auth.friends'
 import { Route as AuthDrillsRouteImport } from './app/routes/_auth.drills'
 import { Route as AuthDictionaryRouteImport } from './app/routes/_auth.dictionary'
 import { Route as AuthDashboardRouteImport } from './app/routes/_auth.dashboard'
@@ -29,6 +30,7 @@ import { Route as AuthConjugationRouteImport } from './app/routes/_auth.conjugat
 import { Route as AuthAdminRouteImport } from './app/routes/_auth.admin'
 import { Route as AuthAchievementsRouteImport } from './app/routes/_auth.achievements'
 import { Route as AuthWritingSlugRouteImport } from './app/routes/_auth.writing.$slug'
+import { Route as AuthUTagRouteImport } from './app/routes/_auth.u.$tag'
 import { Route as AuthReadingSlugRouteImport } from './app/routes/_auth.reading.$slug'
 import { Route as AuthListeningIdRouteImport } from './app/routes/_auth.listening.$id'
 import { Route as AuthGrammarSlugRouteImport } from './app/routes/_auth.grammar.$slug'
@@ -94,6 +96,11 @@ const AuthGrammarRoute = AuthGrammarRouteImport.update({
   path: '/grammar',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthFriendsRoute = AuthFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDrillsRoute = AuthDrillsRouteImport.update({
   id: '/drills',
   path: '/drills',
@@ -134,6 +141,11 @@ const AuthWritingSlugRoute = AuthWritingSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AuthWritingRoute,
 } as any)
+const AuthUTagRoute = AuthUTagRouteImport.update({
+  id: '/u/$tag',
+  path: '/u/$tag',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthReadingSlugRoute = AuthReadingSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -172,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/drills': typeof AuthDrillsRouteWithChildren
+  '/friends': typeof AuthFriendsRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/listening': typeof AuthListeningRouteWithChildren
   '/placement': typeof AuthPlacementRoute
@@ -183,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/grammar/$slug': typeof AuthGrammarSlugRoute
   '/listening/$id': typeof AuthListeningIdRoute
   '/reading/$slug': typeof AuthReadingSlugRoute
+  '/u/$tag': typeof AuthUTagRoute
   '/writing/$slug': typeof AuthWritingSlugRoute
   '/writing/result/$id': typeof AuthWritingResultIdRoute
 }
@@ -198,6 +212,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/drills': typeof AuthDrillsRouteWithChildren
+  '/friends': typeof AuthFriendsRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/listening': typeof AuthListeningRouteWithChildren
   '/placement': typeof AuthPlacementRoute
@@ -209,6 +224,7 @@ export interface FileRoutesByTo {
   '/grammar/$slug': typeof AuthGrammarSlugRoute
   '/listening/$id': typeof AuthListeningIdRoute
   '/reading/$slug': typeof AuthReadingSlugRoute
+  '/u/$tag': typeof AuthUTagRoute
   '/writing/$slug': typeof AuthWritingSlugRoute
   '/writing/result/$id': typeof AuthWritingResultIdRoute
 }
@@ -226,6 +242,7 @@ export interface FileRoutesById {
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dictionary': typeof AuthDictionaryRoute
   '/_auth/drills': typeof AuthDrillsRouteWithChildren
+  '/_auth/friends': typeof AuthFriendsRoute
   '/_auth/grammar': typeof AuthGrammarRouteWithChildren
   '/_auth/listening': typeof AuthListeningRouteWithChildren
   '/_auth/placement': typeof AuthPlacementRoute
@@ -237,6 +254,7 @@ export interface FileRoutesById {
   '/_auth/grammar/$slug': typeof AuthGrammarSlugRoute
   '/_auth/listening/$id': typeof AuthListeningIdRoute
   '/_auth/reading/$slug': typeof AuthReadingSlugRoute
+  '/_auth/u/$tag': typeof AuthUTagRoute
   '/_auth/writing/$slug': typeof AuthWritingSlugRoute
   '/_auth/writing/result/$id': typeof AuthWritingResultIdRoute
 }
@@ -254,6 +272,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dictionary'
     | '/drills'
+    | '/friends'
     | '/grammar'
     | '/listening'
     | '/placement'
@@ -265,6 +284,7 @@ export interface FileRouteTypes {
     | '/grammar/$slug'
     | '/listening/$id'
     | '/reading/$slug'
+    | '/u/$tag'
     | '/writing/$slug'
     | '/writing/result/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -280,6 +300,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dictionary'
     | '/drills'
+    | '/friends'
     | '/grammar'
     | '/listening'
     | '/placement'
@@ -291,6 +312,7 @@ export interface FileRouteTypes {
     | '/grammar/$slug'
     | '/listening/$id'
     | '/reading/$slug'
+    | '/u/$tag'
     | '/writing/$slug'
     | '/writing/result/$id'
   id:
@@ -307,6 +329,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard'
     | '/_auth/dictionary'
     | '/_auth/drills'
+    | '/_auth/friends'
     | '/_auth/grammar'
     | '/_auth/listening'
     | '/_auth/placement'
@@ -318,6 +341,7 @@ export interface FileRouteTypes {
     | '/_auth/grammar/$slug'
     | '/_auth/listening/$id'
     | '/_auth/reading/$slug'
+    | '/_auth/u/$tag'
     | '/_auth/writing/$slug'
     | '/_auth/writing/result/$id'
   fileRoutesById: FileRoutesById
@@ -416,6 +440,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthGrammarRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/friends': {
+      id: '/_auth/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof AuthFriendsRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/drills': {
       id: '/_auth/drills'
       path: '/drills'
@@ -471,6 +502,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/writing/$slug'
       preLoaderRoute: typeof AuthWritingSlugRouteImport
       parentRoute: typeof AuthWritingRoute
+    }
+    '/_auth/u/$tag': {
+      id: '/_auth/u/$tag'
+      path: '/u/$tag'
+      fullPath: '/u/$tag'
+      preLoaderRoute: typeof AuthUTagRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_auth/reading/$slug': {
       id: '/_auth/reading/$slug'
@@ -580,6 +618,7 @@ interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDictionaryRoute: typeof AuthDictionaryRoute
   AuthDrillsRoute: typeof AuthDrillsRouteWithChildren
+  AuthFriendsRoute: typeof AuthFriendsRoute
   AuthGrammarRoute: typeof AuthGrammarRouteWithChildren
   AuthListeningRoute: typeof AuthListeningRouteWithChildren
   AuthPlacementRoute: typeof AuthPlacementRoute
@@ -587,6 +626,7 @@ interface AuthRouteChildren {
   AuthReadingRoute: typeof AuthReadingRouteWithChildren
   AuthVocabularyRoute: typeof AuthVocabularyRoute
   AuthWritingRoute: typeof AuthWritingRouteWithChildren
+  AuthUTagRoute: typeof AuthUTagRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -597,6 +637,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDictionaryRoute: AuthDictionaryRoute,
   AuthDrillsRoute: AuthDrillsRouteWithChildren,
+  AuthFriendsRoute: AuthFriendsRoute,
   AuthGrammarRoute: AuthGrammarRouteWithChildren,
   AuthListeningRoute: AuthListeningRouteWithChildren,
   AuthPlacementRoute: AuthPlacementRoute,
@@ -604,6 +645,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthReadingRoute: AuthReadingRouteWithChildren,
   AuthVocabularyRoute: AuthVocabularyRoute,
   AuthWritingRoute: AuthWritingRouteWithChildren,
+  AuthUTagRoute: AuthUTagRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

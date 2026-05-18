@@ -60,6 +60,7 @@ export function ProfilePage() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [tag, setTag] = useState('');
   // Session-size settings moved to /vocabulary (gear icon in header).
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [currentPwd, setCurrentPwd] = useState('');
@@ -74,25 +75,27 @@ export function ProfilePage() {
     if (profile && !name) {
       setName(profile.name);
       setEmail(profile.email);
+      setTag(profile.tag);
     }
   }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateProfileMutation = useMutation({
-    mutationFn: (data: { name?: string; email?: string; dailyNewWordsLimit?: number; dailyDueWordsLimit?: number }) =>
+    mutationFn: (data: { name?: string; email?: string; tag?: string; dailyNewWordsLimit?: number; dailyDueWordsLimit?: number }) =>
       profileApi.updateProfile(data),
     onSuccess: (updated) => {
       queryClient.setQueryData<UserProfile>(['profile'], (old) =>
         old ? { ...old, ...updated } : old,
       );
-      updateUser({ name: updated.name, email: updated.email });
+      updateUser({ name: updated.name, email: updated.email, tag: updated.tag });
       setProfileMsg({ type: 'ok', text: t.profile.saved });
       setTimeout(() => setProfileMsg(null), 3000);
     },
     onError: (err: Error) => {
-      setProfileMsg({
-        type: 'err',
-        text: err.message.includes('Email') ? t.profile.errorEmailTaken : err.message,
-      });
+      let text = err.message;
+      if (err.message.includes('Email')) text = t.profile.errorEmailTaken;
+      else if (err.message.includes('Tag already')) text = t.social.tagTaken;
+      else if (err.message.includes('Invalid tag')) text = t.social.tagInvalid;
+      setProfileMsg({ type: 'err', text });
     },
   });
 
@@ -392,7 +395,7 @@ export function ProfilePage() {
               className={styles.settingsForm}
               onSubmit={(e) => {
                 e.preventDefault();
-                updateProfileMutation.mutate({ name, email });
+                updateProfileMutation.mutate({ name, email, tag });
               }}
             >
               <div className={styles.fieldRow}>
@@ -415,6 +418,23 @@ export function ProfilePage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
+                </div>
+              </div>
+              <div className={styles.fieldRow}>
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    {t.social.tagLabel.replace('{tag}', profile.tag)}
+                  </label>
+                  <input
+                    className={styles.input}
+                    type="text"
+                    value={tag}
+                    onChange={(e) => setTag(e.target.value.toLowerCase())}
+                    minLength={3}
+                    maxLength={30}
+                    required
+                  />
+                  <p className={styles.settingsBlockDesc}>{t.social.tagHint}</p>
                 </div>
               </div>
               <div className={styles.settingsFooter}>

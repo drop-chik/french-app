@@ -3,7 +3,7 @@ import { Link, useRouterState } from '@tanstack/react-router';
 import {
   Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle,
   Home, Dumbbell, PenLine, BookMarked, Type, Trophy, MoreHorizontal, X, Flame,
-  Shield,
+  Shield, Users,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../hooks/useTheme';
@@ -107,6 +107,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       items: [
         { to: '/dictionary',   label: t.nav.dictionary,   icon: Book },
         { to: '/achievements', label: t.nav.achievements, icon: Trophy },
+        { to: '/friends',      label: t.nav.friends,      icon: Users },
         // Admin entry — only rendered for admins. Backend independently
         // enforces access; this just hides the nav for everyone else.
         ...(user?.role === 'admin'
