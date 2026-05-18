@@ -180,7 +180,7 @@
     gap: var(--space-4);
   }
 
-  .title { font-size: var(--text-2xl); }
+  .title { font-size: var(--text-xl); }
 
   .textGrid {
     grid-template-columns: 1fr;

@@ -97,3 +97,7 @@ a.row:hover {
   color: var(--color-text-tertiary);
   flex-shrink: 0;
 }
+
+@media (max-width: 768px) {
+  .title { font-size: var(--text-xl); }
+}

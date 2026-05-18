@@ -594,3 +594,7 @@
 @media (max-width: 560px) {
   .statGrid { grid-template-columns: repeat(2, 1fr); }
 }
+
+@media (max-width: 768px) {
+  .title { font-size: var(--text-xl); }
+}

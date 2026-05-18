@@ -293,7 +293,7 @@
   .heroLeft { min-width: 0; }
 
   .title { font-size: var(--text-xl); }
-  .subtitle { font-size: var(--text-xs); }
+  .subtitle { font-size: var(--text-sm); }
 
   .heroIconWrap { width: 44px; height: 44px; }
 

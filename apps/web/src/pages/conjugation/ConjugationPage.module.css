@@ -27,7 +27,7 @@
 }
 
 .title {
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
   font-weight: var(--font-bold);
   color: var(--color-text-primary);
   margin: 0 0 4px;
@@ -309,7 +309,7 @@
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .title { font-size: var(--text-xl); }
-  .subtitle { font-size: var(--text-xs); }
+  .subtitle { font-size: var(--text-sm); }
   .verbInf { font-size: var(--text-2xl); }
 
   .titleWrap { gap: var(--space-3); }
