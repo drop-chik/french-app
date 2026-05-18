@@ -8,6 +8,7 @@ import {
   resetUserProgress,
   type UserSort,
 } from './admin.service.js';
+import { getMetricsOverview } from './metrics.service.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const patchSchema = z.object({
@@ -110,6 +111,23 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         if (msg === 'LAST_ADMIN') return reply.status(409).send({ error: msg });
         reply.status(500).send({ error: msg });
       }
+    },
+  );
+
+  // GET /admin/metrics/overview — platform analytics dashboard
+  fastify.get(
+    '/metrics/overview',
+    {
+      ...guard,
+      schema: {
+        tags: ['admin'],
+        summary: 'Platform metrics overview (admin)',
+        security: authorizedSecurity,
+      },
+    },
+    async (_request, reply) => {
+      const data = await getMetricsOverview(fastify.db);
+      reply.send(data);
     },
   );
 
