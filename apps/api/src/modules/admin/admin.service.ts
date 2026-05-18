@@ -45,6 +45,7 @@ export async function listUsers(
       level: users.level,
       role: users.role,
       xp: users.xp,
+      avatarUrl: users.avatarUrl,
       createdAt: users.createdAt,
       lastActive: sql<string | null>`max(${wordProgress.lastReviewed})`.as('last_active'),
       wordsMastered: sql<number>`count(case when ${wordProgress.status} = 'mastered' then 1 end)`,

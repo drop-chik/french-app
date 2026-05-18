@@ -8,6 +8,7 @@ export interface AdminUserRow {
   level: LanguageLevel;
   role: UserRole;
   xp: number;
+  avatarUrl: string | null;
   createdAt: string;
   lastActive: string | null;
   wordsMastered: number;

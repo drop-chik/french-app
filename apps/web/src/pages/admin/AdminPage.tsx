@@ -108,9 +108,7 @@ function UsersTab() {
         <div className={styles.userList}>
           {users.map((u) => (
             <button key={u.id} className={styles.userRow} onClick={() => setSelectedId(u.id)}>
-              <div className={styles.userAvatar}>
-                {u.name.charAt(0).toUpperCase()}
-              </div>
+              <Avatar url={u.avatarUrl} name={u.name} className={styles.userAvatar ?? ''} />
               <div className={styles.userMain}>
                 <span className={styles.userName}>
                   {u.name}
@@ -203,11 +201,11 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
         ) : (
           <>
             <div className={styles.detailHead}>
-              <div className={styles.detailAvatar}>
-                {data.profile.avatarUrl
-                  ? <img src={data.profile.avatarUrl} alt="" className={styles.avatarImg} />
-                  : data.profile.name.charAt(0).toUpperCase()}
-              </div>
+              <Avatar
+                url={data.profile.avatarUrl}
+                name={data.profile.name}
+                className={styles.detailAvatar ?? ''}
+              />
               <div>
                 <h2 className={styles.detailName}>
                   {data.profile.name}
@@ -327,6 +325,26 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
       )}
     </div>
   );
+}
+
+// Avatars are stored as base64 data URLs. Render the image when present,
+// but fall back to the name initial if it's missing OR fails to decode
+// (e.g. a legacy upload with a mismatched MIME type).
+function Avatar({ url, name, className }: { url: string | null; name: string; className: string }) {
+  const [broken, setBroken] = useState(false);
+  if (url && !broken) {
+    return (
+      <div className={className}>
+        <img
+          src={url}
+          alt=""
+          className={styles.avatarImg ?? ''}
+          onError={() => setBroken(true)}
+        />
+      </div>
+    );
+  }
+  return <div className={className}>{name.charAt(0).toUpperCase() || '?'}</div>;
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
