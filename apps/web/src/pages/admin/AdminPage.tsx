@@ -203,7 +203,11 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
         ) : (
           <>
             <div className={styles.detailHead}>
-              <div className={styles.detailAvatar}>{data.profile.name.charAt(0).toUpperCase()}</div>
+              <div className={styles.detailAvatar}>
+                {data.profile.avatarUrl
+                  ? <img src={data.profile.avatarUrl} alt="" className={styles.avatarImg} />
+                  : data.profile.name.charAt(0).toUpperCase()}
+              </div>
               <div>
                 <h2 className={styles.detailName}>
                   {data.profile.name}

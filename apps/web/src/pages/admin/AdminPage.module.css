@@ -166,9 +166,16 @@
   justify-content: center;
   font-weight: 700;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .detailAvatar { width: 48px; height: 48px; font-size: var(--text-xl); }
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .userMain {
   flex: 1;
