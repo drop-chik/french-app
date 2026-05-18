@@ -1040,5 +1040,11 @@ export const en: Translations = {
     tagHint: 'Latin letters, digits, _ and -. 3 to 30 characters.',
     tagTaken: 'This tag is already taken',
     tagInvalid: 'Invalid tag format',
+    share: 'Share',
+    qr: 'QR code',
+    copyLink: 'Copy link',
+    linkCopied: 'Copied',
+    qrHint: 'Show this code — a friend scans it with their camera and lands straight on your profile.',
+    close: 'Close',
   },
 };

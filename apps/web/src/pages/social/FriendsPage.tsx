@@ -12,6 +12,7 @@ import {
 import { socialApi, type UserCard, type FeedItem } from '../../features/social/api';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
+import { MyProfileCard } from './MyProfileCard';
 import styles from './FriendsPage.module.css';
 
 type Tab = 'feed' | 'leaderboard' | 'search' | 'following';
@@ -57,6 +58,8 @@ export function FriendsPage() {
         <Users size={22} className={styles.headerIcon} />
         <h1 className={styles.title}>{t.social.title}</h1>
       </div>
+
+      <MyProfileCard />
 
       <div className={styles.tabs}>
         {tabs.map(({ key, label, icon: Icon }) => (
