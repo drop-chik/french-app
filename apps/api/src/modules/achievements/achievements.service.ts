@@ -11,6 +11,10 @@ import {
 } from '../../db/schema/index.js';
 import { ACHIEVEMENTS, type AchievementMetric, type AchievementDef } from './registry.js';
 import { describeProgress, levelFromXp } from './xp.js';
+import { recordActivity } from '../social/activity.service.js';
+
+// Streak day-counts that are worth a social feed event (and later a push).
+const STREAK_MILESTONES = new Set([3, 7, 30, 100, 365]);
 
 export interface UserMetrics {
   wordsMastered: number;
@@ -186,6 +190,27 @@ export async function recordAction(
     const metrics = await collectMetrics(db, userId, opts);
     metrics.totalXp = xp.totalXp;
     const newlyUnlocked = await checkAndAwardAchievements(db, userId, metrics);
+
+    // Emit social activity-feed events. This is THE single chokepoint every
+    // gamified action passes through, so all feed instrumentation lives here.
+    // recordActivity is best-effort + dedupe-keyed (idempotent).
+    for (const a of newlyUnlocked) {
+      await recordActivity(
+        db,
+        userId,
+        'achievement',
+        { id: a.id, titleRu: a.titleRu, titleEn: a.titleEn, icon: a.icon, rarity: a.rarity },
+        `ach:${a.id}`,
+      );
+    }
+    if (xp.leveledUp) {
+      await recordActivity(db, userId, 'level_up', { level: xp.level }, `lvl:${xp.level}`);
+    }
+    const sd = opts.streakDays ?? 0;
+    if (STREAK_MILESTONES.has(sd)) {
+      await recordActivity(db, userId, 'streak', { days: sd }, `streak:${sd}`);
+    }
+
     return { ...xp, newlyUnlocked };
   } catch (err) {
     console.error('[achievements] recordAction failed (non-fatal):', err);

@@ -8,6 +8,9 @@ import {
   getFollowing,
   getFollowers,
   getLeaderboard,
+  getFeed,
+  reactToEvent,
+  unreactToEvent,
 } from './social.service.js';
 
 const socialRoutes: FastifyPluginAsync = async (fastify) => {
@@ -158,6 +161,84 @@ const socialRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const board = await getLeaderboard(fastify.db, request.user.userId);
       reply.send({ board });
+    },
+  );
+
+  // GET /social/feed?cursor= — activity of people I follow
+  fastify.get(
+    '/feed',
+    {
+      ...guard,
+      schema: {
+        tags: ['social'],
+        summary: 'Activity feed of people I follow (keyset paginated)',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: { cursor: { type: 'string' } },
+        },
+      },
+    },
+    async (request, reply) => {
+      const cursor = (request.query as Record<string, unknown>).cursor;
+      const result = await getFeed(
+        fastify.db,
+        request.user.userId,
+        cursor ? String(cursor) : undefined,
+      );
+      reply.send(result);
+    },
+  );
+
+  // POST /social/feed/:eventId/react
+  fastify.post<{ Params: { eventId: string } }>(
+    '/feed/:eventId/react',
+    {
+      ...guard,
+      schema: {
+        tags: ['social'],
+        summary: 'React (👏) to a feed event',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { eventId: { type: 'string', format: 'uuid' } } },
+        response: { 200: { type: 'object' }, 404: errorSchema },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const result = await reactToEvent(
+          fastify.db,
+          request.user.userId,
+          request.params.eventId,
+        );
+        reply.send(result);
+      } catch (err) {
+        if (err instanceof Error && err.message === 'EVENT_NOT_FOUND') {
+          return reply.status(404).send({ error: 'Event not found' });
+        }
+        throw err;
+      }
+    },
+  );
+
+  // DELETE /social/feed/:eventId/react
+  fastify.delete<{ Params: { eventId: string } }>(
+    '/feed/:eventId/react',
+    {
+      ...guard,
+      schema: {
+        tags: ['social'],
+        summary: 'Remove my reaction from a feed event',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { eventId: { type: 'string', format: 'uuid' } } },
+      },
+    },
+    async (request, reply) => {
+      const result = await unreactToEvent(
+        fastify.db,
+        request.user.userId,
+        request.params.eventId,
+      );
+      reply.send(result);
     },
   );
 };

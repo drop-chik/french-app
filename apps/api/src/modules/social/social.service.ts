@@ -1,6 +1,12 @@
 import { and, eq, ne, or, ilike, inArray, gte, sql, desc, count } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
-import { users, follows, activityEvents, wordProgress } from '../../db/schema/index.js';
+import {
+  users,
+  follows,
+  activityEvents,
+  activityReactions,
+  wordProgress,
+} from '../../db/schema/index.js';
 import {
   getStats,
   getStreak,
@@ -248,6 +254,107 @@ export async function getLeaderboard(db: DB, viewerId: string) {
       isMe: p.id === viewerId,
     }))
     .sort((a, b) => b.weekScore - a.weekScore || b.xpLevel - a.xpLevel);
+}
+
+// ── Activity feed ───────────────────────────────────────────────────────────
+// Events from people I follow (self excluded — this is "friends' activity").
+// Keyset pagination on (created_at, id) so it stays correct as new events
+// arrive. Each row carries reaction count + whether I reacted.
+const FEED_PAGE = 20;
+
+export interface FeedItem {
+  id: string;
+  type: string;
+  payload: unknown;
+  createdAt: Date;
+  actor: { id: string; tag: string; name: string; avatarUrl: string | null };
+  reactionCount: number;
+  myReacted: boolean;
+}
+
+export async function getFeed(
+  db: DB,
+  viewerId: string,
+  cursor?: string,
+): Promise<{ items: FeedItem[]; nextCursor: string | null }> {
+  const followeeRows = await db
+    .select({ id: follows.followeeId })
+    .from(follows)
+    .where(eq(follows.followerId, viewerId));
+  const followeeIds = followeeRows.map((r) => r.id);
+  if (followeeIds.length === 0) return { items: [], nextCursor: null };
+
+  // cursor = "<ISO createdAt>__<uuid id>" — the last item of the prev page.
+  let cursorCond;
+  if (cursor) {
+    const sep = cursor.lastIndexOf('__');
+    const ts = cursor.slice(0, sep);
+    const id = cursor.slice(sep + 2);
+    cursorCond = sql`(${activityEvents.createdAt}, ${activityEvents.id}) < (${ts}::timestamp, ${id}::uuid)`;
+  }
+
+  const rows = await db
+    .select({
+      id: activityEvents.id,
+      type: activityEvents.type,
+      payload: activityEvents.payload,
+      createdAt: activityEvents.createdAt,
+      actorId: users.id,
+      actorTag: users.tag,
+      actorName: users.name,
+      actorAvatar: users.avatarUrl,
+      reactionCount: sql<number>`(select count(*)::int from ${activityReactions} r where r.event_id = ${activityEvents.id})`,
+      myReacted: sql<boolean>`exists(select 1 from ${activityReactions} r where r.event_id = ${activityEvents.id} and r.user_id = ${viewerId})`,
+    })
+    .from(activityEvents)
+    .innerJoin(users, eq(users.id, activityEvents.userId))
+    .where(and(inArray(activityEvents.userId, followeeIds), cursorCond))
+    .orderBy(desc(activityEvents.createdAt), desc(activityEvents.id))
+    .limit(FEED_PAGE + 1);
+
+  const hasMore = rows.length > FEED_PAGE;
+  const page = rows.slice(0, FEED_PAGE);
+  const last = page[page.length - 1];
+  const nextCursor =
+    hasMore && last ? `${last.createdAt.toISOString()}__${last.id}` : null;
+
+  return {
+    items: page.map((r) => ({
+      id: r.id,
+      type: r.type,
+      payload: r.payload,
+      createdAt: r.createdAt,
+      actor: { id: r.actorId, tag: r.actorTag, name: r.actorName, avatarUrl: r.actorAvatar },
+      reactionCount: Number(r.reactionCount ?? 0),
+      myReacted: Boolean(r.myReacted),
+    })),
+    nextCursor,
+  };
+}
+
+export async function reactToEvent(
+  db: DB,
+  userId: string,
+  eventId: string,
+): Promise<{ ok: boolean }> {
+  const event = await db.query.activityEvents.findFirst({
+    where: eq(activityEvents.id, eventId),
+    columns: { id: true },
+  });
+  if (!event) throw new Error('EVENT_NOT_FOUND');
+  await db.insert(activityReactions).values({ eventId, userId }).onConflictDoNothing();
+  return { ok: true };
+}
+
+export async function unreactToEvent(
+  db: DB,
+  userId: string,
+  eventId: string,
+): Promise<{ ok: boolean }> {
+  await db
+    .delete(activityReactions)
+    .where(and(eq(activityReactions.eventId, eventId), eq(activityReactions.userId, userId)));
+  return { ok: true };
 }
 
 // ── shared helper ───────────────────────────────────────────────────────────
