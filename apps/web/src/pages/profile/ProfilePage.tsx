@@ -230,6 +230,7 @@ export function ProfilePage() {
       {/* 1. Hero banner */}
       <HeroBanner
         name={profile.name}
+        tag={profile.tag}
         level={profile.level}
         memberSince={memberSince}
         avatarSrc={avatarSrc}

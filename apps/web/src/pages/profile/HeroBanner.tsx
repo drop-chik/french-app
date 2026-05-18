@@ -12,6 +12,7 @@ interface XpSummary {
 
 interface HeroBannerProps {
   name: string;
+  tag: string;
   level: string;
   memberSince: string;
   avatarSrc: string | null;
@@ -78,6 +79,7 @@ export function HeroBanner(props: HeroBannerProps) {
         {/* Identity */}
         <div className={styles.identity}>
           <h1 className={styles.name}>{props.name}</h1>
+          <span className={styles.tagHandle}>@{props.tag}</span>
           <div className={styles.identityMeta}>
             <span className={styles.levelBadge}>{props.level}</span>
             <span className={styles.memberSince}>
