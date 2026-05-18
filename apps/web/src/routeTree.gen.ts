@@ -22,6 +22,7 @@ import { Route as AuthPlacementRouteImport } from './app/routes/_auth.placement'
 import { Route as AuthListeningRouteImport } from './app/routes/_auth.listening'
 import { Route as AuthGrammarRouteImport } from './app/routes/_auth.grammar'
 import { Route as AuthFriendsRouteImport } from './app/routes/_auth.friends'
+import { Route as AuthExploreRouteImport } from './app/routes/_auth.explore'
 import { Route as AuthDrillsRouteImport } from './app/routes/_auth.drills'
 import { Route as AuthDictionaryRouteImport } from './app/routes/_auth.dictionary'
 import { Route as AuthDashboardRouteImport } from './app/routes/_auth.dashboard'
@@ -99,6 +100,11 @@ const AuthGrammarRoute = AuthGrammarRouteImport.update({
 const AuthFriendsRoute = AuthFriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthExploreRoute = AuthExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthDrillsRoute = AuthDrillsRouteImport.update({
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/drills': typeof AuthDrillsRouteWithChildren
+  '/explore': typeof AuthExploreRoute
   '/friends': typeof AuthFriendsRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/listening': typeof AuthListeningRouteWithChildren
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthDashboardRoute
   '/dictionary': typeof AuthDictionaryRoute
   '/drills': typeof AuthDrillsRouteWithChildren
+  '/explore': typeof AuthExploreRoute
   '/friends': typeof AuthFriendsRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/listening': typeof AuthListeningRouteWithChildren
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/dictionary': typeof AuthDictionaryRoute
   '/_auth/drills': typeof AuthDrillsRouteWithChildren
+  '/_auth/explore': typeof AuthExploreRoute
   '/_auth/friends': typeof AuthFriendsRoute
   '/_auth/grammar': typeof AuthGrammarRouteWithChildren
   '/_auth/listening': typeof AuthListeningRouteWithChildren
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dictionary'
     | '/drills'
+    | '/explore'
     | '/friends'
     | '/grammar'
     | '/listening'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dictionary'
     | '/drills'
+    | '/explore'
     | '/friends'
     | '/grammar'
     | '/listening'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard'
     | '/_auth/dictionary'
     | '/_auth/drills'
+    | '/_auth/explore'
     | '/_auth/friends'
     | '/_auth/grammar'
     | '/_auth/listening'
@@ -445,6 +457,13 @@ declare module '@tanstack/react-router' {
       path: '/friends'
       fullPath: '/friends'
       preLoaderRoute: typeof AuthFriendsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/explore': {
+      id: '/_auth/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof AuthExploreRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/drills': {
@@ -618,6 +637,7 @@ interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDictionaryRoute: typeof AuthDictionaryRoute
   AuthDrillsRoute: typeof AuthDrillsRouteWithChildren
+  AuthExploreRoute: typeof AuthExploreRoute
   AuthFriendsRoute: typeof AuthFriendsRoute
   AuthGrammarRoute: typeof AuthGrammarRouteWithChildren
   AuthListeningRoute: typeof AuthListeningRouteWithChildren
@@ -637,6 +657,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDictionaryRoute: AuthDictionaryRoute,
   AuthDrillsRoute: AuthDrillsRouteWithChildren,
+  AuthExploreRoute: AuthExploreRoute,
   AuthFriendsRoute: AuthFriendsRoute,
   AuthGrammarRoute: AuthGrammarRouteWithChildren,
   AuthListeningRoute: AuthListeningRouteWithChildren,

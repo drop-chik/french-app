@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, Link } from '@tanstack/react-router';
-import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield } from 'lucide-react';
+import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield, Compass } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import type { UserProfile } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -276,6 +276,10 @@ export function ProfilePage() {
           <Settings size={20} className={styles.quickIcon} />
           <span className={styles.quickLabel}>{t.profile.settings}</span>
         </button>
+        <Link to="/explore" className={styles.quickCard}>
+          <Compass size={20} className={styles.quickIcon} />
+          <span className={styles.quickLabel}>{t.explore.title}</span>
+        </Link>
         {role === 'admin' && (
           <Link to="/admin" className={styles.quickCard}>
             <Shield size={20} className={styles.quickIcon} />

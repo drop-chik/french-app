@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BookOpen, LayoutGrid, Headphones, MessageCircle, Book, CheckCircle, ArrowRight, Dumbbell, PenLine, BookMarked, Trophy } from 'lucide-react';
+import { BookOpen, LayoutGrid, Headphones, MessageCircle, Book, CheckCircle, ArrowRight, Dumbbell, PenLine, BookMarked, Trophy, Compass } from 'lucide-react';
 import { profileApi, type LevelProgressData } from '../../features/profile/api';
 import { achievementsApi } from '../../features/achievements/api';
 import { AchievementBadge } from '../../features/achievements/AchievementBadge';
@@ -98,6 +98,16 @@ export function DashboardPage() {
           <span>{t.dashboard.completedListening.replace('{n}', String(lp.completedListening))} / {lp.totalListening}</span>
         </div>
       </div>
+
+      {/* Explore catalog entry */}
+      <Link to="/explore" className={styles.exploreBanner}>
+        <Compass size={20} />
+        <div className={styles.exploreBannerBody}>
+          <span className={styles.exploreBannerTitle}>{t.explore.title}</span>
+          <span className={styles.exploreBannerSub}>{t.explore.subtitle}</span>
+        </div>
+        <ArrowRight size={18} />
+      </Link>
 
       {/* All levels progress */}
       {levelsData && levelsData.levels.length > 0 && (
