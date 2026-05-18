@@ -563,6 +563,8 @@
 }
 
 @media (max-width: 600px) {
+  .title { font-size: var(--text-xl); }
+
   .phaseTabs {
     width: 100%;
   }

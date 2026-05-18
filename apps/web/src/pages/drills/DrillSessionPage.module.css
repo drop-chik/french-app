@@ -434,6 +434,7 @@
 .infiniteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 768px) {
+  .title { font-size: var(--text-xl); }
   .options { grid-template-columns: 1fr; }
   .submitButton { width: 100%; align-self: stretch; }
   .resultActions { flex-direction: column; }
