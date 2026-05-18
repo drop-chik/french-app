@@ -23,6 +23,8 @@ export const ru: DeepRecord = {
     groupReference: 'Справка',
     admin: 'Админ',
     friends: 'Друзья',
+    learnTab: 'Учить',
+    topicsTab: 'Темы',
     streakDays: 'дней подряд',
     streakDay: 'день',
     streakDaysFew: 'дня',

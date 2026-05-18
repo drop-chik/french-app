@@ -1,34 +1,22 @@
-import { useState, useEffect, type ReactNode, type ComponentType } from 'react';
+import { type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import {
-  Moon, Sun, BookOpen, Headphones, MessageCircle, Book, LayoutGrid, UserCircle,
-  Home, Dumbbell, PenLine, BookMarked, Type, Trophy, MoreHorizontal, X, Flame,
-  Shield, Users,
-} from 'lucide-react';
+import { Moon, Sun, Flame } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../i18n';
 import { profileApi } from '../../features/profile/api';
 import { achievementsApi } from '../../features/achievements/api';
+import { HUBS, hubForPath } from '../nav/navConfig';
+import { HubTabs } from './HubTabs';
 import foxIcon from '../../pages/landing/fox-icon.png';
 import styles from './AppLayout.module.css';
-
-type IconType = ComponentType<{ size?: number | string; className?: string }>;
-interface NavItem {
-  to: string;
-  label: string;
-  icon: IconType;
-  badgeKey?: 'wordsDue';
-}
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { toggle, isDark } = useTheme();
   const user = useAuthStore((s) => s.user);
   const { t } = useI18n();
-  const [moreOpen, setMoreOpen] = useState(false);
-  const routerState = useRouterState();
-  const pathname = routerState.location.pathname;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const { data: profileData } = useQuery({
     queryKey: ['profile'],
@@ -42,8 +30,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
     staleTime: 10 * 60 * 1000,
     enabled: !!user,
   });
-  // Home data — gives us due-words count for the sidebar badge. TanStack Query
-  // dedupes with the Dashboard's call, so we don't double-fetch.
   const { data: homeData } = useQuery({
     queryKey: ['home'],
     queryFn: profileApi.getHomeData,
@@ -67,74 +53,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const xpForNext = xpData?.xpForNextLevel ?? 100;
   const xpPct = xpData?.pctToNext ?? 0;
 
-  useEffect(() => { setMoreOpen(false); }, [pathname]);
+  // 5 stable hubs for everyone; Admin appended on desktop only for admins.
+  const coreHubs = HUBS.filter((h) => !h.adminOnly);
+  const showAdmin = user?.role === 'admin';
+  const adminHub = HUBS.find((h) => h.adminOnly);
+  const activeHub = hubForPath(pathname);
 
-  useEffect(() => {
-    if (!moreOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [moreOpen]);
-
-  // Single source of truth — every nav item lists its group + which surfaces
-  // it appears on. The desktop sidebar shows them grouped; the mobile bottom
-  // bar shows only "primary" ones, the rest live in the "More" sheet.
-  const GROUPS: Array<{ key: 'learn' | 'practice' | 'reference'; label: string; items: NavItem[] }> = [
-    {
-      key: 'learn',
-      label: t.nav.groupLearn,
-      items: [
-        { to: '/dashboard',  label: t.nav.dashboard,   icon: Home },
-        { to: '/vocabulary', label: t.nav.words,       icon: BookOpen, badgeKey: 'wordsDue' },
-        { to: '/grammar',    label: t.nav.grammar,     icon: LayoutGrid },
-        { to: '/conjugation', label: t.nav.conjugation, icon: Type },
-        { to: '/dictionary', label: t.nav.dictionary,  icon: Book },
-      ],
-    },
-    {
-      key: 'practice',
-      label: t.nav.groupPractice,
-      items: [
-        { to: '/listening',    label: t.nav.listening,     icon: Headphones },
-        { to: '/reading',      label: t.nav.reading,       icon: BookMarked },
-        { to: '/writing',      label: t.nav.writing,       icon: PenLine },
-        { to: '/drills',       label: t.nav.drills,        icon: Dumbbell },
-        { to: '/conversation', label: t.nav.conversations, icon: MessageCircle },
-      ],
-    },
-    {
-      key: 'reference',
-      label: t.nav.groupReference,
-      items: [
-        { to: '/achievements', label: t.nav.achievements, icon: Trophy },
-        { to: '/friends',      label: t.nav.friends,      icon: Users },
-        // Admin entry — only rendered for admins. Backend independently
-        // enforces access; this just hides the nav for everyone else.
-        ...(user?.role === 'admin'
-          ? [{ to: '/admin', label: t.nav.admin, icon: Shield } as NavItem]
-          : []),
-      ],
-    },
-  ];
-
-  // Mobile primary tabs — keep at 4, the most-used.
-  const PRIMARY: NavItem[] = [
-    { to: '/dashboard',  label: t.nav.dashboard, icon: Home },
-    { to: '/vocabulary', label: t.nav.words,     icon: BookOpen, badgeKey: 'wordsDue' },
-    { to: '/grammar',    label: t.nav.grammar,   icon: LayoutGrid },
-    { to: '/drills',     label: t.nav.drills,    icon: Dumbbell },
-  ];
-  // Everything else for the "More" sheet (everything from GROUPS minus PRIMARY).
-  const primaryRoutes = new Set(PRIMARY.map((p) => p.to));
-  const SECONDARY: NavItem[] = GROUPS
-    .flatMap((g) => g.items)
-    .filter((item) => !primaryRoutes.has(item.to))
-    .concat([{ to: '/profile', label: t.nav.profile, icon: UserCircle }]);
-
-  function getBadge(item: NavItem): number | null {
-    if (item.badgeKey === 'wordsDue' && wordsDue > 0) return wordsDue;
-    return null;
-  }
+  const badgeFor = (key: string): number | null =>
+    key === 'words' && wordsDue > 0 ? wordsDue : null;
 
   return (
     <div className={styles.layout}>
@@ -144,7 +70,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <span className={styles.logoText}>FrenchUp</span>
         </Link>
 
-        {/* Stats card — only on desktop sidebar */}
+        {/* Stats card — desktop sidebar only */}
         <div className={styles.statsCard}>
           <div className={styles.statsTopRow}>
             <div className={`${styles.statsStreak} ${todayCompleted ? styles.statsStreakDone : ''}`}>
@@ -162,60 +88,55 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Desktop nav — grouped */}
+        {/* Desktop nav — 5 flat hubs (+ Admin for admins) */}
         <nav className={styles.nav}>
-          {GROUPS.map((group) => (
-            <div key={group.key} className={styles.navGroup}>
-              <div className={styles.navGroupLabel}>{group.label}</div>
-              {group.items.map(({ to, label, icon: Icon, ...rest }) => {
-                const badge = getBadge({ to, label, icon: Icon, ...rest });
-                return (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={styles.navLink}
-                    activeProps={{ className: styles.navLinkActive }}
-                  >
-                    <Icon size={18} />
-                    <span>{label}</span>
-                    {badge !== null && <span className={styles.navBadge}>{badge}</span>}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+          <div className={styles.navGroup}>
+            {coreHubs.map((hub) => {
+              const Icon = hub.icon;
+              const badge = badgeFor(hub.key);
+              return (
+                <Link
+                  key={hub.key}
+                  to={hub.defaultRoute}
+                  className={`${styles.navLink} ${activeHub?.key === hub.key ? styles.navLinkActive : ''}`}
+                >
+                  <Icon size={18} />
+                  <span>{t.nav[hub.navKey]}</span>
+                  {badge !== null && <span className={styles.navBadge}>{badge}</span>}
+                </Link>
+              );
+            })}
+            {showAdmin && adminHub && (
+              <Link
+                to={adminHub.defaultRoute}
+                className={`${styles.navLink} ${activeHub?.key === 'admin' ? styles.navLinkActive : ''}`}
+              >
+                <adminHub.icon size={18} />
+                <span>{t.nav[adminHub.navKey]}</span>
+              </Link>
+            )}
+          </div>
         </nav>
 
-        {/* Mobile bottom nav — 4 primary + "More" */}
+        {/* Mobile bottom nav — exactly the 5 core hubs, no "More" sheet */}
         <nav className={styles.mobileNav}>
-          {PRIMARY.map(({ to, label, icon: Icon, ...rest }) => {
-            const badge = getBadge({ to, label, icon: Icon, ...rest });
+          {coreHubs.map((hub) => {
+            const Icon = hub.icon;
+            const badge = badgeFor(hub.key);
             return (
               <Link
-                key={to}
-                to={to}
-                className={styles.mobileNavLink}
-                activeProps={{ className: styles.mobileNavLinkActive }}
+                key={hub.key}
+                to={hub.defaultRoute}
+                className={`${styles.mobileNavLink} ${activeHub?.key === hub.key ? styles.mobileNavLinkActive : ''}`}
               >
                 <div className={styles.mobileIconWrap}>
                   <Icon size={22} />
                   {badge !== null && <span className={styles.mobileBadge}>{badge}</span>}
                 </div>
-                <span>{label}</span>
+                <span>{t.nav[hub.navKey]}</span>
               </Link>
             );
           })}
-          <button
-            type="button"
-            onClick={() => setMoreOpen(true)}
-            className={`${styles.mobileNavLink} ${moreOpen ? styles.mobileNavLinkActive : ''}`}
-            aria-expanded={moreOpen}
-          >
-            <div className={styles.mobileIconWrap}>
-              <MoreHorizontal size={22} />
-            </div>
-            <span>{t.nav.more}</span>
-          </button>
         </nav>
 
         <div className={styles.sidebarFooter}>
@@ -228,8 +149,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className={styles.userAvatar}>
               {avatarUrl
                 ? <img src={avatarUrl} alt="avatar" className={styles.userAvatarImg} />
-                : (user?.name?.[0]?.toUpperCase() ?? '?')
-              }
+                : (user?.name?.[0]?.toUpperCase() ?? '?')}
             </div>
             <div className={styles.userDetails}>
               <span className={styles.userName}>{user?.name}</span>
@@ -247,64 +167,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <main className={styles.main}>
+        <HubTabs />
         {children}
       </main>
-
-      {/* Mobile "More" sheet */}
-      {moreOpen && (
-        <div
-          className={styles.sheetBackdrop}
-          onClick={() => setMoreOpen(false)}
-          role="presentation"
-        >
-          <div
-            className={styles.sheet}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label={t.nav.moreSheetTitle}
-          >
-            <div className={styles.sheetHandle} />
-            <div className={styles.sheetHeader}>
-              <h2 className={styles.sheetTitle}>{t.nav.moreSheetTitle}</h2>
-              <button
-                type="button"
-                className={styles.sheetClose}
-                onClick={() => setMoreOpen(false)}
-                aria-label={t.pwa.dismiss}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className={styles.sheetGrid}>
-              {SECONDARY.map(({ to, label, icon: Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className={styles.sheetItem}
-                  activeProps={{ className: `${styles.sheetItem} ${styles.sheetItemActive}` }}
-                >
-                  <Icon size={22} />
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </div>
-
-            <div className={styles.sheetDivider} />
-
-            <button
-              type="button"
-              className={styles.sheetThemeRow}
-              onClick={toggle}
-            >
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
-              <span>{t.nav.theme}</span>
-              <span className={styles.sheetThemeValue}>{isDark ? 'Dark' : 'Light'}</span>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -22,6 +22,8 @@ export const en: Translations = {
     groupReference: 'Reference',
     admin: 'Admin',
     friends: 'Friends',
+    learnTab: 'Learn',
+    topicsTab: 'Topics',
     streakDays: 'day streak',
     streakDay: 'day',
     streakDaysFew: 'days',

@@ -1,0 +1,70 @@
+.strip {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
+}
+
+.tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.tabActive,
+.tabActive:hover {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+/* Locked (progressive disclosure) — visible but not navigable. */
+.tabLocked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lockIcon {
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Mobile: horizontally scrollable, sticky under the top ── */
+@media (max-width: 768px) {
+  .strip {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    margin-bottom: var(--space-4);
+  }
+
+  .strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+}
