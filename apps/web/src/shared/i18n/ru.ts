@@ -21,6 +21,7 @@ export const ru: DeepRecord = {
     groupLearn: 'Изучение',
     groupPractice: 'Практика',
     groupReference: 'Справка',
+    admin: 'Админ',
     streakDays: 'дней подряд',
     streakDay: 'день',
     streakDaysFew: 'дня',

@@ -26,6 +26,7 @@ import { Route as AuthDictionaryRouteImport } from './app/routes/_auth.dictionar
 import { Route as AuthDashboardRouteImport } from './app/routes/_auth.dashboard'
 import { Route as AuthConversationRouteImport } from './app/routes/_auth.conversation'
 import { Route as AuthConjugationRouteImport } from './app/routes/_auth.conjugation'
+import { Route as AuthAdminRouteImport } from './app/routes/_auth.admin'
 import { Route as AuthAchievementsRouteImport } from './app/routes/_auth.achievements'
 import { Route as AuthWritingSlugRouteImport } from './app/routes/_auth.writing.$slug'
 import { Route as AuthReadingSlugRouteImport } from './app/routes/_auth.reading.$slug'
@@ -118,6 +119,11 @@ const AuthConjugationRoute = AuthConjugationRouteImport.update({
   path: '/conjugation',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthAdminRoute = AuthAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthAchievementsRoute = AuthAchievementsRouteImport.update({
   id: '/achievements',
   path: '/achievements',
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/achievements': typeof AuthAchievementsRoute
+  '/admin': typeof AuthAdminRoute
   '/conjugation': typeof AuthConjugationRoute
   '/conversation': typeof AuthConversationRoute
   '/dashboard': typeof AuthDashboardRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/achievements': typeof AuthAchievementsRoute
+  '/admin': typeof AuthAdminRoute
   '/conjugation': typeof AuthConjugationRoute
   '/conversation': typeof AuthConversationRoute
   '/dashboard': typeof AuthDashboardRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_auth/achievements': typeof AuthAchievementsRoute
+  '/_auth/admin': typeof AuthAdminRoute
   '/_auth/conjugation': typeof AuthConjugationRoute
   '/_auth/conversation': typeof AuthConversationRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/achievements'
+    | '/admin'
     | '/conjugation'
     | '/conversation'
     | '/dashboard'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/achievements'
+    | '/admin'
     | '/conjugation'
     | '/conversation'
     | '/dashboard'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/_auth/achievements'
+    | '/_auth/admin'
     | '/_auth/conjugation'
     | '/_auth/conversation'
     | '/_auth/dashboard'
@@ -439,6 +451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConjugationRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/admin': {
+      id: '/_auth/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthAdminRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/achievements': {
       id: '/_auth/achievements'
       path: '/achievements'
@@ -555,6 +574,7 @@ const AuthWritingRouteWithChildren = AuthWritingRoute._addFileChildren(
 
 interface AuthRouteChildren {
   AuthAchievementsRoute: typeof AuthAchievementsRoute
+  AuthAdminRoute: typeof AuthAdminRoute
   AuthConjugationRoute: typeof AuthConjugationRoute
   AuthConversationRoute: typeof AuthConversationRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
@@ -571,6 +591,7 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthAchievementsRoute: AuthAchievementsRoute,
+  AuthAdminRoute: AuthAdminRoute,
   AuthConjugationRoute: AuthConjugationRoute,
   AuthConversationRoute: AuthConversationRoute,
   AuthDashboardRoute: AuthDashboardRoute,

@@ -20,6 +20,7 @@ export const en: Translations = {
     groupLearn: 'Learn',
     groupPractice: 'Practice',
     groupReference: 'Reference',
+    admin: 'Admin',
     streakDays: 'day streak',
     streakDay: 'day',
     streakDaysFew: 'days',
