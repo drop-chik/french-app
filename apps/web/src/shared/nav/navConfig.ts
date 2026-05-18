@@ -121,3 +121,16 @@ export function activeTabRoute(pathname: string, hub: NavHub): string | null {
   const p = normalize(pathname);
   return hub.tabs?.find((t) => t.route === p)?.route ?? null;
 }
+
+/** Where a hub link should point: the first tab the user can actually open. */
+export function hubEntryRoute(hub: NavHub, userLevel: string | undefined): string {
+  if (!hub.tabs || hub.tabs.length === 0) return hub.defaultRoute;
+  const firstOpen = hub.tabs.find((t) => isUnlocked(t.minLevel, userLevel));
+  return firstOpen?.route ?? hub.defaultRoute;
+}
+
+/** True when every tab in the hub is still locked for this user's level. */
+export function hubAllLocked(hub: NavHub, userLevel: string | undefined): boolean {
+  if (!hub.tabs || hub.tabs.length === 0) return false;
+  return hub.tabs.every((t) => !isUnlocked(t.minLevel, userLevel));
+}

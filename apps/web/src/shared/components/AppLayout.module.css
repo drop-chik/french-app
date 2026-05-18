@@ -218,6 +218,20 @@
   line-height: 1;
 }
 
+.navLock {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.mobileLock {
+  position: absolute;
+  top: -4px;
+  left: -8px;
+  color: var(--color-text-tertiary);
+}
+
 /* Mobile nav: rendered as a separate element, hidden on desktop */
 .mobileNav {
   display: none;

@@ -25,6 +25,7 @@ export const ru: DeepRecord = {
     friends: 'Друзья',
     learnTab: 'Учить',
     topicsTab: 'Темы',
+    lockedAt: 'Откроется на уровне {level}',
     streakDays: 'дней подряд',
     streakDay: 'день',
     streakDaysFew: 'дня',

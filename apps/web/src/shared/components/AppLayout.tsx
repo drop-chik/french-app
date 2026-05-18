@@ -1,13 +1,13 @@
 import { type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Moon, Sun, Flame } from 'lucide-react';
+import { Moon, Sun, Flame, Lock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../i18n';
 import { profileApi } from '../../features/profile/api';
 import { achievementsApi } from '../../features/achievements/api';
-import { HUBS, hubForPath } from '../nav/navConfig';
+import { HUBS, hubForPath, hubEntryRoute, hubAllLocked } from '../nav/navConfig';
 import { HubTabs } from './HubTabs';
 import foxIcon from '../../pages/landing/fox-icon.png';
 import styles from './AppLayout.module.css';
@@ -94,14 +94,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {coreHubs.map((hub) => {
               const Icon = hub.icon;
               const badge = badgeFor(hub.key);
+              const locked = hubAllLocked(hub, cefrLevel);
               return (
                 <Link
                   key={hub.key}
-                  to={hub.defaultRoute}
+                  to={hubEntryRoute(hub, cefrLevel)}
                   className={`${styles.navLink} ${activeHub?.key === hub.key ? styles.navLinkActive : ''}`}
                 >
                   <Icon size={18} />
                   <span>{t.nav[hub.navKey]}</span>
+                  {locked && <Lock size={13} className={styles.navLock} />}
                   {badge !== null && <span className={styles.navBadge}>{badge}</span>}
                 </Link>
               );
@@ -123,14 +125,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {coreHubs.map((hub) => {
             const Icon = hub.icon;
             const badge = badgeFor(hub.key);
+            const locked = hubAllLocked(hub, cefrLevel);
             return (
               <Link
                 key={hub.key}
-                to={hub.defaultRoute}
+                to={hubEntryRoute(hub, cefrLevel)}
                 className={`${styles.mobileNavLink} ${activeHub?.key === hub.key ? styles.mobileNavLinkActive : ''}`}
               >
                 <div className={styles.mobileIconWrap}>
                   <Icon size={22} />
+                  {locked && <Lock size={11} className={styles.mobileLock} />}
                   {badge !== null && <span className={styles.mobileBadge}>{badge}</span>}
                 </div>
                 <span>{t.nav[hub.navKey]}</span>

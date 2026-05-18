@@ -24,6 +24,7 @@ export const en: Translations = {
     friends: 'Friends',
     learnTab: 'Learn',
     topicsTab: 'Topics',
+    lockedAt: 'Unlocks at level {level}',
     streakDays: 'day streak',
     streakDay: 'day',
     streakDaysFew: 'days',
