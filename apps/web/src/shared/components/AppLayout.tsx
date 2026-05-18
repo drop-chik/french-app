@@ -88,6 +88,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         { to: '/vocabulary', label: t.nav.words,       icon: BookOpen, badgeKey: 'wordsDue' },
         { to: '/grammar',    label: t.nav.grammar,     icon: LayoutGrid },
         { to: '/conjugation', label: t.nav.conjugation, icon: Type },
+        { to: '/dictionary', label: t.nav.dictionary,  icon: Book },
       ],
     },
     {
@@ -105,7 +106,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
       key: 'reference',
       label: t.nav.groupReference,
       items: [
-        { to: '/dictionary',   label: t.nav.dictionary,   icon: Book },
         { to: '/achievements', label: t.nav.achievements, icon: Trophy },
         { to: '/friends',      label: t.nav.friends,      icon: Users },
         // Admin entry — only rendered for admins. Backend independently
