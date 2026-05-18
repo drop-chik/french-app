@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from '@tanstack/react-router';
-import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell } from 'lucide-react';
+import { useRouter, Link } from '@tanstack/react-router';
+import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import type { UserProfile } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -22,6 +22,15 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const updateUser = useAuthStore((s) => s.updateUser);
+  const role = useAuthStore((s) => s.user?.role);
+  const settingsRef = useRef<HTMLDetailsElement>(null);
+
+  function openSettings() {
+    const el = settingsRef.current;
+    if (!el) return;
+    el.open = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
@@ -253,6 +262,28 @@ export function ProfilePage() {
       />
       {avatarError && <p className={styles.errorBanner}>{avatarError}</p>}
 
+      {/* Quick access — Profile is a landing hub */}
+      <div className={styles.quickGrid}>
+        <Link to="/achievements" className={styles.quickCard}>
+          <Trophy size={20} className={styles.quickIcon} />
+          <span className={styles.quickLabel}>{t.nav.achievements}</span>
+        </Link>
+        <Link to="/friends" className={styles.quickCard}>
+          <Users size={20} className={styles.quickIcon} />
+          <span className={styles.quickLabel}>{t.nav.friends}</span>
+        </Link>
+        <button type="button" className={styles.quickCard} onClick={openSettings}>
+          <Settings size={20} className={styles.quickIcon} />
+          <span className={styles.quickLabel}>{t.profile.settings}</span>
+        </button>
+        {role === 'admin' && (
+          <Link to="/admin" className={styles.quickCard}>
+            <Shield size={20} className={styles.quickIcon} />
+            <span className={styles.quickLabel}>{t.nav.admin}</span>
+          </Link>
+        )}
+      </div>
+
       {/* 2. Streak + Weekly goal */}
       <div className={styles.twoCol}>
         <StreakCard
@@ -373,7 +404,7 @@ export function ProfilePage() {
       )}
 
       {/* 6. Settings accordion */}
-      <details className={styles.accordion}>
+      <details className={styles.accordion} ref={settingsRef}>
         <summary className={styles.accordionSummary}>
           <Settings size={18} />
           <span>{t.profile.settings}</span>

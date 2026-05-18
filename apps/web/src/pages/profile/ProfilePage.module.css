@@ -63,6 +63,45 @@
   border-radius: var(--radius-md);
 }
 
+/* ── Quick-access hub cards (Profile is a landing) ── */
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.quickCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.quickCard:hover {
+  border-color: var(--color-brand);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.quickIcon { color: var(--color-brand); }
+
+.quickLabel {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
 /* ── Two-column layout for Streak + Goal ── */
 .twoCol {
   display: grid;
