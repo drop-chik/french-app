@@ -15,6 +15,7 @@ import {
   uniqueIndex,
   customType,
   char,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 
 // Postgres BYTEA — used by tts_cache to store generated MP3 bytes inline.
@@ -52,6 +53,9 @@ export const users = pgTable('users', {
   placementTestDone: boolean('placement_test_done').default(false).notNull(),
   // 'user' (default) | 'admin' — gates the /admin panel and /admin API.
   role: varchar('role', { length: 20 }).default('user').notNull(),
+  // Unique public @handle (e.g. "kraid-7f2a"). Backfilled in 0019 for
+  // existing users; new users get one at registration. Editable in profile.
+  tag: varchar('tag', { length: 30 }).unique().notNull(),
   streakRepairUsedAt: timestamp('streak_repair_used_at'),
   streakRepairSavedValue: integer('streak_repair_saved_value').default(0),
   xp: integer('xp').default(0).notNull(),
@@ -505,3 +509,57 @@ export const ttsCache = pgTable('tts_cache', {
 }, (t) => [
   index('idx_tts_cache_text').on(t.text),
 ]);
+
+// ─── Social layer ───────────────────────────────────────────────────────────
+
+// Follow graph. Asymmetric (Duolingo-style): follower_id follows followee_id,
+// no approval. "Following" = whose activity shows in my feed.
+export const follows = pgTable(
+  'follows',
+  {
+    followerId: uuid('follower_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    followeeId: uuid('followee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.followerId, t.followeeId] }),
+    index('idx_follows_followee').on(t.followeeId),
+    index('idx_follows_follower').on(t.followerId),
+  ],
+);
+
+// Activity-feed events. `dedupeKey` + the partial unique index make
+// milestone emits (streak/level/achievement) idempotent — recordActivity
+// can be called repeatedly without producing duplicate feed rows.
+export const activityEvents = pgTable(
+  'activity_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    // 'joined' | 'achievement' | 'level_up' | 'streak'
+    type: varchar('type', { length: 30 }).notNull(),
+    payload: jsonb('payload').default({}).notNull(),
+    dedupeKey: varchar('dedupe_key', { length: 80 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('idx_activity_user_created').on(t.userId, t.createdAt),
+    uniqueIndex('uq_activity_dedupe')
+      .on(t.userId, t.type, t.dedupeKey)
+      .where(sql`${t.dedupeKey} IS NOT NULL`),
+  ],
+);
+
+// Reactions (👏) on feed events — one per (event, user).
+export const activityReactions = pgTable(
+  'activity_reactions',
+  {
+    eventId: uuid('event_id').notNull().references(() => activityEvents.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.eventId, t.userId] }),
+    index('idx_reactions_event').on(t.eventId),
+  ],
+);

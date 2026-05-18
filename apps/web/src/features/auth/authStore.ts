@@ -4,7 +4,7 @@ import type { User } from '@french-app/shared-types';
 
 interface AuthState {
   accessToken: string | null;
-  user: Pick<User, 'id' | 'email' | 'name' | 'level' | 'placementTestDone' | 'role'> | null;
+  user: Pick<User, 'id' | 'email' | 'name' | 'level' | 'placementTestDone' | 'role' | 'tag'> | null;
   isAuthenticated: boolean;
   setAuth: (token: string, user: AuthState['user']) => void;
   updateUser: (updates: Partial<AuthState['user']>) => void;

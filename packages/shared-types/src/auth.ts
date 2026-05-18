@@ -18,5 +18,6 @@ export interface AuthResponse {
     level: import('./user.js').LanguageLevel;
     placementTestDone: boolean;
     role: import('./user.js').UserRole;
+    tag: string;
   };
 }

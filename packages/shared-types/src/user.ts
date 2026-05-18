@@ -9,6 +9,7 @@ export interface User {
   level: LanguageLevel;
   placementTestDone: boolean;
   role: UserRole;
+  tag: string;
   createdAt: string;
   updatedAt: string;
 }

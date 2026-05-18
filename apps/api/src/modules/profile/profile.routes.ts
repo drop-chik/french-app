@@ -46,11 +46,12 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
           name:                 { type: 'string', minLength: 1 },
           email:                { type: 'string', format: 'email' },
           uiLanguage:           { type: 'string', enum: ['ru', 'en'] },
+          tag:                  { type: 'string', minLength: 3, maxLength: 30 },
           dailyNewWordsLimit:   { type: 'integer', minimum: 1, maximum: 100 },
           dailyDueWordsLimit:   { type: 'integer', minimum: 1, maximum: 200 },
         },
       },
-      response: { 200: userSchema, 409: errorSchema },
+      response: { 200: userSchema, 400: errorSchema, 409: errorSchema },
     },
   }, async (request, reply) => {
     const { userId } = request.user;
@@ -58,6 +59,7 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
       name?: string;
       email?: string;
       uiLanguage?: string;
+      tag?: string;
       dailyNewWordsLimit?: number;
       dailyDueWordsLimit?: number;
     };
@@ -67,6 +69,12 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     } catch (err) {
       if (err instanceof Error && err.message === 'EMAIL_TAKEN') {
         return reply.status(409).send({ error: 'Email already in use' });
+      }
+      if (err instanceof Error && err.message === 'TAG_TAKEN') {
+        return reply.status(409).send({ error: 'Tag already taken' });
+      }
+      if (err instanceof Error && err.message === 'INVALID_TAG') {
+        return reply.status(400).send({ error: 'Invalid tag format' });
       }
       throw err;
     }

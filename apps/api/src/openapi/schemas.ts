@@ -24,6 +24,7 @@ export const userSchema = {
     uiLanguage:          { type: 'string' },
     placementTestDone:   { type: 'boolean' },
     role:                { type: 'string', enum: ['user', 'admin'] },
+    tag:                 { type: 'string' },
     dailyNewWordsLimit:  { type: 'integer' },
     dailyDueWordsLimit:  { type: 'integer' },
     createdAt:           { type: 'string', format: 'date-time' },

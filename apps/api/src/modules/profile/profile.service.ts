@@ -18,6 +18,7 @@ export async function getProfile(db: DB, userId: string) {
       uiLanguage: true,
       placementTestDone: true,
       role: true,
+      tag: true,
       dailyNewWordsLimit: true,
       dailyDueWordsLimit: true,
       createdAt: true,
@@ -34,6 +35,7 @@ export async function updateProfile(
     name?: string;
     email?: string;
     uiLanguage?: string;
+    tag?: string;
     dailyNewWordsLimit?: number;
     dailyDueWordsLimit?: number;
   },
@@ -45,6 +47,21 @@ export async function updateProfile(
       columns: { id: true },
     });
     if (existing && existing.id !== userId) throw new Error('EMAIL_TAKEN');
+  }
+
+  // Validate + dedupe the public @tag. Normalize to lowercase first; the
+  // regex enforces 3..30 chars, alnum ends, [a-z0-9_-] inside.
+  let normalizedTag: string | undefined;
+  if (data.tag !== undefined) {
+    normalizedTag = data.tag.trim().toLowerCase();
+    if (!/^[a-z0-9](?:[a-z0-9_-]{1,28}[a-z0-9])$/.test(normalizedTag)) {
+      throw new Error('INVALID_TAG');
+    }
+    const taken = await db.query.users.findFirst({
+      where: eq(users.tag, normalizedTag),
+      columns: { id: true },
+    });
+    if (taken && taken.id !== userId) throw new Error('TAG_TAKEN');
   }
 
   // Clamp session limits to sensible bounds: 1..100 new, 1..200 due
@@ -61,6 +78,7 @@ export async function updateProfile(
       ...(data.name !== undefined && { name: data.name }),
       ...(data.email !== undefined && { email: data.email }),
       ...(data.uiLanguage !== undefined && { uiLanguage: data.uiLanguage }),
+      ...(normalizedTag !== undefined && { tag: normalizedTag }),
       ...(newLimit !== undefined && { dailyNewWordsLimit: newLimit }),
       ...(dueLimit !== undefined && { dailyDueWordsLimit: dueLimit }),
       updatedAt: new Date(),
@@ -74,6 +92,7 @@ export async function updateProfile(
       avatarUrl: users.avatarUrl,
       uiLanguage: users.uiLanguage,
       placementTestDone: users.placementTestDone,
+      tag: users.tag,
       dailyNewWordsLimit: users.dailyNewWordsLimit,
       dailyDueWordsLimit: users.dailyDueWordsLimit,
     });
