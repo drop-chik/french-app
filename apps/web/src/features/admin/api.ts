@@ -43,6 +43,19 @@ export interface AdminUserDetail {
   lastActiveAt: string | null;
 }
 
+export interface AdminMetrics {
+  totals: { total: number; new7d: number; new30d: number };
+  active: { dau: number; wau: number; mau: number };
+  timeseries: Array<{ date: string; users: number }>;
+  featureUsage: {
+    vocab: number; grammar: number; listening: number; writing: number;
+    conversation: number; reading: number; drills: number;
+  };
+  retention: Array<{ week: string; size: number; d1: number; d7: number; d30: number }>;
+  backlog: { avgOverdue: number; medianOverdue: number; usersWithBacklog: number; maxOverdue: number };
+  accuracy: number;
+}
+
 export type AdminUserSort = 'created' | 'lastActive' | 'level' | 'name';
 
 export const adminApi = {
@@ -74,4 +87,6 @@ export const adminApi = {
     apiRequest<{ deleted: number }>(`/admin/users/${id}/reset-progress`, {
       method: 'POST',
     }),
+
+  metrics: () => apiRequest<AdminMetrics>('/admin/metrics/overview'),
 };
