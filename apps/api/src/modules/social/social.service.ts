@@ -14,6 +14,7 @@ import {
   getLevelsProgress,
 } from '../profile/profile.service.js';
 import { levelFromXp } from '../achievements/xp.js';
+import { sendToUser } from '../push/push.service.js';
 
 export interface UserCard {
   id: string;
@@ -154,7 +155,29 @@ export async function followUser(
     .onConflictDoNothing()
     .returning({ followerId: follows.followerId });
 
-  return { ok: true, isNew: inserted.length > 0 };
+  const isNew = inserted.length > 0;
+
+  // Notify the followee — only on a genuinely new follow. Best-effort.
+  if (isNew) {
+    try {
+      const follower = await db.query.users.findFirst({
+        where: eq(users.id, followerId),
+        columns: { tag: true },
+      });
+      if (follower) {
+        await sendToUser(db, followeeId, {
+          title: 'Новый подписчик',
+          body: `@${follower.tag} подписался на вас`,
+          url: '/friends',
+          tag: 'follow',
+        });
+      }
+    } catch (err) {
+      console.error('[social] follow push failed (non-fatal):', err);
+    }
+  }
+
+  return { ok: true, isNew };
 }
 
 export async function unfollowUser(
