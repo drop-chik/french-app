@@ -25,6 +25,7 @@ import conjugationRoutes from './modules/conjugation/conjugation.routes.js';
 import achievementsRoutes from './modules/achievements/achievements.routes.js';
 import pushRoutes from './modules/push/push.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import socialRoutes from './modules/social/social.routes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -125,6 +126,7 @@ await fastify.register(conjugationRoutes, { prefix: '/conjugation' });
 await fastify.register(achievementsRoutes, { prefix: '/achievements' });
 await fastify.register(pushRoutes, { prefix: '/push' });
 await fastify.register(adminRoutes, { prefix: '/admin' });
+await fastify.register(socialRoutes, { prefix: '/social' });
 
 // Health check
 fastify.get('/health', {
