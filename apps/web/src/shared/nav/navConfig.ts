@@ -67,21 +67,21 @@ export const HUBS: NavHub[] = [
     prefixes: ['/grammar', '/conjugation', '/drills'],
     tabs: [
       { key: 'topics', route: '/grammar', navKey: 'topicsTab', icon: LayoutGrid, minLevel: 'A1' },
-      { key: 'conj', route: '/conjugation', navKey: 'conjugation', icon: Type, minLevel: 'A2' },
       { key: 'drills', route: '/drills', navKey: 'drills', icon: Dumbbell, minLevel: 'A2' },
+      { key: 'conj', route: '/conjugation', navKey: 'conjugation', icon: Type, minLevel: 'A2' },
     ],
   },
   {
     key: 'practice',
     navKey: 'groupPractice',
     icon: GraduationCap,
-    defaultRoute: '/listening',
+    defaultRoute: '/reading',
     prefixes: ['/listening', '/reading', '/writing', '/conversation'],
     tabs: [
-      { key: 'listening', route: '/listening', navKey: 'listening', icon: Headphones, minLevel: 'A2' },
       { key: 'reading', route: '/reading', navKey: 'reading', icon: BookMarked, minLevel: 'A2' },
-      { key: 'conversation', route: '/conversation', navKey: 'conversations', icon: MessageCircle, minLevel: 'A2' },
       { key: 'writing', route: '/writing', navKey: 'writing', icon: PenLine, minLevel: 'B1' },
+      { key: 'listening', route: '/listening', navKey: 'listening', icon: Headphones, minLevel: 'A2' },
+      { key: 'conversation', route: '/conversation', navKey: 'conversations', icon: MessageCircle, minLevel: 'A2' },
     ],
   },
   {
