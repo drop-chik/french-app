@@ -40,13 +40,15 @@ export function GrammarTopicPage({ slug }: { slug: string }) {
   // Words tagged with this grammar topic — rendered as a section under the
   // theory. If the topic has no tagged words, the section is hidden entirely
   // so we don't clutter the UI with an empty card.
+  // Fetch on mount (not only on the theory tab) so the post-exercise result
+  // screen can decide whether to show the "practice these words" CTA.
   const { data: relatedWordsData } = useQuery({
     queryKey: ['words-by-tag', slug, lang],
     queryFn: () => wordsApi.getByGrammarTag(slug),
-    enabled: tab === 'theory',
     staleTime: 5 * 60 * 1000,
   });
   const relatedWords = relatedWordsData?.words ?? [];
+  const hasRelatedWords = relatedWords.length > 0;
 
   const submitMutation = useMutation({
     mutationFn: ({ score, total }: { score: number; total: number }) =>
@@ -223,10 +225,10 @@ export function GrammarTopicPage({ slug }: { slug: string }) {
               {t.grammar.backToList}
             </button>
           </div>
-          {result.isCompleted && (
+          {result.isCompleted && hasRelatedWords && (
             <button
               className={styles.practiceWordsBtn}
-              onClick={() => navigate({ to: '/vocabulary' })}
+              onClick={() => navigate({ to: '/vocabulary', search: { tag: slug } as never })}
             >
               {t.grammar.practiceWords}
             </button>
