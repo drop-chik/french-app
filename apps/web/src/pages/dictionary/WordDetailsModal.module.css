@@ -102,6 +102,17 @@
   line-height: 1.1;
 }
 
+/* IPA — mono, slightly smaller, secondary colour. Sits under .french. */
+.ipa {
+  display: block;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
 .pos {
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);

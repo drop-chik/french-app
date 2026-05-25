@@ -4,6 +4,7 @@ import { useI18n } from '../../shared/i18n';
 export interface WordData {
   id: string;
   french: string;
+  ipa: string | null;
   translation: string;
   level: string;
   category: string;

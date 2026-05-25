@@ -576,6 +576,7 @@ function IntroStage({ word, onAdvance }: { word: WordData; onAdvance: () => void
       <div className={styles.introBadge}>{t.learn.newWord}</div>
       <AudioBtn word={word} />
       <h2 className={styles.bigFrench}>{word.french}</h2>
+      {word.ipa && <span className={styles.bigIpa}>/{word.ipa}/</span>}
       {(word.partOfSpeech || word.gender) && (
         <p className={styles.posLine}>
           {word.partOfSpeech}

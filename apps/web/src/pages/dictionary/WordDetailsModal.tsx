@@ -147,6 +147,7 @@ export function WordDetailsModal({ wordId, onClose, onMutated, onEdit }: Props) 
               </button>
               <div className={styles.headerText}>
                 <h2 className={styles.french}>{word.french}</h2>
+                {word.ipa && <span className={styles.ipa}>/{word.ipa}/</span>}
                 {word.partOfSpeech && (
                   <span className={styles.pos}>
                     {word.partOfSpeech}

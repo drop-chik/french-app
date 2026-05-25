@@ -111,6 +111,17 @@
   flex: 1;
 }
 
+/* IPA hint sits right under the big French word — same family as the
+   WordDetailsModal version, scaled for the intro card. */
+.bigIpa {
+  display: block;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: var(--text-base);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+  line-height: 1.2;
+}
+
 .bigTranslation {
   font-size: var(--text-xl);
   font-weight: 600;
