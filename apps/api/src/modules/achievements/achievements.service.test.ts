@@ -93,19 +93,19 @@ describe('evaluateAchievements', () => {
     expect(evaluateAchievements({ ...zero, wordsLearning: 1 })).toContain('first_word');
   });
 
-  it('does not unlock words_10 with only 5 mastered', () => {
-    const got = evaluateAchievements({ ...zero, wordsMastered: 5 });
+  it('does not unlock words_10 with only 5 learned', () => {
+    const got = evaluateAchievements({ ...zero, wordsLearned: 5 });
     expect(got).not.toContain('words_10');
   });
 
   it('unlocks words_10, words_50 at the right thresholds', () => {
-    expect(evaluateAchievements({ ...zero, wordsMastered: 10 })).toContain('words_10');
-    expect(evaluateAchievements({ ...zero, wordsMastered: 49 })).not.toContain('words_50');
-    expect(evaluateAchievements({ ...zero, wordsMastered: 50 })).toContain('words_50');
+    expect(evaluateAchievements({ ...zero, wordsLearned: 10 })).toContain('words_10');
+    expect(evaluateAchievements({ ...zero, wordsLearned: 49 })).not.toContain('words_50');
+    expect(evaluateAchievements({ ...zero, wordsLearned: 50 })).toContain('words_50');
   });
 
   it('higher tiers do not unlock without meeting the threshold', () => {
-    const got = evaluateAchievements({ ...zero, wordsMastered: 100 });
+    const got = evaluateAchievements({ ...zero, wordsLearned: 100 });
     expect(got).toContain('words_100');
     expect(got).not.toContain('words_500');
   });
@@ -119,6 +119,7 @@ describe('evaluateAchievements', () => {
   it('a maxed-out user unlocks the entire catalog', () => {
     const maxed: UserMetrics = {
       wordsMastered: 9999,
+      wordsLearned: 9999,
       wordsLearning: 9999,
       streakDays: 9999,
       grammarCompleted: 9999,
