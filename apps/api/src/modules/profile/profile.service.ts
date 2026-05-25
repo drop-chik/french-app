@@ -152,6 +152,15 @@ export async function getStats(db: DB, userId: string) {
   }
   const totalWords = Object.values(wordCounts).reduce((a, b) => a + b, 0);
 
+  // Fast "Выучено" metric — 2 correct answers in a row. Derived from the
+  // existing SM-2 repetitions counter (resets to 0 on a wrong answer), so this
+  // matches "currently remembered" not "ever seen". No schema change.
+  const [learnedResult] = await db
+    .select({ cnt: count() })
+    .from(wordProgress)
+    .where(and(eq(wordProgress.userId, userId), gte(wordProgress.repetitions, 2)));
+  const wordsLearned = Number(learnedResult?.cnt ?? 0);
+
   // Grammar stats
   const grammarStats = await db
     .select({ status: grammarProgress.status, cnt: count() })
@@ -220,6 +229,7 @@ export async function getStats(db: DB, userId: string) {
     words: {
       total: totalWords,
       mastered: wordCounts.mastered,
+      learned: wordsLearned,
       learning: wordCounts.learning + wordCounts.review,
       new: wordCounts.new,
     },
@@ -458,7 +468,9 @@ export async function getHomeData(db: DB, userId: string, level: LanguageLevel, 
     _getListeningData(db, userId, level),
   ]);
 
-  const wordPct = wordStats.totalWords > 0 ? wordStats.masteredWords / wordStats.totalWords : 0;
+  // Level-progress bar uses the fast "Выучено" metric so the bar moves on
+  // Day 1 instead of waiting 3 weeks for the strict SRS mastered status.
+  const wordPct = wordStats.totalWords > 0 ? wordStats.learnedWords / wordStats.totalWords : 0;
   const grammarPct = grammarData.total > 0 ? grammarData.completed / grammarData.total : 0;
   const listeningPct = listeningData.total > 0 ? listeningData.completed / listeningData.total : 0;
   const levelPercent = Math.round((wordPct * 0.5 + grammarPct * 0.3 + listeningPct * 0.2) * 100);
@@ -470,6 +482,7 @@ export async function getHomeData(db: DB, userId: string, level: LanguageLevel, 
       level,
       percent: levelPercent,
       masteredWords: wordStats.masteredWords,
+      learnedWords: wordStats.learnedWords,
       totalWords: wordStats.totalWords,
       completedGrammar: grammarData.completed,
       totalGrammar: grammarData.total,
@@ -504,7 +517,11 @@ async function _getWordStats(db: DB, userId: string, level: LanguageLevel) {
     .where(eq(words.level, level));
 
   const progressAtLevel = await db
-    .select({ status: wordProgress.status, nextReview: wordProgress.nextReview })
+    .select({
+      status: wordProgress.status,
+      nextReview: wordProgress.nextReview,
+      repetitions: wordProgress.repetitions,
+    })
     .from(wordProgress)
     .innerJoin(words, eq(wordProgress.wordId, words.id))
     .where(and(eq(wordProgress.userId, userId), eq(words.level, level)));
@@ -526,15 +543,17 @@ async function _getWordStats(db: DB, userId: string, level: LanguageLevel) {
 
   const now = new Date();
   let mastered = 0;
+  let learned = 0;
   for (const p of progressAtLevel) {
     if (p.status === 'mastered') mastered++;
+    if (p.repetitions >= 2) learned++;
     void now;
   }
 
   const totalWords = Number(totalResult?.cnt ?? 0);
   const newCount = Math.max(0, Math.min(totalWords - progressAtLevel.length, 20));
 
-  return { totalWords, masteredWords: mastered, due, newCount };
+  return { totalWords, masteredWords: mastered, learnedWords: learned, due, newCount };
 }
 
 async function _getGrammarData(db: DB, userId: string, level: LanguageLevel, lang: 'ru' | 'en') {
@@ -599,7 +618,7 @@ async function _getListeningData(db: DB, userId: string, level: LanguageLevel) {
 export async function getLevelsProgress(db: DB, userId: string) {
   const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
 
-  const [totals, mastered] = await Promise.all([
+  const [totals, mastered, learned] = await Promise.all([
     db
       .select({ level: words.level, cnt: count() })
       .from(words)
@@ -617,6 +636,18 @@ export async function getLevelsProgress(db: DB, userId: string) {
         ),
       )
       .groupBy(words.level),
+    db
+      .select({ level: words.level, cnt: count() })
+      .from(wordProgress)
+      .innerJoin(words, eq(wordProgress.wordId, words.id))
+      .where(
+        and(
+          eq(wordProgress.userId, userId),
+          gte(wordProgress.repetitions, 2),
+          inArray(words.level, [...LEVELS]),
+        ),
+      )
+      .groupBy(words.level),
   ]);
 
   const totalMap: Record<string, number> = {};
@@ -625,14 +656,21 @@ export async function getLevelsProgress(db: DB, userId: string) {
   const masteredMap: Record<string, number> = {};
   for (const r of mastered) masteredMap[r.level] = Number(r.cnt);
 
+  const learnedMap: Record<string, number> = {};
+  for (const r of learned) learnedMap[r.level] = Number(r.cnt);
+
   return LEVELS.map((level) => {
     const total = totalMap[level] ?? 0;
     const m = masteredMap[level] ?? 0;
+    const l = learnedMap[level] ?? 0;
     return {
       level,
       masteredWords: m,
+      learnedWords: l,
       totalWords: total,
-      percent: total > 0 ? Math.round((m / total) * 100) : 0,
+      // Percent is keyed off "learned" (the fast metric) so the bar reflects
+      // visible progress; "освоено K" can be shown separately.
+      percent: total > 0 ? Math.round((l / total) * 100) : 0,
     };
   });
 }

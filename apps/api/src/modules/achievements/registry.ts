@@ -10,7 +10,8 @@
  */
 
 export type AchievementMetric =
-  | 'wordsMastered'
+  | 'wordsMastered'       // strict SRS mastery (long-term, interval ≥ 21d)
+  | 'wordsLearned'        // fast metric — 2 correct answers in a row (repetitions ≥ 2)
   | 'wordsLearning'       // words user has ever started reviewing
   | 'streakDays'
   | 'grammarCompleted'
@@ -46,32 +47,32 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   {
     id: 'words_10', category: 'words', icon: '📚', rarity: 'bronze',
     titleRu: 'Десятка', titleEn: 'Tenfold',
-    descRu: 'Освой 10 слов', descEn: 'Master 10 words',
-    metric: 'wordsMastered', threshold: 10,
+    descRu: 'Выучи 10 слов', descEn: 'Learn 10 words',
+    metric: 'wordsLearned', threshold: 10,
   },
   {
     id: 'words_50', category: 'words', icon: '📖', rarity: 'silver',
     titleRu: 'Полка', titleEn: 'Shelf',
-    descRu: 'Освой 50 слов', descEn: 'Master 50 words',
-    metric: 'wordsMastered', threshold: 50,
+    descRu: 'Выучи 50 слов', descEn: 'Learn 50 words',
+    metric: 'wordsLearned', threshold: 50,
   },
   {
     id: 'words_100', category: 'words', icon: '📕', rarity: 'silver',
     titleRu: 'Сотня', titleEn: 'Centurion',
-    descRu: 'Освой 100 слов', descEn: 'Master 100 words',
-    metric: 'wordsMastered', threshold: 100,
+    descRu: 'Выучи 100 слов', descEn: 'Learn 100 words',
+    metric: 'wordsLearned', threshold: 100,
   },
   {
     id: 'words_500', category: 'words', icon: '🎓', rarity: 'gold',
     titleRu: 'Эрудит', titleEn: 'Erudite',
-    descRu: 'Освой 500 слов', descEn: 'Master 500 words',
-    metric: 'wordsMastered', threshold: 500,
+    descRu: 'Выучи 500 слов', descEn: 'Learn 500 words',
+    metric: 'wordsLearned', threshold: 500,
   },
   {
     id: 'words_1000', category: 'words', icon: '🧠', rarity: 'legendary',
     titleRu: 'Тысячник', titleEn: 'Polyglot',
-    descRu: 'Освой 1000 слов', descEn: 'Master 1000 words',
-    metric: 'wordsMastered', threshold: 1000,
+    descRu: 'Выучи 1000 слов', descEn: 'Learn 1000 words',
+    metric: 'wordsLearned', threshold: 1000,
   },
 
   // ── Streak ────────────────────────────────────────────────────────────────

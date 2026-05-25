@@ -1,4 +1,4 @@
-import { eq, and, count, sql, inArray } from 'drizzle-orm';
+import { eq, and, gte, count, sql, inArray } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import {
   users,
@@ -18,6 +18,7 @@ const STREAK_MILESTONES = new Set([3, 7, 30, 100, 365]);
 
 export interface UserMetrics {
   wordsMastered: number;
+  wordsLearned: number;
   wordsLearning: number;
   streakDays: number;
   grammarCompleted: number;
@@ -30,6 +31,7 @@ export interface UserMetrics {
 
 const ZERO_METRICS: UserMetrics = {
   wordsMastered: 0,
+  wordsLearned: 0,
   wordsLearning: 0,
   streakDays: 0,
   grammarCompleted: 0,
@@ -52,6 +54,7 @@ export async function collectMetrics(
 ): Promise<UserMetrics> {
   const [
     masteredRow,
+    learnedRow,
     learningRow,
     grammarRow,
     listeningRow,
@@ -62,6 +65,11 @@ export async function collectMetrics(
   ] = await Promise.all([
     db.select({ cnt: count() }).from(wordProgress)
       .where(and(eq(wordProgress.userId, userId), eq(wordProgress.status, 'mastered'))),
+    // wordsLearned: the motivational fast metric — 2 correct in a row (the
+    // repetitions counter resets on a wrong answer, so this matches "currently
+    // remembered" rather than "ever seen").
+    db.select({ cnt: count() }).from(wordProgress)
+      .where(and(eq(wordProgress.userId, userId), gte(wordProgress.repetitions, 2))),
     db.select({ cnt: count() }).from(wordProgress)
       .where(eq(wordProgress.userId, userId)),
     db.select({ cnt: count() }).from(grammarProgress)
@@ -80,6 +88,7 @@ export async function collectMetrics(
   return {
     ...ZERO_METRICS,
     wordsMastered: Number(masteredRow[0]?.cnt ?? 0),
+    wordsLearned: Number(learnedRow[0]?.cnt ?? 0),
     wordsLearning: Number(learningRow[0]?.cnt ?? 0),
     streakDays: opts.streakDays ?? 0,
     grammarCompleted: Number(grammarRow[0]?.cnt ?? 0),
