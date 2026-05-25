@@ -100,7 +100,16 @@ export async function getStudySession(
         visibleToUser(userId),
       ),
     )
-    .orderBy(asc(words.frequencyRank))
+    // Two-bucket ordering: current-level words first (by frequencyRank ASC,
+    // NULLS LAST is the Postgres default), then everything below the user's
+    // level (also by frequencyRank). Without the bucket a placement-tested
+    // B2 user would get hammered with A1 high-frequency words first because
+    // A1 ranks start at 1; this fixes that without losing the fallback
+    // when the current level runs out of unseen words.
+    .orderBy(
+      sql`CASE WHEN ${words.level} = ${level} THEN 0 ELSE 1 END`,
+      asc(words.frequencyRank),
+    )
     .limit(maxNew * 5); // over-fetch then filter unseen
 
   const newWords = newRows
