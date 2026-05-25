@@ -259,8 +259,11 @@ interface CategoryCardProps {
 }
 
 function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
-  const pct = cat.count > 0 ? Math.round((cat.masteredCount / cat.count) * 100) : 0;
-  const hasProgress = cat.masteredCount > 0;
+  // Cards reflect the fast "Выучено" metric so they move with the user's
+  // visible Profile/Dashboard progress (mastered is the strict long-term stat).
+  const learned = cat.learnedCount ?? cat.masteredCount;
+  const pct = cat.count > 0 ? Math.round((learned / cat.count) * 100) : 0;
+  const hasProgress = learned > 0;
   return (
     <button
       className={`${styles.catCard} ${hasProgress ? styles.catCardActive : ''}`}
@@ -273,7 +276,7 @@ function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
         <ChevronRight size={14} className={styles.catCardArrow} />
       </div>
       <span className={styles.catCardCount}>
-        {cat.masteredCount > 0 ? `${cat.masteredCount} / ${cat.count}` : `${cat.count} слов`}
+        {learned > 0 ? `${learned} / ${cat.count}` : `${cat.count} слов`}
       </span>
       <div className={styles.catProgressRow}>
         <div className={styles.catProgressTrack}>
@@ -559,7 +562,8 @@ export function DictionaryPage() {
   // ── Stats strip ────────────────────────────────────────────────────────────
 
   const categories = catsData?.categories ?? [];
-  const totalMastered = categories.reduce((s, c) => s + c.masteredCount, 0);
+  // Dictionary header shows the fast "Выучено" count to match Profile/Dashboard.
+  const totalLearned = categories.reduce((s, c) => s + (c.learnedCount ?? c.masteredCount), 0);
   const totalWords = categories.reduce((s, c) => s + c.count, 0);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -594,7 +598,7 @@ export function DictionaryPage() {
           {totalWords > 0 && (
             <span className={styles.statsStrip}>
               <span className={styles.statItem} data-color="mastered">
-                <Star size={12} /> {totalMastered}
+                <Star size={12} /> {totalLearned}
               </span>
               <span className={styles.statDivider}>/</span>
               <span className={styles.statTotal}>{totalWords}</span>

@@ -54,6 +54,7 @@ export interface WordCategory {
   name: string;
   count: number;
   masteredCount: number;
+  learnedCount: number;
 }
 
 export const wordsApi = {

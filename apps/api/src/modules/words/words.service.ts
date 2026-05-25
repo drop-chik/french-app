@@ -357,6 +357,7 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
       category: words.category,
       cnt: count(),
       masteredCnt: sql<number>`count(case when ${wordProgress.status} = 'mastered' then 1 end)`,
+      learnedCnt: sql<number>`count(case when ${wordProgress.repetitions} >= 1 then 1 end)`,
     })
     .from(words)
     .leftJoin(
@@ -370,6 +371,7 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
     name: r.category ?? 'other',
     count: Number(r.cnt),
     masteredCount: Number(r.masteredCnt),
+    learnedCount: Number(r.learnedCnt),
   }));
 
   // Sort by the explicit display order; anything unknown bubbles to the end
