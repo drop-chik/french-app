@@ -260,42 +260,62 @@
   }
 }
 
-/* Clean, uniform cards. No per-category gradient — the category identity is
-   carried by name + a tiny 3px stripe on the left edge. All interactive
-   states use the brand colour, matching the rest of the app. */
+/* Card identity: thematic emoji tile (tinted by category colour) + name +
+   slim progress bar. Minimalist but warm; the colour lives in the tile and
+   the progress fill, not in heavy backgrounds. */
 .catCard {
   text-align: left;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) + 4px);
+  padding: var(--space-3);
   cursor: pointer;
   font-family: inherit;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
   position: relative;
   overflow: hidden;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 78px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--space-3);
+  min-height: 84px;
 }
 
-/* Thin coloured stripe on the left edge — the only category-specific accent.
-   Subtle enough not to disrupt the uniform grid, distinct enough to scan. */
-.catCardStrip {
-  position: absolute;
-  left: 0;
-  top: 10%;
-  bottom: 10%;
-  width: 3px;
-  background: var(--cat-color);
-  border-radius: 0 2px 2px 0;
-  opacity: 0.7;
+/* Square tinted tile holding the thematic emoji — sole category accent. */
+.catCardEmoji {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  background: color-mix(in srgb, var(--cat-color) 16%, transparent);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.catCard:hover .catCardEmoji {
+  transform: scale(1.06);
+  background: color-mix(in srgb, var(--cat-color) 24%, transparent);
+}
+
+.catCardBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .catCard:hover {
-  border-color: var(--color-brand);
-  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+  border-color: color-mix(in srgb, var(--cat-color) 55%, var(--color-border) 45%);
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--cat-color) 45%, transparent);
+  transform: translateY(-1px);
 }
 
 .catCardActive {
@@ -361,7 +381,7 @@
 
 .catProgressFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-brand), #6366f1);
+  background: var(--cat-color);
   border-radius: inherit;
   transition: width 0.5s ease;
   min-width: 2px;

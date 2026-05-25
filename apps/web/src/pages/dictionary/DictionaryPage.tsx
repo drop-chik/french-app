@@ -23,6 +23,43 @@ function categoryColor(name: string): string {
   return PALETTE[Math.abs(h) % PALETTE.length] ?? PALETTE[0]!;
 }
 
+// Thematic emoji per category — adds personality without breaking minimalism.
+// Falls back to 📚 for unknown / future categories.
+const CATEGORY_EMOJI: Record<string, string> = {
+  // Parts of speech
+  verbs: '🏃', adjectives: '🎨', colors: '🌈', adverbs: '✨',
+  pronouns: '👉', prepositions: '🧭', conjunctions: '🔗',
+  determiners: '🔖', numbers: '🔢', expressions: '💬', interjections: '❗',
+  // Person
+  family: '👪', body: '🦵', health: '🩺', emotions: '😊',
+  // Daily life
+  food: '🍕', home: '🏠', clothes: '👕', shopping: '🛒',
+  // Time
+  time: '⏰', calendar: '📅',
+  // City / world
+  city: '🏙️', travel: '✈️', nature: '🌳', weather: '🌦️',
+  animals: '🐾', geography: '🌍',
+  // Society
+  environment: '🌱', sports: '⚽', education: '🎓', work: '💼',
+  economy: '💰', politics: '🏛️', law: '⚖️', society: '👥',
+  arts: '🎭', media: '📺',
+  // Mind
+  technology: '💻', science: '🔬', psychology: '🧠',
+  // Generic fallback bucket
+  vocabulary: '📖',
+};
+
+function categoryEmoji(name: string): string {
+  // Direct hit, then progressive suffix stripping (mirrors getCategoryName).
+  if (CATEGORY_EMOJI[name]) return CATEGORY_EMOJI[name]!;
+  const parts = name.split('_');
+  for (let len = parts.length - 1; len >= 1; len--) {
+    const candidate = parts.slice(0, len).join('_');
+    if (CATEGORY_EMOJI[candidate]) return CATEGORY_EMOJI[candidate]!;
+  }
+  return '📚';
+}
+
 function getCategoryName(name: string, categoryNames: Record<string, string>): string {
   // Exact match
   if (categoryNames[name]) return categoryNames[name]!;
@@ -270,19 +307,23 @@ function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
       onClick={onClick}
       style={{ '--cat-color': color } as React.CSSProperties}
     >
-      <span className={styles.catCardStrip} aria-hidden />
-      <div className={styles.catCardTop}>
-        <span className={styles.catCardName}>{label}</span>
-        <ChevronRight size={14} className={styles.catCardArrow} />
-      </div>
-      <span className={styles.catCardCount}>
-        {learned > 0 ? `${learned} / ${cat.count}` : `${cat.count} слов`}
+      <span className={styles.catCardEmoji} aria-hidden>
+        {categoryEmoji(cat.name)}
       </span>
-      <div className={styles.catProgressRow}>
-        <div className={styles.catProgressTrack}>
-          <div className={styles.catProgressFill} style={{ width: `${pct}%` }} />
+      <div className={styles.catCardBody}>
+        <div className={styles.catCardTop}>
+          <span className={styles.catCardName}>{label}</span>
+          <ChevronRight size={14} className={styles.catCardArrow} />
         </div>
-        <span className={styles.catProgressPct}>{pct}%</span>
+        <span className={styles.catCardCount}>
+          {learned > 0 ? `${learned} / ${cat.count}` : `${cat.count} слов`}
+        </span>
+        <div className={styles.catProgressRow}>
+          <div className={styles.catProgressTrack}>
+            <div className={styles.catProgressFill} style={{ width: `${pct}%` }} />
+          </div>
+          <span className={styles.catProgressPct}>{pct}%</span>
+        </div>
       </div>
     </button>
   );
