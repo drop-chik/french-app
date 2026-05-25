@@ -123,6 +123,9 @@ export const words = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     french: varchar('french', { length: 255 }).notNull(),
+    // IPA transcription (без слешей). Заполняется батч-скриптом через
+    // gpt-4o-mini. Nullable — слова без IPA просто не рендерят строку.
+    ipa: varchar('ipa', { length: 30 }),
     translation: varchar('translation', { length: 255 }).notNull(),
     level: languageLevelEnum('level').notNull(),
     category: varchar('category', { length: 100 }).notNull(),
