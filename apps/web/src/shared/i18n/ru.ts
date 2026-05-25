@@ -67,6 +67,7 @@ export const ru: DeepRecord = {
     levelBadge: 'Уровень {level}',
     levelProgress: 'Прогресс уровня {level}',
     masteredWords: '{n} слов',
+    masteredSub: 'из них освоено: {n}',
     completedGrammar: '{n} тем',
     completedListening: '{n} упр.',
     todayPlan: 'Сегодня',

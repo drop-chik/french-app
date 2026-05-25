@@ -18,7 +18,7 @@ interface HeroBannerProps {
   avatarSrc: string | null;
   levelPercent: number;
   streak: number;
-  wordsMastered: number;
+  wordsLearned: number;
   accuracy: number | null;
   grammarCompleted: number;
   xp: XpSummary | null;
@@ -38,7 +38,7 @@ export function HeroBanner(props: HeroBannerProps) {
   const gradient = LEVEL_GRADIENTS[props.level] ?? LEVEL_GRADIENTS.A1!;
 
   const streakAnim = useCountUp(props.streak);
-  const wordsAnim = useCountUp(props.wordsMastered);
+  const wordsAnim = useCountUp(props.wordsLearned);
   const accAnim = useCountUp(props.accuracy ?? 0);
   const gramAnim = useCountUp(props.grammarCompleted);
 

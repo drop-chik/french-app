@@ -93,10 +93,13 @@ export function DashboardPage() {
           <div className={styles.progressFill} style={{ width: `${lp.percent}%` }} />
         </div>
         <div className={styles.progressMeta}>
-          <span>{t.dashboard.masteredWords.replace('{n}', String(lp.masteredWords))} / {lp.totalWords}</span>
+          <span>{t.dashboard.masteredWords.replace('{n}', String(lp.learnedWords ?? lp.masteredWords))} / {lp.totalWords}</span>
           <span>{t.dashboard.completedGrammar.replace('{n}', String(lp.completedGrammar))} / {lp.totalGrammar}</span>
           <span>{t.dashboard.completedListening.replace('{n}', String(lp.completedListening))} / {lp.totalListening}</span>
         </div>
+        <span className={styles.progressSub}>
+          {t.dashboard.masteredSub.replace('{n}', String(lp.masteredWords))}
+        </span>
       </div>
 
       {/* Explore catalog entry */}

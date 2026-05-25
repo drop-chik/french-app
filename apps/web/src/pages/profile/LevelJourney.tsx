@@ -5,6 +5,7 @@ import styles from './LevelJourney.module.css';
 interface LevelData {
   level: string;
   masteredWords: number;
+  learnedWords?: number;
   totalWords: number;
   percent: number;
 }
@@ -33,7 +34,9 @@ export function LevelJourney(props: LevelJourneyProps) {
         {LEVEL_ORDER.map((lvl, i) => {
           const data = levelMap.get(lvl);
           const percent = data?.percent ?? 0;
-          const mastered = data?.masteredWords ?? 0;
+          // Fast metric for the visible "X/Y" — falls back to mastered for
+          // legacy API responses that don't yet carry learnedWords.
+          const learned = data?.learnedWords ?? data?.masteredWords ?? 0;
           const total = data?.totalWords ?? 0;
           const isCurrent = lvl === props.currentLevel;
 
@@ -73,7 +76,7 @@ export function LevelJourney(props: LevelJourneyProps) {
                 <span className={styles.stageStatus}>{status}</span>
                 {nodeState !== 'locked' && (
                   <span className={styles.stageNumbers}>
-                    {mastered}/{total}
+                    {learned}/{total}
                   </span>
                 )}
               </div>

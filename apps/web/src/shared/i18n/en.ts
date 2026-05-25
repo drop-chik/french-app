@@ -66,6 +66,7 @@ export const en: Translations = {
     levelBadge: 'Level {level}',
     levelProgress: 'Level {level} progress',
     masteredWords: '{n} words',
+    masteredSub: 'of which mastered: {n}',
     completedGrammar: '{n} topics',
     completedListening: '{n} ex.',
     todayPlan: 'Today',

@@ -245,7 +245,7 @@ export function ProfilePage() {
         avatarSrc={avatarSrc}
         levelPercent={currentLevelPercent}
         streak={streakData?.streak ?? 0}
-        wordsMastered={stats?.words.mastered ?? 0}
+        wordsLearned={stats?.words.learned ?? stats?.words.mastered ?? 0}
         accuracy={accuracy}
         grammarCompleted={stats?.grammar.completed ?? 0}
         xp={xpData ?? null}

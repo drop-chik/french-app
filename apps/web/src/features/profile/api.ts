@@ -16,7 +16,7 @@ export interface UserProfile {
 }
 
 export interface LearningStats {
-  words: { total: number; mastered: number; learning: number; new: number };
+  words: { total: number; mastered: number; learned: number; learning: number; new: number };
   grammar: { completed: number; inProgress: number };
   listening: { completed: number };
   conversations: number;
@@ -54,6 +54,7 @@ export interface HomeData {
     level: string;
     percent: number;
     masteredWords: number;
+    learnedWords: number;
     totalWords: number;
     completedGrammar: number;
     totalGrammar: number;
@@ -71,6 +72,7 @@ export interface HomeData {
 export interface LevelProgressData {
   level: string;
   masteredWords: number;
+  learnedWords: number;
   totalWords: number;
   percent: number;
 }
