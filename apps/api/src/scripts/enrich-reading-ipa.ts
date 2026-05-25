@@ -1,0 +1,133 @@
+/**
+ * Bake IPA into every entry of every reading_texts.word_map.
+ *
+ * The seed wordMap was only {tr, pos}. After the global IPA batch fills the
+ * `words` table, ~22% of wordMap keys overlap with words and can be enriched
+ * at runtime via getTextBySlug. The other ~78% are reading-only entries
+ * (e.g. "récréation" wasn't added as a standalone word). This script:
+ *   1. Pulls IPA from the `words` table for any overlapping keys (free).
+ *   2. Generates IPA via gpt-4o-mini for the rest (≈$0.02 for ~1500 entries).
+ *   3. Persists the enriched wordMap back to reading_texts.word_map.
+ *
+ * Idempotent: only touches entries where `entry.ipa` is missing. Safe to
+ * re-run after new texts are seeded.
+ *
+ * Run:
+ *   $env:DATABASE_URL = (railway variables --service french-app --json | ConvertFrom-Json).DATABASE_URL
+ *   $env:OPENAI_API_KEY = (railway variables --service french-app --json | ConvertFrom-Json).OPENAI_API_KEY
+ *   cd apps/api
+ *   npx tsx src/scripts/enrich-reading-ipa.ts
+ */
+import 'dotenv/config';
+import { eq, inArray } from 'drizzle-orm';
+import OpenAI from 'openai';
+import { db } from '../db/index.js';
+import { readingTexts, words } from '../db/schema/index.js';
+
+const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
+const CHUNK = 20;
+const SLEEP_MS = 200;
+
+const SYSTEM_PROMPT =
+  'You are a French phonetics expert. Given a JSON array of French words, articles or short phrases, ' +
+  'return a JSON object {"ipa": [...]} where each entry is the IPA transcription of the ' +
+  'corresponding input. ' +
+  'Use the modern Parisian standard. Do NOT include surrounding slashes or brackets. ' +
+  'Use proper IPA characters (ʁ, ɑ̃, ɔ̃, ɛ̃, œ̃, ø, œ, ɥ, ɲ, ʃ, ʒ, etc.). ' +
+  'For multi-word phrases, separate words with a single space and respect liaison. ' +
+  'Keep each transcription concise (≤30 chars). Return ONLY the JSON object.';
+
+interface IpaResponse { ipa: string[] }
+type WordEntry = { tr: string; pos: string; ipa?: string | null };
+
+async function aiTranscribe(inputs: string[]): Promise<string[]> {
+  const resp = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    response_format: { type: 'json_object' },
+    temperature: 0,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: JSON.stringify(inputs) },
+    ],
+  });
+  const raw = resp.choices[0]?.message?.content ?? '{}';
+  const parsed = JSON.parse(raw) as IpaResponse;
+  if (!Array.isArray(parsed.ipa) || parsed.ipa.length !== inputs.length) {
+    throw new Error(`Length mismatch: expected ${inputs.length}, got ${parsed.ipa?.length}`);
+  }
+  return parsed.ipa.map((s) => String(s).trim().slice(0, 30));
+}
+
+async function main() {
+  const texts = await db.select({
+    id: readingTexts.id,
+    slug: readingTexts.slug,
+    wordMap: readingTexts.wordMap,
+  }).from(readingTexts);
+
+  console.log(`Texts: ${texts.length}`);
+
+  let totalGenerated = 0;
+  let totalFromDb = 0;
+  let totalFailed = 0;
+
+  for (const t of texts) {
+    const wm = t.wordMap as Record<string, WordEntry>;
+    const keys = Object.keys(wm);
+    const missing = keys.filter((k) => !wm[k]?.ipa);
+    if (missing.length === 0) continue;
+
+    // 1. Pull free from words table (overlap)
+    const wordRows = await db
+      .select({ french: words.french, ipa: words.ipa })
+      .from(words)
+      .where(inArray(words.french, missing));
+    const fromDb = new Map<string, string>();
+    for (const r of wordRows) if (r.ipa) fromDb.set(r.french.toLowerCase(), r.ipa);
+
+    const stillMissing = missing.filter((k) => !fromDb.has(k.toLowerCase()));
+
+    // 2. AI for the rest, in chunks
+    const fromAi = new Map<string, string>();
+    for (let i = 0; i < stillMissing.length; i += CHUNK) {
+      const batch = stillMissing.slice(i, i + CHUNK);
+      try {
+        const ipas = await aiTranscribe(batch);
+        for (let j = 0; j < batch.length; j++) {
+          const key = batch[j]!;
+          const ipa = ipas[j];
+          if (ipa) fromAi.set(key.toLowerCase(), ipa);
+        }
+      } catch (err) {
+        totalFailed += batch.length;
+        console.error(`  [${t.slug}] chunk failed:`, err instanceof Error ? err.message : err);
+      }
+      if (i + CHUNK < stillMissing.length) await new Promise((r) => setTimeout(r, SLEEP_MS));
+    }
+
+    // 3. Merge and persist
+    const newMap: Record<string, WordEntry> = { ...wm };
+    let touched = 0;
+    for (const k of missing) {
+      const ipa = fromDb.get(k.toLowerCase()) ?? fromAi.get(k.toLowerCase());
+      if (ipa) {
+        const entry = newMap[k]!;
+        newMap[k] = { ...entry, ipa };
+        touched++;
+      }
+    }
+
+    if (touched > 0) {
+      await db.update(readingTexts).set({ wordMap: newMap }).where(eq(readingTexts.id, t.id));
+    }
+    totalFromDb += fromDb.size;
+    totalGenerated += fromAi.size;
+    console.log(`  ${t.slug}: +${touched} (db ${fromDb.size}, ai ${fromAi.size})`);
+  }
+
+  console.log(`\nDone. From DB: ${totalFromDb}, generated by AI: ${totalGenerated}, failed: ${totalFailed}.`);
+}
+
+main()
+  .catch((err) => { console.error(err); process.exit(1); })
+  .finally(() => process.exit(0));
