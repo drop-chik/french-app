@@ -598,6 +598,7 @@ export async function translateWord(db: DB, wordFr: string) {
       pos: word.partOfSpeech ?? '',
       level: word.level,
       baseForm: null as string | null,
+      ipa: word.ipa ?? null,
     };
   }
 
@@ -614,6 +615,7 @@ export async function translateWord(db: DB, wordFr: string) {
         pos: match.partOfSpeech ?? 'verb',
         level: match.level,
         baseForm: match.french,
+        ipa: match.ipa ?? null,
       };
     }
   }
@@ -631,6 +633,7 @@ export async function translateWord(db: DB, wordFr: string) {
         pos: match.partOfSpeech ?? '',
         level: match.level,
         baseForm: match.french !== clean ? match.french : null,
+        ipa: match.ipa ?? null,
       };
     }
   }

@@ -179,6 +179,15 @@
   color: var(--color-text-primary);
 }
 
+/* IPA — mono, секунда строка под словом, та же стилистика что в WordDetailsModal. */
+.popupIpa {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  line-height: 1.2;
+  margin-top: -2px;
+}
+
 .posTag {
   display: inline-block;
   font-size: 10px;

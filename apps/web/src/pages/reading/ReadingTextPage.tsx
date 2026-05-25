@@ -353,7 +353,7 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
     try {
       const res = await readingApi.translate(clean);
       const entry = res.result
-        ? { tr: res.result.tr, pos: res.result.pos, baseForm: res.result.baseForm }
+        ? { tr: res.result.tr, pos: res.result.pos, baseForm: res.result.baseForm, ipa: res.result.ipa ?? null }
         : null;
       translationCache.current.set(clean, entry);
       setPopup((prev) => prev?.cleanWord === clean
@@ -436,6 +436,11 @@ function PopupCard({
     >
       {/* Word being looked up */}
       <div className={styles.popupWord}>{popup.cleanWord}</div>
+
+      {/* IPA transcription (when the word resolved to a dictionary entry) */}
+      {!popup.loading && popup.entry?.ipa && (
+        <div className={styles.popupIpa}>/{popup.entry.ipa}/</div>
+      )}
 
       {/* Loading */}
       {popup.loading && (
