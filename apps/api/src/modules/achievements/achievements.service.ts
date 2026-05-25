@@ -65,11 +65,11 @@ export async function collectMetrics(
   ] = await Promise.all([
     db.select({ cnt: count() }).from(wordProgress)
       .where(and(eq(wordProgress.userId, userId), eq(wordProgress.status, 'mastered'))),
-    // wordsLearned: the motivational fast metric — 2 correct in a row (the
-    // repetitions counter resets on a wrong answer, so this matches "currently
-    // remembered" rather than "ever seen").
+    // wordsLearned: motivational fast metric — at least 1 correct answer
+    // (repetitions ≥ 1). The counter resets on a wrong answer, so this is
+    // "currently remembered" rather than "ever seen" — Day-1 visible wins.
     db.select({ cnt: count() }).from(wordProgress)
-      .where(and(eq(wordProgress.userId, userId), gte(wordProgress.repetitions, 2))),
+      .where(and(eq(wordProgress.userId, userId), gte(wordProgress.repetitions, 1))),
     db.select({ cnt: count() }).from(wordProgress)
       .where(eq(wordProgress.userId, userId)),
     db.select({ cnt: count() }).from(grammarProgress)

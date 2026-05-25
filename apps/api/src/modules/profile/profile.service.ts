@@ -152,13 +152,15 @@ export async function getStats(db: DB, userId: string) {
   }
   const totalWords = Object.values(wordCounts).reduce((a, b) => a + b, 0);
 
-  // Fast "Выучено" metric — 2 correct answers in a row. Derived from the
-  // existing SM-2 repetitions counter (resets to 0 on a wrong answer), so this
-  // matches "currently remembered" not "ever seen". No schema change.
+  // Fast "Выучено" metric — at least one correct answer (repetitions ≥ 1).
+  // Derived from the existing SM-2 counter, which resets to 0 on a wrong
+  // answer — so this matches "currently remembered" not "ever seen", and the
+  // count drops if you fail a previously-learned word. Day-1 wins: a fresh
+  // session gives instant progress. No schema change.
   const [learnedResult] = await db
     .select({ cnt: count() })
     .from(wordProgress)
-    .where(and(eq(wordProgress.userId, userId), gte(wordProgress.repetitions, 2)));
+    .where(and(eq(wordProgress.userId, userId), gte(wordProgress.repetitions, 1)));
   const wordsLearned = Number(learnedResult?.cnt ?? 0);
 
   // Grammar stats
@@ -546,7 +548,7 @@ async function _getWordStats(db: DB, userId: string, level: LanguageLevel) {
   let learned = 0;
   for (const p of progressAtLevel) {
     if (p.status === 'mastered') mastered++;
-    if (p.repetitions >= 2) learned++;
+    if (p.repetitions >= 1) learned++;
     void now;
   }
 
@@ -643,7 +645,7 @@ export async function getLevelsProgress(db: DB, userId: string) {
       .where(
         and(
           eq(wordProgress.userId, userId),
-          gte(wordProgress.repetitions, 2),
+          gte(wordProgress.repetitions, 1),
           inArray(words.level, [...LEVELS]),
         ),
       )

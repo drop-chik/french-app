@@ -11,7 +11,7 @@
 
 export type AchievementMetric =
   | 'wordsMastered'       // strict SRS mastery (long-term, interval ≥ 21d)
-  | 'wordsLearned'        // fast metric — 2 correct answers in a row (repetitions ≥ 2)
+  | 'wordsLearned'        // fast metric — at least one correct answer (repetitions ≥ 1)
   | 'wordsLearning'       // words user has ever started reviewing
   | 'streakDays'
   | 'grammarCompleted'
