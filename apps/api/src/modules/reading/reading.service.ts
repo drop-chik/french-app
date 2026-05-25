@@ -13,6 +13,7 @@ export interface ReadingQuestion {
 export interface WordEntry {
   tr: string;
   pos: string;
+  ipa?: string | null;
 }
 
 export async function getTexts(
@@ -78,9 +79,29 @@ export async function getTextBySlug(db: DB, userId: string, slug: string) {
     ),
   });
 
+  // wordMap (stored as {tr, pos} per text in the seed) doesn't carry IPA —
+  // pull it from the words table by exact french match and merge in. Single
+  // bulk query, no extra requests per click.
+  const baseMap = text.wordMap as Record<string, WordEntry>;
+  const keys = Object.keys(baseMap);
+  let enrichedMap = baseMap;
+  if (keys.length > 0) {
+    const rows = await db
+      .select({ french: words.french, ipa: words.ipa })
+      .from(words)
+      .where(inArray(words.french, keys));
+    const ipaByFrench = new Map(rows.map((r) => [r.french.toLowerCase(), r.ipa]));
+    enrichedMap = Object.fromEntries(
+      Object.entries(baseMap).map(([k, v]) => {
+        const ipa = ipaByFrench.get(k.toLowerCase()) ?? null;
+        return [k, ipa ? { ...v, ipa } : v];
+      }),
+    );
+  }
+
   return {
     ...text,
-    wordMap: text.wordMap as Record<string, WordEntry>,
+    wordMap: enrichedMap,
     questions: text.questions as ReadingQuestion[],
     progress: prog
       ? {
