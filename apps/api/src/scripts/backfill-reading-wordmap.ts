@@ -31,7 +31,9 @@ const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
 // low; if anything still slips through, re-run picks up only the
 // stragglers — and a CHUNK=2 or =1 sweep handles the residual stubborn
 // tokens (we observed ~10/2500 cases needing the smaller-chunk fallback).
-const CHUNK = 15;
+// Drops to 5 if env asks for it — used by tail-end re-runs to chip away at
+// the few chunks that keep failing at 15 due to the model adding N+1 items.
+const CHUNK = Number(process.env['CHUNK']) || 15;
 const SLEEP_MS = 200;
 
 // Mirror SKIP_TOKEN + cleanWord from ReadingTextPage.tsx exactly.
