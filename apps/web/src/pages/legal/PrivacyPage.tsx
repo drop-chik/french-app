@@ -3,8 +3,11 @@ import foxIcon from '../landing/fox-icon.png';
 import { useI18n } from '../../shared/i18n';
 import styles from './LegalPage.module.css';
 
+const CONTACT_EMAIL = 'the.lord.kraid@gmail.com';
+
 export function PrivacyPage() {
   const { t } = useI18n();
+  const p = t.legal.privacy;
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
@@ -21,138 +24,117 @@ export function PrivacyPage() {
 
         <div className={styles.content}>
           <div className={styles.section}>
-            <div className={styles.highlight}>
-              Мы серьёзно относимся к вашей конфиденциальности. Этот документ объясняет, какие данные
-              собирает FrenchUp, как мы их используем и как вы можете управлять своей информацией.
-            </div>
+            <div className={styles.highlight}>{p.intro}</div>
           </div>
 
           <div className={styles.section}>
-            <h2>1. Кто мы</h2>
+            <h2>{p.s1Title}</h2>
             <p>
-              FrenchUp — образовательный сервис для изучения французского языка, доступный по адресу{' '}
-              <a href="https://frenchup.app">frenchup.app</a>. По всем вопросам, связанным с
-              конфиденциальностью, пишите на{' '}
-              <a href="mailto:the.lord.kraid@gmail.com">the.lord.kraid@gmail.com</a>.
+              {p.s1Body}{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
             </p>
           </div>
 
           <div className={styles.section}>
-            <h2>2. Какие данные мы собираем</h2>
+            <h2>{p.s2Title}</h2>
             <ul>
-              <li>
-                <strong>Данные аккаунта:</strong> имя, адрес электронной почты, хешированный пароль
-                (мы не храним пароли в открытом виде).
-              </li>
-              <li>
-                <strong>Данные при входе через Google:</strong> имя и email из вашего Google-аккаунта
-                (только при использовании OAuth-авторизации).
-              </li>
-              <li>
-                <strong>Данные об обучении:</strong> прогресс по словам, результаты тестов,
-                пройденные грамматические темы, статистика упражнений по аудированию, результат
-                вступительного теста определения уровня.
-              </li>
-              <li>
-                <strong>Технические данные:</strong> сессионные cookie для поддержания
-                авторизованного состояния (refresh-токен). Никаких трекинговых cookie или рекламных
-                идентификаторов мы не используем.
-              </li>
+              <li><strong>{p.s2AccountLabel}</strong> {p.s2Account}</li>
+              <li><strong>{p.s2GoogleLabel}</strong> {p.s2Google}</li>
+              <li><strong>{p.s2LearningLabel}</strong> {p.s2Learning}</li>
+              <li><strong>{p.s2UgcLabel}</strong> {p.s2Ugc}</li>
+              <li><strong>{p.s2TechLabel}</strong> {p.s2Tech}</li>
+              <li><strong>{p.s2PushLabel}</strong> {p.s2Push}</li>
             </ul>
           </div>
 
           <div className={styles.section}>
-            <h2>3. Как мы используем ваши данные</h2>
+            <h2>{p.s3Title}</h2>
             <ul>
-              <li>Для предоставления сервиса: авторизация, отображение прогресса, персонализация контента.</li>
-              <li>Для подбора учебных материалов под ваш уровень (A1–C2).</li>
-              <li>Для хранения истории обучения и статистики между сессиями.</li>
-              <li>Для связи с вами по вопросам, связанным с аккаунтом (только при необходимости).</li>
+              <li>{p.s3Item1}</li>
+              <li>{p.s3Item2}</li>
+              <li>{p.s3Item3}</li>
+              <li>{p.s3Item4}</li>
+              <li>{p.s3Item5}</li>
             </ul>
             <p style={{ marginTop: 'var(--space-3)' }}>
-              Мы <strong>не продаём</strong> ваши данные третьим лицам и не используем их в
-              рекламных целях.
+              {p.s3NoSell} <strong>{p.s3NoSellStrong}</strong> {p.s3NoSellAfter}
             </p>
           </div>
 
           <div className={styles.section}>
-            <h2>4. Передача данных третьим лицам</h2>
+            <h2>{p.s4Title}</h2>
+            <p>{p.s4Intro}</p>
             <ul>
               <li>
-                <strong>Railway (railway.app):</strong> хостинг-провайдер, на серверах которого
-                работает база данных и API. Railway расположен в США и соответствует стандартам
-                безопасности данных.
+                <strong>{p.s4RailwayLabel}</strong> {p.s4Railway}{' '}
+                <a href="https://railway.app/legal/privacy" target="_blank" rel="noreferrer">
+                  Privacy Policy →
+                </a>
               </li>
               <li>
-                <strong>Google OAuth:</strong> используется только для альтернативного входа. Мы
-                получаем только имя и email. На Google распространяется их собственная{' '}
+                <strong>{p.s4VercelLabel}</strong> {p.s4Vercel}{' '}
+                <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noreferrer">
+                  Privacy Policy →
+                </a>
+              </li>
+              <li>
+                <strong>{p.s4OpenaiLabel}</strong> {p.s4Openai}{' '}
+                <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noreferrer">
+                  Privacy Policy →
+                </a>
+              </li>
+              <li>
+                <strong>{p.s4GoogleLabel}</strong> {p.s4Google}{' '}
                 <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">
-                  Политика конфиденциальности
-                </a>.
+                  Privacy Policy →
+                </a>
               </li>
+              <li><strong>{p.s4PushLabel}</strong> {p.s4Push}</li>
             </ul>
-            <p style={{ marginTop: 'var(--space-3)' }}>
-              Иным третьим лицам ваши данные не передаются.
-            </p>
+            <p style={{ marginTop: 'var(--space-3)' }}>{p.s4Transfer}</p>
+            <p style={{ marginTop: 'var(--space-2)' }}>{p.s4NoOther}</p>
           </div>
 
           <div className={styles.section}>
-            <h2>5. Хранение и защита данных</h2>
+            <h2>{p.s5Title}</h2>
             <ul>
-              <li>Все соединения защищены протоколом HTTPS.</li>
-              <li>Пароли хранятся в виде хеша (bcrypt) — даже мы не знаем ваш пароль.</li>
-              <li>Данные хранятся до тех пор, пока существует ваш аккаунт.</li>
+              <li>{p.s5Item1}</li>
+              <li>{p.s5Item2}</li>
+              <li>{p.s5Item3}</li>
+              <li>{p.s5Item4}</li>
             </ul>
           </div>
 
           <div className={styles.section}>
-            <h2>6. Ваши права</h2>
+            <h2>{p.s6Title}</h2>
             <ul>
-              <li>
-                <strong>Просмотр данных:</strong> вся информация о вашем профиле и прогрессе
-                доступна на странице «Профиль».
-              </li>
-              <li>
-                <strong>Изменение данных:</strong> имя и пароль можно изменить в настройках профиля.
-              </li>
-              <li>
-                <strong>Удаление аккаунта:</strong> напишите нам на{' '}
-                <a href="mailto:the.lord.kraid@gmail.com">the.lord.kraid@gmail.com</a> — мы удалим
-                все ваши данные в течение 30 дней.
-              </li>
+              <li><strong>{p.s6Item1Label}</strong> {p.s6Item1}</li>
+              <li><strong>{p.s6Item2Label}</strong> {p.s6Item2}</li>
+              <li><strong>{p.s6Item3Label}</strong> {p.s6Item3}</li>
+              <li><strong>{p.s6Item4Label}</strong> {p.s6Item4}</li>
+              <li><strong>{p.s6Item5Label}</strong> {p.s6Item5}</li>
             </ul>
           </div>
 
           <div className={styles.section}>
-            <h2>7. Cookie</h2>
-            <p>
-              Мы используем только технические cookie, необходимые для работы сервиса: refresh-токен
-              для поддержания сессии авторизации. Аналитические, рекламные или сторонние cookie
-              не используются.
-            </p>
+            <h2>{p.s7Title}</h2>
+            <p>{p.s7Body}</p>
           </div>
 
           <div className={styles.section}>
-            <h2>8. Возрастные ограничения</h2>
-            <p>
-              FrenchUp предназначен для пользователей старше 13 лет. Мы намеренно не собираем
-              данные детей младше этого возраста. Если вы обнаружили подобный аккаунт — пожалуйста,
-              сообщите нам.
-            </p>
+            <h2>{p.s8Title}</h2>
+            <p>{p.s8Body}</p>
           </div>
 
           <div className={styles.section}>
-            <h2>9. Изменения политики</h2>
-            <p>
-              При существенных изменениях мы обновим дату вверху страницы. Продолжение использования
-              сервиса после обновления означает ваше согласие с новой редакцией.
-            </p>
+            <h2>{p.s9Title}</h2>
+            <p>{p.s9Body}</p>
           </div>
 
           <div className={styles.section}>
-            <h2>10. Контакты</h2>
+            <h2>{p.s10Title}</h2>
             <p>
-              По вопросам конфиденциальности: <a href="mailto:the.lord.kraid@gmail.com">the.lord.kraid@gmail.com</a>
+              {p.s10Body} <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
             </p>
           </div>
         </div>
