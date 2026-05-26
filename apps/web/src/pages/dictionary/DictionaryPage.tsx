@@ -453,7 +453,7 @@ function FilterBar({ t, sortBy, statusFilter, onSortChange, onFilterChange }: Fi
   }, [sortOpen]);
 
   return (
-    <div className={styles.filterBar}>
+    <div className={styles.filterBar} data-tour="dictionary-filters">
       <div className={styles.filterChips}>
         {filters.map((f) => (
           <button
@@ -646,7 +646,7 @@ export function DictionaryPage() {
             </span>
           )}
         </div>
-        <div className={styles.headerRight}>
+        <div className={styles.headerRight} data-tour="dictionary-tools">
           {!searchActive && (
             <>
               <button

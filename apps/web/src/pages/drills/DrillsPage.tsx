@@ -87,7 +87,7 @@ export function DrillsPage() {
         <p className={styles.subtitle}>{t.drills.subtitle}</p>
       </div>
 
-      <div className={styles.filterGroups}>
+      <div className={styles.filterGroups} data-tour="drills-filters">
         <div className={styles.filterGroupRow}>
           <span className={styles.filterGroupLabel}>{t.drills.filterCategoryLabel}</span>
           <div className={styles.filters}>

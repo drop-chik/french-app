@@ -190,7 +190,7 @@ export function WritingPage() {
         </div>
       </div>
 
-      <div className={styles.tabs}>
+      <div className={styles.tabs} data-tour="writing-tabs">
         <button
           className={`${styles.tab} ${tab === 'prompts' ? styles.tabActive : ''}`}
           onClick={() => setTab('prompts')}
@@ -200,6 +200,7 @@ export function WritingPage() {
         <button
           className={`${styles.tab} ${tab === 'ai' ? styles.tabActive : ''}`}
           onClick={() => setTab('ai')}
+          data-tour="writing-ai"
         >
           <Sparkles size={13} className={styles.tabIcon} />
           {tw.tabAi}

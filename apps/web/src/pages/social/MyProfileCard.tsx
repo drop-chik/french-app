@@ -80,7 +80,7 @@ export function MyProfileCard() {
   }
 
   return (
-    <div className={styles.myCard}>
+    <div className={styles.myCard} data-tour="friends-mycard">
       <div className={styles.avatar}>
         {profile.avatarUrl
           ? <img src={profile.avatarUrl} alt="" className={styles.avatarImg} />

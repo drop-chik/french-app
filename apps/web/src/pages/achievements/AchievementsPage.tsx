@@ -74,7 +74,7 @@ export function AchievementsPage() {
           </div>
         </div>
 
-        <div className={styles.xpSummary}>
+        <div className={styles.xpSummary} data-tour="ach-xp">
           <div className={styles.xpLevelWrap}>
             <span className={styles.xpLevelLabel}>{t.achievements.level}</span>
             <span className={styles.xpLevelValue}>{data.xp.level}</span>

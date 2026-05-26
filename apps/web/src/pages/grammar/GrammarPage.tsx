@@ -96,7 +96,7 @@ export function GrammarPage() {
         </div>
 
         {/* Level chips */}
-        <div className={styles.levelChips}>
+        <div className={styles.levelChips} data-tour="grammar-levels">
           {LEVELS.map((lvl) => {
             const isActive = selectedLevel === lvl;
             const c = LEVEL_COLORS[lvl];

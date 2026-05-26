@@ -201,13 +201,17 @@ export function ConversationPage() {
       )}
 
       {/* Sidebar */}
-      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
+      <aside
+        className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}
+        data-tour="conversation-sidebar"
+      >
         <div className={styles.sidebarHeader}>
           <span className={styles.sidebarTitle}>{t.conversation.sidebarTitle}</span>
           <button
             className={styles.newButton}
             onClick={() => setShowTopicPicker(true)}
             title={t.conversation.newChat}
+            data-tour="conversation-new"
           >
             <Plus size={16} />
           </button>
@@ -271,7 +275,7 @@ export function ConversationPage() {
 
         {/* ── Idea 2: Topic picker with emojis ── */}
         {showTopicPicker && (
-          <div className={styles.topicPicker}>
+          <div className={styles.topicPicker} data-tour="conversation-topics">
             <h2 className={styles.topicTitle}>{t.conversation.pickTopic}</h2>
             <div className={styles.topicGrid}>
               {TOPICS.map((topic) => (

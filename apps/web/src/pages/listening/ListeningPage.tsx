@@ -87,7 +87,7 @@ export function ListeningPage() {
         </div>
 
         {/* Level chips — colored per level */}
-        <div className={styles.levelChips}>
+        <div className={styles.levelChips} data-tour="listening-levels">
           {LEVELS.map((lvl) => {
             const isActive = selectedLevel === lvl;
             const c = LEVEL_COLORS[lvl];
@@ -152,6 +152,7 @@ export function ListeningPage() {
           className={styles.featured}
           onClick={() => navigate({ to: '/listening/$id', params: { id: continueExercise.id } })}
           style={{ background: `linear-gradient(135deg, ${levelColor.from}, ${levelColor.to})` }}
+          data-tour="listening-continue"
         >
           <div className={styles.featuredLabel}>{t.listening.continueLabel}</div>
           <div className={styles.featuredBody}>

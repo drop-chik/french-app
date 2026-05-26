@@ -61,7 +61,7 @@ export function FriendsPage() {
 
       <MyProfileCard />
 
-      <div className={styles.tabs}>
+      <div className={styles.tabs} data-tour="friends-tabs">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}

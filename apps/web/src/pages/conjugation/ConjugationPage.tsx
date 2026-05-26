@@ -84,7 +84,7 @@ export function ConjugationPage() {
         </div>
       </div>
 
-      <form className={styles.searchForm} onSubmit={handleSubmit}>
+      <form className={styles.searchForm} onSubmit={handleSubmit} data-tour="conj-form">
         <div className={styles.searchRow}>
           <div className={styles.inputWrap}>
             <Search size={18} className={styles.searchIcon} />
