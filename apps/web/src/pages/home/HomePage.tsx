@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, Link } from '@tanstack/react-router';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../shared/hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -148,6 +148,12 @@ export function HomePage() {
           >
             {loading ? t.common.loading : mode === 'login' ? t.home.login : t.home.register}
           </button>
+
+          {mode === 'login' && (
+            <Link to="/forgot-password" className={styles.forgotLink}>
+              {t.home.forgotPassword}
+            </Link>
+          )}
         </form>
       </div>
     </div>

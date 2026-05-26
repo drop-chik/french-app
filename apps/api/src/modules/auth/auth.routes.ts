@@ -1,7 +1,26 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { registerSchema, loginSchema } from './auth.schema.js';
-import { registerUser, loginUser } from './auth.service.js';
+import { z } from 'zod';
+import {
+  registerSchema,
+  loginSchema,
+} from './auth.schema.js';
+import {
+  registerUser,
+  loginUser,
+  createPasswordResetToken,
+  resetPasswordWithToken,
+} from './auth.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email().max(255),
+  lang: z.enum(['ru', 'en']).optional(),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(32).max(128),
+  password: z.string().min(8).max(200),
+});
 
 const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -164,6 +183,94 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     } catch {
       reply.clearCookie('refreshToken', { path: '/auth' });
       reply.status(401).send({ error: 'Invalid refresh token' });
+    }
+  });
+
+  // POST /auth/forgot-password — request a reset link.
+  // Always returns 200 with the same body, whether or not the email matches
+  // a user. This prevents email enumeration via the response. Rate limited
+  // tight (5/15min/IP) because the only legitimate use is "I forgot, send
+  // the link" — a burst is always an attack or a buggy client.
+  fastify.post('/forgot-password', {
+    config: {
+      rateLimit: { max: 5, timeWindow: '15 minutes' },
+    },
+    schema: {
+      tags: ['auth'],
+      summary: 'Request a password-reset email',
+      description:
+        'Sends a one-time link if the email is registered. Always returns ' +
+        '{ ok: true } regardless of whether the email exists — no enumeration.',
+      body: {
+        type: 'object',
+        required: ['email'],
+        properties: {
+          email: { type: 'string', format: 'email', maxLength: 255 },
+          lang:  { type: 'string', enum: ['ru', 'en'] },
+        },
+      },
+      response: {
+        200: { type: 'object', properties: { ok: { type: 'boolean' } } },
+        400: errorSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const parsed = forgotPasswordSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Validation error' });
+    }
+    const lang = parsed.data.lang ?? 'ru';
+    const frontendUrl = process.env['FRONTEND_URL'] ?? 'http://localhost:5173';
+    try {
+      await createPasswordResetToken(fastify.db, parsed.data.email, lang, frontendUrl);
+    } catch (err) {
+      // Never bubble email-send failures up to the caller — that would let
+      // an attacker probe deliverability. Log for our side instead.
+      request.log.error({ err }, 'Password reset email failed');
+    }
+    // Always 200 — same body whether the email matched or not.
+    reply.send({ ok: true });
+  });
+
+  // POST /auth/reset-password — consume a token + set new password.
+  fastify.post('/reset-password', {
+    config: {
+      rateLimit: { max: 10, timeWindow: '15 minutes' },
+    },
+    schema: {
+      tags: ['auth'],
+      summary: 'Reset password using a token from email',
+      body: {
+        type: 'object',
+        required: ['token', 'password'],
+        properties: {
+          token:    { type: 'string', minLength: 32, maxLength: 128 },
+          password: { type: 'string', minLength: 8,  maxLength: 200 },
+        },
+      },
+      response: {
+        200: { type: 'object', properties: { ok: { type: 'boolean' } } },
+        400: errorSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const parsed = resetPasswordSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Validation error' });
+    }
+    try {
+      await resetPasswordWithToken(fastify.db, parsed.data.token, parsed.data.password);
+      reply.send({ ok: true });
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === 'INVALID_TOKEN') {
+          return reply.status(400).send({ error: 'Invalid or expired token' });
+        }
+        if (err.message === 'PASSWORD_TOO_SHORT') {
+          return reply.status(400).send({ error: 'Password must be at least 8 characters' });
+        }
+      }
+      throw err;
     }
   });
 

@@ -38,4 +38,16 @@ export const authApi = {
 
   logout: () =>
     request<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+
+  forgotPassword: (email: string, lang: 'ru' | 'en') =>
+    request<{ ok: boolean }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, lang }),
+    }),
+
+  resetPassword: (token: string, password: string) =>
+    request<{ ok: boolean }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    }),
 };

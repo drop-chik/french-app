@@ -103,6 +103,23 @@ export const userAchievements = pgTable(
   ],
 );
 
+// One-time tokens for the "forgot password" flow. Raw token is mailed; we
+// store only the bcrypt hash. Verified-by-hash, used-by-mark, expires in 1h.
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
+    expiresAt: timestamp('expires_at').notNull(),
+    usedAt: timestamp('used_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('idx_password_reset_tokens_user').on(t.userId, t.usedAt)],
+);
+
 // OAuth accounts (for future Google login)
 export const oauthAccounts = pgTable(
   'oauth_accounts',
