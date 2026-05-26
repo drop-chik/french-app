@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@french-app/shared-types';
+import { setSentryUser } from '../../lib/sentry';
 
 interface AuthState {
   accessToken: string | null;
@@ -17,10 +18,18 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       user: null,
       isAuthenticated: false,
-      setAuth: (accessToken, user) => set({ accessToken, user, isAuthenticated: true }),
+      setAuth: (accessToken, user) => {
+        set({ accessToken, user, isAuthenticated: true });
+        // Tag Sentry events with the signed-in user so we can correlate
+        // production errors with specific accounts during triage.
+        if (user) setSentryUser({ id: user.id, email: user.email });
+      },
       updateUser: (updates) =>
         set((state) => ({ user: state.user ? { ...state.user, ...updates } : state.user })),
-      clearAuth: () => set({ accessToken: null, user: null, isAuthenticated: false }),
+      clearAuth: () => {
+        set({ accessToken: null, user: null, isAuthenticated: false });
+        setSentryUser(null);
+      },
     }),
     {
       name: 'french-app-auth',
@@ -30,6 +39,10 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      // On page reload, re-attach the user to Sentry from persisted state.
+      onRehydrateStorage: () => (state) => {
+        if (state?.user) setSentryUser({ id: state.user.id, email: state.user.email });
+      },
     },
   ),
 );

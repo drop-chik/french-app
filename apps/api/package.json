@@ -25,6 +25,7 @@
     "@french-app/shared-types": "workspace:*",
     "@french-app/srs-engine": "workspace:*",
     "@scalar/fastify-api-reference": "^1.55.3",
+    "@sentry/node": "^10.54.0",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.38.0",
     "dotenv": "^17.4.2",

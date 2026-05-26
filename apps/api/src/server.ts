@@ -9,7 +9,12 @@ import swagger from '@fastify/swagger';
 import scalar from '@scalar/fastify-api-reference';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
+import { initSentry, attachToFastify } from './lib/sentry.js';
 import { db } from './db/index.js';
+
+// Init Sentry before any route registration so import-time crashes get sent.
+// No-op when SENTRY_DSN is unset (dev, previews).
+initSentry();
 import dbPlugin from './plugins/db.js';
 import authPlugin from './plugins/auth.js';
 import authRoutes from './modules/auth/auth.routes.js';
@@ -140,6 +145,10 @@ await fastify.register(scalar, {
 // Plugins
 await fastify.register(dbPlugin);
 await fastify.register(authPlugin);
+
+// Attach Sentry's onError hook AFTER auth so request.user is populated and
+// gets correlated into reports.
+attachToFastify(fastify);
 
 // Routes
 await fastify.register(authRoutes, { prefix: '/auth' });

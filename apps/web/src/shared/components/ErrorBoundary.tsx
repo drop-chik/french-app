@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useI18n } from '../i18n';
+import { reportError } from '../../lib/sentry';
 import styles from './ErrorBoundary.module.css';
 
 interface Props {
@@ -24,9 +25,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo) {
-    // Keep the full stack visible in the console while we don't have a
-    // structured reporter wired up yet.
+    // Console for local dev visibility + Sentry for production telemetry
+    // (no-op locally because VITE_SENTRY_DSN isn't set).
     console.error('[ErrorBoundary] Uncaught error:', error, info);
+    reportError(error, { componentStack: info.componentStack });
   }
 
   handleReset = () => {
