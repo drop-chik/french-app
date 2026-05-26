@@ -13,11 +13,13 @@ interface Props {
 type Phase = 'reading' | 'questions' | 'summary';
 
 export function ReadingTextPage({ slug }: Props) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['reading-text', slug],
+    // lang in the key so EN users don't get a cached RU wordMap (or vice
+    // versa) — switching language refetches with the right translations.
+    queryKey: ['reading-text', slug, lang],
     queryFn: () => readingApi.getTextBySlug(slug),
     staleTime: 10 * 60 * 1000,
   });

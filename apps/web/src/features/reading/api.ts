@@ -1,4 +1,9 @@
 import { apiRequest } from '../../lib/apiClient';
+import { useI18n } from '../../shared/i18n';
+
+function getLang(): string {
+  return useI18n.getState().lang;
+}
 
 export interface ReadingQuestion {
   id: string;
@@ -63,7 +68,7 @@ export const readingApi = {
   },
 
   getTextBySlug: (slug: string) =>
-    apiRequest<{ text: ReadingTextDetail }>(`/reading/texts/${slug}`),
+    apiRequest<{ text: ReadingTextDetail }>(`/reading/texts/${slug}?lang=${getLang()}`),
 
   saveProgress: (textId: string, payload: SaveProgressPayload) =>
     apiRequest<{ ok: boolean }>(`/reading/progress/${textId}`, {
@@ -79,6 +84,6 @@ export const readingApi = {
 
   translate: (word: string) =>
     apiRequest<{ result: { fr: string; tr: string; pos: string; level: string; baseForm: string | null; ipa: string | null } | null }>(
-      `/reading/translate?word=${encodeURIComponent(word)}`,
+      `/reading/translate?word=${encodeURIComponent(word)}&lang=${getLang()}`,
     ),
 };

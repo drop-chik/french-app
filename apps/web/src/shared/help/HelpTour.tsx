@@ -144,6 +144,15 @@ export function HelpTour({ tour, onClose }: Props) {
 
   if (!step) return null;
 
+  // Localized override: en.ts ships translations under t.help.tours.<key>[i].
+  // ru.ts omits the block — Russian uses the inline strings from tourConfig.
+  // Missing entries gracefully fall back to step.title / step.body.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const toursI18n: any = (t.help as { tours?: unknown }).tours;
+  const localized = toursI18n && toursI18n[tour.key] && toursI18n[tour.key][i];
+  const title = localized?.title ?? step.title;
+  const body  = localized?.body  ?? step.body;
+
   // Backdrop: full-screen dim. If we have a rect, punch a hole via clip-path.
   const backdropStyle: React.CSSProperties = rect
     ? {
@@ -179,8 +188,8 @@ export function HelpTour({ tour, onClose }: Props) {
           <X size={16} />
         </button>
         <div className={styles.stepLabel}>{stepLabel}</div>
-        <h3 className={styles.title}>{step.title}</h3>
-        <p className={styles.body}>{step.body}</p>
+        <h3 className={styles.title}>{title}</h3>
+        <p className={styles.body}>{body}</p>
 
         <div className={styles.actions}>
           {i > 0 ? (

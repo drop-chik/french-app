@@ -10,6 +10,18 @@ export interface ReadingQuestion {
   explanation: string;
 }
 
+// In the DB, wordMap entries are bilingual: `tr` is Russian, `tr_en` is the
+// English translation. `getTextBySlug` normalises down to a single `tr` based
+// on the caller's lang. Older texts may still lack `tr_en` (the backfill
+// script populates it on a pass); when missing on EN UI we fall back to RU
+// rather than show nothing.
+export interface StoredWordEntry {
+  tr: string;
+  tr_en?: string | null;
+  pos: string;
+  ipa?: string | null;
+}
+
 export interface WordEntry {
   tr: string;
   pos: string;
@@ -66,7 +78,12 @@ export async function getTexts(
   });
 }
 
-export async function getTextBySlug(db: DB, userId: string, slug: string) {
+export async function getTextBySlug(
+  db: DB,
+  userId: string,
+  slug: string,
+  lang: 'ru' | 'en' = 'ru',
+) {
   const text = await db.query.readingTexts.findFirst({
     where: and(eq(readingTexts.slug, slug), eq(readingTexts.isActive, true)),
   });
@@ -79,12 +96,21 @@ export async function getTextBySlug(db: DB, userId: string, slug: string) {
     ),
   });
 
-  // wordMap (stored as {tr, pos} per text in the seed) doesn't carry IPA —
-  // pull it from the words table by exact french match and merge in. Single
-  // bulk query, no extra requests per click.
-  const baseMap = text.wordMap as Record<string, WordEntry>;
+  // wordMap stores both languages: {tr (Russian), tr_en?, pos, ipa?}. We
+  // collapse to a single `tr` field based on the caller's lang and fall back
+  // to Russian if `tr_en` hasn't been backfilled for this key yet. IPA may
+  // still be missing on legacy seed entries — top up from the words table in
+  // a single bulk lookup.
+  const baseMap = text.wordMap as Record<string, StoredWordEntry>;
   const keys = Object.keys(baseMap);
-  let enrichedMap = baseMap;
+  let enrichedMap: Record<string, WordEntry> = Object.fromEntries(
+    Object.entries(baseMap).map(([k, v]) => {
+      const tr = lang === 'en' && v.tr_en && v.tr_en.trim() ? v.tr_en : v.tr;
+      const entry: WordEntry = { tr, pos: v.pos };
+      if (v.ipa) entry.ipa = v.ipa;
+      return [k, entry];
+    }),
+  );
   if (keys.length > 0) {
     const rows = await db
       .select({ french: words.french, ipa: words.ipa })
@@ -92,7 +118,8 @@ export async function getTextBySlug(db: DB, userId: string, slug: string) {
       .where(inArray(words.french, keys));
     const ipaByFrench = new Map(rows.map((r) => [r.french.toLowerCase(), r.ipa]));
     enrichedMap = Object.fromEntries(
-      Object.entries(baseMap).map(([k, v]) => {
+      Object.entries(enrichedMap).map(([k, v]) => {
+        if (v.ipa) return [k, v];
         const ipa = ipaByFrench.get(k.toLowerCase()) ?? null;
         return [k, ipa ? { ...v, ipa } : v];
       }),
@@ -587,8 +614,20 @@ const FUNCTION_WORDS: Record<string, { tr: string; pos: string; level: string; b
   'leurs': { tr: 'их (мн.ч.)',     pos: 'det', level: 'A1' },
 };
 
-export async function translateWord(db: DB, wordFr: string) {
+export async function translateWord(
+  db: DB,
+  wordFr: string,
+  lang: 'ru' | 'en' = 'ru',
+) {
   const clean = wordFr.toLowerCase().trim();
+
+  // Choose the right translation field based on caller's language. The
+  // inline FUNCTION_WORDS table is Russian-only; for EN we fall back to the
+  // Russian gloss rather than returning null — better than nothing while
+  // there's no English seed table for function words. Most function words
+  // are short and obvious in context anyway.
+  const pickTr = (ru: string, en?: string | null) =>
+    lang === 'en' && en && en.trim() ? en : ru;
 
   // 0. Inline function word dict — instant, no DB query
   const fw = FUNCTION_WORDS[clean];
@@ -615,7 +654,7 @@ export async function translateWord(db: DB, wordFr: string) {
   if (word) {
     return {
       fr: word.french,
-      tr: word.translation,
+      tr: pickTr(word.translation, word.translationEn),
       pos: word.partOfSpeech ?? '',
       level: word.level,
       baseForm: null as string | null,
@@ -632,7 +671,7 @@ export async function translateWord(db: DB, wordFr: string) {
     if (match) {
       return {
         fr: match.french,
-        tr: match.translation,
+        tr: pickTr(match.translation, match.translationEn),
         pos: match.partOfSpeech ?? 'verb',
         level: match.level,
         baseForm: match.french,
@@ -650,7 +689,7 @@ export async function translateWord(db: DB, wordFr: string) {
     if (match) {
       return {
         fr: match.french,
-        tr: match.translation,
+        tr: pickTr(match.translation, match.translationEn),
         pos: match.partOfSpeech ?? '',
         level: match.level,
         baseForm: match.french !== clean ? match.french : null,

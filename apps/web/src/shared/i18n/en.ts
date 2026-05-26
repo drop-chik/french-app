@@ -102,6 +102,167 @@ export const en: Translations = {
         body: 'Badges for milestones: vocab, streak, grammar, reading. They grant XP.',
       },
     },
+    // Per-page tour scripts. Keyed by tour key from tourConfig.ts; index
+    // matches step position. Russian users get the inline strings from
+    // tourConfig (ru.ts has no `tours` block), English users get these.
+    tours: {
+      dashboard: [
+        {
+          title: 'This is your home',
+          body: '"What to do right now": word reviews, grammar topics for today, listening. The main menu is on the left.',
+        },
+        {
+          title: 'Today\'s plan',
+          body: 'Due reviews from SRS + a portion of new words. Tap "Start" and the cards arrive automatically.',
+        },
+        {
+          title: 'Friends',
+          body: 'New section: add people by tag, see their progress and achievements.',
+        },
+        {
+          title: 'The "?" is your friend',
+          body: 'On any page, open this button: you get a tour of the screen and a catalog of all sections.',
+        },
+      ],
+      vocabulary: [
+        {
+          title: 'Vocabulary session',
+          body: 'The SM-2 algorithm decides what to show right now: new words + ones due for review. The better you remember, the rarer they come back.',
+        },
+        {
+          title: 'Session progress',
+          body: 'Shows how many cards you\'ve done out of today\'s planned set. A fully-green ring = everything reviewed.',
+        },
+      ],
+      dictionary: [
+        {
+          title: 'Dictionary',
+          body: 'Every word for your level with translation, IPA and examples. Sort, filter by status, search.',
+        },
+        {
+          title: 'Filters & sorting',
+          body: 'Show only new / in-progress / mastered. Sort by alphabet, frequency, or date added.',
+        },
+        {
+          title: 'Tools on the right',
+          body: 'Toggle view (grid/list), enable bulk-select for batch actions, add your own word, search.',
+        },
+      ],
+      reading: [
+        {
+          title: 'Reading at your level',
+          body: 'Texts with a translation for every word. Tap any word — instant translation + transcription (no network call).',
+        },
+      ],
+      grammar: [
+        {
+          title: 'Grammar topics',
+          body: 'Each topic = theory + drills. Progress tracks automatically as you do exercises.',
+        },
+        {
+          title: 'Levels',
+          body: 'Switch A1 → A2 → B1 → B2 to see your level\'s topics. Current level is highlighted.',
+        },
+      ],
+      drills: [
+        {
+          title: 'Grammar trainers',
+          body: 'Micro-drills focused on one skill: articles, tenses, agreement. Faster than theory — hands-on.',
+        },
+        {
+          title: 'Category + level',
+          body: 'Two filters: pick exercise type and difficulty. The grid below adapts.',
+        },
+      ],
+      conjugation: [
+        {
+          title: 'Verb conjugation',
+          body: 'Type any French verb in the infinitive — see every form across every tense: présent, passé composé, imparfait, futur, conditionnel, subjonctif, impératif.',
+        },
+        {
+          title: 'Try it now',
+          body: 'Enter a verb or tap a suggestion below. Works for all regular verbs and the common irregulars.',
+        },
+      ],
+      'reading-detail': [
+        {
+          title: 'Tap the words',
+          body: 'Tap any word in the text — you\'ll see its translation and IPA in a popup card. After reading: a comprehension test.',
+        },
+      ],
+      writing: [
+        {
+          title: 'Writing',
+          body: 'Writing topics with AI feedback. You write — you get scored on grammar, vocab, cohesion, style.',
+        },
+        {
+          title: 'Three topic sources',
+          body: '"Topics" — ready-made prompts by level. "AI" — generate a custom topic. "History" — your past work and scores.',
+        },
+        {
+          title: 'Custom topic via AI',
+          body: 'If the ready-made topics don\'t fit — ask the AI to generate a personal one at your level.',
+        },
+      ],
+      listening: [
+        {
+          title: 'Listening',
+          body: 'Short French audio with comprehension questions. Listen — answer — get a percentage.',
+        },
+        {
+          title: 'Level picker',
+          body: 'A1 — simplest, slow pace. B1/B2 — natural speed, longer. The strip on the right shows your progress per level.',
+        },
+        {
+          title: 'Pick up where you left off',
+          body: 'The big card at the top is the next exercise you haven\'t done. Hit Play and go.',
+        },
+      ],
+      conversation: [
+        {
+          title: 'Talk to AI',
+          body: 'Voice or text dialogues with an AI partner at your level. The AI asks questions, corrects, keeps the conversation going.',
+        },
+        {
+          title: 'Start a new chat',
+          body: 'The "+" button opens topic selection. Pick a ready-made one or type your own.',
+        },
+        {
+          title: 'Chat history',
+          body: 'All your past conversations live in the sidebar. Tap any to return and continue.',
+        },
+      ],
+      friends: [
+        {
+          title: 'Social',
+          body: 'Add friends, see their progress and achievements, motivate each other. Activity feed, leaderboard, search, follows.',
+        },
+        {
+          title: 'Your public profile',
+          body: 'Your tag and a QR code — share with friends so they can find you. Use the Share button or the QR icon.',
+        },
+        {
+          title: 'Four tabs',
+          body: '"Feed" — what your follows are doing right now. "Leaderboard" — who\'s ahead on XP. "Search" — find by tag or name. "Following" — people you follow.',
+        },
+      ],
+      profile: [
+        {
+          title: 'Your profile',
+          body: 'Level, streak, stats, settings. Also: your tag (others can add you by it).',
+        },
+      ],
+      achievements: [
+        {
+          title: 'Achievements',
+          body: 'Badges for milestones across vocab, streak, grammar, reading, conversation. Each grants XP — they build up your level.',
+        },
+        {
+          title: 'XP level',
+          body: 'Total XP determines your account level (not the same as CEFR — A1/A2). The bar shows progress to the next.',
+        },
+      ],
+    },
   },
   achievements: {
     title: 'Achievements',

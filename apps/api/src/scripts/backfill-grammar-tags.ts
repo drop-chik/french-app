@@ -30,7 +30,10 @@ import { db } from '../db/index.js';
 import { words, grammarTopics } from '../db/schema/index.js';
 
 const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
-const CHUNK = 30;
+// Smaller chunk than usual — the system prompt is ~6KB (82 topic slugs +
+// rules), and gpt-4o-mini occasionally hallucinates extra items at 30/batch
+// or trips the JSON output token cap. 10/batch keeps everything tight.
+const CHUNK = 10;
 const SLEEP_MS = 200;
 
 interface TopicLite { slug: string; titleRu: string; titleFr: string; category: string }
@@ -42,28 +45,35 @@ function buildPrompt(topics: TopicLite[]): string {
   );
   return [
     'You are a French linguistics assistant. Given a JSON array of French words,',
-    'assign each to ONE grammar topic slug from the allowed list, or null if no',
-    'topic clearly applies. The tag is the topic that this word PRIMARILY illustrates',
-    'as a learner example.',
+    'assign each word to ONE grammar topic slug from the allowed list, or null if',
+    'no topic clearly applies. The tag is the topic that this word PRIMARILY',
+    'illustrates as a learner example.',
     '',
-    'Rules:',
+    'STRICT OUTPUT RULES:',
+    '- Output EXACTLY ONE entry per input word — no more, no less. Length MUST',
+    '  equal the input length.',
+    '- Each entry is either a slug string from the allowed list, or null.',
+    '- No explanations, no objects, no extra fields. Just slugs / null.',
     '- Use a slug ONLY from the allowed list below. Never invent new slugs.',
-    '- Prefer specificity: if a word is a question word, tag "mots-interrogatifs"',
-    '  rather than a generic "pronouns-personal".',
-    '- Reflexive verbs → "reflexive-verbs". Modal verbs (pouvoir, vouloir, devoir,',
-    '  falloir) → "verbs-modal" if present; otherwise their tense topic.',
-    '- For nouns: tag the gender/plural topic ONLY if the word teaches that rule',
-    '  specifically (rare). Most common nouns get null.',
-    '- For adjectives that are colours: "colors-adjectives" if present, else null.',
-    '- Numbers → numbers topic if present.',
-    '- If no topic fits clearly, use null. Do NOT force-fit — null is fine.',
     '',
-    'Allowed topic slugs:',
+    'TAGGING GUIDELINES:',
+    '- Prefer specificity: a question word → "mots-interrogatifs", not a generic',
+    '  "pronouns-personal".',
+    '- Reflexive verbs (s\'appeler, se laver) → "reflexive-verbs".',
+    '- Modals (pouvoir, vouloir, devoir, falloir) → modals topic if present.',
+    '- For nouns: tag a gender/plural topic ONLY if the word specifically teaches',
+    '  that rule (rare). Most common nouns get null.',
+    '- Colour adjectives → "colors-adjectives" if present, else null.',
+    '- Numbers → numbers topic if present.',
+    '- If no topic fits clearly, use null. Do NOT force-fit — null is fine and',
+    '  expected for most ordinary content words.',
+    '',
+    'Allowed topic slugs (USE ONLY THESE, NEVER INVENT):',
     ...lines,
     '',
-    'Return JSON {"tags":[...]} with one entry per input word, in the SAME ORDER',
-    'as input. Each entry is either a slug string from the list above, or null.',
-    'Return ONLY the JSON object.',
+    'Output format: {"tags":[<slug or null>, <slug or null>, ...]}',
+    'Order MUST match input order. Length MUST match input length.',
+    'Return ONLY the JSON object — no markdown, no commentary.',
   ].join('\n');
 }
 
@@ -82,6 +92,10 @@ async function aiTag(systemPrompt: string, batch: WordLite[]): Promise<(string |
     model: 'gpt-4o-mini',
     response_format: { type: 'json_object' },
     temperature: 0,
+    // Generous cap but capped — 10 entries × ~30 chars each + JSON overhead
+    // fits easily under 500 tokens; the cap mostly guards against runaway
+    // hallucinations (the failure mode that broke the earlier run).
+    max_tokens: 800,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMsg },

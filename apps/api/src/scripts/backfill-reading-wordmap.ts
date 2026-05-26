@@ -62,18 +62,19 @@ function tokenize(content: string): Set<string> {
   return out;
 }
 
-interface Entry { tr: string; pos: string; ipa?: string | null }
-interface AiItem { tr: string; pos: string; ipa: string }
+interface Entry { tr: string; tr_en?: string | null; pos: string; ipa?: string | null }
+interface AiItem { tr: string; tr_en: string; pos: string; ipa: string }
 
 const SYSTEM_PROMPT =
-  'You are a French ↔ Russian dictionary that also gives IPA. ' +
+  'You are a trilingual French↔Russian↔English dictionary that also gives IPA. ' +
   'Given a JSON array of French tokens (words, conjugated forms, particles, or proper nouns), ' +
   'return JSON {"items":[...]} where each entry has: ' +
   ' tr — concise Russian translation (1-4 words); for conjugated verbs include the person hint, e.g. "(я) имею"; ' +
+  ' tr_en — concise English translation (1-4 words); for conjugated verbs include the person hint, e.g. "(I) have"; ' +
   ' pos — slug from {verb, noun, adjective, adverb, pronoun, preposition, conjunction, determiner, number, interjection, expression, proper}; ' +
   ' ipa — modern Parisian IPA transcription, no slashes, ≤30 chars. ' +
-  'For PROPER NOUNS (city/person names like "Léo", "Bordeaux"): pos="proper", tr = the name as-is in Cyrillic or Latin (e.g. "Léo" → "Лео", "Bordeaux" → "Бордо"). ' +
-  'For very common particles ("a", "à", "et", "ou", "ne", "pas"): give the natural Russian (et → "и", ne → "не") and pos="conjunction"/"adverb"/etc. ' +
+  'For PROPER NOUNS (city/person names like "Léo", "Bordeaux"): pos="proper", tr/tr_en = the name spelled naturally in each language (e.g. "Léo" → tr "Лео" / tr_en "Léo", "Bordeaux" → tr "Бордо" / tr_en "Bordeaux"). ' +
+  'For very common particles ("a", "à", "et", "ou", "ne", "pas"): give the natural translation (et → tr "и" / tr_en "and", ne → tr "не" / tr_en "not") and pos="conjunction"/"adverb"/etc. ' +
   'Length must match input. Return ONLY the JSON.';
 
 async function aiResolve(tokens: string[]): Promise<AiItem[]> {
@@ -92,9 +93,10 @@ async function aiResolve(tokens: string[]): Promise<AiItem[]> {
     throw new Error(`length mismatch: expected ${tokens.length}, got ${parsed.items?.length}`);
   }
   return parsed.items.map((it) => ({
-    tr: String(it.tr ?? '').trim().slice(0, 200),
-    pos: String(it.pos ?? '').trim().slice(0, 30),
-    ipa: String(it.ipa ?? '').trim().slice(0, 30),
+    tr:    String(it.tr    ?? '').trim().slice(0, 200),
+    tr_en: String(it.tr_en ?? '').trim().slice(0, 200),
+    pos:   String(it.pos   ?? '').trim().slice(0, 30),
+    ipa:   String(it.ipa   ?? '').trim().slice(0, 30),
   }));
 }
 
@@ -127,12 +129,13 @@ async function main() {
       if (!existingKeys.has(key)) missing.push(key);
     }
 
-    // incomplete — entries present but missing tr or ipa
+    // incomplete — entries present but missing tr, tr_en, or ipa
     const incomplete: string[] = [];
     for (const [k, v] of Object.entries(wm)) {
-      const needsTr = !v.tr || v.tr.trim() === '';
-      const needsIpa = !v.ipa;
-      if (needsTr || needsIpa) incomplete.push(k);
+      const needsTr   = !v.tr    || v.tr.trim() === '';
+      const needsTrEn = !v.tr_en || v.tr_en.trim() === '';
+      const needsIpa  = !v.ipa;
+      if (needsTr || needsTrEn || needsIpa) incomplete.push(k);
     }
 
     if (missing.length === 0 && incomplete.length === 0) {
@@ -148,6 +151,7 @@ async function main() {
         .select({
           french: words.french,
           translation: words.translation,
+          translationEn: words.translationEn,
           pos: words.partOfSpeech,
           ipa: words.ipa,
         })
@@ -159,6 +163,7 @@ async function main() {
         if (w?.translation) {
           newMap[key] = {
             tr: w.translation,
+            tr_en: w.translationEn ?? null,
             pos: w.pos ?? 'noun',
             ipa: w.ipa ?? null,
           };
@@ -167,11 +172,16 @@ async function main() {
       }
     }
 
-    // 2. Anything still missing → AI
+    // 2. Anything still missing → AI; also entries from the DB pass that
+    // didn't have translation_en (so we still need AI for tr_en).
     const stillMissing = missing.filter((k) => !newMap[k]);
+    const missingTrEn = missing.filter((k) => {
+      const v = newMap[k];
+      return v && (!v.tr_en || v.tr_en.trim() === '');
+    });
 
     // 3. Plus existing incomplete entries → AI (we'll merge fields back)
-    const toAi = [...stillMissing, ...incomplete];
+    const toAi = [...stillMissing, ...missingTrEn, ...incomplete];
 
     let fromAi = 0;
     let topped = 0;
@@ -185,16 +195,18 @@ async function main() {
           const ai = items[j];
           if (!ai) continue;
           if (newMap[key]) {
-            // top-up: only fill blanks, keep existing tr/pos if they're set
+            // top-up: only fill blanks, keep existing tr/pos/tr_en if set
             const prev = newMap[key];
-            const nextTr = prev.tr && prev.tr.trim() ? prev.tr : ai.tr;
-            const nextPos = prev.pos && prev.pos.trim() ? prev.pos : ai.pos;
-            const nextIpa = prev.ipa ?? (ai.ipa || null);
-            newMap[key] = { tr: nextTr, pos: nextPos, ipa: nextIpa };
+            const nextTr   = prev.tr && prev.tr.trim() ? prev.tr : ai.tr;
+            const nextTrEn = prev.tr_en && prev.tr_en.trim() ? prev.tr_en : (ai.tr_en || null);
+            const nextPos  = prev.pos && prev.pos.trim() ? prev.pos : ai.pos;
+            const nextIpa  = prev.ipa ?? (ai.ipa || null);
+            newMap[key] = { tr: nextTr, tr_en: nextTrEn, pos: nextPos, ipa: nextIpa };
             topped++;
           } else {
             newMap[key] = {
               tr: ai.tr,
+              tr_en: ai.tr_en || null,
               pos: ai.pos,
               ipa: ai.ipa || null,
             };

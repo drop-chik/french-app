@@ -63,7 +63,9 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const { slug } = request.params as { slug: string };
-      const text = await getTextBySlug(fastify.db, request.user.userId, slug);
+      const q = request.query as Record<string, unknown>;
+      const lang: 'ru' | 'en' = q['lang'] === 'en' ? 'en' : 'ru';
+      const text = await getTextBySlug(fastify.db, request.user.userId, slug, lang);
       if (!text) return reply.status(404).send({ error: 'Text not found' });
       reply.send({ text });
     },
@@ -157,9 +159,10 @@ const readingRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const { word } = request.query as { word?: string };
+      const { word, lang } = request.query as { word?: string; lang?: string };
       if (!word) return reply.status(400).send({ error: 'word is required' });
-      const result = await translateWord(fastify.db, word);
+      const effectiveLang: 'ru' | 'en' = lang === 'en' ? 'en' : 'ru';
+      const result = await translateWord(fastify.db, word, effectiveLang);
       reply.send({ result });
     },
   );
