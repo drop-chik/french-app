@@ -103,10 +103,23 @@ async function aiTag(systemPrompt: string, batch: WordLite[]): Promise<(string |
   });
   const raw = resp.choices[0]?.message?.content ?? '{}';
   const parsed = JSON.parse(raw) as AiResponse;
-  if (!Array.isArray(parsed.tags) || parsed.tags.length !== batch.length) {
-    throw new Error(`length mismatch: expected ${batch.length}, got ${parsed.tags?.length}`);
+  const raw_tags = Array.isArray(parsed.tags) ? parsed.tags : [];
+  // Tolerance: gpt-4o-mini systematically emits N+1 (extra item appended)
+  // on certain batches; less often it emits N-1. Rather than discarding the
+  // whole batch, we align by length: trim trailing extras for N+1 (the first
+  // N are usually correct), pad with null for N-1. If the drift is >1, we
+  // refuse — that's a genuinely broken response.
+  let aligned: unknown[];
+  if (raw_tags.length === batch.length) {
+    aligned = raw_tags;
+  } else if (raw_tags.length === batch.length + 1) {
+    aligned = raw_tags.slice(0, batch.length);
+  } else if (raw_tags.length === batch.length - 1) {
+    aligned = [...raw_tags, null];
+  } else {
+    throw new Error(`length mismatch: expected ${batch.length}, got ${raw_tags.length}`);
   }
-  return parsed.tags.map((t) => {
+  return aligned.map((t) => {
     if (t === null || t === undefined) return null;
     if (typeof t !== 'string') return null;
     const s = t.trim();
