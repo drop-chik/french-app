@@ -913,6 +913,11 @@ export const ru: DeepRecord = {
     wordsLookedUp: 'слов просмотрено',
     wordsSaved: 'слов добавлено',
     readAgain: 'Читать снова',
+    popupNoTranslation: 'Нет перевода',
+    popupSaveAdded: 'Добавлено',
+    popupSaveExists: 'Уже в словаре',
+    popupSaveNotFound: 'Нет в словаре',
+    popupSaveBtn: 'В словарь',
     topics: {
       famille: 'Семья',
       vie_quotidienne: 'Повседневная жизнь',

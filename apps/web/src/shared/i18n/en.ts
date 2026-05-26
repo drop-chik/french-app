@@ -1073,6 +1073,11 @@ export const en: Translations = {
     wordsLookedUp: 'words looked up',
     wordsSaved: 'words saved',
     readAgain: 'Read again',
+    popupNoTranslation: 'No translation',
+    popupSaveAdded: 'Added',
+    popupSaveExists: 'Already in dictionary',
+    popupSaveNotFound: 'Not in dictionary',
+    popupSaveBtn: 'Add to dictionary',
     topics: {
       famille: 'Family',
       vie_quotidienne: 'Daily life',

@@ -149,6 +149,8 @@ export function ReadingTextPage({ slug }: Props) {
             onSaveWord={handleSaveWord}
             saveStatus={saveStatus}
             wordsSaved={wordsSaved}
+            lang={lang}
+            t={t}
           />
           <button
             className={styles.startQuestionsBtn}
@@ -272,19 +274,47 @@ function parseTranslation(tr: string): { main: string; base: string | null } {
   return { main: tr, base: null };
 }
 
-const POS_LABELS: Record<string, { label: string; color: string }> = {
-  verb:   { label: 'глагол',          color: '#3b82f6' },
-  noun:   { label: 'существительное', color: '#8b5cf6' },
-  adj:    { label: 'прилагательное',  color: '#10b981' },
-  adverb: { label: 'наречие',         color: '#f59e0b' },
-  adv:    { label: 'наречие',         color: '#f59e0b' },
-  number: { label: 'числительное',    color: '#6366f1' },
-  pron:   { label: 'местоимение',     color: '#ec4899' },
-  prep:   { label: 'предлог',         color: '#64748b' },
-  conj:   { label: 'союз',            color: '#94a3b8' },
-  art:    { label: 'артикль',         color: '#94a3b8' },
-  det:    { label: 'определитель',    color: '#94a3b8' },
+// Color is language-agnostic; only the human label changes per UI language.
+const POS_COLORS: Record<string, string> = {
+  verb: '#3b82f6', noun: '#8b5cf6', adj: '#10b981', adverb: '#f59e0b',
+  adv: '#f59e0b', number: '#6366f1', pron: '#ec4899', prep: '#64748b',
+  conj: '#94a3b8', art: '#94a3b8', det: '#94a3b8',
+  // wordMap emits a few additional pos slugs from the AI backfill — give
+  // them sensible defaults so the chip renders something.
+  adjective: '#10b981', pronoun: '#ec4899', preposition: '#64748b',
+  conjunction: '#94a3b8', determiner: '#94a3b8', expression: '#64748b',
+  interjection: '#64748b', proper: '#a16207',
 };
+
+const POS_LABELS_RU: Record<string, string> = {
+  verb: 'глагол', noun: 'существительное', adj: 'прилагательное',
+  adjective: 'прилагательное', adverb: 'наречие', adv: 'наречие',
+  number: 'числительное', pron: 'местоимение', pronoun: 'местоимение',
+  prep: 'предлог', preposition: 'предлог', conj: 'союз',
+  conjunction: 'союз', art: 'артикль', det: 'определитель',
+  determiner: 'определитель', expression: 'выражение',
+  interjection: 'междометие', proper: 'имя собственное',
+};
+
+const POS_LABELS_EN: Record<string, string> = {
+  verb: 'verb', noun: 'noun', adj: 'adjective',
+  adjective: 'adjective', adverb: 'adverb', adv: 'adverb',
+  number: 'number', pron: 'pronoun', pronoun: 'pronoun',
+  prep: 'preposition', preposition: 'preposition', conj: 'conjunction',
+  conjunction: 'conjunction', art: 'article', det: 'determiner',
+  determiner: 'determiner', expression: 'expression',
+  interjection: 'interjection', proper: 'proper noun',
+};
+
+function posInfoFor(pos: string | undefined | null, lang: 'ru' | 'en'):
+  { label: string; color: string } | null {
+  if (!pos) return null;
+  const key = pos.toLowerCase();
+  const labels = lang === 'en' ? POS_LABELS_EN : POS_LABELS_RU;
+  const label = labels[key];
+  if (!label) return null;
+  return { label, color: POS_COLORS[key] ?? '#64748b' };
+}
 
 interface PopupState {
   rawWord: string;
@@ -303,9 +333,13 @@ interface InteractiveTextProps {
   onSaveWord: (word: string) => void;
   saveStatus: Record<string, string>;
   wordsSaved: Set<string>;
+  // Forwarded into <PopupCard> for lang-aware POS labels and i18n save button.
+  lang: 'ru' | 'en';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: any;
 }
 
-function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, wordsSaved }: InteractiveTextProps) {
+function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, wordsSaved, lang, t }: InteractiveTextProps) {
   const [popup, setPopup] = useState<PopupState | null>(null);
   // Cache DB lookups for this session
   const translationCache = useRef<Map<string, WordEntry | null>>(new Map());
@@ -403,6 +437,8 @@ function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, w
           saveStatus={saveStatus}
           wordsSaved={wordsSaved}
           onSave={onSaveWord}
+          lang={lang}
+          t={t}
         />
       )}
     </div>
@@ -416,13 +452,18 @@ function PopupCard({
   saveStatus,
   wordsSaved,
   onSave,
+  lang,
+  t,
 }: {
   popup: PopupState;
   saveStatus: Record<string, string>;
   wordsSaved: Set<string>;
   onSave: (word: string) => void;
+  lang: 'ru' | 'en';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: any;
 }) {
-  const posInfo = popup.entry?.pos ? POS_LABELS[popup.entry.pos] : null;
+  const posInfo = posInfoFor(popup.entry?.pos, lang);
   const parsed = popup.entry ? parseTranslation(popup.entry.tr) : null;
   // baseForm comes from DB lemmatization or is parsed from translation string
   const baseForm = popup.entry?.baseForm ?? parsed?.base ?? null;
@@ -477,7 +518,7 @@ function PopupCard({
 
       {/* Not found */}
       {!popup.loading && popup.notFound && (
-        <div className={styles.popupNotFound}>Нет перевода</div>
+        <div className={styles.popupNotFound}>{t.reading.popupNoTranslation}</div>
       )}
 
       {/* Save to vocab */}
@@ -488,10 +529,10 @@ function PopupCard({
           disabled={!!status}
         >
           {status === 'saving' ? '...' :
-            isSaved ? <><Check size={13} /> Добавлено</> :
-            status === 'exists' ? 'Уже в словаре' :
-            status === 'not_found' ? 'Нет в словаре' :
-            <><BookPlus size={13} /> В словарь</>}
+            isSaved ? <><Check size={13} /> {t.reading.popupSaveAdded}</> :
+            status === 'exists' ? t.reading.popupSaveExists :
+            status === 'not_found' ? t.reading.popupSaveNotFound :
+            <><BookPlus size={13} /> {t.reading.popupSaveBtn}</>}
         </button>
       )}
     </div>
