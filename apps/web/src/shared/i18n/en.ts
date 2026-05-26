@@ -30,6 +30,78 @@ export const en: Translations = {
     streakDaysFew: 'days',
     xpLevel: 'Level',
     xpToNext: 'to next',
+    help: 'Help',
+  },
+  help: {
+    title: 'Help & Navigation',
+    subtitle: 'Every section of the app with a one-liner about each. Tap to open.',
+    catalogButton: 'All sections',
+    tourButton: 'Tour this page',
+    tourOnThisPage: 'Tour this screen',
+    tourUnavailable: 'No tour for this page yet',
+    skip: 'Skip',
+    next: 'Next',
+    prev: 'Back',
+    done: 'Got it',
+    step: 'Step {n} of {total}',
+    sectionLearn: 'Learn',
+    sectionPractice: 'Practice',
+    sectionSocial: 'Social',
+    sectionRef: 'Reference',
+    cards: {
+      dashboard: {
+        title: 'Home',
+        body: 'What to do right now: reviews, new words, grammar topics for today.',
+      },
+      vocabulary: {
+        title: 'Words — Learn',
+        body: 'SRS session: cards surface by SM-2. The better you remember, the rarer they come back.',
+      },
+      dictionary: {
+        title: 'Words — Dictionary',
+        body: 'All words for your level — translation, IPA, examples. Filter by category.',
+      },
+      grammar: {
+        title: 'Grammar — Topics',
+        body: 'Theory + drills for every topic. Progress tracked automatically.',
+      },
+      drills: {
+        title: 'Grammar — Trainers',
+        body: 'Micro-drills focused on one skill: articles, tenses, agreement.',
+      },
+      conjugation: {
+        title: 'Grammar — Conjugation',
+        body: 'Type any verb — see every form across every tense.',
+      },
+      reading: {
+        title: 'Reading',
+        body: 'Texts at your level. Tap any word — instant translation and IPA.',
+      },
+      writing: {
+        title: 'Writing',
+        body: 'Topics for writing assignments with AI feedback on grammar, vocab, style.',
+      },
+      listening: {
+        title: 'Listening',
+        body: 'Audio with comprehension questions. Get the meaning, answer.',
+      },
+      conversation: {
+        title: 'Conversations',
+        body: 'Voice/text chats with an AI partner on a chosen topic.',
+      },
+      friends: {
+        title: 'Friends',
+        body: 'Add friends by tag, see their progress and achievements, motivate each other.',
+      },
+      profile: {
+        title: 'Profile',
+        body: 'Your progress, stats, settings, streak. Achievements live here too.',
+      },
+      achievements: {
+        title: 'Achievements',
+        body: 'Badges for milestones: vocab, streak, grammar, reading. They grant XP.',
+      },
+    },
   },
   achievements: {
     title: 'Achievements',

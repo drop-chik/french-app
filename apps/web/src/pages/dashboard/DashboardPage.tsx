@@ -165,7 +165,7 @@ export function DashboardPage() {
       )}
 
       {/* Today's plan */}
-      <section className={styles.section}>
+      <section className={styles.section} data-tour="dashboard-today">
         <h2 className={styles.sectionTitle}>{t.dashboard.todayPlan}</h2>
         <div className={styles.planGrid}>
           {/* Words card */}

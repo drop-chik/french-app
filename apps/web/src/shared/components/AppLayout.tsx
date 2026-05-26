@@ -100,6 +100,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   key={hub.key}
                   to={hubEntryRoute(hub, cefrLevel)}
                   className={`${styles.navLink} ${activeHub?.key === hub.key ? styles.navLinkActive : ''}`}
+                  data-tour={`sidebar-${hub.key}`}
                 >
                   <Icon size={18} />
                   <span>{t.nav[hub.navKey]}</span>

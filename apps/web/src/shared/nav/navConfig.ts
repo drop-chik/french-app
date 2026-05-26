@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import {
   Home, BookOpen, LayoutGrid, GraduationCap, UserCircle,
-  Book, Type, Dumbbell, Headphones, BookMarked, PenLine, MessageCircle,
+  Book, Type, Dumbbell, Headphones, BookMarked, PenLine, MessageCircle, Users,
 } from 'lucide-react';
 
 export type IconType = ComponentType<{ size?: number | string; className?: string }>;
@@ -85,12 +85,20 @@ export const HUBS: NavHub[] = [
     ],
   },
   {
+    key: 'friends',
+    navKey: 'friends',
+    icon: Users,
+    defaultRoute: '/friends',
+    // Social hub: friends list + public profile pages live here.
+    prefixes: ['/friends', '/u/'],
+  },
+  {
     key: 'profile',
     navKey: 'profile',
     icon: UserCircle,
     defaultRoute: '/profile',
-    // Profile is a landing with cards — Achievements / Friends live under it.
-    prefixes: ['/profile', '/achievements', '/friends', '/u/'],
+    // Profile is a landing with cards — Achievements still live under it.
+    prefixes: ['/profile', '/achievements'],
   },
   {
     key: 'admin',

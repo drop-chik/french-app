@@ -481,7 +481,7 @@ export function VocabularyPage() {
           A progress ring shows how far the user is through their current
           session pool; the right side shows what awaits + a single CTA. */}
       {!isLoading && !error && sessionWords.length > 0 && (
-        <div className={`${styles.hero} ${todayCompleted ? styles.heroDone : ''}`}>
+        <div className={`${styles.hero} ${todayCompleted ? styles.heroDone : ''}`} data-tour="session-progress">
           <ProgressRing
             percent={ringPercent}
             color={todayCompleted ? 'var(--color-success)' : undefined}
