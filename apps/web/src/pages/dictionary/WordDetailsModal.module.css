@@ -209,6 +209,70 @@
   line-height: 1.4;
 }
 
+/* "Show more examples" disclosure — sits between the primary example block
+   and the action buttons. Quiet until the user opens it. */
+.moreExamplesBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-secondary);
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: var(--space-4);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+  font-family: inherit;
+}
+
+.moreExamplesBtn:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.moreExamplesBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.moreExamplesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.extraExample {
+  background: var(--color-bg-secondary);
+  border-left: 3px solid color-mix(in srgb, var(--color-brand) 60%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+
+.extraExampleFr {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.extraExampleRu {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.extraExampleEmpty {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
 /* Actions */
 .actions {
   display: flex;

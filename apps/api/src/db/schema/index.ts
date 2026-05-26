@@ -143,6 +143,10 @@ export const words = pgTable(
     exampleRu: text('example_ru'),
     translationEn: varchar('translation_en', { length: 255 }),
     exampleEn: text('example_en'),
+    // Optional cached array of 2-3 extra examples, generated lazily on demand
+    // via gpt-4o-mini when the user opens word details and asks for more.
+    // Shape: [{fr, ru, en}, ...]. NULL until first request.
+    extraExamples: jsonb('extra_examples'),
     audioUrl: varchar('audio_url', { length: 500 }),
     imageUrl: varchar('image_url', { length: 500 }),
     imageGenerating: boolean('image_generating').default(false).notNull(),
@@ -252,6 +256,10 @@ export const listeningExercises = pgTable('listening_exercises', {
   transcript: text('transcript').notNull(),
   questions: jsonb('questions').notNull(),
   durationSec: integer('duration_sec').notNull(),
+  // Real per-sentence start times in seconds (monotonic float[]). Populated
+  // by a one-off Whisper batch — null on legacy rows; frontend then falls
+  // back to its word-weighted estimate.
+  sentenceTimestamps: jsonb('sentence_timestamps'),
 });
 
 // Listening progress

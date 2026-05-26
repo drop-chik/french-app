@@ -13,6 +13,7 @@ const exerciseCols = {
   transcript: listeningExercises.transcript,
   questions: listeningExercises.questions,
   durationSec: listeningExercises.durationSec,
+  sentenceTimestamps: listeningExercises.sentenceTimestamps,
 };
 
 // Get all exercises for a level, with per-user progress joined in.
@@ -82,6 +83,7 @@ export async function getExercise(db: DB, userId: string, exerciseId: string) {
     audioUrl,
     transcript: exercise.transcript,
     durationSec: exercise.durationSec,
+    sentenceTimestamps: exercise.sentenceTimestamps as number[] | null,
     questions,
     progress: progress
       ? { completed: progress.completed, score: progress.score }

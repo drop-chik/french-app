@@ -13,6 +13,10 @@ export interface ListeningExercise {
   audioUrl: string;
   transcript: string;
   durationSec: number;
+  /** Real per-sentence start times (seconds, monotonic) from Whisper.
+   *  Null on legacy exercises that haven't been backfilled — the frontend
+   *  falls back to word-weighted estimates in that case. */
+  sentenceTimestamps: number[] | null;
   questions: ListeningQuestion[];
   progress: { completed: boolean; score: number } | null;
 }

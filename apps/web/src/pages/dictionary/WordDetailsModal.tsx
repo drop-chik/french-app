@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { X, Volume2, Plus, Check, BookOpen, ArrowRight, Hash, RotateCcw, Pencil, Trash2 } from 'lucide-react';
+import { X, Volume2, Plus, Check, BookOpen, ArrowRight, Hash, RotateCcw, Pencil, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { wordsApi, type WordData } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -37,11 +37,15 @@ const LEVEL_COLOR: Record<string, string> = {
 };
 
 export function WordDetailsModal({ wordId, onClose, onMutated, onEdit }: Props) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const currentUserId = useAuthStore((s) => s.user?.id);
   const [audioLoading, setAudioLoading] = useState(false);
+  // Extra examples are lazy — fetched only when the user opens the disclosure.
+  const [examplesOpen, setExamplesOpen] = useState(false);
+  const [examples, setExamples] = useState<Array<{ fr: string; ru: string; en: string }> | null>(null);
+  const [examplesLoading, setExamplesLoading] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['word-details', wordId],
@@ -110,6 +114,24 @@ export function WordDetailsModal({ wordId, onClose, onMutated, onEdit }: Props) 
       audio.onended = () => URL.revokeObjectURL(url);
     } finally {
       setAudioLoading(false);
+    }
+  }
+
+  async function loadExtraExamples() {
+    if (examples !== null) {
+      // Already loaded — just toggle visibility.
+      setExamplesOpen((v) => !v);
+      return;
+    }
+    setExamplesOpen(true);
+    setExamplesLoading(true);
+    try {
+      const res = await wordsApi.getExtraExamples(wordId);
+      setExamples(res.examples ?? []);
+    } catch {
+      setExamples([]);
+    } finally {
+      setExamplesLoading(false);
     }
   }
 
@@ -215,6 +237,46 @@ export function WordDetailsModal({ wordId, onClose, onMutated, onEdit }: Props) 
                   <div className={styles.exampleRu}>{word.exampleRu}</div>
                 )}
               </div>
+            )}
+
+            {/* Lazy "show more examples" disclosure. First click hits the API,
+                which either returns cached examples or generates them via AI
+                and caches for next time. */}
+            <button
+              type="button"
+              className={styles.moreExamplesBtn}
+              onClick={loadExtraExamples}
+              disabled={examplesLoading}
+            >
+              {examplesLoading ? (
+                <Loader2 size={13} className={styles.spinner} />
+              ) : (
+                <Sparkles size={13} />
+              )}
+              <span>
+                {examplesOpen
+                  ? t.dictionary.moreExamplesHide
+                  : t.dictionary.moreExamplesShow}
+              </span>
+            </button>
+
+            {examplesOpen && examples !== null && !examplesLoading && (
+              examples.length > 0 ? (
+                <div className={styles.moreExamplesList}>
+                  {examples.map((ex, i) => (
+                    <div key={i} className={styles.extraExample}>
+                      <div className={styles.extraExampleFr}>«{ex.fr}»</div>
+                      <div className={styles.extraExampleRu}>
+                        {lang === 'en' ? ex.en : ex.ru}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles.extraExampleEmpty}>
+                  {t.dictionary.moreExamplesEmpty}
+                </p>
+              )
             )}
 
             {/* Single primary action determined by current status. */}

@@ -17,6 +17,7 @@ import {
   createUserWord,
   updateUserWord,
   deleteUserWord,
+  getOrGenerateExtraExamples,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
@@ -307,6 +308,43 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const word = await getWordDetails(fastify.db, request.user.userId, request.params.id, lang);
       if (!word) return reply.status(404).send({ error: 'Word not found' });
       reply.send({ word });
+    },
+  );
+
+  // POST /words/:id/examples — fetch (or lazily generate) extra example sentences.
+  // First call hits gpt-4o-mini and caches in words.extra_examples; subsequent
+  // calls return instantly from the cache. Costs ~$0.0001 once per word.
+  fastify.post<{ Params: { id: string } }>(
+    '/:id/examples',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Get 3 extra example sentences (lazy + cached)',
+        description:
+          'Returns the cached array if present; otherwise generates via gpt-4o-mini, stores in the DB, and returns. Idempotent.',
+        security: authorizedSecurity,
+        params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              examples: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { fr: { type: 'string' }, ru: { type: 'string' }, en: { type: 'string' } },
+                },
+              },
+            },
+          },
+          ...errorSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const examples = await getOrGenerateExtraExamples(fastify.db, request.params.id);
+      reply.send({ examples });
     },
   );
 

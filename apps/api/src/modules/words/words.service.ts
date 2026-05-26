@@ -1,9 +1,19 @@
 import { eq, and, lte, inArray, sql, or, isNull, asc, isNotNull, count } from 'drizzle-orm';
+import OpenAI from 'openai';
 import type { DB } from '../../db/index.js';
 import { words, wordProgress, users } from '../../db/schema/index.js';
 import { calculateNextReview, getStatus, createCard } from '@french-app/srs-engine';
 import type { SRSGrade } from '@french-app/srs-engine';
 import type { LanguageLevel } from '@french-app/shared-types';
+
+// Lazily-init OpenAI client. Reused for on-demand example generation.
+const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
+
+export interface ExtraExample {
+  fr: string;
+  ru: string;
+  en: string;
+}
 
 // Defaults — overridden per-user via users.dailyNewWordsLimit /
 // dailyDueWordsLimit. Lowered again because users were reporting that 14
@@ -719,6 +729,79 @@ export async function restartWord(db: DB, userId: string, wordId: string) {
       nextReview: now,
     })
     .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
+}
+
+// Lazy-generate (and cache) 2-3 extra example sentences for a word. First
+// call hits gpt-4o-mini (~$0.0001 per word) and writes back to the row;
+// subsequent calls return the cached array instantly. Idempotent — never
+// regenerates once cached. Returns [] if generation fails or the word
+// doesn't exist.
+const EXTRA_EXAMPLES_PROMPT =
+  'You are a French language teacher. Given a French word with its primary translation, ' +
+  'produce exactly 3 extra example sentences that demonstrate distinct contexts/usages of the word. ' +
+  'Each sentence must be: natural, 8-15 words, A2-B1 difficulty, and INCLUDE the target word ' +
+  '(or its inflected/conjugated form if a verb). Return JSON {"examples":[{"fr":"…","ru":"…","en":"…"}, …]}. ' +
+  'Each entry must have all three fields. Return ONLY the JSON.';
+
+export async function getOrGenerateExtraExamples(
+  db: DB,
+  wordId: string,
+): Promise<ExtraExample[]> {
+  const word = await db.query.words.findFirst({
+    where: eq(words.id, wordId),
+    columns: { french: true, translation: true, translationEn: true, extraExamples: true },
+  });
+  if (!word) return [];
+
+  // Cache hit — return immediately. Validated as array of {fr,ru,en}.
+  const cached = word.extraExamples;
+  if (Array.isArray(cached) && cached.length > 0) {
+    return cached.filter(
+      (e): e is ExtraExample =>
+        !!e && typeof e === 'object' &&
+        typeof (e as ExtraExample).fr === 'string' &&
+        typeof (e as ExtraExample).ru === 'string' &&
+        typeof (e as ExtraExample).en === 'string',
+    );
+  }
+
+  // Cache miss — call OpenAI once and write back. Failures return [] but
+  // do NOT mark the row; next request will retry, which is fine.
+  try {
+    const userMsg = JSON.stringify({
+      french: word.french,
+      russian: word.translation,
+      english: word.translationEn ?? null,
+    });
+    const resp = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' },
+      temperature: 0.4,
+      messages: [
+        { role: 'system', content: EXTRA_EXAMPLES_PROMPT },
+        { role: 'user', content: userMsg },
+      ],
+    });
+    const raw = resp.choices[0]?.message?.content ?? '{}';
+    const parsed = JSON.parse(raw) as { examples?: unknown };
+    if (!Array.isArray(parsed.examples)) return [];
+
+    const cleaned: ExtraExample[] = [];
+    for (const item of parsed.examples.slice(0, 3)) {
+      if (!item || typeof item !== 'object') continue;
+      const o = item as Record<string, unknown>;
+      const fr = typeof o['fr'] === 'string' ? o['fr'].trim().slice(0, 300) : '';
+      const ru = typeof o['ru'] === 'string' ? o['ru'].trim().slice(0, 300) : '';
+      const en = typeof o['en'] === 'string' ? o['en'].trim().slice(0, 300) : '';
+      if (fr && ru && en) cleaned.push({ fr, ru, en });
+    }
+    if (cleaned.length === 0) return [];
+
+    await db.update(words).set({ extraExamples: cleaned }).where(eq(words.id, wordId));
+    return cleaned;
+  } catch {
+    return [];
+  }
 }
 
 // Request image generation for a word

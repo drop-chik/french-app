@@ -176,14 +176,20 @@ export function ListeningExercisePage({ id }: Props) {
     }
   }, [audioReady, playbackRate]);
 
-  // Split transcript into sentences once. Each sentence gets a fractional
-  // start time *weighted by word count*, not by index — long sentences take
-  // longer to read than short ones. This is still an approximation (we don't
-  // have real per-sentence timestamps), but it's much closer than uniform
-  // division. A small lead-in offset on jump compensates for the residual error.
+  // Split transcript into sentences once. Sentence start times come from
+  // exercise.sentenceTimestamps when available (real values aligned by
+  // Whisper, ±100ms), or fall back to a word-weighted estimate based on
+  // total duration. The fallback is still better than uniform division
+  // because longer sentences take longer to read — but it's not exact.
   const sentences = useMemo(() => exercise ? splitSentences(exercise.transcript) : [], [exercise]);
   const sentenceTimes = useMemo(() => {
     if (!exercise || sentences.length === 0) return [] as number[];
+    // Prefer real per-sentence timestamps if the backfill has populated them.
+    const baked = exercise.sentenceTimestamps;
+    if (Array.isArray(baked) && baked.length === sentences.length) {
+      return baked.map((n) => Number(n));
+    }
+    // Fallback: word-weighted estimate against total duration.
     const total = duration || exercise.durationSec;
     const wordCounts = sentences.map((s) => s.split(/\s+/).filter(Boolean).length || 1);
     const totalWords = wordCounts.reduce((a, b) => a + b, 0);
@@ -196,8 +202,10 @@ export function ListeningExercisePage({ id }: Props) {
     return out;
   }, [sentences, duration, exercise]);
   // Tiny lead-in: jump 0.4s earlier than the estimate so we don't miss the
-  // first syllable when the estimate is slightly late.
-  const JUMP_LEAD_SEC = 0.4;
+  // first syllable when the estimate is slightly late. With real Whisper
+  // timestamps we keep a smaller 0.15s lead — they're already accurate.
+  const JUMP_LEAD_SEC =
+    Array.isArray(exercise?.sentenceTimestamps) ? 0.15 : 0.4;
 
   // Which sentence is currently being read (by clock position)
   const activeSentenceIdx = useMemo(() => {

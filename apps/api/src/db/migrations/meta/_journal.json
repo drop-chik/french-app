@@ -148,6 +148,20 @@
       "when": 1779400000000,
       "tag": "0020_words_ipa",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1779500000000,
+      "tag": "0021_words_extra_examples",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1779600000000,
+      "tag": "0022_listening_sentence_timestamps",
+      "breakpoints": true
     }
   ]
 }

@@ -171,4 +171,13 @@ export const wordsApi = {
     apiRequest<{ word: WordData }>(
       `/words/${wordId}?lang=${getLang()}`,
     ),
+
+  // Lazy-fetch extra example sentences. First call generates via AI + caches
+  // server-side; later calls return instantly. Used by WordDetailsModal's
+  // "Показать ещё примеры" disclosure.
+  getExtraExamples: (wordId: string) =>
+    apiRequest<{ examples: Array<{ fr: string; ru: string; en: string }> }>(
+      `/words/${wordId}/examples`,
+      { method: 'POST' },
+    ),
 };
