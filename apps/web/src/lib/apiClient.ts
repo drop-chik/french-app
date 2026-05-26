@@ -2,6 +2,11 @@ import { useAuthStore } from '../features/auth/authStore';
 
 const BASE = '/api';
 
+// Default timeout — 30s covers normal requests. AI endpoints (writing
+// feedback, conversation, image generation) should pass a longer timeout
+// via `options.signal` or accept the default and rely on the abort wrapper.
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 let refreshPromise: Promise<string> | null = null;
 
 async function doRefresh(): Promise<string> {
@@ -17,22 +22,47 @@ async function doRefresh(): Promise<string> {
   return data.accessToken;
 }
 
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+interface ApiOptions extends RequestInit {
+  /** Override the default request timeout (ms). 0 disables the timeout. */
+  timeoutMs?: number;
+}
+
+export async function apiRequest<T>(path: string, options: ApiOptions = {}): Promise<T> {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, ...fetchOptions } = options;
   const makeRequest = async (token: string | null) => {
-    const hasBody = options.body !== undefined && options.body !== null;
-    return fetch(`${BASE}${path}`, {
-      ...options,
-      headers: {
-        ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
-      credentials: 'include',
-    });
+    const hasBody = fetchOptions.body !== undefined && fetchOptions.body !== null;
+    // If caller already supplied a signal, respect it; otherwise auto-abort
+    // after timeoutMs so a hung backend doesn't freeze the UI forever.
+    const controller = fetchOptions.signal ? null : new AbortController();
+    const timer = controller && timeoutMs > 0
+      ? setTimeout(() => controller.abort(), timeoutMs)
+      : null;
+    try {
+      return await fetch(`${BASE}${path}`, {
+        ...fetchOptions,
+        signal: fetchOptions.signal ?? controller?.signal ?? null,
+        headers: {
+          ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...fetchOptions.headers,
+        },
+        credentials: 'include',
+      });
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   };
 
   let token = useAuthStore.getState().accessToken;
-  let res = await makeRequest(token);
+  let res: Response;
+  try {
+    res = await makeRequest(token);
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Request timed out');
+    }
+    throw err;
+  }
 
   // If 401 — try to refresh once
   if (res.status === 401) {

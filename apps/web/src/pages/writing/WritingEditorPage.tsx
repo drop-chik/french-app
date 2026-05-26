@@ -117,7 +117,7 @@ export function WritingEditorPage({ slug }: Props) {
   }
 
   if (!prompt) {
-    return <div className={styles.loading}>Задание не найдено</div>;
+    return <div className={styles.loading}>{tw.promptNotFound}</div>;
   }
 
   return (
@@ -253,7 +253,7 @@ export function WritingEditorPage({ slug }: Props) {
 
           {isSubmitted && (
             <div className={styles.submittedBanner}>
-              <p>Работа сдана. Получи оценку AI!</p>
+              <p>{tw.submissionSent}</p>
               <button
                 className={styles.btnPrimary}
                 onClick={() =>

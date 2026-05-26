@@ -126,6 +126,8 @@ export const writingApi = {
   generateFeedback: (id: string) =>
     apiRequest<{ feedback: WritingFeedback }>(`/writing/submissions/${id}/feedback`, {
       method: 'POST',
+      // GPT-4o evaluation of a 200-word essay can take 30-60s.
+      timeoutMs: 90_000,
     }),
 
   getStats: () =>
@@ -141,5 +143,7 @@ export const writingApi = {
     apiRequest<{ prompt: WritingPrompt }>('/writing/prompts/generate', {
       method: 'POST',
       body: JSON.stringify(params),
+      // Topic generation is shorter than feedback but still AI — give it 60s.
+      timeoutMs: 60_000,
     }),
 };

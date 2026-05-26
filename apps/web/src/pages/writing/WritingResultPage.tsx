@@ -97,7 +97,7 @@ export function WritingResultPage({ id }: Props) {
   }
 
   if (!submission) {
-    return <div className={styles.center}>Работа не найдена</div>;
+    return <div className={styles.center}>{tw.submissionNotFound}</div>;
   }
 
   const sortedCorrections = feedback
@@ -281,7 +281,7 @@ export function WritingResultPage({ id }: Props) {
 
           {/* Submitted text */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Ваша работа</h2>
+            <h2 className={styles.sectionTitle}>{tw.yourWork}</h2>
             <div className={styles.submittedText}>{submission.content}</div>
           </section>
         </div>

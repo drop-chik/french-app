@@ -14,12 +14,25 @@ interface I18nState {
 
 const translations: Record<Lang, Translations> = { ru, en };
 
+// Keep <html lang="…"> in sync with the active UI language. Screen readers
+// switch pronunciation rules based on this attribute — a Russian voice
+// pronouncing English text in Cyrillic phonetics is harsh on the ear and
+// fails WCAG 3.1.1 / 3.1.2.
+function syncDocumentLang(lang: Lang): void {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang;
+  }
+}
+
 export const useI18n = create<I18nState>()(
   persist(
     (set) => ({
       lang: 'ru',
       t: ru,
-      setLang: (lang) => set({ lang, t: translations[lang] }),
+      setLang: (lang) => {
+        set({ lang, t: translations[lang] });
+        syncDocumentLang(lang);
+      },
     }),
     {
       name: 'french-app-lang',
@@ -29,6 +42,7 @@ export const useI18n = create<I18nState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.t = translations[state.lang] ?? ru;
+          syncDocumentLang(state.lang);
         }
       },
     },

@@ -15,8 +15,12 @@ const authTokenResponse = {
 } as const;
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
-  // POST /auth/register
+  // POST /auth/register — tighter rate limit to prevent automated account
+  // creation / email enumeration via the 409 response.
   fastify.post('/register', {
+    config: {
+      rateLimit: { max: 5, timeWindow: '15 minutes' },
+    },
     schema: {
       tags: ['auth'],
       summary: 'Register a new account',
@@ -70,8 +74,13 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // POST /auth/login
+  // POST /auth/login — strict rate limit blocks brute-force credential
+  // stuffing. 10/min/IP is enough for legitimate retries (typos, password
+  // manager fumbles) but stops automated dictionary attacks dead.
   fastify.post('/login', {
+    config: {
+      rateLimit: { max: 10, timeWindow: '1 minute' },
+    },
     schema: {
       tags: ['auth'],
       summary: 'Log in with email and password',

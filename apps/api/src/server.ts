@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import scalar from '@scalar/fastify-api-reference';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -38,11 +40,40 @@ await db.execute(sql`ALTER TABLE listening_exercises ADD COLUMN IF NOT EXISTS au
 
 const isDev = process.env['NODE_ENV'] !== 'production';
 
+// Fail loud in production if secret env vars are missing — otherwise we
+// silently fall back to the dev defaults and an attacker can forge tokens.
+if (!isDev) {
+  if (!process.env['JWT_SECRET'] || process.env['JWT_SECRET'] === 'dev_secret_change_me') {
+    throw new Error('JWT_SECRET must be set in production');
+  }
+  if (!process.env['JWT_REFRESH_SECRET'] || process.env['JWT_REFRESH_SECRET'] === 'refresh_secret') {
+    throw new Error('JWT_REFRESH_SECRET must be set in production');
+  }
+}
+
 const fastify = Fastify({
   logger: isDev
     ? { level: 'info', transport: { target: 'pino-pretty', options: { colorize: true } } }
     : { level: 'warn' },
   bodyLimit: 2 * 1024 * 1024, // 2MB — для base64 аватарок
+});
+
+// Security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+// etc). CSP is OFF here because Scalar API Reference loads inline scripts and
+// external assets from cdn.jsdelivr.net — adding a strict CSP needs a
+// per-route policy or moving /docs behind a separate plugin instance.
+await fastify.register(helmet, {
+  contentSecurityPolicy: false,
+});
+
+// Rate limit — global default (300 req/min/IP). Login/register endpoints
+// tighten further via per-route config so brute force on credentials caps at
+// ~10 attempts/min/IP.
+await fastify.register(rateLimit, {
+  max: 300,
+  timeWindow: '1 minute',
+  // Skip rate limit on the health check so platform pings never trip it.
+  allowList: (req) => req.url === '/health',
 });
 
 // CORS
