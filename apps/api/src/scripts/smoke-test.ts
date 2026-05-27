@@ -32,6 +32,10 @@ process.env['JWT_REFRESH_SECRET'] = process.env['JWT_REFRESH_SECRET'] ?? 'smoke-
 process.env['FRONTEND_URL'] = process.env['FRONTEND_URL'] ?? 'http://localhost:5173';
 // Use a dummy DATABASE_URL — pg pool defers actual connection, so this is OK.
 process.env['DATABASE_URL'] = process.env['DATABASE_URL'] ?? 'postgresql://smoke:smoke@127.0.0.1:1/smoke';
+// words.service.ts instantiates `new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] })`
+// at module load — without a value, the OpenAI SDK throws synchronously and the
+// smoke import fails before any route registers. The key is never actually used.
+process.env['OPENAI_API_KEY'] = process.env['OPENAI_API_KEY'] ?? 'sk-smoke-test-not-real';
 
 const TIMEOUT_MS = 30_000;
 const watchdog = setTimeout(() => {
