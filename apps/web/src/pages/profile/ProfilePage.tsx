@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, Link } from '@tanstack/react-router';
-import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield, Compass, Download, Trash2 } from 'lucide-react';
+import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield, Compass, Download, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import type { UserProfile } from '../../features/profile/api';
+import { authApi } from '../../features/auth/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
@@ -179,6 +180,20 @@ export function ProfilePage() {
 
   const langMutation = useMutation({
     mutationFn: (newLang: string) => profileApi.updateProfile({ uiLanguage: newLang }),
+  });
+
+  // Email verification resend — small inline action inside Settings.
+  // Shows the same toast-free "sent" feedback as the top banner.
+  const resendVerifyMutation = useMutation({
+    mutationFn: () => authApi.resendVerification(),
+    onSuccess: () => {
+      setProfileMsg({ type: 'ok', text: t.verifyBanner.resendSent });
+      setTimeout(() => setProfileMsg(null), 3000);
+    },
+    onError: () => {
+      setProfileMsg({ type: 'err', text: t.errors.saveFailed });
+      setTimeout(() => setProfileMsg(null), 4000);
+    },
   });
 
   const logoutMutation = useMutation({
@@ -491,6 +506,25 @@ export function ProfilePage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
+                  {profile.emailVerifiedAt ? (
+                    <p className={styles.emailVerified}>
+                      <CheckCircle2 size={14} />
+                      <span>{t.verifyBanner.statusVerified}</span>
+                    </p>
+                  ) : (
+                    <p className={styles.emailUnverified}>
+                      <AlertCircle size={14} />
+                      <span>{t.verifyBanner.statusUnverified}</span>
+                      <button
+                        type="button"
+                        className={styles.emailResendBtn}
+                        onClick={() => resendVerifyMutation.mutate()}
+                        disabled={resendVerifyMutation.isPending}
+                      >
+                        {resendVerifyMutation.isPending ? t.verifyBanner.sending : t.verifyBanner.resend}
+                      </button>
+                    </p>
+                  )}
                 </div>
               </div>
               <div className={styles.fieldRow}>

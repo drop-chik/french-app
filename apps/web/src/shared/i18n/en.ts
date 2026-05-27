@@ -939,6 +939,8 @@ export const en: Translations = {
     sending: 'Sending…',
     resendSent: 'Email sent',
     dismiss: 'Hide until next session',
+    statusVerified: 'Email verified',
+    statusUnverified: 'Email not verified',
   },
   resetPassword: {
     title: 'New password',

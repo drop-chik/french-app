@@ -779,6 +779,8 @@ export const ru: DeepRecord = {
     sending: 'Отправляем…',
     resendSent: 'Письмо отправлено',
     dismiss: 'Скрыть до следующей сессии',
+    statusVerified: 'Email подтверждён',
+    statusUnverified: 'Email не подтверждён',
   },
   resetPassword: {
     title: 'Новый пароль',

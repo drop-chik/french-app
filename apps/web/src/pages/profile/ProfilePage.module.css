@@ -339,6 +339,49 @@ details[open] .accordionChevron { transform: rotate(180deg); }
   font-weight: 500;
 }
 
+/* Email verification status — sits under the email input, telegraphs
+   verified state at a glance and exposes the resend action inline so
+   users don't need to dismiss-then-recover the top banner. */
+.emailVerified,
+.emailUnverified {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.emailVerified {
+  color: var(--color-success, #22c55e);
+}
+
+.emailUnverified {
+  color: var(--color-warning, #d97706);
+}
+
+.emailResendBtn {
+  background: none;
+  border: 1px solid currentColor;
+  color: inherit;
+  border-radius: var(--radius-md);
+  padding: 2px var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: var(--space-2);
+  transition: background-color var(--transition-fast);
+}
+
+.emailResendBtn:hover:not(:disabled) {
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.emailResendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Language tiles ── */
 .langTiles {
   display: grid;
