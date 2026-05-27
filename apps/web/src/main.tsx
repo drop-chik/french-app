@@ -29,6 +29,22 @@ window.addEventListener('unhandledrejection', (event) => {
   }));
 });
 
+// After a deploy the user's still-running bundle holds references to lazy
+// chunk hashes that the new build no longer has. The next `import()` 404s
+// and React Router shows a blank screen. Vite emits a `vite:preloadError`
+// for this exact case — reload to pick up the new manifest. We guard with
+// sessionStorage so a true broken-link doesn't trap users in a reload loop.
+window.addEventListener('vite:preloadError', () => {
+  const RELOAD_KEY = 'frenchup:chunk-error-reloaded';
+  if (sessionStorage.getItem(RELOAD_KEY) === '1') {
+    // Already tried reloading this session — something else is wrong,
+    // let the error surface via Sentry rather than infinite-loop.
+    return;
+  }
+  try { sessionStorage.setItem(RELOAD_KEY, '1'); } catch { /* private */ }
+  window.location.reload();
+});
+
 /**
  * Custom 404 component. The default TanStack Router fallback is just bare
  * text "Not Found", which collides with our stale-SW scenario: a user with

@@ -8,10 +8,14 @@
   --color-surface-raised: #222222;
   --color-overlay: rgba(0, 0, 0, 0.6);
 
-  /* Text */
+  /* Text — measured for WCAG AA (≥4.5:1) on bg/surface/surface-raised.
+     tertiary at #666 was 3.2:1 vs #111 (PSI flagged); #8a8a8a clears 5.1:1
+     on #111 and 4.5:1 on #1a1a1a, so it stays readable on every surface
+     we render text on. disabled is intentionally low-contrast (WCAG
+     exempt for inactive UI). */
   --color-text-primary: #f5f5f5;
   --color-text-secondary: #a8a8a8;
-  --color-text-tertiary: #666666;
+  --color-text-tertiary: #8a8a8a;
   --color-text-disabled: #444444;
   --color-text-inverse: #111111;
 

@@ -804,7 +804,11 @@ export function LandingPage() {
                 >
                   <div className={styles.cefrBadge}>{lvl.code}</div>
                   <div className={styles.cefrBody}>
-                    <h4 className={styles.cefrName}>{lvl.name}</h4>
+                    {/* h3 (not h4) — siblings in this section's hierarchy
+                        are h3-level. PSI flagged h2→h4 jump as a heading
+                        order violation. Visual styling lives on .cefrName,
+                        so only the tag changes. */}
+                    <h3 className={styles.cefrName}>{lvl.name}</h3>
                     <p className={styles.cefrDesc}>{lvl.desc}</p>
                     <span className={styles.cefrDuration}>{lvl.duration}</span>
                   </div>

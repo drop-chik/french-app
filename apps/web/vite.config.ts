@@ -11,7 +11,18 @@ export default defineConfig({
       generatedRouteTree: './src/routeTree.gen.ts',
     }),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' instead of 'autoUpdate'. autoUpdate silently activates the
+      // new SW via skipWaiting+clientsClaim — that immediately breaks any
+      // in-flight lazy chunk load (the old bundle references old chunk
+      // hashes the new SW doesn't precache → 404 → chunk-load error mid
+      // session). With 'prompt' the new SW stays in 'waiting' state, the
+      // PWAUpdater component surfaces a toast, user clicks Reload to
+      // trigger updateServiceWorker() which sends SKIP_WAITING + reloads.
+      registerType: 'prompt',
+      // null = don't inject the auto-register <script>; PWAUpdater handles
+      // registration itself via useRegisterSW so it can react to update
+      // events without racing the injected script.
+      injectRegister: null,
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'FrenchUp — Изучай французский',

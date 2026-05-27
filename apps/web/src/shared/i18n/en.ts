@@ -274,6 +274,11 @@ export const en: Translations = {
     subtitle: 'Use it like a native app',
     install: 'Install',
     dismiss: 'Dismiss',
+    updateTitle: 'Update available',
+    updateBody: 'A new version of the app has been downloaded. Reload to apply.',
+    updateReload: 'Reload',
+    updateLater: 'Later',
+    offlineReady: 'App is ready to work offline',
   },
   conjugation: {
     title: 'Verb Conjugation',

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react-query';
 import { useMemo, type ReactNode } from 'react';
 import { ToastProvider, useToast } from '../shared/components/Toast';
+import { PWAUpdater } from '../shared/components/PWAUpdater';
 import { useI18n } from '../shared/i18n';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -10,6 +11,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ToastProvider>
       <QueryProviderInner>{children}</QueryProviderInner>
+      {/* PWAUpdater is a floating banner, no layout impact — it self-mounts
+          a fixed-position element only when a new SW is waiting. Place it
+          outside the route tree so it survives navigations. */}
+      <PWAUpdater />
     </ToastProvider>
   );
 }

@@ -114,6 +114,11 @@ export const ru: DeepRecord = {
     subtitle: 'Открывай как обычное приложение',
     install: 'Установить',
     dismiss: 'Закрыть',
+    updateTitle: 'Доступно обновление',
+    updateBody: 'Загружена новая версия приложения. Перезагрузи страницу чтобы применить.',
+    updateReload: 'Перезагрузить',
+    updateLater: 'Позже',
+    offlineReady: 'Приложение готово работать офлайн',
   },
   conjugation: {
     title: 'Спряжение глаголов',
