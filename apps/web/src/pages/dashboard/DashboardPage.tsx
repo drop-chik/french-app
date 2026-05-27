@@ -295,6 +295,10 @@ const LEVEL_COLORS: Record<string, string> = {
 
 function LevelItem({ lv }: { lv: LevelProgressData }) {
   const color = LEVEL_COLORS[lv.level] ?? '#6b7280';
+  // The backend computes `percent` from `learnedWords / totalWords` (everything
+  // the user has at least touched once). Showing `masteredWords / totalWords`
+  // here made "20% — 3 / 799" look like a lie — bar said 20%, fraction said
+  // 0.4%. Use the same numerator the percent is keyed off.
   return (
     <div className={styles.levelItem}>
       <div className={styles.levelHeader}>
@@ -304,7 +308,7 @@ function LevelItem({ lv }: { lv: LevelProgressData }) {
       <div className={styles.levelBar}>
         <div className={styles.levelFill} style={{ width: `${lv.percent}%`, background: color }} />
       </div>
-      <span className={styles.levelMeta}>{lv.masteredWords} / {lv.totalWords}</span>
+      <span className={styles.levelMeta}>{lv.learnedWords} / {lv.totalWords}</span>
     </div>
   );
 }
