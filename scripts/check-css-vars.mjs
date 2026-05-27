@@ -32,6 +32,10 @@ const RUNTIME_VARS = new Set([
   '--ci',          // confetti keyframe
   '--cat-color',   // DictionaryPage sets per-category via inline style
   '--tint',        // AchievementsPage badge accent set via inline style
+  '--radix-toast-swipe-move-x', // Radix Toast sets on swipe gesture
+  '--radix-toast-swipe-move-y', // Radix Toast sets on swipe gesture
+  '--radix-toast-swipe-end-x',  // Radix Toast sets on swipe end
+  '--radix-toast-swipe-end-y',  // Radix Toast sets on swipe end
 ]);
 
 async function walk(dir) {
