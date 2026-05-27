@@ -45,15 +45,8 @@ export default defineConfig({
         // Pull in our custom push-notification handler.
         importScripts: ['sw-push.js'],
         runtimeCaching: [
-          {
-            // Fonts — basically immutable, cache for a year.
-            urlPattern: /^https:\/\/fonts\.(?:gstatic|googleapis)\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-            },
-          },
+          // Inter is bundled by @fontsource into the precache via globPatterns
+          // above — no runtime fetch needed, so no Google Fonts entry here.
           {
             // User avatars — accept slightly stale, refresh in background.
             urlPattern: /\/api\/profile\/.+\/avatar/,

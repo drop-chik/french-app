@@ -16,6 +16,7 @@
     "size": "size-limit"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
     "@french-app/shared-types": "workspace:*",
     "@french-app/srs-engine": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.4",

@@ -1,7 +1,15 @@
 @import './tokens.css';
 @import './themes/light.css';
 @import './themes/dark.css';
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Self-host Inter via @fontsource. Previously this was a Google Fonts
+   @import that PageSpeed flagged as render-blocking (~1170 ms on slow 4G
+   mobile). Hosting locally lets Vite inline + cache-bust the font and
+   eliminates the cross-origin handshake on first paint. */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 
 /* Default theme */
 :root {

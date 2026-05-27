@@ -323,7 +323,7 @@ export function LandingPage() {
 
         <div className={styles.navInner}>
           <div className={styles.navLogo}>
-            <img src={foxIcon} style={{ height: 32 }} alt="FrenchUp" />
+            <img src={foxIcon} style={{ height: 32 }} width={32} height={32} alt="FrenchUp" />
             <motion.span className={styles.navLogoText} style={{ color: logoColor }}>
               FrenchUp
             </motion.span>
@@ -345,6 +345,10 @@ export function LandingPage() {
           </div>
         </div>
       </motion.nav>
+
+      {/* Wrap content in <main> so screen readers / Lighthouse find the
+          primary landmark. The nav and footer are correctly outside. */}
+      <main>
 
       {/* ═══ HERO ═══ */}
       <section className={styles.hero} onMouseMove={handleMouseMove}>
@@ -429,6 +433,10 @@ export function LandingPage() {
                 className={styles.heroFox}
                 alt="Fox mascot"
                 style={{ x: foxX, y: foxY }}
+                width={1024}
+                height={1024}
+                fetchPriority="high"
+                decoding="async"
               />
             </motion.div>
           </motion.div>
@@ -622,7 +630,7 @@ export function LandingPage() {
         <div className={styles.demoInner}>
           <AnimatedSection>
             <motion.div className={styles.demoLabel} variants={fadeIn}>
-              <img src={foxIcon} style={{ height: 26 }} alt="" />
+              <img src={foxIcon} style={{ height: 26 }} width={26} height={26} alt="" />
               <span>{t.landing.demo.tryNow}</span>
             </motion.div>
 
@@ -962,6 +970,10 @@ export function LandingPage() {
               src={foxHero}
               className={styles.ctaFox}
               alt="Fox mascot"
+              width={1024}
+              height={1024}
+              loading="lazy"
+              decoding="async"
               animate={{ y: [0, -16, 0] }}
               transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
             />
@@ -984,11 +996,13 @@ export function LandingPage() {
         </AnimatedSection>
       </section>
 
+      </main>
+
       {/* ═══ FOOTER ═══ */}
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerLeft}>
-            <img src={foxIcon} style={{ height: 22 }} alt="FrenchUp" />
+            <img src={foxIcon} style={{ height: 22 }} width={22} height={22} alt="FrenchUp" />
             <span className={styles.footerLogo}>FrenchUp</span>
             <span className={styles.footerCopy}>{t.landing.footer.copy.replace('{year}', String(new Date().getFullYear()))}</span>
           </div>
