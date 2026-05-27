@@ -50,4 +50,18 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ token, password }),
     }),
+
+  verifyEmail: (token: string) =>
+    request<{ ok: boolean; alreadyVerified: boolean }>('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
+
+  resendVerification: async () => {
+    // This one is authenticated → needs the access token. Use apiRequest
+    // pattern from lib/apiClient by lazy-importing to keep this file's
+    // top of file untouched.
+    const { apiRequest } = await import('../../lib/apiClient');
+    return apiRequest<{ ok: boolean }>('/auth/resend-verification', { method: 'POST' });
+  },
 };

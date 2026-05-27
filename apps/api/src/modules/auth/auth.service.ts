@@ -2,15 +2,17 @@ import bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'node:crypto';
 import { eq, and, isNull, gt } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
-import { users, passwordResetTokens } from '../../db/schema/index.js';
+import { users, passwordResetTokens, emailVerificationTokens } from '../../db/schema/index.js';
 import type { RegisterInput, LoginInput } from './auth.schema.js';
 import { generateUniqueTag } from '../social/tag.js';
 import { recordActivity } from '../social/activity.service.js';
-import { sendEmail, buildPasswordResetEmail } from '../../lib/email.js';
+import { sendEmail, buildPasswordResetEmail, buildEmailVerificationEmail } from '../../lib/email.js';
 
 const BCRYPT_ROUNDS = 12;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const RESET_TOKEN_BYTES = 32; // 256 bits → 64 hex chars in URL
+const VERIFY_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const VERIFY_TOKEN_BYTES = 32;
 
 export async function registerUser(db: DB, input: RegisterInput) {
   const existing = await db.query.users.findFirst({
@@ -167,4 +169,79 @@ export async function resetPasswordWithToken(
     .where(eq(passwordResetTokens.id, row.id));
 
   return { userId: row.userId };
+}
+
+/**
+ * Generate an email-verification token, store its sha256 hash, and email
+ * the raw URL to the user. Called automatically on registration AND from
+ * the resend button on the dashboard banner.
+ *
+ * Idempotent in practice: if the user already clicked verify, we no-op
+ * (no point sending a confirm to an already-confirmed address).
+ */
+export async function createEmailVerificationToken(
+  db: DB,
+  userId: string,
+  lang: 'ru' | 'en',
+  frontendUrl: string,
+): Promise<void> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { id: true, email: true, emailVerifiedAt: true },
+  });
+  if (!user || user.emailVerifiedAt) return;
+
+  const rawToken = randomBytes(VERIFY_TOKEN_BYTES).toString('hex');
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + VERIFY_TOKEN_TTL_MS);
+
+  await db.insert(emailVerificationTokens).values({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  });
+
+  const verifyUrl = `${frontendUrl.replace(/\/$/, '')}/verify-email?token=${rawToken}`;
+  const mail = buildEmailVerificationEmail(verifyUrl, lang);
+  await sendEmail({
+    to: user.email,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+  });
+}
+
+/**
+ * Consume a verification token: marks both the token and the user as
+ * verified. Idempotent — if already verified, returns ok without trying
+ * to re-verify (so users who click the link twice don't see an error).
+ */
+export async function verifyEmailWithToken(
+  db: DB,
+  rawToken: string,
+): Promise<{ userId: string; alreadyVerified: boolean }> {
+  const tokenHash = hashToken(rawToken);
+  const now = new Date();
+
+  const row = await db.query.emailVerificationTokens.findFirst({
+    where: and(
+      eq(emailVerificationTokens.tokenHash, tokenHash),
+      gt(emailVerificationTokens.expiresAt, now),
+    ),
+  });
+  if (!row) throw new Error('INVALID_TOKEN');
+
+  // Already used (e.g. user clicked the link twice) — still report success
+  // so the second click doesn't show an error. Just don't re-stamp.
+  if (row.usedAt) {
+    return { userId: row.userId, alreadyVerified: true };
+  }
+
+  await db.update(users).set({ emailVerifiedAt: now }).where(eq(users.id, row.userId));
+  await db
+    .update(emailVerificationTokens)
+    .set({ usedAt: now })
+    .where(eq(emailVerificationTokens.id, row.id));
+
+  return { userId: row.userId, alreadyVerified: false };
 }

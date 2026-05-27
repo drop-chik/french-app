@@ -9,6 +9,8 @@ import {
   loginUser,
   createPasswordResetToken,
   resetPasswordWithToken,
+  createEmailVerificationToken,
+  verifyEmailWithToken,
 } from './auth.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
 
@@ -20,6 +22,10 @@ const forgotPasswordSchema = z.object({
 const resetPasswordSchema = z.object({
   token: z.string().min(32).max(128),
   password: z.string().min(8).max(200),
+});
+
+const verifyEmailSchema = z.object({
+  token: z.string().min(32).max(128),
 });
 
 const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -85,12 +91,84 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
         .status(201)
         .send({ accessToken, user });
+
+      // Best-effort verification email — non-blocking. If RESEND_API_KEY
+      // isn't set, the email service falls back to console.log; the user
+      // can still resend via the dashboard banner.
+      const frontendUrl = process.env['FRONTEND_URL'] ?? 'http://localhost:5173';
+      createEmailVerificationToken(fastify.db, user.id, 'ru', frontendUrl).catch((err) => {
+        request.log.error({ err }, 'Email verification send failed');
+      });
     } catch (err) {
       if (err instanceof Error && err.message === 'EMAIL_TAKEN') {
         return reply.status(409).send({ error: 'Email already in use' });
       }
       throw err;
     }
+  });
+
+  // POST /auth/verify-email — consume confirmation token from email link.
+  // Always 200 on valid token (including already-used tokens — clicking
+  // twice shouldn't error). Rate-limited to block brute-force enumeration.
+  fastify.post('/verify-email', {
+    config: { rateLimit: { max: 20, timeWindow: '15 minutes' } },
+    schema: {
+      tags: ['auth'],
+      summary: 'Confirm email via token from registration email',
+      body: {
+        type: 'object',
+        required: ['token'],
+        properties: { token: { type: 'string', minLength: 32, maxLength: 128 } },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            ok: { type: 'boolean' },
+            alreadyVerified: { type: 'boolean' },
+          },
+        },
+        400: errorSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const parsed = verifyEmailSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Validation error' });
+    }
+    try {
+      const result = await verifyEmailWithToken(fastify.db, parsed.data.token);
+      reply.send({ ok: true, alreadyVerified: result.alreadyVerified });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'INVALID_TOKEN') {
+        return reply.status(400).send({ error: 'Invalid or expired token' });
+      }
+      throw err;
+    }
+  });
+
+  // POST /auth/resend-verification — let the user kick a new email from
+  // the dashboard banner. Tight rate limit so it's not abusable. Always
+  // 200 — no signal whether the email was actually sent (verified users
+  // get no-op silently).
+  fastify.post('/resend-verification', {
+    preHandler: [fastify.authenticate],
+    config: { rateLimit: { max: 3, timeWindow: '15 minutes' } },
+    schema: {
+      tags: ['auth'],
+      summary: 'Resend the email-verification link',
+      security: authorizedSecurity,
+      response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } } },
+    },
+  }, async (request, reply) => {
+    const { userId } = request.user;
+    const frontendUrl = process.env['FRONTEND_URL'] ?? 'http://localhost:5173';
+    try {
+      await createEmailVerificationToken(fastify.db, userId, 'ru', frontendUrl);
+    } catch (err) {
+      request.log.error({ err }, 'Verification email resend failed');
+    }
+    reply.send({ ok: true });
   });
 
   // POST /auth/login — strict rate limit blocks brute-force credential

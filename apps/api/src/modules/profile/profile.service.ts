@@ -18,6 +18,7 @@ export async function getProfile(db: DB, userId: string) {
     columns: {
       id: true,
       email: true,
+      emailVerifiedAt: true,
       name: true,
       level: true,
       avatarUrl: true,

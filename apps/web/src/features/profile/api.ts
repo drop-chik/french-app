@@ -4,6 +4,8 @@ import { useAuthStore } from '../auth/authStore';
 export interface UserProfile {
   id: string;
   email: string;
+  /** Timestamp of email confirmation, or null while pending. */
+  emailVerifiedAt: string | null;
   name: string;
   level: string;
   tag: string;

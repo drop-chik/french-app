@@ -4,6 +4,7 @@ import { Shield, Search, X, Users as UsersIcon, BarChart3, Loader2, AlertTriangl
 import { adminApi, type AdminUserSort } from '../../features/admin/api';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import { useI18n } from '../../shared/i18n';
+import type { Translations } from '../../shared/i18n/ru';
 import { useAuthStore } from '../../features/auth/authStore';
 import type { LanguageLevel, UserRole } from '@french-app/shared-types';
 import { MetricsTab } from './MetricsTab';
@@ -11,19 +12,21 @@ import styles from './AdminPage.module.css';
 
 const LEVELS: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
-function fmtDate(s: string | null): string {
+function fmtDate(s: string | null, lang: 'ru' | 'en'): string {
   if (!s) return '—';
   const d = new Date(s);
-  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  return d.toLocaleDateString(lang === 'en' ? 'en-US' : 'ru-RU', {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+  });
 }
 
-function relTime(s: string | null): string {
-  if (!s) return 'никогда';
+function relTime(s: string | null, ta: Translations['admin']): string {
+  if (!s) return ta.relNever;
   const days = Math.floor((Date.now() - new Date(s).getTime()) / 86400000);
-  if (days <= 0) return 'сегодня';
-  if (days === 1) return 'вчера';
-  if (days < 30) return `${days} дн. назад`;
-  return `${Math.floor(days / 30)} мес. назад`;
+  if (days <= 0) return ta.relToday;
+  if (days === 1) return ta.relYesterday;
+  if (days < 30) return ta.relDaysAgo.replace('{n}', String(days));
+  return ta.relMonthsAgo.replace('{n}', String(Math.floor(days / 30)));
 }
 
 export function AdminPage() {
@@ -42,13 +45,13 @@ export function AdminPage() {
           className={`${styles.tab} ${tab === 'users' ? styles.tabActive : ''}`}
           onClick={() => setTab('users')}
         >
-          <UsersIcon size={15} /> Пользователи
+          <UsersIcon size={15} /> {t.admin.tabUsers}
         </button>
         <button
           className={`${styles.tab} ${tab === 'metrics' ? styles.tabActive : ''}`}
           onClick={() => setTab('metrics')}
         >
-          <BarChart3 size={15} /> Метрики
+          <BarChart3 size={15} /> {t.admin.tabMetrics}
         </button>
       </div>
 
@@ -58,6 +61,8 @@ export function AdminPage() {
 }
 
 function UsersTab() {
+  const { t } = useI18n();
+  const ta = t.admin;
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<AdminUserSort>('created');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -79,7 +84,7 @@ function UsersTab() {
             className={styles.searchInput}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Поиск по имени или email…"
+            placeholder={ta.searchPlaceholder}
           />
           {q && (
             <button className={styles.searchClear} onClick={() => setQ('')}>
@@ -92,10 +97,10 @@ function UsersTab() {
           value={sort}
           onChange={(e) => setSort(e.target.value as AdminUserSort)}
         >
-          <option value="created">Новые сначала</option>
-          <option value="lastActive">По активности</option>
-          <option value="level">По уровню</option>
-          <option value="name">По имени</option>
+          <option value="created">{ta.sortCreated}</option>
+          <option value="lastActive">{ta.sortActive}</option>
+          <option value="level">{ta.sortLevel}</option>
+          <option value="name">{ta.sortName}</option>
         </select>
         <span className={styles.totalBadge}>{data?.total ?? 0}</span>
       </div>
@@ -103,7 +108,7 @@ function UsersTab() {
       {isLoading ? (
         <div className={styles.loading}><Loader2 size={20} className={styles.spin} /></div>
       ) : users.length === 0 ? (
-        <p className={styles.empty}>Ничего не найдено</p>
+        <p className={styles.empty}>{ta.nothingFound}</p>
       ) : (
         <div className={styles.userList}>
           {users.map((u) => (
@@ -118,8 +123,10 @@ function UsersTab() {
               </div>
               <span className={styles.userLevel}>{u.level}</span>
               <div className={styles.userMeta}>
-                <span className={styles.userMetaTop}>{u.wordsMastered} слов</span>
-                <span className={styles.userMetaSub}>{relTime(u.lastActive)}</span>
+                <span className={styles.userMetaTop}>
+                  {ta.wordsCount.replace('{n}', String(u.wordsMastered))}
+                </span>
+                <span className={styles.userMetaSub}>{relTime(u.lastActive, ta)}</span>
               </div>
             </button>
           ))}
@@ -134,6 +141,8 @@ function UsersTab() {
 }
 
 function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => void }) {
+  const { t, lang } = useI18n();
+  const ta = t.admin;
   const queryClient = useQueryClient();
   const selfId = useAuthStore((s) => s.user?.id);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -168,7 +177,7 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-user', userId] });
-      setMsg('Сохранено');
+      setMsg(ta.saved);
       setTimeout(() => setMsg(null), 2500);
     },
     onError: (e: Error) => setMsg(e.message),
@@ -180,7 +189,7 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
       queryClient.invalidateQueries({ queryKey: ['admin-user', userId] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setConfirmReset(false);
-      setMsg(`Сброшено ${r.deleted} записей прогресса`);
+      setMsg(ta.resetSuccess.replace('{n}', String(r.deleted)));
       setTimeout(() => setMsg(null), 3000);
     },
   });
@@ -192,7 +201,7 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
   return (
     <div className={styles.backdrop} onClick={onClose} role="presentation">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.modalClose} onClick={onClose} aria-label="Close">
+        <button className={styles.modalClose} onClick={onClose} aria-label={ta.closeBtn}>
           <X size={18} />
         </button>
 
@@ -213,7 +222,7 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
                 </h2>
                 <p className={styles.detailEmail}>{data.profile.email}</p>
                 <p className={styles.detailSub}>
-                  Регистрация: {fmtDate(data.profile.createdAt)} · Активность: {relTime(data.lastActiveAt)}
+                  {ta.registered}: {fmtDate(data.profile.createdAt, lang)} · {ta.activity}: {relTime(data.lastActiveAt, ta)}
                 </p>
               </div>
             </div>
@@ -221,21 +230,21 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
             {/* Read-only stats — "view as user" */}
             {stats && (
               <div className={styles.statGrid}>
-                <Stat label="Освоено" value={stats.words.mastered} />
-                <Stat label="Учится" value={stats.words.learning} />
-                <Stat label="Новые" value={stats.words.new} />
-                <Stat label="Стрик" value={data.streak?.streak ?? 0} />
-                <Stat label="Грамматика" value={stats.grammar.completed} />
-                <Stat label="Аудир." value={stats.listening.completed} />
-                <Stat label="Диалоги" value={stats.conversations} />
-                <Stat label="К повтору" value={stats.wordsDueToday} />
+                <Stat label={ta.statMastered} value={stats.words.mastered} />
+                <Stat label={ta.statLearning} value={stats.words.learning} />
+                <Stat label={ta.statNew} value={stats.words.new} />
+                <Stat label={ta.statStreak} value={data.streak?.streak ?? 0} />
+                <Stat label={ta.statGrammar} value={stats.grammar.completed} />
+                <Stat label={ta.statListening} value={stats.listening.completed} />
+                <Stat label={ta.statConversations} value={stats.conversations} />
+                <Stat label={ta.statDue} value={stats.wordsDueToday} />
               </div>
             )}
 
             {/* Activity sparkline (last ~90 days) */}
             {activity.length > 0 && (
               <div className={styles.spark}>
-                <span className={styles.sparkLabel}>Активность (90 дней)</span>
+                <span className={styles.sparkLabel}>{ta.sparkActivity90}</span>
                 <div className={styles.sparkBars}>
                   {activity.slice(-60).map((a, i) => (
                     <div
@@ -251,10 +260,10 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
 
             {/* Edit */}
             <div className={styles.editBlock}>
-              <h3 className={styles.editTitle}>Редактирование</h3>
+              <h3 className={styles.editTitle}>{ta.editTitle}</h3>
               <div className={styles.editGrid}>
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Уровень</span>
+                  <span className={styles.fieldLabel}>{ta.fieldLevel}</span>
                   <select
                     className={styles.input}
                     value={level}
@@ -264,7 +273,7 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
                   </select>
                 </label>
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Роль</span>
+                  <span className={styles.fieldLabel}>{ta.fieldRole}</span>
                   <select
                     className={styles.input}
                     value={role}
@@ -275,11 +284,11 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
                   </select>
                 </label>
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Имя</span>
+                  <span className={styles.fieldLabel}>{ta.fieldName}</span>
                   <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)} />
                 </label>
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Email</span>
+                  <span className={styles.fieldLabel}>{ta.fieldEmail}</span>
                   <input className={styles.input} value={email} onChange={(e) => setEmail(e.target.value)} />
                 </label>
               </div>
@@ -289,7 +298,7 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending}
               >
-                {saveMutation.isPending ? 'Сохраняем…' : 'Сохранить'}
+                {saveMutation.isPending ? ta.saving : ta.save}
               </button>
             </div>
 
@@ -297,15 +306,15 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
             <div className={styles.dangerBlock}>
               <div className={styles.dangerInfo}>
                 <AlertTriangle size={15} className={styles.dangerIcon} />
-                <span>Сбросить весь SRS-прогресс пользователя</span>
+                <span>{ta.resetSrsCaption}</span>
               </div>
               <button
                 className={styles.dangerBtn}
                 onClick={() => setConfirmReset(true)}
                 disabled={userId === selfId}
-                title={userId === selfId ? 'Нельзя сбросить свой аккаунт' : ''}
+                title={userId === selfId ? ta.resetSelfDisabled : ''}
               >
-                Сбросить прогресс
+                {ta.resetBtn}
               </button>
             </div>
           </>
@@ -314,10 +323,10 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
 
       {confirmReset && (
         <ConfirmDialog
-          title="Сбросить прогресс?"
-          message="Все слова пользователя вернутся в статус «новые». Действие необратимо."
-          confirmLabel="Сбросить"
-          cancelLabel="Отмена"
+          title={ta.resetConfirmTitle}
+          message={ta.resetConfirmBody}
+          confirmLabel={ta.resetConfirmYes}
+          cancelLabel={ta.resetConfirmNo}
           loading={resetMutation.isPending}
           onConfirm={() => resetMutation.mutate()}
           onCancel={() => setConfirmReset(false)}
@@ -340,6 +349,7 @@ function Avatar({ url, name, className }: { url: string | null; name: string; cl
           alt=""
           className={styles.avatarImg ?? ''}
           onError={() => setBroken(true)}
+          loading="lazy"
         />
       </div>
     );

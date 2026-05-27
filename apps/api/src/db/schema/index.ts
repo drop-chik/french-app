@@ -45,6 +45,9 @@ export const exerciseTypeEnum = pgEnum('exercise_type', [
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).unique().notNull(),
+  // Timestamp when the user clicked the confirmation link from their email.
+  // NULL = pending verification. Reset to NULL if the user changes their email.
+  emailVerifiedAt: timestamp('email_verified_at'),
   password: varchar('password', { length: 255 }),
   name: varchar('name', { length: 255 }).notNull(),
   level: languageLevelEnum('level').default('A1').notNull(),
@@ -62,6 +65,11 @@ export const users = pgTable('users', {
   // Per-user session size — defaults match Anki/Memrise common practice.
   dailyNewWordsLimit: integer('daily_new_words_limit').default(10).notNull(),
   dailyDueWordsLimit: integer('daily_due_words_limit').default(20).notNull(),
+  // Weekly recap email — defaults ON, user can opt out from profile settings.
+  // last_digest_sent_at lets the cron skip recently-emailed users when the
+  // job retries on partial failure.
+  digestEnabled: boolean('digest_enabled').default(true).notNull(),
+  lastDigestSentAt: timestamp('last_digest_sent_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -101,6 +109,23 @@ export const userAchievements = pgTable(
     unique('user_achievements_pk').on(t.userId, t.achievementId),
     index('idx_user_achievements_user').on(t.userId),
   ],
+);
+
+// One-time tokens for the "confirm your email" flow (migration 0025).
+// Same shape as password-reset tokens — sha256 hashed in DB, expires in 7d.
+export const emailVerificationTokens = pgTable(
+  'email_verification_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
+    expiresAt: timestamp('expires_at').notNull(),
+    usedAt: timestamp('used_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('idx_email_verification_tokens_user').on(t.userId, t.usedAt)],
 );
 
 // One-time tokens for the "forgot password" flow. Raw token is mailed; we

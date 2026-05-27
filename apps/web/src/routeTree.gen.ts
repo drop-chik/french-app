@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './app/routes/__root'
+import { Route as VerifyEmailRouteImport } from './app/routes/verify-email'
 import { Route as TermsRouteImport } from './app/routes/terms'
 import { Route as ResetPasswordRouteImport } from './app/routes/reset-password'
 import { Route as PrivacyRouteImport } from './app/routes/privacy'
@@ -41,6 +42,11 @@ import { Route as AuthGrammarSlugRouteImport } from './app/routes/_auth.grammar.
 import { Route as AuthDrillsSlugRouteImport } from './app/routes/_auth.drills.$slug'
 import { Route as AuthWritingResultIdRouteImport } from './app/routes/_auth.writing.result.$id'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/achievements': typeof AuthAchievementsRoute
   '/admin': typeof AuthAdminRoute
   '/conjugation': typeof AuthConjugationRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/achievements': typeof AuthAchievementsRoute
   '/admin': typeof AuthAdminRoute
   '/conjugation': typeof AuthConjugationRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_auth/achievements': typeof AuthAchievementsRoute
   '/_auth/admin': typeof AuthAdminRoute
   '/_auth/conjugation': typeof AuthConjugationRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/verify-email'
     | '/achievements'
     | '/admin'
     | '/conjugation'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/verify-email'
     | '/achievements'
     | '/admin'
     | '/conjugation'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/verify-email'
     | '/_auth/achievements'
     | '/_auth/admin'
     | '/_auth/conjugation'
@@ -402,10 +414,18 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -740,6 +760,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

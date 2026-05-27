@@ -2,24 +2,34 @@ import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Users, Zap, TrendingUp } from 'lucide-react';
 import { adminApi } from '../../features/admin/api';
+import { useI18n } from '../../shared/i18n';
+import type { Translations } from '../../shared/i18n/ru';
 import styles from './AdminPage.module.css';
 
-const FEATURE_LABELS: Record<string, string> = {
-  vocab: 'Слова',
-  grammar: 'Грамматика',
-  listening: 'Аудир.',
-  writing: 'Письмо',
-  conversation: 'Диалоги',
-  reading: 'Чтение',
-  drills: 'Тренаж.',
-};
+// Feature key → translation slug. We keep the mapping here so the API can
+// stay using the short keys; the UI just looks up the right label per lang.
+function featureLabels(ta: Translations['admin']): Record<string, string> {
+  return {
+    vocab: ta.featVocab,
+    grammar: ta.featGrammar,
+    listening: ta.featListening,
+    writing: ta.featWriting,
+    conversation: ta.featConversation,
+    reading: ta.featReading,
+    drills: ta.featDrills,
+  };
+}
 
-function fmtWeek(s: string): string {
+function fmtWeek(s: string, lang: 'ru' | 'en'): string {
   const d = new Date(s);
-  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+  return d.toLocaleDateString(lang === 'en' ? 'en-US' : 'ru-RU', {
+    day: '2-digit', month: '2-digit',
+  });
 }
 
 export function MetricsTab() {
+  const { t, lang } = useI18n();
+  const ta = t.admin;
   const { data, isLoading } = useQuery({
     queryKey: ['admin-metrics'],
     queryFn: adminApi.metrics,
@@ -33,31 +43,32 @@ export function MetricsTab() {
   const maxTs = Math.max(1, ...data.timeseries.map((t) => t.users));
   const featEntries = Object.entries(data.featureUsage);
   const maxFeat = Math.max(1, ...featEntries.map(([, v]) => v));
+  const FEATURE_LABELS = featureLabels(ta);
 
   return (
     <div className={styles.metrics}>
       {/* Top cards */}
       <div className={styles.metricCards}>
-        <MetricCard icon={<Users size={16} />} label="Всего" value={data.totals.total}
-          sub={`+${data.totals.new7d} за 7д · +${data.totals.new30d} за 30д`} />
-        <MetricCard icon={<Zap size={16} />} label="DAU" value={data.active.dau}
-          sub="активны сегодня" />
-        <MetricCard icon={<Zap size={16} />} label="WAU" value={data.active.wau}
-          sub="за 7 дней" />
-        <MetricCard icon={<Zap size={16} />} label="MAU" value={data.active.mau}
-          sub="за 30 дней" />
-        <MetricCard icon={<TrendingUp size={16} />} label="Точность" value={`${data.accuracy}%`}
-          sub="по платформе" />
-        <MetricCard icon={<TrendingUp size={16} />} label="Бэклог" value={data.backlog.medianOverdue}
-          sub={`медиана просрочки · max ${data.backlog.maxOverdue}`} />
+        <MetricCard icon={<Users size={16} />} label={ta.mTotal} value={data.totals.total}
+          sub={ta.mDelta.replace('{n7}', String(data.totals.new7d)).replace('{n30}', String(data.totals.new30d))} />
+        <MetricCard icon={<Zap size={16} />} label={ta.mDau} value={data.active.dau}
+          sub={ta.mActiveToday} />
+        <MetricCard icon={<Zap size={16} />} label={ta.mWau} value={data.active.wau}
+          sub={ta.m7days} />
+        <MetricCard icon={<Zap size={16} />} label={ta.mMau} value={data.active.mau}
+          sub={ta.m30days} />
+        <MetricCard icon={<TrendingUp size={16} />} label={ta.mAccuracy} value={`${data.accuracy}%`}
+          sub={ta.mAccuracySub} />
+        <MetricCard icon={<TrendingUp size={16} />} label={ta.mBacklog} value={data.backlog.medianOverdue}
+          sub={ta.mBacklogSub.replace('{max}', String(data.backlog.maxOverdue))} />
       </div>
 
       {/* 30-day activity */}
       <section className={styles.metricSection}>
-        <h3 className={styles.metricSectionTitle}>Активные пользователи (30 дней)</h3>
+        <h3 className={styles.metricSectionTitle}>{ta.mActive30}</h3>
         <div className={styles.tsChart}>
           {data.timeseries.length === 0 ? (
-            <span className={styles.metricEmpty}>Нет данных</span>
+            <span className={styles.metricEmpty}>{ta.mNoData}</span>
           ) : (
             data.timeseries.map((t) => (
               <div key={t.date} className={styles.tsCol} title={`${t.date}: ${t.users}`}>
@@ -73,7 +84,7 @@ export function MetricsTab() {
 
       {/* Feature usage */}
       <section className={styles.metricSection}>
-        <h3 className={styles.metricSectionTitle}>Использование функций (всего юзеров)</h3>
+        <h3 className={styles.metricSectionTitle}>{ta.mFeatureUsage}</h3>
         <div className={styles.featList}>
           {featEntries.map(([key, val]) => (
             <div key={key} className={styles.featRow}>
@@ -89,14 +100,14 @@ export function MetricsTab() {
 
       {/* Retention cohorts */}
       <section className={styles.metricSection}>
-        <h3 className={styles.metricSectionTitle}>Удержание (когорты по неделе регистрации)</h3>
+        <h3 className={styles.metricSectionTitle}>{ta.mRetention}</h3>
         {data.retention.length === 0 ? (
-          <span className={styles.metricEmpty}>Нет данных</span>
+          <span className={styles.metricEmpty}>{ta.mNoData}</span>
         ) : (
           <table className={styles.cohortTable}>
             <thead>
               <tr>
-                <th>Неделя</th><th>Размер</th><th>D1</th><th>D7</th><th>D30</th>
+                <th>{ta.mWeek}</th><th>{ta.mCohortSize}</th><th>D1</th><th>D7</th><th>D30</th>
               </tr>
             </thead>
             <tbody>
@@ -104,7 +115,7 @@ export function MetricsTab() {
                 const pct = (n: number) => (c.size > 0 ? Math.round((n / c.size) * 100) : 0);
                 return (
                   <tr key={c.week}>
-                    <td>{fmtWeek(c.week)}</td>
+                    <td>{fmtWeek(c.week, lang)}</td>
                     <td>{c.size}</td>
                     <td><RetCell pct={pct(c.d1)} /></td>
                     <td><RetCell pct={pct(c.d7)} /></td>
