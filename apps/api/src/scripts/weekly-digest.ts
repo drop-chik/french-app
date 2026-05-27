@@ -43,6 +43,10 @@ console.log(`[weekly-digest] start ${new Date().toISOString()}${debug ? ' (DEBUG
 //  - verified email (we never send to unverified accounts)
 //  - opted-in to digests
 //  - not digested in the last 6 days
+//
+// Debug mode bypasses ALL guards (verification, opt-in, recency) so you
+// can dry-run the whole pipeline against your own account without
+// fighting the filters. Pair it with WEEKLY_DIGEST_ONLY to scope.
 const candidates = await db
   .select({
     id: users.id,
@@ -58,8 +62,8 @@ const candidates = await db
   })
   .from(users)
   .where(and(
-    isNotNull(users.emailVerifiedAt),
-    eq(users.digestEnabled, true),
+    debug ? sql`true` : isNotNull(users.emailVerifiedAt),
+    debug ? sql`true` : eq(users.digestEnabled, true),
     or(
       isNull(users.lastDigestSentAt),
       debug ? sql`true` : sql`${users.lastDigestSentAt} < ${recentDigestCutoff.toISOString()}`,
