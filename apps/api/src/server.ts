@@ -36,12 +36,16 @@ import socialRoutes from './modules/social/social.routes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Run pending migrations on every startup (idempotent)
-const migrationsFolder = join(__dirname, '../src/db/migrations');
-await migrate(db, { migrationsFolder });
-
-// Safety net: ensure audio_data column exists regardless of migrator state
-await db.execute(sql`ALTER TABLE listening_exercises ADD COLUMN IF NOT EXISTS audio_data bytea`);
+// Run pending migrations on every startup (idempotent). The smoke-test
+// script sets SMOKE_TEST=1 so CI can boot the server far enough to catch
+// route/schema errors WITHOUT a real DB attached.
+const isSmoke = process.env['SMOKE_TEST'] === '1';
+if (!isSmoke) {
+  const migrationsFolder = join(__dirname, '../src/db/migrations');
+  await migrate(db, { migrationsFolder });
+  // Safety net: ensure audio_data column exists regardless of migrator state
+  await db.execute(sql`ALTER TABLE listening_exercises ADD COLUMN IF NOT EXISTS audio_data bytea`);
+}
 
 const isDev = process.env['NODE_ENV'] !== 'production';
 
@@ -190,10 +194,19 @@ fastify.get('/health', {
 const port = parseInt(process.env['PORT'] ?? '3001', 10);
 const host = '0.0.0.0';
 
-try {
-  await fastify.listen({ port, host });
-  console.log(`API running on http://localhost:${port}`);
-} catch (err) {
-  fastify.log.error(err);
-  process.exit(1);
+// Smoke test mode: register everything but DON'T bind a port — we just want
+// .ready() to succeed (all schemas built, plugins loaded). CI script exits
+// immediately after import succeeds.
+if (isSmoke) {
+  await fastify.ready();
+  // Don't `process.exit` here — smoke-test.ts owns the exit after the import
+  // resolves so we get a clean log line first.
+} else {
+  try {
+    await fastify.listen({ port, host });
+    console.log(`API running on http://localhost:${port}`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
 }

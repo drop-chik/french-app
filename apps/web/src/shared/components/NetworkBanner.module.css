@@ -1,0 +1,26 @@
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: #b91c1c;
+  color: #ffffff;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  text-align: center;
+  /* iOS notch / safe area support — banner shouldn't slide under the notch. */
+  padding-top: calc(var(--space-2) + env(safe-area-inset-top, 0));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: slideDown 200ms ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}

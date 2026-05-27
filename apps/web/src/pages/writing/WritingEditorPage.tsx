@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Lightbulb, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { writingApi, type WritingSubmission } from './api';
 import { useI18n } from '../../shared/i18n';
+import { useToast } from '../../shared/components/Toast';
 import styles from './WritingEditorPage.module.css';
 
 interface Props {
@@ -15,6 +16,7 @@ export function WritingEditorPage({ slug }: Props) {
   const { t, lang } = useI18n();
   const tw = t.writing;
   const qc = useQueryClient();
+  const toast = useToast();
 
   const [content, setContent] = useState('');
   const [submission, setSubmission] = useState<WritingSubmission | null>(null);
@@ -57,6 +59,13 @@ export function WritingEditorPage({ slug }: Props) {
       setSaveStatus('saved');
       qc.invalidateQueries({ queryKey: ['writing-submissions'] });
       setTimeout(() => setSaveStatus('idle'), 2000);
+    },
+    onError: () => {
+      // Silent failures on auto-save are the worst — user thinks their
+      // work is safe and finds out only on next session that it wasn't.
+      // Toast it so they at least know to retry.
+      setSaveStatus('idle');
+      toast.error(t.errors.saveFailed);
     },
   });
 

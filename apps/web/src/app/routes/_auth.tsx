@@ -5,6 +5,7 @@ import { ErrorBoundary } from '../../shared/components/ErrorBoundary';
 import { InstallPrompt } from '../../shared/components/InstallPrompt';
 import { HelpProvider } from '../../shared/help/HelpProvider';
 import { HelpButton } from '../../shared/help/HelpButton';
+import { NetworkBanner } from '../../shared/components/NetworkBanner';
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: () => {
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_auth')({
   },
   component: () => (
     <HelpProvider>
+      <NetworkBanner />
       <AppLayout>
         <ErrorBoundary>
           <Outlet />

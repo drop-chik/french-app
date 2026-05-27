@@ -992,6 +992,10 @@ export const ru: DeepRecord = {
     boundaryDetails: 'Технические детали',
     boundaryRetry: 'Попробовать снова',
     boundaryReload: 'Обновить страницу',
+    networkOffline: 'Нет интернета. Проверьте соединение.',
+    networkOnline: 'Соединение восстановлено',
+    saveFailed: 'Не удалось сохранить. Попробуйте ещё раз.',
+    sendFailed: 'Не удалось отправить сообщение',
   },
   common: {
     loading: 'Загрузка...',

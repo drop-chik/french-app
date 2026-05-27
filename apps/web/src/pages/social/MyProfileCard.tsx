@@ -83,7 +83,7 @@ export function MyProfileCard() {
     <div className={styles.myCard} data-tour="friends-mycard">
       <div className={styles.avatar}>
         {profile.avatarUrl
-          ? <img src={profile.avatarUrl} alt="" className={styles.avatarImg} />
+          ? <img src={profile.avatarUrl} alt="" className={styles.avatarImg} loading="lazy" />
           : (profile.name.charAt(0).toUpperCase() || '?')}
       </div>
       <div className={styles.cardMain}>

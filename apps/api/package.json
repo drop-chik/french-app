@@ -13,7 +13,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed/index.ts",
     "generate-audio": "tsx src/scripts/generate-audio.ts",
-    "streak-reminder": "tsx src/scripts/streak-reminder.ts"
+    "streak-reminder": "tsx src/scripts/streak-reminder.ts",
+    "smoke": "tsx src/scripts/smoke-test.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

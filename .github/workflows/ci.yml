@@ -32,6 +32,12 @@ jobs:
       - name: Typecheck (web)
         run: pnpm --filter @french-app/web typecheck
 
+      # Boot Fastify with mocked env far enough to register every plugin and
+      # route schema. Catches FST_ERR_SCH_SERIALIZATION_BUILD and similar
+      # runtime-only schema errors that pass tsc but crash on deploy.
+      - name: Smoke test (api boot)
+        run: pnpm --filter @french-app/api smoke
+
       - name: Lint CSS custom properties
         run: pnpm lint:css
 
@@ -64,6 +70,13 @@ jobs:
 
       - name: Build web app
         run: pnpm --filter @french-app/web build
+
+      # Bundle-size guard. Fails CI if dist/ exceeds limits in .size-limit.json.
+      # Catches accidental regressions (forgetting a dynamic import, adding a
+      # heavy dep). Limits are intentionally generous now so they don't block
+      # day-to-day work — will tighten during Epic B bundle-splitting.
+      - name: Bundle size check
+        run: pnpm --filter @french-app/web size
 
       - name: Install Playwright browsers
         run: pnpm --filter @french-app/web exec playwright install chromium --with-deps

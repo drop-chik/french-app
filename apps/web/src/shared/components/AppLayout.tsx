@@ -153,7 +153,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             <div className={styles.userAvatar}>
               {avatarUrl
-                ? <img src={avatarUrl} alt="avatar" className={styles.userAvatarImg} />
+                ? <img src={avatarUrl} alt="avatar" className={styles.userAvatarImg} loading="lazy" />
                 : (user?.name?.[0]?.toUpperCase() ?? '?')}
             </div>
             <div className={styles.userDetails}>

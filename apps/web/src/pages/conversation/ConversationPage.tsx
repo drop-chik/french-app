@@ -5,6 +5,7 @@ import { Send, Plus, MessageSquare, AlertCircle, ChevronDown, Trash2, Menu } fro
 import { conversationApi, type ConversationSession, type ChatMessage, type Correction, type CorrectionType } from '../../features/conversation/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
+import { useToast } from '../../shared/components/Toast';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import foxIcon from '../landing/fox-icon.png';
 import styles from './ConversationPage.module.css';
@@ -25,6 +26,7 @@ export function ConversationPage() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const { t, lang } = useI18n();
+  const toast = useToast();
 
   // Allow ?session=<id> to deep-link a specific session — used by the
   // "practice in dialogue" flow at the end of a learning session.
@@ -83,6 +85,7 @@ export function ConversationPage() {
     onError: (err) => {
       console.error('Delete session error:', err);
       setDeleteConfirmId(null);
+      toast.error(t.errors.saveFailed);
     },
   });
 
@@ -157,6 +160,9 @@ export function ConversationPage() {
         setStreamingText('');
         setIsStreaming(false);
         console.error('Stream error:', err);
+        // Без toast'а юзер вообще не видит почему AI «не отвечает» — текст
+        // сообщения отправлен, но ответа нет. Раньше уходило только в console.
+        toast.error(t.errors.sendFailed);
       },
     );
   };
@@ -324,7 +330,7 @@ export function ConversationPage() {
             {activeSession && (
               <div className={styles.chatHeader}>
                 <div className={styles.chatHeaderAvatar}>
-                  <img src={foxIcon} alt="AI" />
+                  <img src={foxIcon} alt="AI" loading="lazy" />
                 </div>
                 <div className={styles.chatHeaderInfo}>
                   <span className={styles.chatHeaderName}>{t.conversation.aiTutor}</span>
@@ -358,7 +364,7 @@ export function ConversationPage() {
                 <div className={`${styles.message} ${styles.assistantMessage}`}>
                   <div className={styles.assistantRow}>
                     <div className={styles.foxAvatarWrap}>
-                      <img src={foxIcon} alt="AI" />
+                      <img src={foxIcon} alt="AI" loading="lazy" />
                     </div>
                     <StreamingBubble rawText={streamingText} />
                   </div>
@@ -369,7 +375,7 @@ export function ConversationPage() {
                 <div className={`${styles.message} ${styles.assistantMessage}`}>
                   <div className={styles.assistantRow}>
                     <div className={styles.foxAvatarWrap}>
-                      <img src={foxIcon} alt="AI" />
+                      <img src={foxIcon} alt="AI" loading="lazy" />
                     </div>
                     <div className={styles.bubble}>
                       <span className={styles.typingIndicator}>
@@ -454,7 +460,7 @@ function AssistantBubble({ msg, lang }: { msg: ChatMessage; lang: string }) {
   return (
     <div className={styles.assistantRow}>
       <div className={styles.foxAvatarWrap}>
-        <img src={foxIcon} alt="AI Tutor" />
+        <img src={foxIcon} alt="AI Tutor" loading="lazy" />
       </div>
       <div className={styles.assistantContent}>
         <span className={styles.assistantName}>{t.conversation.aiTutor}</span>

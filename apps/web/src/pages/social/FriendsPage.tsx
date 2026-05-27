@@ -35,7 +35,7 @@ function Avatar({ url, name, cls }: { url: string | null; name: string; cls?: st
   return (
     <div className={`${styles.avatar} ${cls ?? ''}`}>
       {url
-        ? <img src={url} alt="" className={styles.avatarImg} />
+        ? <img src={url} alt="" className={styles.avatarImg} loading="lazy" />
         : (name.charAt(0).toUpperCase() || '?')}
     </div>
   );

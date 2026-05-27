@@ -1152,6 +1152,10 @@ export const en: Translations = {
     boundaryDetails: 'Technical details',
     boundaryRetry: 'Try again',
     boundaryReload: 'Reload page',
+    networkOffline: 'No internet connection. Check your network.',
+    networkOnline: 'Back online',
+    saveFailed: 'Could not save. Please try again.',
+    sendFailed: 'Could not send message',
   },
   common: {
     loading: 'Loading...',

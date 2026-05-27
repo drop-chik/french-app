@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "api:types": "openapi-typescript http://localhost:3001/docs/openapi.json -o src/api/openapi.types.ts",
-    "api:types:prod": "openapi-typescript https://french-app-production.up.railway.app/docs/openapi.json -o src/api/openapi.types.ts"
+    "api:types:prod": "openapi-typescript https://french-app-production.up.railway.app/docs/openapi.json -o src/api/openapi.types.ts",
+    "size": "size-limit"
   },
   "dependencies": {
     "@french-app/shared-types": "workspace:*",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@size-limit/file": "^12.1.0",
     "@tanstack/router-devtools": "^1.97.17",
     "@tanstack/router-vite-plugin": "^1.97.17",
     "@types/qrcode-generator": "^1.0.6",
@@ -47,6 +49,7 @@
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "openapi-typescript": "^7.13.0",
+    "size-limit": "^12.1.0",
     "typescript": "^5.7.3",
     "vite": "^6.0.7",
     "vite-plugin-pwa": "^1.3.0"

@@ -88,7 +88,7 @@ export function PublicProfilePage({ tag }: { tag: string }) {
       <div className={styles.hero}>
         <div className={`${styles.avatar} ${styles.heroAvatar}`}>
           {profile.avatarUrl
-            ? <img src={profile.avatarUrl} alt="" className={styles.avatarImg} />
+            ? <img src={profile.avatarUrl} alt="" className={styles.avatarImg} loading="lazy" />
             : profile.name.charAt(0).toUpperCase()}
         </div>
         <div className={styles.heroInfo}>
