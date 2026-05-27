@@ -1,1 +1,4 @@
 .vercel
+
+# Lighthouse local runs
+lh-*.json
