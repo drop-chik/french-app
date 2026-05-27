@@ -20,6 +20,47 @@
 
 ---
 
+## Lighthouse / axe pass (2026-05-27)
+
+⚠️ Lighthouse CLI на Windows крашится с `EPERM, Permission denied` на
+`temp/lighthouse.XXX` directory cleanup (известная chrome-launcher проблема
+на Windows). Сделал manual a11y/perf/seo pass по чек-листу того что Lighthouse
+обычно ловит.
+
+### Fixed inline
+- ✅ **Dead `composes` rule** в `global.css` — `body:not([data-theme]) { composes: global(...); }` это CSS Modules feature, не работает в global stylesheet. Молча игнорилось браузером, плюс шумело в Stylelint
+- ✅ **Skip-to-content link** (WCAG 2.4.1) — keyboard и screen-reader users могут пропустить sidebar nav на каждой загрузке. Видимый только на focus, в `_auth.tsx` первым focusable элементом, target `#main-content` в `AppLayout main`
+- ✅ **`tabIndex={-1}` на main** — позволяет программный focus от skip-link без попадания в natural tab order
+- ✅ **Preconnect hints** в index.html для Google Fonts (gstatic + googleapis) — раньше первый paint blocked на DNS+TLS handshake к шрифту через @import
+
+### Pass ✅
+- `<html lang>` динамический (синхронится с useI18n.setLang) — закрыто в Pass 1
+- OG/Twitter card meta + theme-color light/dark — закрыто в Pass 1
+- robots.txt + sitemap.xml — закрыто в Pass 1
+- Hero PNG → WebP (-92%) — Epic B
+- Bundle splitting (366→171 KB gzip main) — Epic B
+- DB indexes для поиска и активности — Epic B
+- `prefers-reduced-motion: reduce` глобально в tokens.css
+- `:focus-visible` outline 2px на всё — было до этого pass
+- Avatars и chat-images с `loading="lazy"` — Pass 3 + текущий
+- `<img alt="">` decorative / `alt="..."` informative — проверено через grep
+- `<title>` per route — TanStack head — defer
+
+### Defer (для следующих pass'ов)
+- 🟡 **Color contrast audit** — нужен axe-core в CI или ручной spot-check `--color-text-tertiary` против фона
+- 🟡 **Tap target audit** — некоторые Dictionary chips 28-32px вместо рекомендованных WCAG 44×44
+- 🟡 **Per-route `<title>`** — сейчас фиксированный «FrenchUp — Учи французский». TanStack Router 1.45+ имеет head management — отдельный тикет
+- 🟡 **schema.org JSON-LD** — для Google rich results
+- 🟡 **hreflang** между ru/en версиями — сейчас одна URL, lang клиентский. Когда добавим SSR/per-locale URLs
+
+### Workaround для Lighthouse на Windows
+Если нужно прогнать локально:
+1. Запустить через WSL2 (`wsl lighthouse ...`) — там Chrome temp permissions работают
+2. Или через Vercel — `vercel preview` URL → лить в [PageSpeed Insights](https://pagespeed.web.dev/)
+3. В CI можно добавить headless Linux runner с Lighthouse CI Action
+
+---
+
 ## Targeted security pass (2026-05-27 before Epic B)
 
 Прицельный аудит на 9 пунктов: admin access, IDOR, privilege escalation,

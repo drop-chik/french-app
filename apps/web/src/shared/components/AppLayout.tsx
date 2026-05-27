@@ -171,7 +171,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className={styles.main}>
+      {/* tabIndex=-1 lets the skip-to-content link in _auth.tsx focus
+          the main region directly without making it part of the natural
+          tab order. */}
+      <main id="main-content" className={styles.main} tabIndex={-1}>
         <HubTabs />
         {children}
       </main>
