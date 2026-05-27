@@ -70,6 +70,13 @@ export const users = pgTable('users', {
   // job retries on partial failure.
   digestEnabled: boolean('digest_enabled').default(true).notNull(),
   lastDigestSentAt: timestamp('last_digest_sent_at'),
+  // Distributed-brute-force defence. /auth/login already rate-limits per-IP
+  // (10/min), but an attacker on a botnet can rotate IPs to dodge that.
+  // We track failures per *account* (email→user) and lock the account
+  // after LOCKOUT_THRESHOLD failures in LOCKOUT_WINDOW.
+  failedLoginAttempts: integer('failed_login_attempts').default(0).notNull(),
+  lastFailedLoginAt: timestamp('last_failed_login_at'),
+  lockoutUntil: timestamp('lockout_until'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

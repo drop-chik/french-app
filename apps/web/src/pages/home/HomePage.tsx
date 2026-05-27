@@ -41,7 +41,14 @@ export function HomePage() {
       const needsPlacement = !result.user.placementTestDone;
       await navigate({ to: needsPlacement ? '/placement' : '/dashboard' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.home.errorDefault);
+      // Backend sends 423 with a structured English message when the account
+      // is locked. Map to the localised string instead of surfacing raw EN.
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.toLowerCase().includes('locked') || msg.toLowerCase().includes('too many')) {
+        setError(t.home.accountLocked);
+      } else {
+        setError(msg || t.home.errorDefault);
+      }
     } finally {
       setLoading(false);
     }

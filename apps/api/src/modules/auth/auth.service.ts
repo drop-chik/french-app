@@ -53,18 +53,62 @@ export async function registerUser(db: DB, input: RegisterInput) {
   return user;
 }
 
+// Distributed-brute-force defence. /auth/login route already enforces an IP
+// rate-limit; this is an *account*-level lockout for attackers rotating IPs.
+// Threshold is generous enough that real users won't trip it from a couple
+// of typos (5 attempts in a sliding 15-min window), and the lockout itself
+// is short (15 min) so we don't ddos legit users out of their own accounts
+// if someone targets them.
+const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_WINDOW_MS = 15 * 60 * 1000; // count failures within this window
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // and lock for this long
+
 export async function loginUser(db: DB, input: LoginInput) {
   const user = await db.query.users.findFirst({
     where: eq(users.email, input.email),
   });
 
   if (!user || !user.password) {
+    // Don't increment counters here — the email isn't in our DB, so there's
+    // no row to update. The IP rate-limit still throttles enumeration.
     throw new Error('INVALID_CREDENTIALS');
+  }
+
+  // Locked account: reject without even hashing. Surfaces a distinct error
+  // so the UI can tell the user when to come back rather than the generic
+  // "wrong password".
+  if (user.lockoutUntil && user.lockoutUntil.getTime() > Date.now()) {
+    throw new Error('ACCOUNT_LOCKED');
   }
 
   const valid = await bcrypt.compare(input.password, user.password);
   if (!valid) {
-    throw new Error('INVALID_CREDENTIALS');
+    // Increment failed counter. If the previous failure was older than
+    // LOCKOUT_WINDOW_MS we treat this as a fresh attempt window (reset to 1).
+    // Hitting LOCKOUT_THRESHOLD trips the lock for LOCKOUT_DURATION_MS.
+    const now = new Date();
+    const lastFail = user.lastFailedLoginAt;
+    const withinWindow = lastFail && now.getTime() - lastFail.getTime() < LOCKOUT_WINDOW_MS;
+    const newCount = withinWindow ? user.failedLoginAttempts + 1 : 1;
+    const shouldLock = newCount >= LOCKOUT_THRESHOLD;
+
+    await db.update(users)
+      .set({
+        failedLoginAttempts: newCount,
+        lastFailedLoginAt: now,
+        lockoutUntil: shouldLock ? new Date(now.getTime() + LOCKOUT_DURATION_MS) : null,
+      })
+      .where(eq(users.id, user.id));
+
+    throw new Error(shouldLock ? 'ACCOUNT_LOCKED' : 'INVALID_CREDENTIALS');
+  }
+
+  // Successful login — reset the counters so a typo earlier in the week
+  // doesn't add up over time.
+  if (user.failedLoginAttempts > 0 || user.lockoutUntil) {
+    await db.update(users)
+      .set({ failedLoginAttempts: 0, lastFailedLoginAt: null, lockoutUntil: null })
+      .where(eq(users.id, user.id));
   }
 
   return {

@@ -199,6 +199,10 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         200: authTokenResponse,
         400: errorSchema,
         401: { ...errorSchema, description: 'Invalid email or password' },
+        // 423 Locked — distinct from 401 so the UI shows a different message
+        // ("too many attempts — try again in 15 min") rather than telling the
+        // user to check their password.
+        423: { ...errorSchema, description: 'Account temporarily locked after too many failed attempts' },
       },
     },
   }, async (request, reply) => {
@@ -227,8 +231,15 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         })
         .send({ accessToken, user });
     } catch (err) {
-      if (err instanceof Error && err.message === 'INVALID_CREDENTIALS') {
-        return reply.status(401).send({ error: 'Invalid email or password' });
+      if (err instanceof Error) {
+        if (err.message === 'INVALID_CREDENTIALS') {
+          return reply.status(401).send({ error: 'Invalid email or password' });
+        }
+        if (err.message === 'ACCOUNT_LOCKED') {
+          return reply.status(423).send({
+            error: 'Account temporarily locked after too many failed attempts. Try again in 15 minutes.',
+          });
+        }
       }
       throw err;
     }

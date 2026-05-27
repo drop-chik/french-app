@@ -758,6 +758,7 @@ export const ru: DeepRecord = {
     passwordRuleLength: 'Минимум 8 символов',
     passwordRuleLetter: 'Хотя бы одна буква',
     passwordRuleDigit: 'Хотя бы одна цифра',
+    accountLocked: 'Слишком много неудачных попыток входа. Попробуй через 15 минут или сбрось пароль.',
   },
   forgotPassword: {
     title: 'Сброс пароля',

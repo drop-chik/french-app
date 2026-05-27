@@ -918,6 +918,7 @@ export const en: Translations = {
     passwordRuleLength: 'At least 8 characters',
     passwordRuleLetter: 'At least one letter',
     passwordRuleDigit: 'At least one digit',
+    accountLocked: 'Too many failed login attempts. Try again in 15 minutes or reset your password.',
   },
   forgotPassword: {
     title: 'Password reset',
