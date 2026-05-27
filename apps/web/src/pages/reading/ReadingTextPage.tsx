@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronLeft, BookPlus, Check, X, RotateCcw, Loader2 } from 'lucide-react';
 import { readingApi, type ReadingQuestion, type WordEntry } from '../../features/reading/api';
 import { useI18n } from '../../shared/i18n';
+import type { Translations } from '../../shared/i18n/ru';
 import styles from './ReadingTextPage.module.css';
 
 interface Props {
@@ -335,8 +336,7 @@ interface InteractiveTextProps {
   wordsSaved: Set<string>;
   // Forwarded into <PopupCard> for lang-aware POS labels and i18n save button.
   lang: 'ru' | 'en';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: any;
+  t: Translations;
 }
 
 function InteractiveText({ content, wordMap, onLookup, onSaveWord, saveStatus, wordsSaved, lang, t }: InteractiveTextProps) {
@@ -460,8 +460,7 @@ function PopupCard({
   wordsSaved: Set<string>;
   onSave: (word: string) => void;
   lang: 'ru' | 'en';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: any;
+  t: Translations;
 }) {
   const posInfo = posInfoFor(popup.entry?.pos, lang);
   const parsed = popup.entry ? parseTranslation(popup.entry.tr) : null;

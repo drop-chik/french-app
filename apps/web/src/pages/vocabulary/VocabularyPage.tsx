@@ -11,6 +11,7 @@ import { conversationApi } from '../../features/conversation/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { grammarApi } from '../../features/grammar/api';
 import { useI18n } from '../../shared/i18n';
+import { useVocabSessionRecovery } from '../../features/vocabulary/useSessionRecovery';
 import { FlashcardMode } from './FlashcardMode/FlashcardMode';
 import { MultipleChoiceMode } from './MultipleChoiceMode/MultipleChoiceMode';
 import { SpellingMode } from './SpellingMode/SpellingMode';
@@ -212,6 +213,14 @@ function SessionSettingsPopover({ onClose }: { onClose: () => void }) {
 export function VocabularyPage() {
   const [activeMode, setActiveMode] = useState<ActiveMode>('menu');
   const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
+  // Lightweight resume-prompt — see useSessionRecovery for design notes.
+  const { snapshot: recoverySnap, recordModeStart, dismissBanner } = useVocabSessionRecovery();
+
+  // Mirror activeMode into localStorage. The hook decides whether the value
+  // is worth keeping (non-menu/complete) or to wipe (menu/complete reached).
+  useEffect(() => {
+    recordModeStart(activeMode);
+  }, [activeMode, recordModeStart]);
   // Other-modes accordion — collapsed by default. Most users just want to
   // hit "Начать занятие" and not pick between 8 modes themselves.
   const [showOtherModes, setShowOtherModes] = useState(false);
@@ -473,6 +482,37 @@ export function VocabularyPage() {
           )}
         </div>
       </div>
+
+      {/* Resume-session banner — visible only when there's a recent
+          unfinished session AND user is back at the menu. Hidden once they
+          enter any mode (so it doesn't haunt the in-session view).
+          Continue button hops straight into Smart Session — the SRS planner
+          re-surfaces what was due, no data loss. */}
+      {recoverySnap && activeMode === 'menu' && !isLoading && (
+        <div className={styles.resumeBanner}>
+          <div className={styles.resumeBannerText}>
+            <strong>{t.vocabulary.resumeTitle}</strong>
+            <span>{t.vocabulary.resumeBody.replace('{n}', String(recoverySnap.minutesAgo))}</span>
+          </div>
+          <div className={styles.resumeBannerActions}>
+            <button
+              type="button"
+              className={styles.resumeBtnPrimary}
+              onClick={() => setActiveMode('smart')}
+            >
+              {t.vocabulary.resumeContinue}
+            </button>
+            <button
+              type="button"
+              className={styles.resumeBtnGhost}
+              onClick={dismissBanner}
+              aria-label={t.vocabulary.resumeDismiss}
+            >
+              <XIcon size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {isLoading && <p className={styles.loading}>{t.vocabulary.loading}</p>}
       {error && <p className={styles.error}>{t.vocabulary.errorLoad}</p>}
