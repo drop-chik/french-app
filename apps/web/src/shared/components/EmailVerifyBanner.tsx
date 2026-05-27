@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Mail, X } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import { authApi } from '../../features/auth/api';
@@ -22,6 +22,7 @@ const DISMISS_KEY = 'frenchup:verify-banner-dismissed';
 export function EmailVerifyBanner() {
   const { t } = useI18n();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   // Read profile to know verification status. Stale 5min via global default,
   // banner appears within a session.
@@ -35,6 +36,21 @@ export function EmailVerifyBanner() {
     catch { return false; }
   });
   const [resending, setResending] = useState(false);
+
+  // Listen for cross-tab verification — VerifyEmailPage writes a timestamp
+  // to localStorage on success, which fires `storage` in every *other* tab.
+  // Without this, a user verifies in tab A and tab B keeps showing the
+  // 5-minute-stale "not verified" banner. Same-tab is covered by direct
+  // invalidation inside VerifyEmailPage itself.
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'frenchup:email-verified') {
+        void queryClient.invalidateQueries({ queryKey: ['profile'] });
+      }
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [queryClient]);
 
   // Hide while profile loads (banner flashing in is worse than waiting),
   // when email is already verified, or when user dismissed this session.

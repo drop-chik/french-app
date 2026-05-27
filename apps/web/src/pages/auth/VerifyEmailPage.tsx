@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearch } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { Moon, Sun, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useTheme } from '../../shared/hooks/useTheme';
 import { authApi } from '../../features/auth/api';
@@ -20,6 +21,7 @@ type State = 'pending' | 'success' | 'invalid';
 export function VerifyEmailPage() {
   const { t } = useI18n();
   const { toggle, isDark } = useTheme();
+  const queryClient = useQueryClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const search = useSearch({ strict: false }) as { token?: string };
   const token = search.token ?? '';
@@ -29,9 +31,23 @@ export function VerifyEmailPage() {
   useEffect(() => {
     if (!token) return;
     authApi.verifyEmail(token)
-      .then(() => setState('success'))
+      .then(() => {
+        setState('success');
+        // Profile and home queries cache emailVerifiedAt — invalidate so the
+        // banner + Settings → Personal info refresh on the very next render
+        // without forcing the user to hard-reload.
+        void queryClient.invalidateQueries({ queryKey: ['profile'] });
+        void queryClient.invalidateQueries({ queryKey: ['home'] });
+        // Cross-tab nudge: users typically open the email link in a fresh tab
+        // while the app is still loaded in another. localStorage fires a
+        // `storage` event in *other* tabs (not this one) so listeners there
+        // can invalidate their own cache. The timestamp value makes each
+        // write unique so it always fires even if verified twice.
+        try { localStorage.setItem('frenchup:email-verified', String(Date.now())); }
+        catch { /* private mode */ }
+      })
       .catch(() => setState('invalid'));
-  }, [token]);
+  }, [token, queryClient]);
 
   return (
     <div className={styles.page}>
