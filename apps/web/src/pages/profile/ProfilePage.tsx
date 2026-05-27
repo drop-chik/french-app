@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, Link } from '@tanstack/react-router';
-import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield, Compass } from 'lucide-react';
+import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield, Compass, Download, Trash2 } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import type { UserProfile } from '../../features/profile/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
+import { DeleteAccountDialog } from '../../shared/components/DeleteAccountDialog';
 import { achievementsApi } from '../../features/achievements/api';
 import { AchievementBadge } from '../../features/achievements/AchievementBadge';
 import { usePush } from '../../features/push/usePush';
@@ -79,6 +80,42 @@ export function ProfilePage() {
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  // ── GDPR Art 15/17 — data section ──
+  const [exportState, setExportState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleExportData() {
+    setExportState('loading');
+    try {
+      await profileApi.exportData();
+      setExportState('success');
+      // Reset back to idle after 3s so the button isn't stuck on "saved".
+      setTimeout(() => setExportState('idle'), 3000);
+    } catch {
+      setExportState('error');
+      setTimeout(() => setExportState('idle'), 4000);
+    }
+  }
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => profileApi.deleteAccount(),
+    onSuccess: () => {
+      // Clear local auth + nav back to landing. We don't await /auth/logout
+      // because the user no longer exists.
+      useAuthStore.getState().clearAuth();
+      router.navigate({ to: '/' });
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.toLowerCase().includes('last admin')) {
+        setDeleteError(t.profile.deleteLastAdmin);
+      } else {
+        setDeleteError(t.profile.deleteFailed);
+      }
+    },
+  });
 
   useEffect(() => {
     if (profile && !name) {
@@ -593,8 +630,113 @@ export function ProfilePage() {
 
           {/* — Notifications — */}
           <NotificationsBlock />
+
+          <div className={styles.settingsDivider} />
+
+          {/* — My data (GDPR Art 15/17) — */}
+          <div className={styles.settingsBlock}>
+            <div className={styles.settingsBlockHead}>
+              <div className={`${styles.settingsIconBubble} ${styles.bubblePink}`}>
+                <Shield size={18} />
+              </div>
+              <div className={styles.settingsBlockTitleWrap}>
+                <h3 className={styles.settingsBlockTitle}>{t.profile.dataTitle}</h3>
+                <p className={styles.settingsBlockDesc}>{t.profile.dataDesc}</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              {/* Export */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 'var(--space-3)',
+                padding: 'var(--space-3)',
+                background: 'var(--color-bg-secondary)',
+                borderRadius: 'var(--radius-md)',
+                flexWrap: 'wrap',
+              }}>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary)' }}>
+                    {t.profile.dataExportTitle}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                    {exportState === 'success'
+                      ? t.profile.dataExportSuccess
+                      : exportState === 'error'
+                        ? t.profile.dataExportError
+                        : t.profile.dataExportDesc}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={handleExportData}
+                  disabled={exportState === 'loading'}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Download size={14} />
+                  {exportState === 'loading' ? t.profile.dataExportLoading : t.profile.dataExportBtn}
+                </button>
+              </div>
+
+              {/* Delete */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 'var(--space-3)',
+                padding: 'var(--space-3)',
+                background: 'color-mix(in srgb, #dc2626 6%, transparent)',
+                border: '1px solid color-mix(in srgb, #dc2626 18%, transparent)',
+                borderRadius: 'var(--radius-md)',
+                flexWrap: 'wrap',
+              }}>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: '#b91c1c' }}>
+                    {t.profile.dataDeleteTitle}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                    {t.profile.dataDeleteDesc}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setDeleteError(null); setShowDeleteDialog(true); }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 14px',
+                    background: '#dc2626',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Trash2 size={14} />
+                  {t.profile.dataDeleteBtn}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </details>
+
+      {showDeleteDialog && profile && (
+        <DeleteAccountDialog
+          userEmail={profile.email}
+          loading={deleteAccountMutation.isPending}
+          errorMessage={deleteError}
+          onConfirm={() => deleteAccountMutation.mutate()}
+          onCancel={() => { setShowDeleteDialog(false); setDeleteError(null); }}
+        />
+      )}
     </div>
   );
 }

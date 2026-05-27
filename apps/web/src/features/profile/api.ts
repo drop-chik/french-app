@@ -129,4 +129,39 @@ export const profileApi = {
     apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST' }).catch(() => {
       // Ignore server errors on logout — we clear auth regardless
     }),
+
+  // GDPR Art 15: download all my data as a JSON file. We use a manual fetch
+  // (not apiRequest) because apiRequest expects JSON and we want to stream
+  // straight to a Blob → File download via <a download>.
+  exportData: async (): Promise<void> => {
+    const { accessToken } = useAuthStore.getState();
+    const res = await fetch('/api/profile/export', {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Export failed' }));
+      throw new Error((err as { error?: string }).error ?? 'Export failed');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    // Backend sends Content-Disposition with filename; some browsers honour
+    // that, others use the anchor's download attribute. Belt + braces.
+    a.download = `frenchup-export-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+
+  // GDPR Art 17: permanently delete the account. Returns void on success;
+  // throws on the LAST_ADMIN guard or 4xx. Caller is responsible for
+  // clearing local auth state + redirecting.
+  deleteAccount: () =>
+    apiRequest<{ ok: boolean }>('/profile', {
+      method: 'DELETE',
+      body: JSON.stringify({ confirmation: 'DELETE' }),
+    }),
 };

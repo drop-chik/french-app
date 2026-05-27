@@ -1,7 +1,13 @@
 import bcrypt from 'bcrypt';
 import { eq, count, sql, gte, lt, lte, and, or, asc, inArray } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
-import { users, words, wordProgress, grammarTopics, grammarProgress, listeningExercises, listeningProgress, conversationSessions } from '../../db/schema/index.js';
+import {
+  users, words, wordProgress, grammarTopics, grammarProgress,
+  listeningExercises, listeningProgress, conversationSessions,
+  readingProgress, writingSubmissions, writingFeedback, writingPrompts,
+  drillProgress, placementTests, userAchievements, pushSubscriptions,
+  follows, activityEvents, activityReactions,
+} from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const BCRYPT_ROUNDS = 12;
@@ -675,4 +681,163 @@ export async function getLevelsProgress(db: DB, userId: string) {
       percent: total > 0 ? Math.round((l / total) * 100) : 0,
     };
   });
+}
+
+// ── GDPR Article 15: right of access ────────────────────────────────────────
+//
+// Returns ALL personal data we hold about a single user, in JSON. Includes:
+//   - profile fields
+//   - learning progress (words, grammar, listening, reading, writing, drills)
+//   - placement test history
+//   - conversation sessions (we DON'T export message content — message rows
+//     are huge and the conversation itself is on the OpenAI side; we just
+//     list session metadata so the user knows what was created on their
+//     account)
+//   - social graph (follows in/out)
+//   - activity events the user authored, reactions they gave
+//   - push subscriptions (endpoints — not the encryption keys)
+//   - achievements unlocked
+//   - custom words the user added to their personal dictionary
+//
+// Heavy binary blobs (audio_data, image bytes) are intentionally excluded —
+// the user can re-fetch them from the live URLs.
+export async function exportUserData(db: DB, userId: string) {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    // Explicit columns — never accidentally include the password hash.
+    columns: {
+      id: true, email: true, name: true, level: true, avatarUrl: true,
+      uiLanguage: true, placementTestDone: true, role: true, tag: true,
+      dailyNewWordsLimit: true, dailyDueWordsLimit: true,
+      xp: true,
+      streakRepairUsedAt: true, streakRepairSavedValue: true,
+      createdAt: true, updatedAt: true,
+    },
+  });
+  if (!user) throw new Error('USER_NOT_FOUND');
+
+  // Pull everything in parallel — it's small enough not to hurt the DB.
+  const [
+    wordProgressRows,
+    grammarProgressRows,
+    listeningProgressRows,
+    readingProgressRows,
+    writingSubmissionRows,
+    writingFeedbackRows,
+    writingPromptRows,
+    drillProgressRows,
+    placementHistoryRows,
+    achievementRows,
+    pushRows,
+    followingRows,
+    followerRows,
+    activityRows,
+    reactionRows,
+    customWordRows,
+    conversationRows,
+  ] = await Promise.all([
+    db.select().from(wordProgress).where(eq(wordProgress.userId, userId)),
+    db.select().from(grammarProgress).where(eq(grammarProgress.userId, userId)),
+    db.select().from(listeningProgress).where(eq(listeningProgress.userId, userId)),
+    db.select().from(readingProgress).where(eq(readingProgress.userId, userId)),
+    db.select().from(writingSubmissions).where(eq(writingSubmissions.userId, userId)),
+    // Writing feedback joined to submissions implicitly through the
+    // foreign key — fetch all rows whose submission belongs to the user.
+    db
+      .select()
+      .from(writingFeedback)
+      .innerJoin(writingSubmissions, eq(writingFeedback.submissionId, writingSubmissions.id))
+      .where(eq(writingSubmissions.userId, userId)),
+    db.select().from(writingPrompts).where(eq(writingPrompts.createdByUserId, userId)),
+    db.select().from(drillProgress).where(eq(drillProgress.userId, userId)),
+    db.select().from(placementTests).where(eq(placementTests.userId, userId)),
+    db.select().from(userAchievements).where(eq(userAchievements.userId, userId)),
+    // Push subscriptions — strip encryption keys, only keep endpoint URL +
+    // metadata so the user sees what device tokens they granted.
+    db.select({
+      id: pushSubscriptions.id,
+      endpoint: pushSubscriptions.endpoint,
+      createdAt: pushSubscriptions.createdAt,
+    }).from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId)),
+    db.select().from(follows).where(eq(follows.followerId, userId)),
+    db.select().from(follows).where(eq(follows.followeeId, userId)),
+    db.select().from(activityEvents).where(eq(activityEvents.userId, userId)),
+    db.select().from(activityReactions).where(eq(activityReactions.userId, userId)),
+    db.select().from(words).where(eq(words.createdByUserId, userId)),
+    db.select({
+      id: conversationSessions.id,
+      topic: conversationSessions.topic,
+      level: conversationSessions.level,
+      startedAt: conversationSessions.startedAt,
+      endedAt: conversationSessions.endedAt,
+    }).from(conversationSessions).where(eq(conversationSessions.userId, userId)),
+  ]);
+
+  return {
+    exportedAt: new Date().toISOString(),
+    exportFormatVersion: 1,
+    profile: user,
+    progress: {
+      words: wordProgressRows,
+      grammar: grammarProgressRows,
+      listening: listeningProgressRows,
+      reading: readingProgressRows,
+      drills: drillProgressRows,
+    },
+    writing: {
+      submissions: writingSubmissionRows,
+      feedback: writingFeedbackRows.map((r) => r.writing_feedback),
+      customPrompts: writingPromptRows,
+    },
+    placementHistory: placementHistoryRows,
+    achievements: achievementRows,
+    pushSubscriptions: pushRows,
+    social: {
+      following: followingRows,
+      followers: followerRows,
+      activity: activityRows,
+      reactions: reactionRows,
+    },
+    customWords: customWordRows,
+    conversationSessions: conversationRows,
+  };
+}
+
+// ── GDPR Article 17: right to erasure ───────────────────────────────────────
+//
+// Deletes the user row. All related tables use `onDelete: 'cascade'` on
+// their user_id foreign keys, so word_progress, grammar_progress,
+// listening_progress, reading_progress, writing_*, drill_progress,
+// placement_tests, user_achievements, push_subscriptions, follows (both
+// directions), activity_events, activity_reactions, oauth_accounts,
+// password_reset_tokens, conversation_sessions and the user's custom words
+// all vanish in a single statement.
+//
+// We DON'T delete: shared seed words (created_by_user_id IS NULL), grammar
+// topics, reading texts, listening exercises — they're global content. We
+// DO delete the user's reactions on someone else's activity (they belong to
+// the user). We don't delete other users' activity events that happened to
+// be about this user (e.g. someone followed them) — those are owned by the
+// other user and form part of THEIR history.
+//
+// Safety: refuses to delete the last admin. Without this an admin who is
+// the sole admin could lock everyone out by self-deleting.
+export async function deleteUserAccount(db: DB, userId: string): Promise<void> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { id: true, role: true },
+  });
+  if (!user) throw new Error('USER_NOT_FOUND');
+
+  if (user.role === 'admin') {
+    const adminCount = await db
+      .select({ n: count() })
+      .from(users)
+      .where(eq(users.role, 'admin'));
+    if ((adminCount[0]?.n ?? 0) <= 1) {
+      throw new Error('LAST_ADMIN');
+    }
+  }
+
+  await db.delete(users).where(eq(users.id, userId));
 }

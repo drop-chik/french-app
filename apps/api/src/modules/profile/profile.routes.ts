@@ -10,6 +10,8 @@ import {
   repairStreak,
   getHomeData,
   getLevelsProgress,
+  exportUserData,
+  deleteUserAccount,
 } from './profile.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
 
@@ -253,6 +255,83 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const levels = await getLevelsProgress(fastify.db, request.user.userId);
     reply.send({ levels });
+  });
+
+  // GET /profile/export — GDPR Article 15: download all my data as JSON.
+  // Tight rate limit: this is a heavy query (5+ table scans) and a feature
+  // a normal user calls maybe once in their life.
+  fastify.get('/export', {
+    preHandler: [fastify.authenticate],
+    config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
+    schema: {
+      tags: ['profile'],
+      summary: 'Export all personal data (GDPR Art 15)',
+      description: 'Returns a JSON blob with the full user record + every progress / submission / activity row tied to this account. Heavy media (audio, image bytes) excluded — re-fetchable from live URLs.',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const { userId } = request.user;
+    try {
+      const data = await exportUserData(fastify.db, userId);
+      // Attach a filename hint so the browser saves it as a real file
+      // even when the user just navigates to the URL (rare; usually they
+      // hit it via fetch + Blob download, see frontend).
+      reply
+        .header(
+          'Content-Disposition',
+          `attachment; filename="frenchup-export-${userId}-${Date.now()}.json"`,
+        )
+        .type('application/json')
+        .send(data);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'USER_NOT_FOUND') {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+      throw err;
+    }
+  });
+
+  // DELETE /profile — GDPR Article 17: erase account.
+  // Body must include `confirmation: "DELETE"` so accidental client bugs
+  // can't wipe an account. Refuses if user is the sole admin.
+  fastify.delete('/', {
+    preHandler: [fastify.authenticate],
+    config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
+    schema: {
+      tags: ['profile'],
+      summary: 'Permanently delete my account (GDPR Art 17)',
+      description: 'Cascades through every related table via foreign-key onDelete. Requires `{ "confirmation": "DELETE" }` in the body to guard against accidental wipes. Returns 403 if the caller is the only admin.',
+      security: authorizedSecurity,
+      body: {
+        type: 'object',
+        required: ['confirmation'],
+        properties: { confirmation: { type: 'string', enum: ['DELETE'] } },
+      },
+    },
+  }, async (request, reply) => {
+    const body = request.body as { confirmation?: string };
+    if (body?.confirmation !== 'DELETE') {
+      return reply.status(400).send({ error: 'Confirmation phrase required' });
+    }
+    const { userId } = request.user;
+    try {
+      await deleteUserAccount(fastify.db, userId);
+      // Clear the refresh cookie so the browser doesn't keep trying to
+      // refresh into a now-non-existent user (would 401, then redirect).
+      reply
+        .clearCookie('refreshToken', { path: '/auth' })
+        .send({ ok: true });
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === 'USER_NOT_FOUND') {
+          return reply.status(404).send({ error: 'User not found' });
+        }
+        if (err.message === 'LAST_ADMIN') {
+          return reply.status(403).send({ error: 'Cannot delete the last admin account' });
+        }
+      }
+      throw err;
+    }
   });
 };
 
