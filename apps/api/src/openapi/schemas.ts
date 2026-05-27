@@ -18,6 +18,10 @@ export const userSchema = {
   properties: {
     id:                  { type: 'string', format: 'uuid' },
     email:               { type: 'string', format: 'email' },
+    // Fastify strips any property not listed here from the response body.
+    // Without this entry the front-end always sees emailVerifiedAt=undefined
+    // → EmailVerifyBanner can't tell verified from unverified.
+    emailVerifiedAt:     { type: 'string', format: 'date-time', nullable: true },
     name:                { type: 'string' },
     level:               { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
     avatarUrl:           { type: 'string', nullable: true },
