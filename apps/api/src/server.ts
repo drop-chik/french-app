@@ -75,11 +75,18 @@ await fastify.register(helmet, {
   contentSecurityPolicy: false,
 });
 
-// Rate limit — global default (300 req/min/IP). Login/register endpoints
-// tighten further via per-route config so brute force on credentials caps at
-// ~10 attempts/min/IP.
+// Rate limit — global default 120 req/min/IP. Lowered from 300 after the
+// 2026-05-27 security audit: 300 was 2x what any legitimate session
+// produces, and a single attacker easily generates 300/min from one IP.
+// 120/min still covers normal use (auto-save bursts, popovers, fast nav)
+// with comfortable headroom.
+//
+// AI / cost endpoints (writing feedback, conversation message, TTS, DALL-E,
+// extra examples) have tighter per-route limits — see each route's `config`.
+// Auth endpoints (login/register/forgot-password/reset-password) have
+// per-route brute-force limits, also in their own files.
 await fastify.register(rateLimit, {
-  max: 300,
+  max: 120,
   timeWindow: '1 minute',
   // Skip rate limit on the health check so platform pings never trip it.
   allowList: (req) => req.url === '/health',

@@ -87,6 +87,9 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
     '/prompts/generate',
     {
       preHandler: [fastify.authenticate],
+      // GPT-4o prompt generation: ~$0.005 per call. 10/hour matches realistic
+      // exploration (user tries a few topics) while blocking scripted enumeration.
+      config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
       schema: {
         tags: ['writing'],
         summary: 'Generate a new AI writing prompt for the current user',
@@ -209,6 +212,9 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
     '/submissions/:id/feedback',
     {
       preHandler: [fastify.authenticate],
+      // GPT-4o full-essay evaluation is ~$0.01-0.03 per call. Cap to 20/hour
+      // — far more than any human writes, blocks scripted abuse.
+      config: { rateLimit: { max: 20, timeWindow: '1 hour' } },
       schema: {
         tags: ['writing'],
         summary: 'Generate AI grammar / style feedback for a submission',

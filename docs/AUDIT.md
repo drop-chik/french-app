@@ -20,6 +20,73 @@
 
 ---
 
+## Targeted security pass (2026-05-27 before Epic B)
+
+Прицельный аудит на 9 пунктов: admin access, IDOR, privilege escalation,
+locked-tab gating, rate limits, mass assignment, CORS, resource limits,
+client-bundle secret leaks.
+
+### Pass ✅
+- **Admin routes** — все 5 эндпоинтов под `[authenticate, requireAdmin]`.
+  `requireAdmin` re-checks `users.role` из БД на каждый запрос (не trust
+  JWT cache), плюс fail-safe в `deleteUserAccount(LAST_ADMIN)` не даёт
+  снять последнего админа
+- **IDOR на personal data**: profile/conversation/writing endpoints везде
+  фильтруют по `userId` AND `id`. Writing submissions / conversation
+  sessions нельзя прочитать у чужого аккаунта по UUID
+- **Privilege escalation** в `PATCH /profile`: Fastify body schema +
+  TypeScript signature `updateProfile()` whitelist — `role` / `password` /
+  `streakRepairUsedAt` физически нельзя переписать через self-update
+- **CORS**: одна origin из `FRONTEND_URL` env (Vercel), credentials: true.
+  Wildcard origin нет
+- **Secrets в client bundle**: только `VITE_SENTRY_DSN` (полу-публичный
+  identifier) — реальных секретов в JS bundle нет
+- **Body limit**: 2MB (для аватарок base64), отрезает big payload DOS
+- **Request schema validation**: zod + JSON schema на всех write endpoints
+
+### Fixed inline в этом проходе
+- 🟠 **Глобальный rate limit** 300→120 req/min/IP. 300 был 2x от
+  реальной сессии и не помешал бы script. Все нормальные пиковые случаи
+  (autosave + popovers) держатся в 120 с запасом
+- 🟠 **AI/cost endpoints — per-route rate limit**:
+  - `POST /words/:id/examples` — 30/час (gpt-4o-mini extra examples)
+  - `POST /words/:id/image` — 5/час (DALL-E flag, $0.04/image)
+  - `POST /writing/submissions/:id/feedback` — 20/час (GPT-4o eval ~$0.03)
+  - `POST /writing/prompts/generate` — 10/час (GPT-4o prompt-gen ~$0.005)
+  - `POST /conversation/sessions/:id/message` — 60/час (SSE GPT-4o stream)
+  - `POST /listening/tts` — 200/час (TTS-1-HD + DB cache, словарные сессии)
+- 🟠 **IDOR в `GET /words/:id/distractors`** — раньше любой userId доставал
+  word по UUID без owner-check. Теоретически можно было подтвердить
+  существование custom-слова чужого юзера. Добавлен фильтр
+  `OR(NULL owner, equals current user)` через Drizzle relational query
+
+### Findings — defer (не фиксил)
+- 🟡 **Locked tabs ≠ security**: фронтовый Lock на /writing (B1+) /
+  /drills (A2+) / /conjugation (A2+) это **только UX-нудж**. API эти
+  endpoints ОТКРЫТ для любого авторизованного юзера независимо от
+  CEFR-уровня. Это design choice (контент не персональный, юзер просто
+  получает что-то «слишком сложное»), а не утечка данных. Если нужен
+  hard gate — добавить middleware `requireLevel('B1')` per-route
+- 🟡 **DDoS на сетевом уровне**: Railway не имеет DDoS shield. Per-route
+  rate-limit защитит от cost-amplification (OpenAI bill), но не от
+  network flooding. Решение — Cloudflare proxy перед Railway (отдельный
+  setup, не в коде)
+- 🟡 **`additionalProperties: false` на body schemas**: сейчас Fastify
+  по умолчанию принимает любые extra поля. На текущих write-роутах это
+  безопасно (services используют whitelist), но fragile. Прогон по
+  всем PATCH/POST routes — отдельный тикет
+- 🟡 **OpenAI hard cap**: даже с rate-limit, теоретически если 100 юзеров
+  одновременно пробьют свои квоты — bill вырастет. Решение: установить
+  monthly cap в OpenAI dashboard (user action, не код). Без cap первая
+  атака может стоить сотни долларов до того как OpenAI отрубит ключ
+- 🟢 **CSP на /docs**: уже зафиксирован выше
+- 🟢 **Per-IP detection с прокси**: Railway видит IP клиента в
+  X-Forwarded-For, Fastify rate-limit использует remote IP по умолчанию.
+  За Cloudflare нужен `trustProxy: true` — пока живём на raw Railway
+  без CDN, всё ок
+
+---
+
 ## 1. Security
 
 ### Fixed inline (this audit pass)

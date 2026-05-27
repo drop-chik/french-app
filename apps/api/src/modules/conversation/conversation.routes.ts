@@ -155,6 +155,11 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
     '/sessions/:id/message',
     {
       preHandler: [fastify.authenticate],
+      // GPT-4o streaming chat: $0.01-0.05 per long exchange. 60/hour ≈ one
+      // message per minute — covers genuine practice, blocks bots that
+      // hammer the model. SSE keeps the connection open so per-call cost
+      // isn't fully bounded; rate-limit ALSO matters as a back-pressure.
+      config: { rateLimit: { max: 60, timeWindow: '1 hour' } },
       schema: {
         tags: ['conversation'],
         summary: 'Send a user message; reply streams back as Server-Sent Events',

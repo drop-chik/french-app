@@ -151,8 +151,15 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const query = request.query as Record<string, unknown>;
       const lang = parseLang(query);
 
+      // IDOR guard: only return distractors for words that are either global
+      // (created_by_user_id IS NULL) or owned by the requesting user. Without
+      // this filter an attacker who knows a custom-word UUID can confirm
+      // its existence on another account.
       const word = await fastify.db.query.words.findFirst({
-        where: (w, { eq }) => eq(w.id, request.params.id),
+        where: (w, { eq, or, isNull, and }) => and(
+          eq(w.id, request.params.id),
+          or(isNull(w.createdByUserId), eq(w.createdByUserId, request.user.userId)),
+        ),
       });
       if (!word) return reply.status(404).send({ error: 'Word not found' });
 
@@ -318,6 +325,10 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
     '/:id/examples',
     {
       preHandler: [fastify.authenticate],
+      // Cost guard: even though we cache, an attacker could enumerate UUIDs
+      // and trigger the AI path for every word in the dictionary. 30/hour is
+      // 10x typical real usage (user explores ~3 words per session).
+      config: { rateLimit: { max: 30, timeWindow: '1 hour' } },
       schema: {
         tags: ['words'],
         summary: 'Get 3 extra example sentences (lazy + cached)',
@@ -561,6 +572,10 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
     '/:id/image',
     {
       preHandler: [fastify.authenticate],
+      // DALL-E is $0.04/image. The endpoint only flips a flag, but the
+      // batch processor we run later picks up those flags. 5/hour caps the
+      // budget impact even if someone scripts the endpoint.
+      config: { rateLimit: { max: 5, timeWindow: '1 hour' } },
       schema: {
         tags: ['words'],
         summary: 'Trigger DALL-E image generation for a word (async)',

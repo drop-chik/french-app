@@ -131,6 +131,10 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
     '/tts',
     {
       preHandler: [fastify.authenticate],
+      // TTS-1-HD is $30/1M chars, ~$0.0002 per word. Heavily cached in
+      // tts_cache table so most calls are free. 200/hour fits a 20-word
+      // vocab session × 10 sessions, blocks scripted bulk synthesis.
+      config: { rateLimit: { max: 200, timeWindow: '1 hour' } },
       schema: {
         tags: ['listening'],
         summary: 'On-demand TTS — used by vocabulary modes to pronounce a word',
