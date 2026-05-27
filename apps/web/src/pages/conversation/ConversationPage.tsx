@@ -7,7 +7,7 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { useToast } from '../../shared/components/Toast';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
-import foxIcon from '../landing/fox-icon.png';
+import foxIcon from '../landing/fox-icon.webp';
 import styles from './ConversationPage.module.css';
 
 // Topic value stays in French (sent to GPT) — only the label is translated

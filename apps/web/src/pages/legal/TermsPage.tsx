@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import foxIcon from '../landing/fox-icon.png';
+import foxIcon from '../landing/fox-icon.webp';
 import { useI18n } from '../../shared/i18n';
 import styles from './LegalPage.module.css';
 

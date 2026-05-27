@@ -4,7 +4,7 @@ import { Moon, Sun, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useTheme } from '../../shared/hooks/useTheme';
 import { authApi } from '../../features/auth/api';
 import { useI18n } from '../../shared/i18n';
-import foxIcon from '../landing/fox-icon.png';
+import foxIcon from '../landing/fox-icon.webp';
 import styles from './AuthForms.module.css';
 
 /**

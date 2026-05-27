@@ -32,19 +32,46 @@ export default defineConfig({
       },
       workbox: {
         // Cache the SPA shell so the app opens offline. API calls aren't
-        // cached — they need fresh data from the server.
-        globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2}'],
+        // cached — they need fresh data from the server. .webp added (we
+        // converted PNGs); legacy .png patterns dropped since the only
+        // PNGs left are PWA icons in /public.
+        globPatterns: ['**/*.{js,css,html,svg,webp,png,woff,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
+        // Bump max size for precache entries — main JS chunk is ~600 KB
+        // raw which exceeds the workbox default 2MB cap (would silently
+        // skip otherwise; we precache because users open the app daily).
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Pull in our custom push-notification handler.
         importScripts: ['sw-push.js'],
         runtimeCaching: [
           {
+            // Fonts — basically immutable, cache for a year.
             urlPattern: /^https:\/\/fonts\.(?:gstatic|googleapis)\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts-cache',
               expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+          {
+            // User avatars — accept slightly stale, refresh in background.
+            urlPattern: /\/api\/profile\/.+\/avatar/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'avatars-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+          {
+            // Listening MP3s — large, change rarely, "stale ok while we
+            // refetch". Saves 100-500 KB per replay.
+            urlPattern: /\/api\/listening\/exercises\/.+\/audio/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'listening-audio-cache',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],
@@ -63,5 +90,40 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+  },
+  build: {
+    // Bundle-splitting hints. Vite's automatic chunking lumped every vendor
+    // dep into the main bundle (1.19 MB raw). Split known-cacheable libs into
+    // named chunks so:
+    //   1. Long-term browser cache hits on subsequent visits (vendor hash
+    //      doesn't change every release).
+    //   2. Initial page render gets a smaller main chunk, lazier vendors are
+    //      fetched in parallel.
+    //   3. CDN gets to deliver fewer bytes per route change (chunks already
+    //      cached from the first visit).
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react': ['react', 'react-dom'],
+          'router': ['@tanstack/react-router'],
+          'query': ['@tanstack/react-query', '@tanstack/react-query-devtools'],
+          'radix': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-progress',
+            '@radix-ui/react-toast',
+            '@radix-ui/react-slot',
+            '@radix-ui/react-tooltip',
+          ],
+          'icons': ['lucide-react'],
+          'animation': ['framer-motion', 'canvas-confetti'],
+          'forms': ['react-hook-form', 'zod'],
+          'sentry': ['@sentry/react'],
+        },
+      },
+    },
+    // Default warning threshold (500 KB) was masking the 1.2 MB main chunk
+    // for ages — set explicitly so the warning stays meaningful after split.
+    chunkSizeWarningLimit: 350,
   },
 });

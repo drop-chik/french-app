@@ -1,5 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ReadingTextPage } from '../../pages/reading/ReadingTextPage';
+import { lazyPage } from '../../shared/components/LazyRoute';
+
+const ReadingTextPage = lazyPage<{ slug: string }>(
+  () => import('../../pages/reading/ReadingTextPage'),
+  'ReadingTextPage',
+);
 
 function ReadingTextRoute() {
   const { slug } = Route.useParams();

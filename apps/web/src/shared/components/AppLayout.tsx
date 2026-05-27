@@ -9,7 +9,7 @@ import { profileApi } from '../../features/profile/api';
 import { achievementsApi } from '../../features/achievements/api';
 import { HUBS, hubForPath, hubEntryRoute, hubAllLocked } from '../nav/navConfig';
 import { HubTabs } from './HubTabs';
-import foxIcon from '../../pages/landing/fox-icon.png';
+import foxIcon from '../../pages/landing/fox-icon.webp';
 import styles from './AppLayout.module.css';
 
 export function AppLayout({ children }: { children: ReactNode }) {

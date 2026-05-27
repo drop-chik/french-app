@@ -1,5 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { GrammarTopicPage } from '../../pages/grammar/GrammarTopicPage';
+import { lazyPage } from '../../shared/components/LazyRoute';
+
+const GrammarTopicPage = lazyPage<{ slug: string }>(
+  () => import('../../pages/grammar/GrammarTopicPage'),
+  'GrammarTopicPage',
+);
 
 function GrammarTopicRoute() {
   const { slug } = Route.useParams();

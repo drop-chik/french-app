@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import foxIcon from './fox-icon.png';
+import foxIcon from './fox-icon.webp';
 import { useI18n } from '../../shared/i18n';
 import styles from './Preloader.module.css';
 

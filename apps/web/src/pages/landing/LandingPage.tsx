@@ -10,8 +10,8 @@ import {
   Dumbbell, Check, Minus, X as XIcon,
 } from 'lucide-react';
 import { useI18n } from '../../shared/i18n';
-import foxHero from './fox-hero.png';
-import foxIcon from './fox-icon.png';
+import foxHero from './fox-hero.webp';
+import foxIcon from './fox-icon.webp';
 import styles from './LandingPage.module.css';
 import confetti from 'canvas-confetti';
 import { Preloader } from './Preloader';

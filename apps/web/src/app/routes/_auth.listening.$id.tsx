@@ -1,5 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ListeningExercisePage } from '../../pages/listening/ListeningExercisePage';
+import { lazyPage } from '../../shared/components/LazyRoute';
+
+const ListeningExercisePage = lazyPage<{ id: string }>(
+  () => import('../../pages/listening/ListeningExercisePage'),
+  'ListeningExercisePage',
+);
 
 function ListeningExerciseRoute() {
   const { id } = Route.useParams();

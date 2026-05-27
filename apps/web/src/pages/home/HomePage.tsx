@@ -5,7 +5,7 @@ import { useTheme } from '../../shared/hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
 import { authApi } from '../../features/auth/api';
 import { useI18n } from '../../shared/i18n';
-import foxIcon from '../landing/fox-icon.png';
+import foxIcon from '../landing/fox-icon.webp';
 import styles from './HomePage.module.css';
 
 type Mode = 'login' | 'register';

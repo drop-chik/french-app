@@ -1,14 +1,20 @@
 [
   {
-    "name": "main JS bundle (gzip)",
+    "name": "main JS chunk (gzip)",
     "path": "dist/assets/index-*.js",
-    "limit": "400 KB",
+    "limit": "200 KB",
     "gzip": true
   },
   {
-    "name": "main CSS bundle (gzip)",
+    "name": "main CSS (gzip)",
     "path": "dist/assets/index-*.css",
     "limit": "75 KB",
+    "gzip": true
+  },
+  {
+    "name": "vendor chunks total (gzip)",
+    "path": "dist/assets/{react,router,query,radix,icons,animation,forms,sentry}-*.js",
+    "limit": "180 KB",
     "gzip": true
   }
 ]
