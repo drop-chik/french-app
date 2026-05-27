@@ -338,7 +338,12 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
               },
             },
           },
-          ...errorSchema,
+          // Status codes must be numeric keys — `...errorSchema` would spread
+          // schema fields at the top level and crash Fastify with
+          // FST_ERR_SCH_SERIALIZATION_BUILD on startup. Map errors explicitly.
+          400: errorSchema,
+          401: errorSchema,
+          404: errorSchema,
         },
       },
     },
