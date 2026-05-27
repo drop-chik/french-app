@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from '@tanstack/react-router';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Check, X } from 'lucide-react';
 import { useTheme } from '../../shared/hooks/useTheme';
 import { useAuthStore } from '../../features/auth/authStore';
 import { authApi } from '../../features/auth/api';
+import { checkPassword } from '../../features/auth/passwordRules';
 import { useI18n } from '../../shared/i18n';
 import foxIcon from '../landing/fox-icon.webp';
 import styles from './HomePage.module.css';
@@ -114,7 +115,22 @@ export function HomePage() {
               placeholder={t.home.passwordPlaceholder}
               required
               minLength={8}
+              aria-describedby={mode === 'register' ? 'password-rules' : undefined}
             />
+            {mode === 'register' && password.length > 0 && (() => {
+              // Hide the checklist once all three constraints pass — at that
+              // point we don't need to remind the user. Show it while typing
+              // so they get instant feedback rather than a 400 after submit.
+              const r = checkPassword(password);
+              if (r.ok) return null;
+              return (
+                <ul id="password-rules" className={styles.passwordRules}>
+                  <PwdRule ok={r.checks.length} text={t.home.passwordRuleLength} />
+                  <PwdRule ok={r.checks.letter} text={t.home.passwordRuleLetter} />
+                  <PwdRule ok={r.checks.digit}  text={t.home.passwordRuleDigit} />
+                </ul>
+              );
+            })()}
           </div>
 
           {mode === 'register' && (
@@ -157,5 +173,14 @@ export function HomePage() {
         </form>
       </div>
     </div>
+  );
+}
+
+function PwdRule({ ok, text }: { ok: boolean; text: string }) {
+  return (
+    <li className={`${styles.passwordRule} ${ok ? styles.passwordRuleOk : styles.passwordRuleFail}`}>
+      {ok ? <Check size={12} /> : <X size={12} />}
+      <span>{text}</span>
+    </li>
   );
 }

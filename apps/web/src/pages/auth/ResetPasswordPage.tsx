@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useSearch } from '@tanstack/react-router';
-import { Moon, Sun, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Moon, Sun, CheckCircle2, AlertCircle, Check, X } from 'lucide-react';
 import { useTheme } from '../../shared/hooks/useTheme';
 import { authApi } from '../../features/auth/api';
+import { checkPassword } from '../../features/auth/passwordRules';
 import { useI18n } from '../../shared/i18n';
 import foxIcon from '../landing/fox-icon.webp';
 import styles from './AuthForms.module.css';
@@ -34,7 +35,12 @@ export function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (password.length < 8) {
+    // Client-side mirror of PASSWORD_RULE on the server. Catches the
+    // common "8 lowercase letters" passwords before the round-trip.
+    const r = checkPassword(password);
+    if (!r.ok) {
+      // Single string for the error banner; the live checklist below the
+      // field already tells the user *which* constraints are failing.
       setError(t.resetPassword.tooShort);
       return;
     }
@@ -121,8 +127,29 @@ export function ResetPasswordPage() {
                 placeholder={t.resetPassword.newPasswordPlaceholder}
                 required
                 minLength={8}
+                aria-describedby="reset-password-rules"
                 autoFocus
               />
+              {password.length > 0 && (() => {
+                const r = checkPassword(password);
+                if (r.ok) return null;
+                return (
+                  <ul id="reset-password-rules" className={styles.passwordRules}>
+                    <li className={`${styles.passwordRule} ${r.checks.length ? styles.passwordRuleOk : styles.passwordRuleFail}`}>
+                      {r.checks.length ? <Check size={12} /> : <X size={12} />}
+                      <span>{t.home.passwordRuleLength}</span>
+                    </li>
+                    <li className={`${styles.passwordRule} ${r.checks.letter ? styles.passwordRuleOk : styles.passwordRuleFail}`}>
+                      {r.checks.letter ? <Check size={12} /> : <X size={12} />}
+                      <span>{t.home.passwordRuleLetter}</span>
+                    </li>
+                    <li className={`${styles.passwordRule} ${r.checks.digit ? styles.passwordRuleOk : styles.passwordRuleFail}`}>
+                      {r.checks.digit ? <Check size={12} /> : <X size={12} />}
+                      <span>{t.home.passwordRuleDigit}</span>
+                    </li>
+                  </ul>
+                );
+              })()}
             </div>
 
             <div className={styles.field}>

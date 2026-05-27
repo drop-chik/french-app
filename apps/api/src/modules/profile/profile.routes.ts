@@ -107,8 +107,17 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     const { userId } = request.user;
     const body = request.body as { currentPassword: string; newPassword: string };
 
-    if (!body.currentPassword || !body.newPassword || body.newPassword.length < 8) {
-      return reply.status(400).send({ error: 'Invalid input' });
+    // Same complexity rule as registration: ≥8 chars + ≥1 letter + ≥1 digit.
+    // Mirror of PASSWORD_RULE in auth.schema.ts; can't import directly because
+    // this route owns its own zod-less validation path.
+    const newPw = body.newPassword ?? '';
+    if (
+      !body.currentPassword ||
+      newPw.length < 8 ||
+      !/[a-zA-Z]/.test(newPw) ||
+      !/[0-9]/.test(newPw)
+    ) {
+      return reply.status(400).send({ error: 'Password must be at least 8 characters and contain a letter and a digit' });
     }
 
     try {

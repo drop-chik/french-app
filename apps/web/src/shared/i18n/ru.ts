@@ -755,6 +755,9 @@ export const ru: DeepRecord = {
     register: 'Создать аккаунт',
     errorDefault: 'Произошла ошибка',
     forgotPassword: 'Забыли пароль?',
+    passwordRuleLength: 'Минимум 8 символов',
+    passwordRuleLetter: 'Хотя бы одна буква',
+    passwordRuleDigit: 'Хотя бы одна цифра',
   },
   forgotPassword: {
     title: 'Сброс пароля',

@@ -19,9 +19,14 @@ const forgotPasswordSchema = z.object({
   lang: z.enum(['ru', 'en']).optional(),
 });
 
+// Password complexity here mirrors the shared PASSWORD_RULE in auth.schema.ts —
+// duplicated rather than imported because the request body validation needs
+// the additional token-length constraint as well.
 const resetPasswordSchema = z.object({
   token: z.string().min(32).max(128),
-  password: z.string().min(8).max(200),
+  password: z.string().min(8).max(200)
+    .regex(/[a-zA-Z]/, { message: 'Password must contain at least one letter' })
+    .regex(/[0-9]/,    { message: 'Password must contain at least one digit' }),
 });
 
 const verifyEmailSchema = z.object({

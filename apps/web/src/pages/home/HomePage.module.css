@@ -133,6 +133,33 @@
   border-radius: var(--radius-md);
 }
 
+/* Inline rule checklist under the password input on the register tab.
+   Disappears entirely once all three checks pass (handled by the JSX).
+   Each item flips icon + colour as the user types. */
+.passwordRules {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.passwordRule {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.passwordRuleOk {
+  color: var(--color-success);
+}
+
+.passwordRuleFail {
+  color: var(--color-text-tertiary);
+}
+
 .submitBtn {
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-brand);

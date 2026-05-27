@@ -17,6 +17,7 @@ export const Route = createFileRoute('/_auth')({
   },
   component: () => (
     <HelpProvider>
+      {/* document.title is set globally in __root.tsx via <RouteTitle />. */}
       {/* WCAG 2.4.1 — first focusable element is a skip-to-content link so
           keyboard / screen-reader users don't have to tab through the
           whole sidebar on every page. Styled in global.css (invisible

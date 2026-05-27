@@ -38,6 +38,44 @@
     <meta name="twitter:image" content="/pwa-icon-512.png" />
 
     <title>FrenchUp — Учи французский</title>
+
+    <!-- Schema.org structured data — gives Google enough context to
+         render rich results (sitelinks, knowledge-panel snippet). One
+         EducationalOrganization for the brand, one Course for the
+         actual product offering. Static in index.html (not React-injected)
+         so crawlers see it on first request without running JS. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "EducationalOrganization",
+          "@id": "https://french-web-two.vercel.app/#org",
+          "name": "FrenchUp",
+          "description": "AI-powered French learning platform: vocabulary SRS, grammar, listening, reading, and conversation.",
+          "url": "https://french-web-two.vercel.app/",
+          "logo": "https://french-web-two.vercel.app/pwa-icon-512.png",
+          "sameAs": []
+        },
+        {
+          "@type": "Course",
+          "name": "FrenchUp — Learn French from A1 to B2",
+          "description": "Adaptive French course with spaced-repetition vocabulary, grammar topics, listening exercises, reading texts, and AI-powered conversation practice. Covers CEFR levels A1, A2, B1, B2.",
+          "provider": { "@id": "https://french-web-two.vercel.app/#org" },
+          "educationalLevel": ["A1", "A2", "B1", "B2"],
+          "inLanguage": ["ru", "en"],
+          "teaches": "French as a foreign language",
+          "url": "https://french-web-two.vercel.app/",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

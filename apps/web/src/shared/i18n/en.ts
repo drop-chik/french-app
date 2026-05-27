@@ -915,6 +915,9 @@ export const en: Translations = {
     register: 'Create account',
     errorDefault: 'An error occurred',
     forgotPassword: 'Forgot your password?',
+    passwordRuleLength: 'At least 8 characters',
+    passwordRuleLetter: 'At least one letter',
+    passwordRuleDigit: 'At least one digit',
   },
   forgotPassword: {
     title: 'Password reset',
