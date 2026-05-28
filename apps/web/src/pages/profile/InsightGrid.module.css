@@ -2,6 +2,10 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-4);
+  /* Prevent grid blowout when a child has wider intrinsic content than
+     the column track — default min-width is auto which lets cards expand
+     beyond 1fr and push the row off-screen. */
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {
@@ -21,6 +25,10 @@
   flex-direction: column;
   gap: var(--space-3);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  /* Same flex/grid overflow safety as .grid above: lets the card shrink
+     below its content's intrinsic width when needed (e.g. a long
+     'продолжить' grammar title doesn't blow the card past the column). */
+  min-width: 0;
 }
 
 .card:hover {

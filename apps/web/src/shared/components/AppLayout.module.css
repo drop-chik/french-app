@@ -463,12 +463,18 @@
     /* Same styling as nav links */
   }
 
-  /* Main needs bottom padding so content isn't hidden behind the nav bar */
+  /* Main needs bottom padding so content isn't hidden behind the nav bar.
+     overflow-x: hidden clips any wide internal element (e.g. an absolutely
+     positioned hero illustration or a card whose inner intrinsic width
+     exceeds the viewport) so it never causes the page to scroll
+     horizontally on mobile. */
   .main {
     padding: var(--space-4) var(--space-4) calc(60px + env(safe-area-inset-bottom, 0) + var(--space-4));
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
     min-height: 0;
+    min-width: 0;
   }
 }
 
