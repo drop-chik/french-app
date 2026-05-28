@@ -95,6 +95,9 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  /* Keep the count anchored to the right of every row so it never gets
+     pushed off-screen by a long label like 'Повторение' on narrow phones. */
+  justify-content: flex-start;
 }
 
 .segDot {
@@ -107,17 +110,21 @@
 .segLegendLabel {
   font-size: 11px;
   color: var(--color-text-secondary);
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* No flex:1 — label sizes to content, value follows right after.
+     Earlier flex:1 expanded label into all available space and visually
+     pushed the value out of view on narrow viewports. */
 }
 
 .segLegendVal {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* ── Review today CTA card ── */

@@ -175,7 +175,10 @@
 ══════════════════════════════════════════ */
 .hero {
   position: relative;
-  min-height: 100vh;
+  /* 100dvh tracks the visible viewport on mobile — 100vh would measure the
+     largest possible (address-bar collapsed) viewport, leaving a gap when
+     the bar is shown. */
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1232,12 +1235,12 @@
   .modeCard { padding: 20px var(--space-3); }
   .features, .demo, .modes, .ctaBlock { padding: 64px var(--space-4); }
   .journey { padding: 64px var(--space-4); }
-  /* Tight header on ≤480px — logo text, gap, lang pill, CTA all fight for
-     limited horizontal space. Hide the wordmark (icon alone is recognisable
-     once the user is here) and trim the CTA padding so 'Начать бесплатно'
-     fits without colliding with the logo on 360-390px viewports. */
+  /* Tight header on ≤480px — first attempt (hiding the wordmark) made the
+     icon look orphaned. Keep the FrenchUp wordmark visible but shrink it
+     and trim everything else so the row fits 360-390px. The 0.85rem text
+     + smaller pill + smaller CTA all together fit comfortably. */
   .navInner { padding: 0 var(--space-3); gap: var(--space-2); }
-  .navLogoText { display: none; }
+  .navLogoText { font-size: 0.95rem; }
   .navCta { padding: var(--space-2) var(--space-3); font-size: var(--text-xs); }
   .navLang { min-height: 30px; padding: 4px var(--space-2); }
 }

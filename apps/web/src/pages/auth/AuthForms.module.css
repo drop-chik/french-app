@@ -3,7 +3,7 @@
    its own file so we don't import a sibling page's module. */
 
 .page {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;

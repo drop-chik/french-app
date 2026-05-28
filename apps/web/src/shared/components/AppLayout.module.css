@@ -1,6 +1,12 @@
 .layout {
   display: flex;
-  min-height: 100vh;
+  /* 100vh on mobile = the LARGEST possible viewport (address bar
+     collapsed). When the bar is shown, 100vh measures more than the
+     visible area → empty band appears below the fixed bottom-nav as
+     the address bar retracts on scroll. 100dvh tracks the *current*
+     visible viewport, so the page background always fills exactly
+     what the user sees. */
+  min-height: 100dvh;
   background-color: var(--color-bg);
 }
 
