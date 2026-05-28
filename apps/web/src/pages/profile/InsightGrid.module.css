@@ -80,6 +80,16 @@
   margin-top: var(--space-1);
 }
 
+/* On narrow phones (~360px) the 2-col grid + a 3-digit value pushes the
+   second column's number off-screen ("Повторение" label visible, value
+   clipped). Collapse to one column below 400px so each row gets the full
+   width and never overflows. */
+@media (max-width: 400px) {
+  .segLegend {
+    grid-template-columns: 1fr;
+  }
+}
+
 .segLegendItem {
   display: flex;
   align-items: center;

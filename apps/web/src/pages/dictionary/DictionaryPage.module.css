@@ -143,8 +143,15 @@
     min-width: 56px;
   }
 }
-.levelPill:hover { border-color: var(--color-brand); color: var(--color-brand); }
-.levelPillActive { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+/* Gate :hover behind hover-capable pointers. Touch devices treat tap as a
+   sticky hover, which made the active pill's text disappear: :hover set
+   color to --color-brand, .levelPillActive set background to the SAME
+   --color-brand → text invisible on the freshly-tapped active pill. */
+@media (hover: hover) {
+  .levelPill:hover { border-color: var(--color-brand); color: var(--color-brand); }
+}
+.levelPillActive,
+.levelPillActive:hover { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
 
 /* ── Filter / sort bar (list view & search) ── */
 .filterBar {
