@@ -15,15 +15,11 @@ import { resolve } from 'node:path';
 // In local dev / CI the file may not exist; we no-op silently in that case.
 function pullVercelEnv(mode: string): void {
   const file = resolve(__dirname, '../../.vercel', `.env.${mode}.local`);
-  // eslint-disable-next-line no-console
-  console.log(`[vite-env] looking for ${file} (exists: ${existsSync(file)})`);
   if (!existsSync(file)) return;
   const text = readFileSync(file, 'utf8');
-  let injected = 0;
-  let foundViteVars = 0;
   for (const line of text.split(/\r?\n/)) {
-    // Allow any printable chars in value, including unquoted. Strip surrounding
-    // quotes if present.
+    // Allow any printable chars in value, including unquoted. Strip
+    // surrounding quotes if present.
     const m = line.match(/^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/i);
     if (!m) continue;
     const key = m[1]!;
@@ -31,14 +27,13 @@ function pullVercelEnv(mode: string): void {
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
-    if (key.startsWith('VITE_')) foundViteVars++;
-    if (process.env[key] === undefined) {
-      process.env[key] = value;
-      injected++;
-    }
+    // Don't clobber values already in process.env (CI secret injection wins).
+    // Also skip empty values — Vercel writes Sensitive vars as empty placeholders
+    // at build time, and overwriting a real value with empty would break the
+    // import.meta.env.VITE_* inlining. (Sensitive vars are not the right flag
+    // for VITE_* values anyway — they're shipped to every browser in the bundle.)
+    if (process.env[key] === undefined && value !== '') process.env[key] = value;
   }
-  // eslint-disable-next-line no-console
-  console.log(`[vite-env] parsed ${injected} new vars from .vercel (VITE_* count: ${foundViteVars}, VITE_SENTRY_DSN set: ${!!process.env['VITE_SENTRY_DSN']})`);
 }
 
 export default defineConfig(({ mode }) => {
