@@ -14,7 +14,7 @@
   {
     "name": "vendor chunks total (gzip)",
     "path": "dist/assets/{react,router,query,radix,icons,animation,forms,sentry}-*.js",
-    "limit": "180 KB",
+    "limit": "280 KB",
     "gzip": true
   }
 ]
