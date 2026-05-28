@@ -65,6 +65,23 @@ const fastify = Fastify({
     ? { level: 'info', transport: { target: 'pino-pretty', options: { colorize: true } } }
     : { level: 'warn' },
   bodyLimit: 2 * 1024 * 1024, // 2MB — для base64 аватарок
+  // Defence in depth against mass assignment. With `removeAdditional: true`
+  // Ajv strips any property the route's body schema does not declare,
+  // PROVIDED the schema sets `additionalProperties: false`. Routes that
+  // legitimately need free-form body data (drills answers, placement
+  // results) use `additionalProperties: true` explicitly and are not
+  // affected. zod schemas (auth) keep their own .strip()/.passthrough()
+  // semantics independent of this — Ajv only sees JSON schemas in `body`.
+  //
+  // We use `true` not `'all'`: 'all' strips even when the schema is
+  // implicit (no additionalProperties declared), which would break
+  // endpoints that grew new fields without updating the schema yet.
+  // Opt-in per route by setting additionalProperties: false explicitly.
+  ajv: {
+    customOptions: {
+      removeAdditional: true,
+    },
+  },
 });
 
 // Security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy

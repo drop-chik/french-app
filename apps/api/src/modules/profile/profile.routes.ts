@@ -44,6 +44,14 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
       security: authorizedSecurity,
       body: {
         type: 'object',
+        // Privilege-escalation defence: server only ever assigns the
+        // whitelisted fields below to the user row via updateProfile().
+        // `additionalProperties: false` makes Ajv (with removeAdditional:
+        // true from the global config) silently strip anything else
+        // — so an attacker sending {role: 'admin', xp: 9e9} sees their
+        // payload reach the handler stripped of those fields rather than
+        // depending on the service layer to filter.
+        additionalProperties: false,
         properties: {
           name:                 { type: 'string', minLength: 1 },
           email:                { type: 'string', format: 'email' },
