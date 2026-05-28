@@ -1,9 +1,38 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { TanStackRouterVite } from '@tanstack/router-vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-export default defineConfig({
+// Pull env vars that `vercel build` deposited at the REPO ROOT into our
+// project's env. The CLI writes `.vercel/.env.production.local` two levels
+// up from apps/web, where Vite's default envDir doesn't look — without
+// this, every VITE_* var ends up undefined in the production bundle
+// (we hit exactly this with VITE_SENTRY_DSN — sentry chunk tree-shook to
+// 30 bytes because the DSN check early-returned).
+//
+// In local dev / CI the file may not exist; we no-op silently in that case.
+function pullVercelEnv(mode: string): void {
+  const file = resolve(__dirname, '../../.vercel', `.env.${mode}.local`);
+  if (!existsSync(file)) return;
+  const text = readFileSync(file, 'utf8');
+  for (const line of text.split(/\r?\n/)) {
+    const m = line.match(/^([A-Z_][A-Z0-9_]*)="?([^"]*)"?$/i);
+    if (!m) continue;
+    const key = m[1]!;
+    // Don't clobber values already set on the process — e.g. local
+    // overrides in CI from secret injection should still win.
+    if (process.env[key] === undefined) process.env[key] = m[2];
+  }
+}
+
+export default defineConfig(({ mode }) => {
+  pullVercelEnv(mode);
+  // Trigger Vite to re-read process.env now that we injected the values.
+  // loadEnv returns them too in case future plugin config needs them.
+  loadEnv(mode, process.cwd(), 'VITE_');
+  return {
   plugins: [
     react(),
     TanStackRouterVite({
@@ -130,4 +159,5 @@ export default defineConfig({
     // for ages — set explicitly so the warning stays meaningful after split.
     chunkSizeWarningLimit: 350,
   },
+  };
 });
