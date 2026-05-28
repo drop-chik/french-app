@@ -38,6 +38,16 @@
   justify-content: center;
   cursor: pointer;
   transition: background-color var(--transition-fast);
+  position: absolute;  /* keep the abs-pos */
+}
+
+@media (pointer: coarse) {
+  /* Extend touch target to 44×44 without resizing the visual button. */
+  .closeBtn::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+  }
 }
 
 .closeBtn:hover {

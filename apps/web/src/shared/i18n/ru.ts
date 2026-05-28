@@ -119,6 +119,10 @@ export const ru: DeepRecord = {
     updateReload: 'Перезагрузить',
     updateLater: 'Позже',
     offlineReady: 'Приложение готово работать офлайн',
+    iosTitle: 'Добавь на главный экран',
+    iosBody: 'Чтобы открывать FrenchUp как приложение:',
+    iosStep1: 'Нажми «Поделиться»',
+    iosStep2: 'Выбери «На экран Домой»',
   },
   conjugation: {
     title: 'Спряжение глаголов',

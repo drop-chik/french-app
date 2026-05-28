@@ -623,3 +623,15 @@ export const activityReactions = pgTable(
     index('idx_reactions_event').on(t.eventId),
   ],
 );
+
+// Append-only audit log for sensitive operations on users. See
+// migration 0028_audit_log.sql for the rationale (queryable history of
+// who-did-what when Railway log retention can't help).
+export const auditLog = pgTable('audit_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+  action: varchar('action', { length: 64 }).notNull(),
+  targetUserId: uuid('target_user_id'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

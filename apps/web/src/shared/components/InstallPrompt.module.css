@@ -92,7 +92,28 @@
 
 .btnClose:hover { background: var(--color-border); }
 
+/* iOS-specific instruction list — Share icon + Add-to-home icon
+   matching Safari's UI. Indented under .subtitle. */
+.iosSteps {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.iosSteps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 @media (max-width: 480px) {
   .subtitle { display: none; } /* tight on mobile */
   .btnInstall { padding: var(--space-2) var(--space-3); }
+  /* keep iosSteps visible — they're the whole point on iOS, and that's
+     the platform where the banner shows anyway. */
 }

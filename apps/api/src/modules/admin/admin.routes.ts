@@ -9,6 +9,7 @@ import {
   type UserSort,
 } from './admin.service.js';
 import { getMetricsOverview } from './metrics.service.js';
+import { logAuditEvent, AuditAction } from '../../lib/audit.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const patchSchema = z.object({
@@ -103,6 +104,15 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
           ...(parsed.data.name ? { name: parsed.data.name } : {}),
           ...(parsed.data.email ? { email: parsed.data.email } : {}),
         });
+        // Record only the keys the admin actually changed, not the full
+        // user row — keeps the metadata small and the diff obvious when
+        // we're reading the log months later.
+        await logAuditEvent(fastify.db, {
+          actorUserId: request.user.userId,
+          action: AuditAction.AdminUserUpdate,
+          targetUserId: request.params.id,
+          metadata: { changes: parsed.data },
+        });
         reply.send({ user: updated });
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Update failed';
@@ -145,6 +155,14 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const result = await resetUserProgress(fastify.db, request.params.id);
+      // Destructive op — record the row counts so we can answer "how
+      // bad was it?" later. resetUserProgress returns numbers per table.
+      await logAuditEvent(fastify.db, {
+        actorUserId: request.user.userId,
+        action: AuditAction.AdminUserResetProgress,
+        targetUserId: request.params.id,
+        metadata: { result },
+      });
       reply.send(result);
     },
   );

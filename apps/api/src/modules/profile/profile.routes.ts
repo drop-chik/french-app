@@ -14,6 +14,7 @@ import {
   deleteUserAccount,
 } from './profile.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
+import { logAuditEvent, AuditAction } from '../../lib/audit.js';
 
 const profileRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /profile
@@ -332,6 +333,20 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     }
     const { userId } = request.user;
     try {
+      // Log BEFORE the delete so the FK to users (actor + target) still
+      // exists when the row is inserted. We capture both sides — actor
+      // and target are the same user (self-service), but recording both
+      // keeps the schema consistent with admin-initiated deletes that
+      // might come later.
+      await logAuditEvent(fastify.db, {
+        actorUserId: userId,
+        action: AuditAction.SelfAccountDelete,
+        targetUserId: userId,
+        metadata: {
+          ip: request.ip,
+          userAgent: request.headers['user-agent'] ?? null,
+        },
+      });
       await deleteUserAccount(fastify.db, userId);
       // Clear the refresh cookie so the browser doesn't keep trying to
       // refresh into a now-non-existent user (would 401, then redirect).

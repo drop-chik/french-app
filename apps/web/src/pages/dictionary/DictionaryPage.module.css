@@ -128,9 +128,20 @@
   font-weight: var(--font-semibold);
   font-family: inherit;
   cursor: pointer;
+  /* WCAG 2.5.5 / Apple HIG — 44×44 minimum tap area on touch UIs.
+     The visual height stays 32 via padding; we widen the hit-box
+     with min-height bumped on coarse pointers only so desktop UX
+     doesn't lose its compact pill row. */
   min-height: 32px;
   min-width: 46px;
   transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+}
+
+@media (pointer: coarse) {
+  .levelPill {
+    min-height: 44px;
+    min-width: 56px;
+  }
 }
 .levelPill:hover { border-color: var(--color-brand); color: var(--color-brand); }
 .levelPillActive { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
@@ -446,6 +457,18 @@
   cursor: pointer;
   flex-shrink: 0;
   transition: all var(--transition-fast);
+  /* Touch hit-box extends beyond the visual circle so it meets 44×44
+     without enlarging the icon. ::before is an invisible overlay
+     centred on the button — pure CSS, no JS, no layout impact. */
+  position: relative;
+}
+
+@media (pointer: coarse) {
+  .wordAudioBtn::before {
+    content: '';
+    position: absolute;
+    inset: -8px;  /* 28 + 16 = 44 — meets WCAG 2.5.5 */
+  }
 }
 .wordAudioBtn:hover {
   background: var(--color-brand-light);

@@ -279,6 +279,10 @@ export const en: Translations = {
     updateReload: 'Reload',
     updateLater: 'Later',
     offlineReady: 'App is ready to work offline',
+    iosTitle: 'Add to Home Screen',
+    iosBody: 'To open FrenchUp like an app:',
+    iosStep1: 'Tap the Share button',
+    iosStep2: 'Choose "Add to Home Screen"',
   },
   conjugation: {
     title: 'Verb Conjugation',
