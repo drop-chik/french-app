@@ -12,11 +12,7 @@ const DSN = import.meta.env['VITE_SENTRY_DSN'] as string | undefined;
 const ENV = import.meta.env['MODE'] ?? 'development';
 
 export function initSentry(): void {
-  if (!DSN) {
-    // eslint-disable-next-line no-console
-    console.warn('[sentry] DSN missing — events will not be sent');
-    return;
-  }
+  if (!DSN) return;
   Sentry.init({
     dsn: DSN,
     environment: ENV,
@@ -25,10 +21,6 @@ export function initSentry(): void {
     tracesSampleRate: 0,
     // Don't capture sensitive bits from URLs.
     sendDefaultPii: false,
-    // Verbose during initial deployment so we can confirm transport in
-    // production from DevTools. Remove once a real user event has been
-    // observed in the Sentry dashboard.
-    debug: true,
     // Filter out noise that doesn't help debugging.
     ignoreErrors: [
       // Browser extension noise
@@ -42,13 +34,6 @@ export function initSentry(): void {
       'AbortError',
     ],
   });
-  // eslint-disable-next-line no-console
-  console.log(`[sentry] initialised (env=${ENV}, dsn host=${new URL(DSN).host})`);
-  // Expose the SDK globally so we can dispatch test events from the browser
-  // console without touching app code. Production-safe — Sentry's namespace
-  // is harmless to surface, and the DSN is already in the bundle anyway.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).Sentry = Sentry;
 }
 
 /**
