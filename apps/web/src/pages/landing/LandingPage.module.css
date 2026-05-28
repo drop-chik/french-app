@@ -1164,12 +1164,14 @@
 }
 
 .footerLogo { color: #fff; font-weight: 800; font-size: var(--text-base); }
-.footerCopy  { color: #4b5563; font-size: var(--text-sm); }
+/* #4b5563 on #07080d measured 3.04:1, PSI flagged it. #9ca3af clears
+   5.85:1 on the same bg — keeps the muted look without failing WCAG AA. */
+.footerCopy  { color: #9ca3af; font-size: var(--text-sm); }
 
 .footerLinks { display: flex; gap: var(--space-5); }
 
 .footerLink {
-  color: #4b5563;
+  color: #9ca3af;
   font-size: var(--text-sm);
   text-decoration: none;
   transition: color .2s;
