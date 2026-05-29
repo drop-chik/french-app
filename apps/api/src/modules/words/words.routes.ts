@@ -379,7 +379,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             french:       { type: 'string', minLength: 1, maxLength: 255 },
             translation:  { type: 'string', minLength: 1, maxLength: 255 },
-            level:        { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            level:        { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
             category:     { type: 'string', minLength: 1, maxLength: 100 },
             partOfSpeech: { type: 'string', maxLength: 20 },
             gender:       { type: 'string', enum: ['m', 'f', ''] },
@@ -429,7 +429,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             french:       { type: 'string', minLength: 1, maxLength: 255 },
             translation:  { type: 'string', minLength: 1, maxLength: 255 },
-            level:        { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            level:        { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
             category:     { type: 'string', minLength: 1, maxLength: 100 },
             partOfSpeech: { type: 'string', maxLength: 20 },
             gender:       { type: 'string', enum: ['m', 'f', ''] },

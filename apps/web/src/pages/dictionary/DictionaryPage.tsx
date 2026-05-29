@@ -13,7 +13,7 @@ import styles from './DictionaryPage.module.css';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const ALL_LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+const ALL_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 type Level = typeof ALL_LEVELS[number];
 
 const PALETTE = ['#3b82f6', '#f97316', '#22c55e', '#a855f7', '#ec4899', '#14b8a6', '#f59e0b', '#6366f1'];

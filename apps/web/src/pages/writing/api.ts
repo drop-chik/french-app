@@ -5,7 +5,7 @@ export interface WritingPrompt {
   slug: string;
   titleRu: string;
   titleEn: string;
-  level: 'A1' | 'A2' | 'B1' | 'B2';
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   writingType: string;
   promptRu: string;
   promptEn: string;
@@ -139,7 +139,7 @@ export const writingApi = {
   getAiPrompts: () =>
     apiRequest<{ prompts: WritingPrompt[] }>('/writing/prompts/ai'),
 
-  generatePrompt: (params: { level: 'A1' | 'A2' | 'B1' | 'B2'; writingType: WritingTypeId; topicHint?: string }) =>
+  generatePrompt: (params: { level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'; writingType: WritingTypeId; topicHint?: string }) =>
     apiRequest<{ prompt: WritingPrompt }>('/writing/prompts/generate', {
       method: 'POST',
       body: JSON.stringify(params),

@@ -99,7 +99,7 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
           type: 'object',
           required: ['level', 'writingType'],
           properties: {
-            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
             writingType: {
               type: 'string',
               enum: ['postcard', 'message', 'letter_informal', 'letter_formal', 'email', 'description', 'blog_article', 'essay', 'narrative'],

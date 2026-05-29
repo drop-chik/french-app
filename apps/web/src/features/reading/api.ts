@@ -24,7 +24,7 @@ export interface ReadingTextSummary {
   id: string;
   slug: string;
   title: string;
-  level: 'A1' | 'A2' | 'B1' | 'B2';
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   topic: string;
   estimatedMinutes: number;
   completed: boolean;
@@ -36,7 +36,7 @@ export interface ReadingTextDetail {
   id: string;
   slug: string;
   title: string;
-  level: 'A1' | 'A2' | 'B1' | 'B2';
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   topic: string;
   contentFr: string;
   wordMap: Record<string, WordEntry>;

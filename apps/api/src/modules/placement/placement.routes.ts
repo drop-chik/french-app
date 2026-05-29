@@ -5,7 +5,7 @@ import { authorizedSecurity } from '../../openapi/schemas.js';
 
 const submitSchema = z.object({
   answers: z.record(z.string(), z.string()),
-  selfReportedLevel: z.enum(['A1', 'A2', 'B1', 'B2']).optional(),
+  selfReportedLevel: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']).optional(),
 });
 
 const placementRoutes: FastifyPluginAsync = async (fastify) => {
@@ -51,7 +51,7 @@ const placementRoutes: FastifyPluginAsync = async (fastify) => {
               description: 'Map of questionId → selected option',
               additionalProperties: { type: 'string' },
             },
-            selfReportedLevel: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            selfReportedLevel: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
           },
         },
       },

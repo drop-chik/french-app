@@ -6,13 +6,15 @@ import { readingApi, type ReadingTextSummary } from '../../features/reading/api'
 import { useI18n } from '../../shared/i18n';
 import styles from './ReadingPage.module.css';
 
-const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: '#22c55e',
   A2: '#3b82f6',
   B1: '#f97316',
   B2: '#a855f7',
+  C1: '#ec4899',
+  C2: '#ef4444',
 };
 
 export function ReadingPage() {

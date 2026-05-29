@@ -56,7 +56,7 @@ function DrillCard({
   );
 }
 
-const LEVELS = ['all', 'A1', 'A2', 'B1', 'B2'] as const;
+const LEVELS = ['all', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 
 export function DrillsPage() {
   const navigate = useNavigate();

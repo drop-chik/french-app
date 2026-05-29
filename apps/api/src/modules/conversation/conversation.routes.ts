@@ -6,7 +6,7 @@ import type { LanguageLevel } from '@french-app/shared-types';
 
 const createSessionSchema = z.object({
   topic: z.string().min(1).max(200),
-  level: z.enum(['A1', 'A2', 'B1', 'B2']).optional(),
+  level: z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']).optional(),
 });
 
 const messageSchema = z.object({
@@ -45,7 +45,7 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
           required: ['topic'],
           properties: {
             topic: { type: 'string', minLength: 1, maxLength: 200 },
-            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
           },
         },
       },
@@ -90,7 +90,7 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
                 },
               },
             },
-            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
           },
         },
       },

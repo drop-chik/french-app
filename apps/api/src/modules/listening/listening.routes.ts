@@ -24,7 +24,7 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
         security: authorizedSecurity,
         querystring: {
           type: 'object',
-          properties: { level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] } },
+          properties: { level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] } },
         },
       },
     },

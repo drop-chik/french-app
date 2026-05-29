@@ -8,10 +8,10 @@ import { useI18n } from '../../shared/i18n';
 import styles from './PlacementPage.module.css';
 
 type Phase = 'intro' | 'self-select' | 'test' | 'result' | 'onboarding';
-type Level = 'A1' | 'A2' | 'B1' | 'B2';
+type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
-const LEVELS: Level[] = ['A1', 'A2', 'B1', 'B2'];
-const LEVEL_INDEX: Record<Level, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+const LEVELS: Level[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const LEVEL_INDEX: Record<Level, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5 };
 const MAX_QUESTIONS = 10;
 const STREAK_TO_CHANGE = 2;
 

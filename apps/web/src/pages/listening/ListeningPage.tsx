@@ -6,7 +6,7 @@ import { listeningApi, type ListeningExerciseListItem } from '../../features/lis
 import { useI18n } from '../../shared/i18n';
 import styles from './ListeningPage.module.css';
 
-const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 type Level = typeof LEVELS[number];
 
 // Title-driven topic emoji — covers the obvious French A1-B2 themes. Falls back
@@ -38,6 +38,8 @@ const LEVEL_COLORS: Record<Level, { from: string; to: string; tint: string }> = 
   A2: { from: '#3b82f6', to: '#1d4ed8', tint: 'rgba(59, 130, 246, 0.12)' },
   B1: { from: '#f97316', to: '#c2410c', tint: 'rgba(249, 115, 22, 0.12)' },
   B2: { from: '#a855f7', to: '#7c3aed', tint: 'rgba(168, 85, 247, 0.12)' },
+  C1: { from: '#ec4899', to: '#be185d', tint: 'rgba(236, 72, 153, 0.12)' },
+  C2: { from: '#ef4444', to: '#b91c1c', tint: 'rgba(239, 68, 68, 0.12)' },
 };
 
 export function ListeningPage() {

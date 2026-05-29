@@ -1,10 +1,12 @@
-export const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2'] as const;
+export const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 
 export const LEVEL_COLORS: Record<string, string> = {
   A1: '#22c55e',
   A2: '#3b82f6',
   B1: '#f59e0b',
   B2: '#8b5cf6',
+  C1: '#ec4899',
+  C2: '#ef4444',
 };
 
 export const LEVEL_COLORS_DARK: Record<string, string> = {
@@ -12,6 +14,8 @@ export const LEVEL_COLORS_DARK: Record<string, string> = {
   A2: '#2563eb',
   B1: '#d97706',
   B2: '#7c3aed',
+  C1: '#db2777',
+  C2: '#dc2626',
 };
 
 export const LEVEL_GRADIENTS: Record<string, string> = {
@@ -19,6 +23,8 @@ export const LEVEL_GRADIENTS: Record<string, string> = {
   A2: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
   B1: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
   B2: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+  C1: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+  C2: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
 };
 
 // Weekly goal: number of word reviews per week (10/day × 7 days)

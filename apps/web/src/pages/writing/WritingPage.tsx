@@ -7,7 +7,7 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './WritingPage.module.css';
 
-const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 const TYPES: WritingTypeId[] = ['postcard', 'message', 'letter_informal', 'letter_formal', 'email', 'description', 'blog_article', 'essay', 'narrative'];
 
 function LevelBadge({ level }: { level: string }) {
@@ -17,7 +17,7 @@ function LevelBadge({ level }: { level: string }) {
 // ── AI prompt generation modal ────────────────────────────────────────────────
 
 interface GenerateModalProps {
-  defaultLevel: 'A1' | 'A2' | 'B1' | 'B2';
+  defaultLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   onClose: () => void;
   onCreated: (slug: string) => void;
 }
@@ -25,7 +25,7 @@ interface GenerateModalProps {
 function GenerateModal({ defaultLevel, onClose, onCreated }: GenerateModalProps) {
   const { t } = useI18n();
   const tw = t.writing;
-  const [level, setLevel] = useState<'A1' | 'A2' | 'B1' | 'B2'>(defaultLevel);
+  const [level, setLevel] = useState<'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>(defaultLevel);
   const [writingType, setWritingType] = useState<WritingTypeId>('email');
   const [topicHint, setTopicHint] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +84,7 @@ function GenerateModal({ defaultLevel, onClose, onCreated }: GenerateModalProps)
             <select
               className={styles.modalInput}
               value={level}
-              onChange={(e) => setLevel(e.target.value as 'A1' | 'A2' | 'B1' | 'B2')}
+              onChange={(e) => setLevel(e.target.value as 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2')}
             >
               {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
@@ -161,9 +161,9 @@ export function WritingPage() {
   });
 
   const aiPrompts = aiPromptsData?.prompts ?? [];
-  const defaultAiLevel: 'A1' | 'A2' | 'B1' | 'B2' =
+  const defaultAiLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' =
     (LEVELS as readonly string[]).includes(userLevel ?? '')
-      ? (userLevel as 'A1' | 'A2' | 'B1' | 'B2')
+      ? (userLevel as 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2')
       : 'B1';
 
   const prompts = promptsData?.prompts ?? [];

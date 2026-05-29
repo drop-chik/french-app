@@ -13,7 +13,7 @@ interface Props {
   editWord?: WordData | null;
 }
 
-const LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 const POS_OPTIONS = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'expression'] as const;
 
 export function AddWordModal({ onClose, editWord }: Props) {

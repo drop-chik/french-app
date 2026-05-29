@@ -38,7 +38,7 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
         querystring: {
           type: 'object',
           properties: {
-            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2'] },
+            level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
             lang:  { type: 'string', enum: ['ru', 'en'], default: 'ru' },
           },
         },
