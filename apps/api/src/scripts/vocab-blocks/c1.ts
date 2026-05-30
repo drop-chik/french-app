@@ -1,0 +1,19 @@
+/**
+ * C1 top-up: +484 words to reach Beacco hybrid ~1467.
+ * Themes focus on registers and nuances that the original C1 batch
+ * (13 thematic blocks) did not fully cover.
+ */
+import type { Block } from './types.js';
+
+export const blocks: Block[] = [
+  { category: 'c1-nuanced-adjectives', themeFr: 'Adjectifs nuancés (registre soutenu)', description: 'C1 nuanced adjectives — formal/literary register: insoutenable, irréfutable, indéniable, incontestable, irrévocable, irrépressible, inaltérable, intarissable, inestimable, irréductible, infaillible, immuable, inéluctable, incommensurable, providentiel, manichéen, kafkaïen, dantesque.', targetCount: 70 },
+  { category: 'c1-formal-verbs', themeFr: 'Verbes du registre soutenu', description: 'C1 elevated register verbs: corroborer, étayer, infirmer, réfuter, attester, témoigner de, faire foi, présager, augurer, transparaître, émaner de, ressortir, se dégager, sourdre, suinter, poindre, asseoir (une thèse), pâtir, prévaloir, péricliter.', targetCount: 70 },
+  { category: 'c1-administrative-legal', themeFr: 'Vocabulaire administratif et juridique', description: 'C1 administrative/legal: notification, mise en demeure, sommation, signification, assignation, comparution, instance, recours gracieux, recours contentieux, ressort, juridiction, prescription, déchéance, forclusion, opposabilité, exécutoire, mainlevée.', targetCount: 60 },
+  { category: 'c1-philosophical', themeFr: 'Lexique philosophique', description: 'C1 philosophical lexicon: ontologie, épistémologie, herméneutique, dialectique, axiomatique, transcendance, immanence, contingence, finalité, intentionnalité, conditionnement, déterminisme, libre arbitre, aliénation, réification, idéologie.', targetCount: 60 },
+  { category: 'c1-academic-discourse', themeFr: 'Discours académique', description: 'C1 academic discourse: à l\'aune de, au prisme de, sous l\'angle de, au regard de, au demeurant, au reste, en l\'occurrence, en l\'espèce, par ailleurs, in fine, ad hoc, a posteriori, a priori, ipso facto, mutatis mutandis, prima facie.', targetCount: 50 },
+  { category: 'c1-emotion-fine-shades', themeFr: 'Émotions — nuances fines', description: 'C1 emotional fine shades: amertume, rancœur, dépit, déconvenue, désenchantement, embarras, contrariété, exaspération, indignation, accablement, prostration, désarroi, abattement, allégresse, jubilation, ravissement, extase, béatitude.', targetCount: 60 },
+  { category: 'c1-rhetorical-figures', themeFr: 'Figures rhétoriques et stylistiques', description: 'C1 rhetorical figures: hyperbole, litote, euphémisme, antiphrase, oxymore, paradoxe, chiasme, anaphore, épanaphore, anadiplose, asyndète, polysyndète, métonymie, synecdoque, prosopopée, prétérition, antithèse, gradation, hypallage.', targetCount: 50 },
+  { category: 'c1-economic-precision', themeFr: 'Économie — précisions techniques', description: 'C1 economic precision: récession technique, stagflation, désinflation, hyperinflation, conjoncture, structure, choc exogène, externalité, parité, plein-emploi, sous-emploi, marché captif, économie de rente, tertiarisation, désindustrialisation, financiarisation.', targetCount: 55 },
+  { category: 'c1-scientific-precision', themeFr: 'Sciences — précisions et nuances', description: 'C1 scientific precision: protocole, étalonnage, calibrage, marge d\'erreur, intervalle de confiance, significativité, corrélation, causalité, biais, échantillonnage, méta-analyse, reproductibilité, falsifiabilité, paradigme, percée, rupture épistémologique.', targetCount: 55 },
+  { category: 'c1-extraordinary-events', themeFr: 'Événements et phénomènes — registre soutenu', description: 'C1 events: avènement, déferlement, recrudescence, résurgence, persistance, perpétuation, exacerbation, atténuation, désamorçage, embrasement, escalade, désescalade, surenchère, enlisement, apaisement, dénouement, épilogue.', targetCount: 55 },
+];

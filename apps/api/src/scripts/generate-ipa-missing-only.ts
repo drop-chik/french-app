@@ -24,12 +24,23 @@ line "N: <ipa>" giving the IPA transcription.
 Strict rules:
 - Output IPA of the BARE WORD only. If the input includes an article
   (le, la, l', les, un, une, des), do NOT include the article in the IPA.
-- No surrounding slashes or brackets. No stress marks (ˈ, ˌ).
+  Example: "le chat" → "1: ʃa" (NOT "lə ʃa").
+- No surrounding slashes or brackets. No stress marks (ˈ, ˌ). French does
+  not use lexical stress.
 - Use only standard IPA characters: a ɑ e ɛ ə i o ɔ u y ø œ ɛ̃ ɑ̃ œ̃ ɔ̃
   b d f g k l m n ɲ ŋ p ʁ s ʃ t v z ʒ j ɥ w.
-- Glide accuracy: "ui" before vowel → ɥi, "i" before vowel often → j,
-  "ou" before vowel → w.
-- Vowel accuracy: u in French is /y/, NOT /u/. "tu" is /ty/.
+- Glide accuracy is critical:
+  - "ui" before vowel → ɥi (e.g. "conduire" → kɔ̃.dɥiʁ, "huit" → ɥit)
+  - "i" before vowel often → j (e.g. "quatrième" → ka.tʁi.jɛm)
+  - "ou" before vowel → w (e.g. "ouest" → wɛst)
+- Vowel accuracy: u in French is /y/ (closed front rounded), NOT /u/.
+  "tu" is /ty/, "rue" is /ʁy/. /u/ is "ou" as in "tour" /tuʁ/.
+- Nasal vowels: bien is /bjɛ̃/, bon is /bɔ̃/, banc is /bɑ̃/, brun is /bʁœ̃/
+  (younger speakers merge brun and brin to /bʁɛ̃/, accept either).
+- Consonant clusters: never drop letters. "toxicologie" → tɔk.si.kɔ.lɔ.ʒi.
+  "exact" → ɛɡ.zakt. "exception" → ɛk.sɛp.sjɔ̃.
+- Suffix -ant/-ent at end of adjectives = nasal /ɑ̃/: "dissonant" → di.sɔ.nɑ̃.
+- Suffix -tion = /sjɔ̃/: "réflexion" → ʁe.flɛk.sjɔ̃.
 - For multi-word entries, join word IPAs with a single space.
 - Syllable separation with "." for 3+ syllable words.
 - Output exactly N lines in order. No prose.`;
