@@ -475,10 +475,10 @@ export function LandingPage() {
       <section className={styles.stats}>
         <AnimatedSection className={styles.statsInner}>
           {[
-            { value: 3500, suffix: '+', label: t.landing.stats.wordsDb },
-            { value: 10,   suffix: '+', label: t.landing.stats.modes },
-            { value: 4,    suffix: '',  label: t.landing.stats.levels },
-            { value: 60,   suffix: '+', label: t.landing.stats.satisfied },
+            { value: 17000, suffix: '+', label: t.landing.stats.wordsDb },
+            { value: 10,    suffix: '+', label: t.landing.stats.modes },
+            { value: 6,     suffix: '',  label: t.landing.stats.levels },
+            { value: 110,   suffix: '+', label: t.landing.stats.satisfied },
           ].map((stat, i) => (
             <motion.div key={i} className={styles.statItem} variants={fadeUp} transition={{ duration: 0.5 }}>
               <div className={styles.statValue}><CountUp to={stat.value} suffix={stat.suffix} /></div>
