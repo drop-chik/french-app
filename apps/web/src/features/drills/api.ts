@@ -10,6 +10,7 @@ export interface DrillSet {
   difficulty: number;
   questionCount: number;
   icon: string;
+  grammarTopicSlug: string | null;
   bestScore: number;
   totalSessions: number;
   lastPlayedAt: string | null;

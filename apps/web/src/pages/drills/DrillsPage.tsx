@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Star, Trophy, Play } from 'lucide-react';
+import { Star, Trophy, Play, BookOpen } from 'lucide-react';
 import { drillsApi, type DrillSet } from '../../features/drills/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './DrillsPage.module.css';
@@ -43,14 +43,21 @@ function DrillCard({
         <div className={styles.difficulty}>
           {DIFFICULTY_STARS(drill.difficulty)}
         </div>
-        {hasPlayed ? (
-          <div className={styles.bestScore}>
-            <Trophy size={12} />
-            <span>{drill.bestScore}%</span>
-          </div>
-        ) : (
-          <span className={styles.notPlayed}>{notPlayedLabel}</span>
-        )}
+        <div className={styles.cardFooterRight}>
+          {drill.grammarTopicSlug && (
+            <span className={styles.theoryBadge} title="Есть грамматическая тема">
+              <BookOpen size={11} />
+            </span>
+          )}
+          {hasPlayed ? (
+            <div className={styles.bestScore}>
+              <Trophy size={12} />
+              <span>{drill.bestScore}%</span>
+            </div>
+          ) : (
+            <span className={styles.notPlayed}>{notPlayedLabel}</span>
+          )}
+        </div>
       </div>
     </button>
   );

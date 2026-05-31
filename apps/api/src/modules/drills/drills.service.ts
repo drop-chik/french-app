@@ -4,42 +4,10 @@ import OpenAI from 'openai';
 import type { DB } from '../../db/index.js';
 import { drillSets, drillQuestions, drillProgress, grammarTopics, grammarProgress } from '../../db/schema/index.js';
 
-// Static mapping: drill slug → grammar topic slug
-const DRILL_GRAMMAR_MAP: Record<string, string> = {
-  // A1
-  'etre-avoir-present':        'verbs-etre-avoir',
-  'mots-interrogatifs':        'questions',
-  'pluriel-noms':              'nouns-plural',
-  'articles-choix':            'articles-definite',
-  'genre-des-noms':            'nouns-gender',
-  'prepositions-lieu':         'prepositions-place',
-  'accord-adjectifs':          'adjectives-agreement',
-  // A2
-  'verbes-groupe-3-present':   'verbs-present-regular',
-  'etre-avoir-passe-compose':  'passe-compose-etre',
-  'passe-compose-vs-imparfait':'imparfait',
-  'pronoms-cod-coi':           'pronoms-cod-coi',
-  'negation-avancee':          'negation-avancee',
-  'verbes-pronominaux':        'verbes-pronominaux',
-  'futur-simple':              'futur-simple',
-  'comparatif-superlatif':     'comparatif-superlatif',
-  // B1
-  'subjonctif-conjugaison':    'subjonctif-present',
-  'pronoms-y-en':              'pronoms-y-en',
-  'accord-participe-passe':    'accord-participe-passe',
-  'conditionnel-conjugaison':  'conditionnel-present',
-  'gerondif':                  'gerondif',
-  'subjonctif-usage':          'verbes-subjonctif-infinitif',
-  'plus-que-parfait':          'plus-que-parfait',
-  'discours-indirect':         'discours-indirect',
-  'voix-passive':              'voix-passive',
-  'pronoms-relatifs-composes': 'pronoms-relatifs-dont-ou',
-  'si-hypothese':              'conditionnel-present',
-  'connecteurs-logiques':      'expression-cause',
-  // B2
-  'subjonctif-passe':          'subjonctif-present',
-  'concordance-temps':         'discours-indirect',
-};
+// Drill → grammar topic mapping lives in drill_sets.grammar_topic_slug
+// (migration 0030). The old inline map here covered ~30 drill sets;
+// after the audit-pass-2 expansion we now have 57. Reading from DB
+// avoids drift between code and content as new drills get added.
 
 const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
 
@@ -63,6 +31,7 @@ export async function getDrills(db: DB, userId: string, lang: 'ru' | 'en' = 'ru'
       difficulty: s.difficulty,
       questionCount: s.questionCount,
       icon: s.icon,
+      grammarTopicSlug: s.grammarTopicSlug,  // null if drill stands alone
       bestScore: p?.bestScore ?? 0,
       totalSessions: p?.totalSessions ?? 0,
       lastPlayedAt: p?.lastPlayedAt ?? null,
@@ -86,9 +55,9 @@ export async function getDrillSession(
   // Pick 10 random questions
   const shuffled = allQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
 
-  // Resolve grammar link
+  // Resolve grammar link from the drill_sets.grammar_topic_slug column.
   let grammarLink: { slug: string; title: string; status: string } | null = null;
-  const grammarSlug = DRILL_GRAMMAR_MAP[set.slug];
+  const grammarSlug = set.grammarTopicSlug;
   if (grammarSlug) {
     try {
       const [topic] = await db

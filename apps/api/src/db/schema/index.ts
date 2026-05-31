@@ -355,6 +355,11 @@ export const drillSets = pgTable('drill_sets', {
   difficulty: integer('difficulty').notNull(),
   questionCount: integer('question_count').notNull(),
   icon: varchar('icon', { length: 50 }).notNull(),
+  // Optional link to a grammar topic — when set, the drill UI shows a
+  // "Read the theory" CTA pointing at /grammar/{slug}. References
+  // grammarTopics.slug; left unenforced (no FK) so a typo doesn't
+  // brick the migration.
+  grammarTopicSlug: varchar('grammar_topic_slug', { length: 100 }),
 });
 
 // Drill questions
