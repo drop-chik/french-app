@@ -47,7 +47,7 @@ if (!['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'ALL'].includes(RAW_LEVEL)) {
   console.error('Usage: --level <A1|A2|B1|B2|C1|C2|all> [--apply]');
   process.exit(1);
 }
-const LEVELS = RAW_LEVEL === 'ALL' ? ['A1', 'A2', 'B1', 'B2', 'C1'] as const : [RAW_LEVEL] as const;
+const LEVELS = RAW_LEVEL === 'ALL' ? ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const : [RAW_LEVEL] as const;
 
 const OUT_DIR = 'tmp/vocab-from-beacco';
 if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
