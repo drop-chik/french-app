@@ -107,8 +107,8 @@ function LevelNode({
   state: 'mastered' | 'active' | 'available' | 'next' | 'locked';
 }) {
   const color = LEVEL_COLORS[level] ?? '#94a3b8';
-  const size = 76;
-  const strokeWidth = 5;
+  const size = 64;
+  const strokeWidth = 4;
   const R = size / 2 - strokeWidth;
   const C = 2 * Math.PI * R;
   const filled = Math.max(0, Math.min(1, percent / 100)) * C;

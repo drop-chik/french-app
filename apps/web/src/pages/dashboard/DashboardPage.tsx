@@ -291,6 +291,8 @@ const LEVEL_COLORS: Record<string, string> = {
   A2: '#3b82f6',
   B1: '#f97316',
   B2: '#a855f7',
+  C1: '#ec4899',
+  C2: '#ef4444',
 };
 
 function LevelItem({ lv }: { lv: LevelProgressData }) {
