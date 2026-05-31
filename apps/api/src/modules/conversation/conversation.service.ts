@@ -146,16 +146,24 @@ NE FAIS PAS:
 Réponds UNIQUEMENT en JSON: {"message": "ton ouverture en français"}.
 `.trim();
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: primerPrompt },
-      { role: 'user', content: 'Commence.' },
-    ],
-    temperature: 0.7,
-    max_tokens: 250,
-    response_format: { type: 'json_object' },
-  });
+  // Hard timeout so a hung OpenAI doesn't block the endpoint forever.
+  const ac = new AbortController();
+  const timeoutId = setTimeout(() => ac.abort(), 30_000);
+  let response;
+  try {
+    response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: primerPrompt },
+        { role: 'user', content: 'Commence.' },
+      ],
+      temperature: 0.7,
+      max_tokens: 250,
+      response_format: { type: 'json_object' },
+    }, { signal: ac.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const raw = response.choices[0]?.message?.content ?? '{}';
   let openingText = '';
@@ -239,12 +247,21 @@ export async function* streamReply(
   });
 
   let fullText = '';
-  for await (const chunk of stream) {
-    const delta = chunk.choices[0]?.delta?.content ?? '';
-    if (delta) {
-      fullText += delta;
-      yield delta;
+  let streamError: Error | null = null;
+  try {
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content ?? '';
+      if (delta) {
+        fullText += delta;
+        yield delta;
+      }
     }
+  } catch (err) {
+    // OpenAI dropped the connection / network blip / client aborted.
+    // We still want to persist whatever text we already streamed —
+    // otherwise the user sees half a message and the DB has nothing.
+    streamError = err instanceof Error ? err : new Error(String(err));
+    if (fullText.length === 0) throw streamError;
   }
 
   // Parse and save

@@ -184,11 +184,13 @@ export async function submitDrillSession(
   });
 
   if (existing) {
+    // Atomic update — GREATEST + increment in a single SQL statement so
+    // two concurrent submits cannot stomp each other's bestScore.
     await db
       .update(drillProgress)
       .set({
-        bestScore: Math.max(existing.bestScore, score),
-        totalSessions: existing.totalSessions + 1,
+        bestScore: sql`GREATEST(${drillProgress.bestScore}, ${score})`,
+        totalSessions: sql`${drillProgress.totalSessions} + 1`,
         lastPlayedAt: new Date(),
       })
       .where(eq(drillProgress.id, existing.id));

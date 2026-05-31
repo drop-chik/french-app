@@ -153,6 +153,12 @@ export async function checkAndAwardAchievements(
 /**
  * Add XP to the user. Returns the new total and whether the user just leveled up.
  */
+// Hard cap on a single award to prevent spam exploits — even the
+// biggest legitimate action (WRITING_SUBMITTED = 30 XP) sits well
+// below this. A larger value indicates a caller bug or someone trying
+// to abuse the endpoint.
+const MAX_XP_PER_ACTION = 100;
+
 export async function awardXp(
   db: DB,
   userId: string,
@@ -163,6 +169,8 @@ export async function awardXp(
     const xp = u?.xp ?? 0;
     return { totalXp: xp, level: levelFromXp(xp), leveledUp: false };
   }
+  // Clamp to protect against runaway/buggy callers.
+  const clamped = Math.min(amount, MAX_XP_PER_ACTION);
 
   const before = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -170,7 +178,7 @@ export async function awardXp(
   });
   const oldXp = before?.xp ?? 0;
   const oldLevel = levelFromXp(oldXp);
-  const newXp = oldXp + amount;
+  const newXp = oldXp + clamped;
   const newLevel = levelFromXp(newXp);
 
   await db.update(users).set({ xp: newXp }).where(eq(users.id, userId));

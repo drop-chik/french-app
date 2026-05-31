@@ -108,9 +108,18 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
       if (!Array.isArray(body.words) || body.words.length === 0) {
         return reply.status(400).send({ error: 'words is required' });
       }
+      // Drop incomplete entries before they reach the AI prompt — a
+      // missing translation in the system prompt corrupts the opening.
+      const sanitisedWords = body.words.filter(
+        (w) => typeof w.french === 'string' && w.french.trim().length > 0
+          && typeof w.translation === 'string' && w.translation.trim().length > 0,
+      );
+      if (sanitisedWords.length === 0) {
+        return reply.status(400).send({ error: 'No valid words (each needs french + translation)' });
+      }
       const level = (body.level ?? 'B1') as LanguageLevel;
       try {
-        const result = await createSessionWithPrimer(fastify.db, request.user.userId, body.words, level);
+        const result = await createSessionWithPrimer(fastify.db, request.user.userId, sanitisedWords, level);
         reply.status(201).send({ session: { id: result.id }, opening: result.opening });
       } catch (err) {
         fastify.log.error({ err }, 'createSessionWithPrimer failed');

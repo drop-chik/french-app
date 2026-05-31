@@ -14,6 +14,7 @@ import {
   type WritingType,
 } from './writing.service.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
+import { safePrompt } from '../../lib/sanitize-ai-input.js';
 
 const saveSchema = z.object({
   promptId: z.string().uuid(),
@@ -111,11 +112,20 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const body = request.body as { level: 'A1' | 'A2' | 'B1' | 'B2'; writingType: WritingType; topicHint?: string };
+      let cleanedHint: string | undefined;
+      if (body.topicHint) {
+        const { value, suspicious } = safePrompt(body.topicHint, 200);
+        if (suspicious) {
+          request.log.warn({ userId: request.user.userId, hint: body.topicHint }, 'writing topicHint looks like prompt injection');
+          return reply.status(400).send({ error: 'Topic hint invalid' });
+        }
+        cleanedHint = value || undefined;
+      }
       try {
         const prompt = await generateAiPrompt(fastify.db, request.user.userId, {
           level: body.level,
           writingType: body.writingType,
-          ...(body.topicHint ? { topicHint: body.topicHint } : {}),
+          ...(cleanedHint ? { topicHint: cleanedHint } : {}),
         });
         reply.status(201).send({ prompt });
       } catch (err) {

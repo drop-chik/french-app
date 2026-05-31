@@ -128,8 +128,13 @@ export async function updatePassword(
 }
 
 export async function updateAvatar(db: DB, userId: string, avatarDataUrl: string) {
-  // Basic validation: must be a data URL image
-  if (!avatarDataUrl.startsWith('data:image/')) throw new Error('INVALID_AVATAR');
+  // Strict MIME whitelist — only the raster formats every browser renders
+  // safely inside <img>. Rejecting svg etc. blocks the embedded-JS XSS
+  // surface if the avatar is ever rendered outside an <img> element
+  // (e.g. dragged into an Open Graph card).
+  if (!/^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(avatarDataUrl)) {
+    throw new Error('INVALID_AVATAR');
+  }
   // Limit size (base64 ~1.33× original, so 1MB base64 ≈ 750KB image)
   if (avatarDataUrl.length > 1_400_000) throw new Error('AVATAR_TOO_LARGE');
 

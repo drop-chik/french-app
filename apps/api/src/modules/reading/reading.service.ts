@@ -662,8 +662,10 @@ export async function translateWord(
     };
   }
 
-  // 4. Verb lemmatization — try to find infinitive
-  const verbCandidates = tryVerbStem(clean);
+  // 4. Verb lemmatization — try to find infinitive. Cap the number of
+  // DB lookups so a pathologic token can't trigger a 15-query fan-out;
+  // 5 attempts is enough to cover the common -er / -ir / -re paradigms.
+  const verbCandidates = tryVerbStem(clean).slice(0, 5);
   for (const infinitive of verbCandidates) {
     const match = await db.query.words.findFirst({
       where: or(eq(words.french, infinitive), ilike(words.french, infinitive)),
@@ -680,8 +682,9 @@ export async function translateWord(
     }
   }
 
-  // 5. Noun/adjective lemmatization — strip plural/feminine endings
-  const nounCandidates = tryNounStem(clean);
+  // 5. Noun/adjective lemmatization — strip plural/feminine endings.
+  // Same lookup cap as verbs above (cf. comment).
+  const nounCandidates = tryNounStem(clean).slice(0, 5);
   for (const base of nounCandidates) {
     const match = await db.query.words.findFirst({
       where: or(eq(words.french, base), ilike(words.french, base)),
