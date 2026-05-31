@@ -130,8 +130,10 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Promotion hint — sticky CTA when the user is close to the next level */}
-      {promotionData?.status && promotionData.status.next && promotionData.status.ratio >= 0.5 && (
+      {/* Promotion hint — sticky CTA when the user is close to the next level.
+          The level-up test is available from 40% mastery so motivated learners
+          can shortcut. */}
+      {promotionData?.status && promotionData.status.next && promotionData.status.ratio >= 0.4 && (
         <div className={styles.promotionHint}>
           <p className={styles.promotionHintText}>
             {(promotionData.status.eligibleForPromotion
@@ -144,6 +146,9 @@ export function DashboardPage() {
               .replace('{total}', promotionData.status.total.toString())
               .replace('{remaining}', Math.max(0, Math.ceil(promotionData.status.total * 0.8) - promotionData.status.masteredCount).toString())}
           </p>
+          <Link to="/level-test" className={styles.promotionHintBtn}>
+            {t.profile.promotionHintCta.replace('{next}', promotionData.status.next ?? '')}
+          </Link>
         </div>
       )}
 

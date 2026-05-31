@@ -23,6 +23,7 @@ import { Route as AuthReadingRouteImport } from './app/routes/_auth.reading'
 import { Route as AuthProfileRouteImport } from './app/routes/_auth.profile'
 import { Route as AuthPlacementRouteImport } from './app/routes/_auth.placement'
 import { Route as AuthListeningRouteImport } from './app/routes/_auth.listening'
+import { Route as AuthLevelTestRouteImport } from './app/routes/_auth.level-test'
 import { Route as AuthHelpRouteImport } from './app/routes/_auth.help'
 import { Route as AuthGrammarRouteImport } from './app/routes/_auth.grammar'
 import { Route as AuthFriendsRouteImport } from './app/routes/_auth.friends'
@@ -109,6 +110,11 @@ const AuthPlacementRoute = AuthPlacementRouteImport.update({
 const AuthListeningRoute = AuthListeningRouteImport.update({
   id: '/listening',
   path: '/listening',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthLevelTestRoute = AuthLevelTestRouteImport.update({
+  id: '/level-test',
+  path: '/level-test',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthHelpRoute = AuthHelpRouteImport.update({
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/friends': typeof AuthFriendsRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/help': typeof AuthHelpRoute
+  '/level-test': typeof AuthLevelTestRoute
   '/listening': typeof AuthListeningRouteWithChildren
   '/placement': typeof AuthPlacementRoute
   '/profile': typeof AuthProfileRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByTo {
   '/friends': typeof AuthFriendsRoute
   '/grammar': typeof AuthGrammarRouteWithChildren
   '/help': typeof AuthHelpRoute
+  '/level-test': typeof AuthLevelTestRoute
   '/listening': typeof AuthListeningRouteWithChildren
   '/placement': typeof AuthPlacementRoute
   '/profile': typeof AuthProfileRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/_auth/friends': typeof AuthFriendsRoute
   '/_auth/grammar': typeof AuthGrammarRouteWithChildren
   '/_auth/help': typeof AuthHelpRoute
+  '/_auth/level-test': typeof AuthLevelTestRoute
   '/_auth/listening': typeof AuthListeningRouteWithChildren
   '/_auth/placement': typeof AuthPlacementRoute
   '/_auth/profile': typeof AuthProfileRoute
@@ -324,6 +333,7 @@ export interface FileRouteTypes {
     | '/friends'
     | '/grammar'
     | '/help'
+    | '/level-test'
     | '/listening'
     | '/placement'
     | '/profile'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/friends'
     | '/grammar'
     | '/help'
+    | '/level-test'
     | '/listening'
     | '/placement'
     | '/profile'
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/_auth/friends'
     | '/_auth/grammar'
     | '/_auth/help'
+    | '/_auth/level-test'
     | '/_auth/listening'
     | '/_auth/placement'
     | '/_auth/profile'
@@ -515,6 +527,13 @@ declare module '@tanstack/react-router' {
       path: '/listening'
       fullPath: '/listening'
       preLoaderRoute: typeof AuthListeningRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/level-test': {
+      id: '/_auth/level-test'
+      path: '/level-test'
+      fullPath: '/level-test'
+      preLoaderRoute: typeof AuthLevelTestRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/help': {
@@ -720,6 +739,7 @@ interface AuthRouteChildren {
   AuthFriendsRoute: typeof AuthFriendsRoute
   AuthGrammarRoute: typeof AuthGrammarRouteWithChildren
   AuthHelpRoute: typeof AuthHelpRoute
+  AuthLevelTestRoute: typeof AuthLevelTestRoute
   AuthListeningRoute: typeof AuthListeningRouteWithChildren
   AuthPlacementRoute: typeof AuthPlacementRoute
   AuthProfileRoute: typeof AuthProfileRoute
@@ -741,6 +761,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthFriendsRoute: AuthFriendsRoute,
   AuthGrammarRoute: AuthGrammarRouteWithChildren,
   AuthHelpRoute: AuthHelpRoute,
+  AuthLevelTestRoute: AuthLevelTestRoute,
   AuthListeningRoute: AuthListeningRouteWithChildren,
   AuthPlacementRoute: AuthPlacementRoute,
   AuthProfileRoute: AuthProfileRoute,
