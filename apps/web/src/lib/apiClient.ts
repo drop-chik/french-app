@@ -82,7 +82,23 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}): Pro
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error((err as { error?: string }).error ?? 'Request failed');
+    const code = (err as { error?: string }).error;
+    const message = (err as { message?: string }).message;
+    // Surface a structured error so callers (or a global handler) can
+    // tell apart "auth gate" failures from generic 5xx noise.
+    const e = new Error(message ?? code ?? 'Request failed') as Error & {
+      code?: string;
+      status?: number;
+    };
+    if (code) e.code = code;
+    e.status = res.status;
+    // Email-verify gate: broadcast so a global listener can pop the
+    // verify banner / re-send modal regardless of which page fired the
+    // request.
+    if (code === 'EMAIL_NOT_VERIFIED' && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('email-verify-required'));
+    }
+    throw e;
   }
 
   return res.json() as Promise<T>;

@@ -820,6 +820,7 @@ export const ru: DeepRecord = {
     dismiss: 'Скрыть до следующей сессии',
     statusVerified: 'Email подтверждён',
     statusUnverified: 'Email не подтверждён',
+    required: 'Чтобы пользоваться этой функцией, подтверди email — нажми «Отправить заново».',
   },
   resetPassword: {
     title: 'Новый пароль',

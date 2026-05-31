@@ -980,6 +980,7 @@ export const en: Translations = {
     dismiss: 'Hide until next session',
     statusVerified: 'Email verified',
     statusUnverified: 'Email not verified',
+    required: 'Please verify your email to use this feature — click "Resend".',
   },
   resetPassword: {
     title: 'New password',

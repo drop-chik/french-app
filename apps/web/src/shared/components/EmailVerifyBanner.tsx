@@ -52,6 +52,18 @@ export function EmailVerifyBanner() {
     return () => window.removeEventListener('storage', onStorage);
   }, [queryClient]);
 
+  // Server fired a 403 EMAIL_NOT_VERIFIED — un-dismiss the banner and
+  // surface a toast so the user immediately sees why their action failed.
+  useEffect(() => {
+    function onRequired() {
+      setDismissed(false);
+      try { sessionStorage.removeItem(DISMISS_KEY); } catch { /* private mode */ }
+      toast.error(t.verifyBanner.required);
+    }
+    window.addEventListener('email-verify-required', onRequired);
+    return () => window.removeEventListener('email-verify-required', onRequired);
+  }, [toast, t.verifyBanner.required]);
+
   // Hide while profile loads (banner flashing in is worse than waiting),
   // when email is already verified, or when user dismissed this session.
   if (!profile || profile.emailVerifiedAt || dismissed) return null;

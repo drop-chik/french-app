@@ -53,12 +53,39 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
       }
     },
   );
+
+  // Hard gate on email verification — apply to "production" features
+  // (writing, conversation, image-gen) so unverified accounts can't burn
+  // AI budget. Reading / vocab / grammar stay open so the funnel from
+  // signup → first session isn't broken; we want the user to try the
+  // product, just not spam our OpenAI bill before verifying.
+  fastify.decorate(
+    'requireEmailVerified',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const userId = request.user?.userId;
+      if (!userId) {
+        reply.status(401).send({ error: 'Unauthorized' });
+        return;
+      }
+      const row = await request.server.db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { emailVerifiedAt: true },
+      });
+      if (!row?.emailVerifiedAt) {
+        reply.status(403).send({
+          error: 'EMAIL_NOT_VERIFIED',
+          message: 'Please verify your email address to use this feature.',
+        });
+      }
+    },
+  );
 };
 
 declare module 'fastify' {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     requireAdmin: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    requireEmailVerified: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 

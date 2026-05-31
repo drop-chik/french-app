@@ -36,7 +36,7 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/sessions',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [fastify.authenticate, fastify.requireEmailVerified],
       schema: {
         tags: ['conversation'],
         summary: 'Start a new AI conversation on a chosen topic',
@@ -75,7 +75,7 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/sessions/with-primer',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [fastify.authenticate, fastify.requireEmailVerified],
       schema: {
         tags: ['conversation'],
         summary: 'Start a conversation seeded with the just-studied words',
@@ -171,7 +171,7 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Params: { id: string } }>(
     '/sessions/:id/message',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [fastify.authenticate, fastify.requireEmailVerified],
       // GPT-4o streaming chat: $0.01-0.05 per long exchange. 60/hour ≈ one
       // message per minute — covers genuine practice, blocks bots that
       // hammer the model. SSE keeps the connection open so per-call cost
