@@ -456,6 +456,8 @@ export const en: Translations = {
     retakeBtn: 'Retake placement test',
     promotedToastTitle: 'Congratulations! 🎉',
     promotedToastBody: 'You\'ve mastered {from} and are advancing to {to}',
+    promotionHintReady: '🚀 Ready for {next}! You\'ve mastered {pct}% of {current} words. One step to promotion.',
+    promotionHintProgress: '{current} progress: {mastered}/{total} ({pct}%). To reach {next}: {remaining} more words.',
     insightWordsTitle: 'Vocabulary',
     insightWordsSub: 'by status',
     insightReviewTitle: 'To review',

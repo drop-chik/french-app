@@ -296,6 +296,8 @@ export const ru: DeepRecord = {
     retakeBtn: 'Пересдать тест уровня',
     promotedToastTitle: 'Поздравляем! 🎉',
     promotedToastBody: 'Ты освоил {from} и переходишь на {to}',
+    promotionHintReady: '🚀 Готов к {next}! Освоено {pct}% слов уровня {current}. Один шаг до перехода.',
+    promotionHintProgress: 'Прогресс {current}: {mastered}/{total} ({pct}%). До перехода на {next}: ещё {remaining} слов.',
     insightWordsTitle: 'Словарь',
     insightWordsSub: 'распределение по статусам',
     insightReviewTitle: 'На повторение',

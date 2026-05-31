@@ -6,6 +6,7 @@ import { XP_REWARDS } from '../achievements/xp.js';
 import { generateTTS } from './tts.service.js';
 import { getAudioData } from '../../services/audio.service.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
+import { ensureLevelAllowed } from '../../lib/level-gate.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const submitSchema = z.object({
@@ -30,7 +31,9 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const query = request.query as { level?: string };
-      const level = (query.level ?? 'A1') as LanguageLevel;
+      const requested = (query.level ?? 'A1') as LanguageLevel;
+      const level = await ensureLevelAllowed(fastify, request, reply, requested);
+      if (!level) return;
       const exercises = await getExercises(fastify.db, request.user.userId, level);
       reply.send({ exercises });
     },

@@ -10,6 +10,7 @@ import {
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
 import { authorizedSecurity, langQuery } from '../../openapi/schemas.js';
+import { ensureLevelAllowed } from '../../lib/level-gate.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const answerSchema = z.object({
@@ -46,13 +47,11 @@ const grammarRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const query = request.query as Record<string, unknown>;
-      const level = ((query.level as string) ?? 'A1') as LanguageLevel;
+      const requestedLevel = ((query.level as string) ?? 'A1') as LanguageLevel;
       const lang = parseLang(query);
 
-      const user = await fastify.db.query.users.findFirst({
-        where: (u, { eq }) => eq(u.id, request.user.userId),
-      });
-      if (!user) return reply.status(404).send({ error: 'User not found' });
+      const level = await ensureLevelAllowed(fastify, request, reply, requestedLevel);
+      if (!level) return;
 
       const topics = await getTopics(fastify.db, request.user.userId, level, lang);
       reply.send({ topics });

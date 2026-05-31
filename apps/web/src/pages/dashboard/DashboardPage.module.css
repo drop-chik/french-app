@@ -635,3 +635,18 @@
     align-items: flex-start;
   }
 }
+
+/* ── Promotion hint (auto-promotion progress / ready) ── */
+.promotionHint {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(59, 130, 246, 0.12));
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4) var(--space-5);
+}
+
+.promotionHintText {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.5;
+}

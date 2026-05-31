@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@french-app/shared-types';
 import { setSentryUser } from '../../lib/sentry';
+import { identifyUser, resetAnalytics } from '../../lib/analytics';
 
 interface AuthState {
   accessToken: string | null;
@@ -22,13 +23,17 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken, user, isAuthenticated: true });
         // Tag Sentry events with the signed-in user so we can correlate
         // production errors with specific accounts during triage.
-        if (user) setSentryUser({ id: user.id, email: user.email });
+        if (user) {
+          setSentryUser({ id: user.id, email: user.email });
+          identifyUser(user.id, { level: user.level, role: user.role });
+        }
       },
       updateUser: (updates) =>
         set((state) => ({ user: state.user ? { ...state.user, ...updates } : state.user })),
       clearAuth: () => {
         set({ accessToken: null, user: null, isAuthenticated: false });
         setSentryUser(null);
+        resetAnalytics();
       },
     }),
     {

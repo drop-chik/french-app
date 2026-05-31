@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../features/auth/authStore';
+import { trackEvent } from '../../lib/analytics';
 import { useI18n } from '../i18n';
 import styles from './PromotionBanner.module.css';
 
@@ -22,6 +23,7 @@ export function PromotionBanner() {
       updateUser({ level: detail.to });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['levels-progress'] });
+      trackEvent('level_promoted', { from, to: detail.to });
     }
     window.addEventListener('cefr-promoted', handler as EventListener);
     return () => window.removeEventListener('cefr-promoted', handler as EventListener);

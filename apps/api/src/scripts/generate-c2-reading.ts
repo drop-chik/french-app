@@ -27,6 +27,7 @@ const THEMES: Theme[] = [
   { slug: 'c2-art-conceptuel-marche', title: 'L\'art conceptuel et son rapport au marché', topic: 'culture', focus: 'Art criticism on conceptual art\'s paradoxical relationship to the art market, Duchamp\'s legacy, contemporary speculation, institutional critique.' },
   { slug: 'c2-societe-individualisme-democratie', title: 'Individualisme contemporain et démocratie', topic: 'societe', focus: 'Sociopolitical essay on tensions between contemporary individualism and democratic participation, from Tocqueville to Lipovetsky.' },
   { slug: 'c2-langue-evolution-academie', title: 'L\'évolution de la langue française : entre usage et norme', topic: 'societe', focus: 'Linguistic essay on prescriptivism vs descriptivism, the role of the Académie française, anglicismes, écriture inclusive, generational shifts.' },
+  { slug: 'c2-mondialisation-uniformite', title: 'Mondialisation culturelle et résistance à l\'uniformité', topic: 'societe', focus: 'Essay on cultural globalisation and the local resistances it provokes: French cinema quotas, EU\'s "cultural exception", revival of regional languages and gastronomies as counter-currents. References to Glissant\'s tout-monde, Appadurai\'s scapes, and contemporary debates around algorithmic monoculture.' },
 ];
 
 const TEXT_SYSTEM_PROMPT = `You are a French essayist writing C2-mastery

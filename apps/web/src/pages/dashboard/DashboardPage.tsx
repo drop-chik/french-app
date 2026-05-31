@@ -24,6 +24,12 @@ export function DashboardPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: promotionData } = useQuery({
+    queryKey: ['promotion-status'],
+    queryFn: profileApi.getPromotionStatus,
+    staleTime: 60 * 1000,
+  });
+
   const { data: xpData } = useQuery({
     queryKey: ['xp-summary'],
     queryFn: achievementsApi.xp,
@@ -121,6 +127,23 @@ export function DashboardPage() {
               <LevelItem key={lv.level} lv={lv} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Promotion hint — sticky CTA when the user is close to the next level */}
+      {promotionData?.status && promotionData.status.next && promotionData.status.ratio >= 0.5 && (
+        <div className={styles.promotionHint}>
+          <p className={styles.promotionHintText}>
+            {(promotionData.status.eligibleForPromotion
+              ? t.profile.promotionHintReady
+              : t.profile.promotionHintProgress)
+              .replace('{current}', promotionData.status.current)
+              .replace('{next}', promotionData.status.next ?? '')
+              .replace('{pct}', Math.round(promotionData.status.ratio * 100).toString())
+              .replace('{mastered}', promotionData.status.masteredCount.toString())
+              .replace('{total}', promotionData.status.total.toString())
+              .replace('{remaining}', Math.max(0, Math.ceil(promotionData.status.total * 0.8) - promotionData.status.masteredCount).toString())}
+          </p>
         </div>
       )}
 

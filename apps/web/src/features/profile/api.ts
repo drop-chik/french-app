@@ -127,6 +127,17 @@ export const profileApi = {
 
   getLevelsProgress: () => apiRequest<{ levels: LevelProgressData[] }>('/profile/levels-progress'),
 
+  getPromotionStatus: () => apiRequest<{
+    status: {
+      current: string;
+      next: string | null;
+      masteredCount: number;
+      total: number;
+      ratio: number;
+      eligibleForPromotion: boolean;
+    } | null;
+  }>('/profile/promotion-status'),
+
   logout: () =>
     apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST' }).catch(() => {
       // Ignore server errors on logout — we clear auth regardless

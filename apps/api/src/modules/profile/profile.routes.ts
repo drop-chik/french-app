@@ -13,6 +13,7 @@ import {
   exportUserData,
   deleteUserAccount,
 } from './profile.service.js';
+import { getCurrentLevelMastery } from './promotion.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
 import { logAuditEvent, AuditAction } from '../../lib/audit.js';
 
@@ -267,12 +268,28 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
     preHandler: [fastify.authenticate],
     schema: {
       tags: ['profile'],
-      summary: 'Mastered/total words per CEFR level (A1–B2)',
+      summary: 'Mastered/total words per CEFR level (A1–C2)',
       security: authorizedSecurity,
     },
   }, async (request, reply) => {
     const levels = await getLevelsProgress(fastify.db, request.user.userId);
     reply.send({ levels });
+  });
+
+  // GET /profile/promotion-status — cheap query for the dashboard hint
+  // card. Returns mastery on the current level + whether the user is
+  // close to / ready for promotion. Frontend renders a "you're ready
+  // for B2!" CTA when eligibleForPromotion is true.
+  fastify.get('/promotion-status', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Current-level mastery ratio + promotion eligibility',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const status = await getCurrentLevelMastery(fastify.db, request.user.userId);
+    reply.send({ status });
   });
 
   // GET /profile/export — GDPR Article 15: download all my data as JSON.
