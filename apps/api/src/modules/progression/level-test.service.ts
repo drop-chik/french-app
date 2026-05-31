@@ -21,6 +21,7 @@ import { eq } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, placementTests } from '../../db/schema/index.js';
 import { placementQuestions } from '../../db/seed/placement-test.js';
+import { recordActivity } from '../social/activity.service.js';
 
 const ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 type Level = typeof ORDER[number];
@@ -119,6 +120,13 @@ export async function submitLevelTest(
       resultLevel: toLevel,
     });
     promoted = true;
+
+    // Friends-feed event + push fan-out
+    await recordActivity(
+      db, userId, 'cefr_promoted',
+      { from: fromLevel, to: toLevel, via: 'test', score: Math.round((correct / total) * 100) },
+      `cefr:${fromLevel}->${toLevel}`,
+    );
   } else {
     // Log failed attempt for analytics — no level change.
     await db.insert(placementTests).values({

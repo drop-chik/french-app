@@ -1543,6 +1543,8 @@ export const en: Translations = {
     evLevelUp: 'reached level {level}',
     evStreak: '{days}-day streak',
     evAchievement: 'earned an achievement: {title}',
+    evCefrPromoted: 'advanced from {from} to {to}',
+    evPlacementDone: 'completed the placement test — starting level: {level}',
     tagLabel: 'Your tag (@{tag})',
     tagHint: 'Latin letters, digits, _ and -. 3 to 30 characters.',
     tagTaken: 'This tag is already taken',

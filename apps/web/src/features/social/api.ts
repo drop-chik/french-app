@@ -17,7 +17,7 @@ export interface UserCard {
 
 export interface ActivityEvent {
   id: string;
-  type: 'joined' | 'achievement' | 'level_up' | 'streak' | string;
+  type: 'joined' | 'achievement' | 'level_up' | 'streak' | 'cefr_promoted' | 'placement_done' | string;
   payload: Record<string, unknown>;
   createdAt: string;
 }

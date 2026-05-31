@@ -16,6 +16,7 @@
 import { and, eq, sql, count } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, words, wordProgress, placementTests } from '../../db/schema/index.js';
+import { recordActivity } from '../social/activity.service.js';
 
 const ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 type Level = typeof ORDER[number];
@@ -69,6 +70,14 @@ export async function checkAndPromote(db: DB, userId: string): Promise<Level | n
     answers: { autoPromoted: true, fromLevel: currentLevel, masteredCount, total, ratio: ratio.toFixed(3) } as unknown as Record<string, string>,
     resultLevel: nextLevel,
   });
+
+  // Friends-feed event — high-value milestone, also fans out as push
+  // to followers via recordActivity's notifyFollowers hook.
+  await recordActivity(
+    db, userId, 'cefr_promoted',
+    { from: currentLevel, to: nextLevel, via: 'auto' },
+    `cefr:${currentLevel}->${nextLevel}`,
+  );
 
   return nextLevel;
 }

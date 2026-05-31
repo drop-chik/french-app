@@ -1383,6 +1383,8 @@ export const ru: DeepRecord = {
     evLevelUp: 'достиг уровня {level}',
     evStreak: 'серия {days} дней подряд',
     evAchievement: 'получил достижение: {title}',
+    evCefrPromoted: 'перешёл с {from} на {to}',
+    evPlacementDone: 'прошёл тест уровня — стартовый уровень: {level}',
     tagLabel: 'Ваш тег (@{tag})',
     tagHint: 'Латиница, цифры, _ и -. От 3 до 30 символов.',
     tagTaken: 'Этот тег уже занят',

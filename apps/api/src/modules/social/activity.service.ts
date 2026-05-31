@@ -3,12 +3,20 @@ import type { DB } from '../../db/index.js';
 import { activityEvents, follows, users } from '../../db/schema/index.js';
 import { sendToUser } from '../push/push.service.js';
 
-export type ActivityType = 'joined' | 'achievement' | 'level_up' | 'streak';
+export type ActivityType =
+  | 'joined'
+  | 'achievement'
+  | 'level_up'         // in-game XP level (1, 2, 3…)
+  | 'streak'
+  | 'cefr_promoted'    // CEFR jump A1→A2, B1→B2 etc — both auto-promote + manual test
+  | 'placement_done';  // initial placement test completed (onboarding milestone)
 
 // Only the high-value milestones fan out as a push to followers — ordinary
 // words/lessons never push (would be spam). The feed still records everything.
 function isHighValue(type: ActivityType, payload: Record<string, unknown>): boolean {
   if (type === 'level_up') return true;
+  if (type === 'cefr_promoted') return true;
+  if (type === 'placement_done') return true;
   if (type === 'achievement') {
     return payload['rarity'] === 'gold' || payload['rarity'] === 'legendary';
   }
@@ -31,6 +39,16 @@ function buildMessage(
       };
     case 'level_up':
       return { title: 'Друг растёт', body: `@${tag} достиг уровня ${payload['level']}!` };
+    case 'cefr_promoted':
+      return {
+        title: 'Новый уровень языка 🎉',
+        body: `@${tag} перешёл с ${payload['from']} на ${payload['to']}!`,
+      };
+    case 'placement_done':
+      return {
+        title: 'Начало пути',
+        body: `@${tag} прошёл тест уровня — стартовый уровень: ${payload['level']}`,
+      };
     case 'streak':
       return { title: 'Стрик друга', body: `@${tag} — серия ${payload['days']} дней подряд!` };
     default:

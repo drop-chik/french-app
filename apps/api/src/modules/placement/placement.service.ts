@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, placementTests } from '../../db/schema/index.js';
 import { placementQuestions } from '../../db/seed/placement-test.js';
+import { recordActivity } from '../social/activity.service.js';
 
 export { placementQuestions };
 
@@ -74,7 +75,10 @@ export async function savePlacementResult(
 ) {
   const evaluated = evaluateLevel(answers, selfReportedLevel);
 
-  const [user] = await db.select({ level: users.level }).from(users).where(eq(users.id, userId));
+  const [user] = await db.select({
+    level: users.level,
+    placementTestDone: users.placementTestDone,
+  }).from(users).where(eq(users.id, userId));
   const previousLevel = (user?.level ?? 'A1') as Level;
   const prevIdx = ORDERED.indexOf(previousLevel);
 
@@ -96,5 +100,19 @@ export async function savePlacementResult(
   });
 
   await db.update(users).set({ level: resultLevel, placementTestDone: true }).where(eq(users.id, userId));
+
+  // Friends-feed: initial onboarding placement OR a retake bumped the user.
+  if (!user?.placementTestDone) {
+    // First placement — onboarding milestone
+    await recordActivity(db, userId, 'placement_done', { level: resultLevel }, `placement:initial`);
+  } else if (ORDERED.indexOf(resultLevel) > prevIdx) {
+    // Retake actually moved the user up
+    await recordActivity(
+      db, userId, 'cefr_promoted',
+      { from: previousLevel, to: resultLevel, via: 'placement' },
+      `cefr:${previousLevel}->${resultLevel}`,
+    );
+  }
+
   return { resultLevel, kept: resultLevel !== evaluated };
 }

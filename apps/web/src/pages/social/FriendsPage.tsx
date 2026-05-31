@@ -179,6 +179,18 @@ function eventText(
   switch (item.type) {
     case 'level_up':
       return { emoji: '⭐', text: t.social.evLevelUp.replace('{level}', String(p['level'] ?? '')) };
+    case 'cefr_promoted':
+      return {
+        emoji: '🇫🇷',
+        text: t.social.evCefrPromoted
+          .replace('{from}', String(p['from'] ?? ''))
+          .replace('{to}', String(p['to'] ?? '')),
+      };
+    case 'placement_done':
+      return {
+        emoji: '🧭',
+        text: t.social.evPlacementDone.replace('{level}', String(p['level'] ?? '')),
+      };
     case 'streak':
       return { emoji: '🔥', text: t.social.evStreak.replace('{days}', String(p['days'] ?? '')) };
     case 'achievement': {
