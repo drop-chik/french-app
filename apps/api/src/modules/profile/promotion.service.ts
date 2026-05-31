@@ -27,7 +27,13 @@ export async function checkAndPromote(db: DB, userId: string): Promise<Level | n
   const [user] = await db.select({ id: users.id, level: users.level }).from(users).where(eq(users.id, userId));
   if (!user) return null;
   const currentIdx = ORDER.indexOf(user.level as Level);
-  if (currentIdx === -1 || currentIdx === ORDER.length - 1) return null; // already C2
+  if (currentIdx < 0) {
+    // Corrupted users.level (out-of-band write, broken migration etc.)
+    // — refuse to "promote" from an unknown state. Surface in logs.
+    console.warn(`[promotion] user ${userId} has unknown level "${user.level}", skipping`);
+    return null;
+  }
+  if (currentIdx === ORDER.length - 1) return null; // already C2
 
   const currentLevel = ORDER[currentIdx]!;
   const nextLevel = ORDER[currentIdx + 1]!;

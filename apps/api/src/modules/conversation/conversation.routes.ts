@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { createSession, createSessionWithPrimer, getSessions, getSession, deleteSession, streamReply } from './conversation.service.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
+import { safePrompt } from '../../lib/sanitize-ai-input.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 
 const createSessionSchema = z.object({
@@ -54,8 +55,15 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
       const parsed = createSessionSchema.safeParse(request.body);
       if (!parsed.success) return reply.status(400).send({ error: 'Invalid body' });
 
+      const { value: topic, suspicious } = safePrompt(parsed.data.topic, 200);
+      if (suspicious) {
+        request.log.warn({ userId: request.user.userId, topic: parsed.data.topic }, 'conversation topic looks like prompt injection');
+        return reply.status(400).send({ error: 'Topic invalid' });
+      }
+      if (!topic) return reply.status(400).send({ error: 'Topic required' });
+
       const level = (parsed.data.level ?? 'A1') as LanguageLevel;
-      const session = await createSession(fastify.db, request.user.userId, parsed.data.topic, level);
+      const session = await createSession(fastify.db, request.user.userId, topic, level);
       reply.status(201).send({ session });
     },
   );

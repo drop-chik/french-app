@@ -109,9 +109,15 @@ await fastify.register(rateLimit, {
   allowList: (req) => req.url === '/health',
 });
 
-// CORS
+// CORS — log loudly if FRONTEND_URL falls back to localhost in production.
+// Without an explicit origin Vercel ↔ Railway calls would fail CORS, so
+// noticing it early is more important than silently defaulting.
+const corsOrigin = process.env['FRONTEND_URL'] ?? 'http://localhost:5173';
+if (process.env['NODE_ENV'] === 'production' && !process.env['FRONTEND_URL']) {
+  fastify.log.warn('FRONTEND_URL is unset in production — CORS will only accept localhost. Set FRONTEND_URL to the Vercel domain.');
+}
 await fastify.register(cors, {
-  origin: process.env['FRONTEND_URL'] ?? 'http://localhost:5173',
+  origin: corsOrigin,
   credentials: true,
 });
 

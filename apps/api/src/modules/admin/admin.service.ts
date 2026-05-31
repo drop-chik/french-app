@@ -1,6 +1,10 @@
 import { eq, or, ilike, sql, desc, asc, count, max } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
-import { users, wordProgress } from '../../db/schema/index.js';
+import {
+  users, wordProgress,
+  grammarProgress, listeningProgress, readingProgress, drillProgress,
+  userAchievements,
+} from '../../db/schema/index.js';
 import {
   getProfile,
   getStats,
@@ -152,12 +156,36 @@ export async function updateUser(
   return updated;
 }
 
-// Dangerous — wipes the user's SRS state. Used to reset test accounts or
-// help a user start over. Caller (route) guards with explicit confirmation.
+// Dangerous — wipes the user's entire learning state across every
+// module (vocab SRS, grammar, listening, reading, drills, achievements,
+// XP). Used to reset test accounts or help a user start completely
+// over. Caller (route) guards with explicit confirmation.
+//
+// Note: this is COMPREHENSIVE. The earlier version only deleted
+// wordProgress, which left grammarProgress/listeningProgress/etc behind
+// and produced an inconsistent state where "the dashboard says 5
+// grammar topics done but the vocabulary is empty". One audit-driven
+// expansion of the cascade.
 export async function resetUserProgress(db: DB, userId: string) {
-  const result = await db
-    .delete(wordProgress)
-    .where(eq(wordProgress.userId, userId));
-  return { deleted: result.rowCount ?? 0 };
+  const wp = await db.delete(wordProgress).where(eq(wordProgress.userId, userId));
+  const gp = await db.delete(grammarProgress).where(eq(grammarProgress.userId, userId));
+  const lp = await db.delete(listeningProgress).where(eq(listeningProgress.userId, userId));
+  const rp = await db.delete(readingProgress).where(eq(readingProgress.userId, userId));
+  const dp = await db.delete(drillProgress).where(eq(drillProgress.userId, userId));
+  const ua = await db.delete(userAchievements).where(eq(userAchievements.userId, userId));
+  // Reset XP + level + placement on the user row itself. Streak is
+  // derived from word_progress activity so it resets automatically once
+  // wordProgress is gone — no streak column to touch.
+  await db.update(users).set({
+    xp: 0, level: 'A1', placementTestDone: false,
+  }).where(eq(users.id, userId));
+  return {
+    wordProgress: wp.rowCount ?? 0,
+    grammarProgress: gp.rowCount ?? 0,
+    listeningProgress: lp.rowCount ?? 0,
+    readingProgress: rp.rowCount ?? 0,
+    drillProgress: dp.rowCount ?? 0,
+    userAchievements: ua.rowCount ?? 0,
+  };
 }
 
