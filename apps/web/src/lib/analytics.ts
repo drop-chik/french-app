@@ -41,11 +41,14 @@ async function ensureInit(): Promise<void> {
   }
   initializing = (async () => {
     try {
-      // posthog-js is not yet a dependency — loaded only when
-      // VITE_POSTHOG_KEY is set. Until we adopt PostHog this stays a
-      // true no-op via the catch below.
-      // @ts-expect-error optional runtime dependency
-      const mod = await import('posthog-js');
+      // posthog-js is intentionally NOT a dependency yet — we adopt
+      // PostHog only when VITE_POSTHOG_KEY is set. The module path is
+      // built from a variable so Rollup can't statically analyse it
+      // and won't try to resolve the package at build time. If the
+      // dependency isn't installed at runtime, the catch below keeps
+      // us as a true no-op.
+      const moduleName = ['posthog', 'js'].join('-');
+      const mod = await import(/* @vite-ignore */ moduleName);
       posthog = (mod.default ?? mod) as unknown as PostHog;
       posthog.init(key, {
         api_host: (import.meta.env.VITE_POSTHOG_HOST as string) ?? 'https://eu.i.posthog.com',
