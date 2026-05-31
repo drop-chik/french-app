@@ -72,11 +72,26 @@ export const wordsApi = {
   getByCategory: (category: string) =>
     apiRequest<{ words: WordData[]; total: number }>(`/words/by-category/${encodeURIComponent(category)}?lang=${getLang()}`),
 
-  recordAnswer: (wordId: string, grade: number) =>
-    apiRequest<{ nextReview: string; interval: number }>(`/words/${wordId}/answer`, {
+  recordAnswer: async (wordId: string, grade: number) => {
+    const res = await apiRequest<{
+      nextReview: string;
+      interval: number;
+      xp?: { gained: number; total: number; level: number; leveledUp: boolean };
+      unlocked?: unknown[];
+      promotedToLevel?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+    }>(`/words/${wordId}/answer`, {
       method: 'POST',
       body: JSON.stringify({ grade }),
-    }),
+    });
+    // Side effect: if the backend promoted the user, broadcast it so a
+    // global listener can show a celebration. We use a CustomEvent rather
+    // than React state because recordAnswer is called from many vocab
+    // modes — the listener lives in the auth layout above all of them.
+    if (res.promotedToLevel && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cefr-promoted', { detail: { to: res.promotedToLevel } }));
+    }
+    return res;
+  },
 
   getDictionary: (offset = 0, limit = 200) =>
     apiRequest<{ words: unknown[] }>(`/words/dictionary?lang=${getLang()}&offset=${offset}&limit=${limit}`),

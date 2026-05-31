@@ -18,4 +18,7 @@ export const placementApi = {
       method: 'POST',
       body: JSON.stringify({ answers, selfReportedLevel }),
     }),
+
+  retake: () =>
+    apiRequest<{ ok: boolean }>('/placement/retake', { method: 'POST' }),
 };

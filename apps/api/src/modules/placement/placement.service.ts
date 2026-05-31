@@ -7,14 +7,18 @@ export { placementQuestions };
 
 export type AnswerMap = Record<string, string>; // questionId → chosen option
 
+type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+
 // Evaluate answers and determine level
-export function evaluateLevel(answers: AnswerMap, selfReportedLevel?: string): 'A1' | 'A2' | 'B1' | 'B2' {
-  const ORDERED = ['A1', 'A2', 'B1', 'B2'] as const;
+export function evaluateLevel(answers: AnswerMap, selfReportedLevel?: string): Level {
+  const ORDERED = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
   const scores: Record<string, { correct: number; total: number }> = {
     A1: { correct: 0, total: 0 },
     A2: { correct: 0, total: 0 },
     B1: { correct: 0, total: 0 },
     B2: { correct: 0, total: 0 },
+    C1: { correct: 0, total: 0 },
+    C2: { correct: 0, total: 0 },
   };
 
   for (const q of placementQuestions) {
@@ -24,13 +28,13 @@ export function evaluateLevel(answers: AnswerMap, selfReportedLevel?: string): '
   }
 
   // Highest level with >= 50% correct (only for levels that were actually tested)
-  for (const level of ['B2', 'B1', 'A2', 'A1'] as const) {
+  for (const level of ['C2', 'C1', 'B2', 'B1', 'A2', 'A1'] as const) {
     const s = scores[level]!;
     if (s.total > 0 && s.correct / s.total >= 0.5) return level;
   }
 
   // Nothing passed 50% — use highest tested level minus one step
-  const tested = (['B2', 'B1', 'A2', 'A1'] as const).filter(l => scores[l]!.total > 0);
+  const tested = (['C2', 'C1', 'B2', 'B1', 'A2', 'A1'] as const).filter(l => scores[l]!.total > 0);
   if (tested.length > 0) {
     const highest = tested[0]!;
     const idx = ORDERED.indexOf(highest);
@@ -38,9 +42,8 @@ export function evaluateLevel(answers: AnswerMap, selfReportedLevel?: string): '
   }
 
   // No answers (skipped test) — use self-reported level or A1
-  if (selfReportedLevel === 'A1' || selfReportedLevel === 'A2' ||
-      selfReportedLevel === 'B1' || selfReportedLevel === 'B2') {
-    return selfReportedLevel;
+  if ((['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const).includes(selfReportedLevel as Level)) {
+    return selfReportedLevel as Level;
   }
   return 'A1';
 }

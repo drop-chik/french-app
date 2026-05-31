@@ -3,7 +3,7 @@
 
 export interface PlacementQuestion {
   id: string;
-  level: 'A1' | 'A2' | 'B1' | 'B2';
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
   type: 'vocabulary' | 'grammar' | 'comprehension';
   question: string;
   options: string[];
@@ -297,5 +297,137 @@ export const placementQuestions: PlacementQuestion[] = [
     options: ['persévère', 'persévérera', 'persévèrerait', 'persévérât'],
     correct: 'persévère',
     explanation: 'Bien que + subjonctif présent: il persévère',
+  },
+
+  // === C1 Vocabulary ===
+  {
+    id: 'c1-v1',
+    level: 'C1',
+    type: 'vocabulary',
+    question: 'Que signifie "néanmoins" ?',
+    options: ['тем не менее', 'кроме того', 'вследствие этого', 'без сомнения'],
+    correct: 'тем не менее',
+  },
+  {
+    id: 'c1-v2',
+    level: 'C1',
+    type: 'vocabulary',
+    question: 'Choisissez le synonyme de "scrupuleux" (внимательный, добросовестный) :',
+    options: ['négligent', 'méticuleux', 'imprévoyant', 'oisif'],
+    correct: 'méticuleux',
+  },
+  {
+    id: 'c1-v3',
+    level: 'C1',
+    type: 'vocabulary',
+    question: 'Que signifie "tirer la sonnette d\'alarme" ?',
+    options: ['опаздывать', 'бить тревогу', 'звонить в дверь', 'будить кого-то'],
+    correct: 'бить тревогу',
+    explanation: 'Идиома: привлекать внимание к проблеме',
+  },
+
+  // === C1 Grammar ===
+  {
+    id: 'c1-g1',
+    level: 'C1',
+    type: 'grammar',
+    question: 'Subjonctif passé : "Je regrette qu\'il ___ (partir) sans nous prévenir."',
+    options: ['parte', 'soit parti', 'serait parti', 'est parti'],
+    correct: 'soit parti',
+    explanation: 'Регретер + антериорное действие → subjonctif passé: soit + participe (parti)',
+  },
+  {
+    id: 'c1-g2',
+    level: 'C1',
+    type: 'grammar',
+    question: 'Двойное местоимение: "Tu lui as donné le livre ? — Oui, je ___ ai donné."',
+    options: ['lui le', 'le lui', 'lui en', 'la lui'],
+    correct: 'le lui',
+    explanation: 'Порядок: le/la/les перед lui/leur. Я ему его дал — je le lui ai donné',
+  },
+  {
+    id: 'c1-g3',
+    level: 'C1',
+    type: 'grammar',
+    question: 'Эмфаза: "C\'est de cette question ___ je veux parler."',
+    options: ['que', 'qui', 'dont', 'où'],
+    correct: 'dont',
+    explanation: 'parler de qch → dont (с предлогом de после эмфатического c\'est)',
+  },
+  {
+    id: 'c1-g4',
+    level: 'C1',
+    type: 'grammar',
+    question: 'Сложная инверсия: "Peut-être ___ (avoir-il) raison."',
+    options: ['avait il', 'a-t-il', 'qu\'il a', 'qu\'a-t-il'],
+    correct: 'a-t-il',
+    explanation: 'После peut-être в формальном регистре: инверсия с -t- между гласными',
+  },
+
+  // === C2 Vocabulary ===
+  {
+    id: 'c2-v1',
+    level: 'C2',
+    type: 'vocabulary',
+    question: 'Que signifie "nonobstant" (registre soutenu) ?',
+    options: ['благодаря', 'вопреки, несмотря на', 'до тех пор пока', 'между прочим'],
+    correct: 'вопреки, несмотря на',
+  },
+  {
+    id: 'c2-v2',
+    level: 'C2',
+    type: 'vocabulary',
+    question: 'Choisissez le synonyme littéraire de "discord" (раздор) :',
+    options: ['l\'harmonie', 'l\'inimitié', 'la concorde', 'l\'entente'],
+    correct: 'l\'inimitié',
+    explanation: 'inimitié — литературный синоним discord/враждебности',
+  },
+  {
+    id: 'c2-v3',
+    level: 'C2',
+    type: 'vocabulary',
+    question: 'Quelle figure de style: "un silence éloquent" ?',
+    options: ['hyperbole', 'oxymore', 'métaphore', 'litote'],
+    correct: 'oxymore',
+    explanation: 'Сочетание противоположных понятий → оксюморон',
+  },
+
+  // === C2 Grammar ===
+  {
+    id: 'c2-g1',
+    level: 'C2',
+    type: 'grammar',
+    question: 'Subjonctif imparfait : "Il fallait qu\'il ___ (savoir) la vérité." (registre littéraire)',
+    options: ['savait', 'sache', 'sût', 'saurait'],
+    correct: 'sût',
+    explanation: 'В литературном регистре главное в passé → subj. imparfait: qu\'il sût',
+  },
+  {
+    id: 'c2-g2',
+    level: 'C2',
+    type: 'grammar',
+    question: 'Passé simple 3 л. мн.ч. de "venir" :',
+    options: ['ils venaient', 'ils vinrent', 'ils sont venus', 'ils viendraient'],
+    correct: 'ils vinrent',
+    explanation: 'Passé simple — литературное время; venir → ils vinrent',
+  },
+  {
+    id: 'c2-g3',
+    level: 'C2',
+    type: 'grammar',
+    question: 'Архаическая форма: "___ il pleuvoir, nous sortirons quand même."',
+    options: ['Bien que', 'Fût-il pleuvoir', 'Dût-il pleuvoir', 'Si']
+    ,
+    correct: 'Dût-il pleuvoir',
+    explanation: 'Концессивная инверсия subj. imparfait/passé II формы: «Даже если будет лить» — Dût-il pleuvoir',
+  },
+  {
+    id: 'c2-g4',
+    level: 'C2',
+    type: 'grammar',
+    question: 'Ne explétif : "J\'ai peur qu\'il ___ tard."',
+    options: ['est', 'soit', 'ne soit', 'sera'],
+    correct: 'ne soit',
+    explanation: 'После craindre/avoir peur que → ne explétif перед subjonctif (не несёт отрицание)',
   },
 ];

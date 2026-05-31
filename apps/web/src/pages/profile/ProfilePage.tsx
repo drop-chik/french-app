@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, Link } from '@tanstack/react-router';
 import { Lock, User, Globe, LogOut, Settings, ChevronDown, Bell, Trophy, Users, Shield, Compass, Download, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
+import { placementApi } from '../../features/placement/api';
 import type { UserProfile } from '../../features/profile/api';
 import { authApi } from '../../features/auth/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -382,6 +383,21 @@ export function ProfilePage() {
           locked: t.profile.levelStatusLocked,
         }}
       />
+
+      {/* Retake placement test */}
+      <div className={styles.retakePlacement}>
+        <p className={styles.retakeText}>{t.profile.retakeHint}</p>
+        <button
+          type="button"
+          className={styles.retakeBtn}
+          onClick={async () => {
+            await placementApi.retake();
+            router.navigate({ to: '/placement' });
+          }}
+        >
+          {t.profile.retakeBtn}
+        </button>
+      </div>
 
       {/* 3.5 Recent achievements */}
       {recentAchievementsData && recentAchievementsData.items.length > 0 && (

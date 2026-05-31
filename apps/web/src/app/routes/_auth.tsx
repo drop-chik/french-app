@@ -7,6 +7,7 @@ import { HelpProvider } from '../../shared/help/HelpProvider';
 import { HelpButton } from '../../shared/help/HelpButton';
 import { NetworkBanner } from '../../shared/components/NetworkBanner';
 import { EmailVerifyBanner } from '../../shared/components/EmailVerifyBanner';
+import { PromotionBanner } from '../../shared/components/PromotionBanner';
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: () => {
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/_auth')({
         </ErrorBoundary>
         <InstallPrompt />
         <HelpButton />
+        <PromotionBanner />
       </AppLayout>
     </HelpProvider>
   ),

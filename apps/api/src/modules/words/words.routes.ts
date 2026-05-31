@@ -20,6 +20,7 @@ import {
   getOrGenerateExtraExamples,
 } from './words.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
+import { checkAndPromote } from '../profile/promotion.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
 import { authorizedSecurity, errorSchema, langQuery } from '../../openapi/schemas.js';
 import type { LanguageLevel } from '@french-app/shared-types';
@@ -96,11 +97,16 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       const xpDelta = parsed.data.grade >= 3 ? XP_REWARDS.WORD_CORRECT : XP_REWARDS.WORD_INCORRECT;
       const action = await recordAction(fastify.db, request.user.userId, xpDelta);
 
+      // CEFR auto-promotion: if this answer pushed the user past the 80%
+      // mastery threshold on their current level, bump to the next level.
+      const promotedTo = await checkAndPromote(fastify.db, request.user.userId).catch(() => null);
+
       reply.send({
         nextReview: result.nextReview,
         interval: result.interval,
         xp: { gained: xpDelta, total: action.totalXp, level: action.level, leveledUp: action.leveledUp },
         unlocked: action.newlyUnlocked,
+        ...(promotedTo ? { promotedToLevel: promotedTo } : {}),
       });
     },
   );

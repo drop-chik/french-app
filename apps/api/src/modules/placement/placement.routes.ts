@@ -1,6 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import { placementQuestions, savePlacementResult } from './placement.service.js';
+import { users } from '../../db/schema/index.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
 
 const submitSchema = z.object({
@@ -70,6 +72,27 @@ const placementRoutes: FastifyPluginAsync = async (fastify) => {
       );
 
       reply.send(result);
+    },
+  );
+
+  // POST /placement/retake — reset placementTestDone so the user can
+  // retake the test and update their level
+  fastify.post(
+    '/retake',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['placement'],
+        summary: 'Reset placementTestDone so the user can take the test again',
+        security: authorizedSecurity,
+      },
+    },
+    async (request, reply) => {
+      await fastify.db
+        .update(users)
+        .set({ placementTestDone: false })
+        .where(eq(users.id, request.user.userId));
+      reply.send({ ok: true });
     },
   );
 };
