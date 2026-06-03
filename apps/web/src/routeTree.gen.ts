@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './app/routes/login'
 import { Route as ForgotPasswordRouteImport } from './app/routes/forgot-password'
 import { Route as AuthRouteImport } from './app/routes/_auth'
 import { Route as IndexRouteImport } from './app/routes/index'
+import { Route as LevelLevelRouteImport } from './app/routes/level.$level'
 import { Route as AuthWritingRouteImport } from './app/routes/_auth.writing'
 import { Route as AuthVocabularyRouteImport } from './app/routes/_auth.vocabulary'
 import { Route as AuthReadingRouteImport } from './app/routes/_auth.reading'
@@ -80,6 +81,11 @@ const AuthRoute = AuthRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LevelLevelRoute = LevelLevelRouteImport.update({
+  id: '/level/$level',
+  path: '/level/$level',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthWritingRoute = AuthWritingRouteImport.update({
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/reading': typeof AuthReadingRouteWithChildren
   '/vocabulary': typeof AuthVocabularyRoute
   '/writing': typeof AuthWritingRouteWithChildren
+  '/level/$level': typeof LevelLevelRoute
   '/drills/$slug': typeof AuthDrillsSlugRoute
   '/grammar/$slug': typeof AuthGrammarSlugRoute
   '/listening/$id': typeof AuthListeningIdRoute
@@ -268,6 +275,7 @@ export interface FileRoutesByTo {
   '/reading': typeof AuthReadingRouteWithChildren
   '/vocabulary': typeof AuthVocabularyRoute
   '/writing': typeof AuthWritingRouteWithChildren
+  '/level/$level': typeof LevelLevelRoute
   '/drills/$slug': typeof AuthDrillsSlugRoute
   '/grammar/$slug': typeof AuthGrammarSlugRoute
   '/listening/$id': typeof AuthListeningIdRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/_auth/reading': typeof AuthReadingRouteWithChildren
   '/_auth/vocabulary': typeof AuthVocabularyRoute
   '/_auth/writing': typeof AuthWritingRouteWithChildren
+  '/level/$level': typeof LevelLevelRoute
   '/_auth/drills/$slug': typeof AuthDrillsSlugRoute
   '/_auth/grammar/$slug': typeof AuthGrammarSlugRoute
   '/_auth/listening/$id': typeof AuthListeningIdRoute
@@ -340,6 +349,7 @@ export interface FileRouteTypes {
     | '/reading'
     | '/vocabulary'
     | '/writing'
+    | '/level/$level'
     | '/drills/$slug'
     | '/grammar/$slug'
     | '/listening/$id'
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/reading'
     | '/vocabulary'
     | '/writing'
+    | '/level/$level'
     | '/drills/$slug'
     | '/grammar/$slug'
     | '/listening/$id'
@@ -409,6 +420,7 @@ export interface FileRouteTypes {
     | '/_auth/reading'
     | '/_auth/vocabulary'
     | '/_auth/writing'
+    | '/level/$level'
     | '/_auth/drills/$slug'
     | '/_auth/grammar/$slug'
     | '/_auth/listening/$id'
@@ -427,6 +439,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  LevelLevelRoute: typeof LevelLevelRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/level/$level': {
+      id: '/level/$level'
+      path: '/level/$level'
+      fullPath: '/level/$level'
+      preLoaderRoute: typeof LevelLevelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/writing': {
@@ -782,6 +802,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  LevelLevelRoute: LevelLevelRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,0 +1,182 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 60vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.duration {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.myProgress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 28rem;
+  margin-top: 0.5rem;
+}
+
+.myProgressBar {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.myProgressFill {
+  height: 100%;
+  background: var(--color-brand);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
+}
+
+.myProgressText {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.heroActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* ── Can-do list ── */
+.canDoList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.canDoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.canDoMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-success-light);
+  color: var(--color-success);
+  margin-top: 1px;
+}
+
+/* ── Skills grid ── */
+.skillsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+@media (max-width: 760px) {
+  .skillsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 460px) {
+  .skillsGrid { grid-template-columns: 1fr; }
+}
+
+.skillCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.skillIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-brand-light);
+  color: var(--color-brand);
+  margin-bottom: 0.5rem;
+}
+
+.skillCount {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.skillSuffix {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.skillLabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* ── Grammar list ── */
+.grammarList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  .grammarList { grid-template-columns: 1fr; }
+}
+
+.grammarItem {
+  padding: 0.875rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+
+/* ── Neighbours nav ── */
+.neighbours {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
