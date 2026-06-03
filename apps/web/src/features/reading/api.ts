@@ -87,3 +87,103 @@ export const readingApi = {
       `/reading/translate?word=${encodeURIComponent(word)}&lang=${getLang()}`,
     ),
 };
+
+// ── Mock test API ────────────────────────────────────────────────────────────
+
+export type CefrLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+
+export interface MockMaskedQuestion {
+  id: string;
+  question: string;
+  options: string[];
+}
+
+export interface MockText {
+  id: string;
+  slug: string;
+  title: string;
+  level: CefrLevel;
+  contentFr: string;
+  wordMap: Record<string, WordEntry>;
+  questions: MockMaskedQuestion[];
+  estimatedMinutes: number;
+}
+
+export interface MockStoredAnswer {
+  textId: string;
+  questionId: string;
+  answer: string;
+}
+
+export interface MockActiveAttempt {
+  id: string;
+  level: CefrLevel;
+  startedAt: string;
+  timeLimitSeconds: number;
+  remainingSeconds: number;
+  texts: MockText[];
+  answers: MockStoredAnswer[];
+}
+
+export interface MockResult {
+  id: string;
+  level: CefrLevel;
+  score: number;
+  maxScore: number;
+  finalizedAt: string;
+  breakdown: Array<{
+    textId: string;
+    slug: string;
+    title: string;
+    correct: number;
+    total: number;
+    questions: Array<{
+      id: string;
+      question: string;
+      options: string[];
+      userAnswer: string | null;
+      correctAnswer: string;
+      explanation: string;
+      isCorrect: boolean;
+    }>;
+  }>;
+}
+
+export interface MockHistoryItem {
+  id: string;
+  level: CefrLevel;
+  score: number;
+  maxScore: number;
+  finalizedAt: string;
+  durationSeconds: number;
+}
+
+export const mockApi = {
+  start: (level: CefrLevel) =>
+    apiRequest<{ attempt: MockActiveAttempt }>(`/reading/mock/start?lang=${getLang()}`, {
+      method: 'POST',
+      body: JSON.stringify({ level }),
+    }),
+
+  active: () =>
+    apiRequest<{ active: MockActiveAttempt | { autoFinalized: MockResult } | null }>(
+      `/reading/mock/active?lang=${getLang()}`,
+    ),
+
+  answer: (attemptId: string, payload: MockStoredAnswer) =>
+    apiRequest<{ ok: true }>(`/reading/mock/${attemptId}/answer`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  finalize: (attemptId: string) =>
+    apiRequest<{ result: MockResult }>(`/reading/mock/${attemptId}/finalize`, {
+      method: 'POST',
+    }),
+
+  cancel: (attemptId: string) =>
+    apiRequest<{ ok: true }>(`/reading/mock/${attemptId}`, { method: 'DELETE' }),
+
+  history: () =>
+    apiRequest<{ items: MockHistoryItem[] }>(`/reading/mock/history`),
+};

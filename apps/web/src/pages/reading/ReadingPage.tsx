@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BookMarked, Clock, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Clock, CheckCircle2, ChevronRight, BookOpen, Timer } from 'lucide-react';
 import { readingApi, type ReadingTextSummary } from '../../features/reading/api';
 import { useI18n } from '../../shared/i18n';
+import { MockTab } from './MockTab';
 import styles from './ReadingPage.module.css';
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
@@ -17,7 +18,46 @@ const LEVEL_COLORS: Record<string, string> = {
   C2: '#ef4444',
 };
 
+type Tab = 'library' | 'mock';
+
 export function ReadingPage() {
+  const { t } = useI18n();
+  const [activeTab, setActiveTab] = useState<Tab>('library');
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>{t.reading.title}</h1>
+        <p className={styles.subtitle}>{t.reading.subtitle}</p>
+      </div>
+
+      <div className={styles.hubTabs} role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'library'}
+          className={`${styles.hubTab} ${activeTab === 'library' ? styles.hubTabActive : ''}`}
+          onClick={() => setActiveTab('library')}
+        >
+          <BookOpen size={16} /> {t.reading.tabLibrary}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'mock'}
+          className={`${styles.hubTab} ${activeTab === 'mock' ? styles.hubTabActive : ''}`}
+          onClick={() => setActiveTab('mock')}
+        >
+          <Timer size={16} /> {t.reading.tabMock}
+        </button>
+      </div>
+
+      {activeTab === 'library' ? <LibraryTab /> : <MockTab />}
+    </div>
+  );
+}
+
+function LibraryTab() {
   const { t } = useI18n();
   const [activeLevel, setActiveLevel] = useState<string>('all');
 
@@ -29,15 +69,8 @@ export function ReadingPage() {
 
   const texts = data?.texts ?? [];
 
-  const topics = [...new Set(texts.map((t) => t.topic))].sort();
-
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>{t.reading.title}</h1>
-        <p className={styles.subtitle}>{t.reading.subtitle}</p>
-      </div>
-
+    <>
       {/* Level filter */}
       <div className={styles.levelTabs}>
         <button
@@ -81,7 +114,7 @@ export function ReadingPage() {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
