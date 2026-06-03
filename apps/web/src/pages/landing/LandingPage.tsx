@@ -818,7 +818,7 @@ export function LandingPage() {
                     <p className={styles.cefrDesc}>{lvl.desc}</p>
                     <span className={styles.cefrDuration}>{lvl.duration}</span>
                   </div>
-                  {i < 3 && <div className={styles.cefrArrow}>→</div>}
+                  {i < 5 && <div className={styles.cefrArrow}>→</div>}
                 </motion.div>
               ))}
             </motion.div>
