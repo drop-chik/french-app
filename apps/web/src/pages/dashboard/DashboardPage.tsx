@@ -97,118 +97,111 @@ export function DashboardPage() {
       {/* Other tasks — only the ones NOT already in the hero */}
       <OtherTasks plan={plan} heroTone={heroAction.tone} t={t} />
 
-      {/* Below-the-fold: progress, levels grid, promotion, XP/achievements, tools */}
-      <details className={styles.fold} open>
-        <summary className={styles.foldSummary}>{t.dashboard.levelProgress.replace('{level}', lp.level)}</summary>
+      {/* Level progress card */}
+      <div className={styles.progressCard}>
+        <div className={styles.progressHeader}>
+          <span className={styles.progressTitle}>
+            {t.dashboard.levelProgress.replace('{level}', lp.level)}
+          </span>
+          <span className={styles.progressPct}>{lp.percent}%</span>
+        </div>
+        <div className={styles.progressBar}>
+          <div className={styles.progressFill} style={{ width: `${lp.percent}%` }} />
+        </div>
+        <div className={styles.progressMeta}>
+          <span>{t.dashboard.masteredWords.replace('{n}', String(lp.learnedWords ?? lp.masteredWords))} / {lp.totalWords}</span>
+          <span>{t.dashboard.completedGrammar.replace('{n}', String(lp.completedGrammar))} / {lp.totalGrammar}</span>
+          <span>{t.dashboard.completedListening.replace('{n}', String(lp.completedListening))} / {lp.totalListening}</span>
+        </div>
+        <span className={styles.progressSub}>
+          {t.dashboard.masteredSub.replace('{n}', String(lp.masteredWords))}
+        </span>
+      </div>
 
-        <div className={styles.foldContent}>
-          {/* Level progress card */}
-          <div className={styles.progressCard}>
-            <div className={styles.progressHeader}>
-              <span className={styles.progressTitle}>
-                {t.dashboard.levelProgress.replace('{level}', lp.level)}
-              </span>
-              <span className={styles.progressPct}>{lp.percent}%</span>
-            </div>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: `${lp.percent}%` }} />
-            </div>
-            <div className={styles.progressMeta}>
-              <span>{t.dashboard.masteredWords.replace('{n}', String(lp.learnedWords ?? lp.masteredWords))} / {lp.totalWords}</span>
-              <span>{t.dashboard.completedGrammar.replace('{n}', String(lp.completedGrammar))} / {lp.totalGrammar}</span>
-              <span>{t.dashboard.completedListening.replace('{n}', String(lp.completedListening))} / {lp.totalListening}</span>
-            </div>
-            <span className={styles.progressSub}>
-              {t.dashboard.masteredSub.replace('{n}', String(lp.masteredWords))}
-            </span>
+      {/* All levels progress */}
+      {levelsData && levelsData.levels.length > 0 && (
+        <div className={styles.levelsCard}>
+          <p className={styles.levelsTitle}>{t.dashboard.allLevelsProgress}</p>
+          <div className={styles.levelsRow}>
+            {levelsData.levels.map((lv) => (
+              <LevelItem key={lv.level} lv={lv} />
+            ))}
           </div>
+        </div>
+      )}
 
-          {/* All levels progress */}
-          {levelsData && levelsData.levels.length > 0 && (
-            <div className={styles.levelsCard}>
-              <p className={styles.levelsTitle}>{t.dashboard.allLevelsProgress}</p>
-              <div className={styles.levelsRow}>
-                {levelsData.levels.map((lv) => (
-                  <LevelItem key={lv.level} lv={lv} />
+      {/* Promotion hint */}
+      {promotionData?.status && promotionData.status.next && promotionData.status.ratio >= 0.4 && (
+        <div className={styles.promotionHint}>
+          <p className={styles.promotionHintText}>
+            {(promotionData.status.eligibleForPromotion
+              ? t.profile.promotionHintReady
+              : t.profile.promotionHintProgress)
+              .replace('{current}', promotionData.status.current)
+              .replace('{next}', promotionData.status.next ?? '')
+              .replace('{pct}', Math.round(promotionData.status.ratio * 100).toString())
+              .replace('{mastered}', promotionData.status.masteredCount.toString())
+              .replace('{total}', promotionData.status.total.toString())
+              .replace('{remaining}', Math.max(0, Math.ceil(promotionData.status.total * 0.8) - promotionData.status.masteredCount).toString())}
+          </p>
+          <Link to="/level-test" className={styles.promotionHintBtn}>
+            {t.profile.promotionHintCta.replace('{next}', promotionData.status.next ?? '')}
+          </Link>
+        </div>
+      )}
+
+      {/* XP + recent achievements row */}
+      {(xpData || (recentAchievements && recentAchievements.items.length > 0)) && (
+        <div className={styles.achievementsRow}>
+          {xpData && (
+            <Link to="/achievements" className={styles.xpCard}>
+              <div className={styles.xpCardIcon}>
+                <Trophy size={22} />
+              </div>
+              <div className={styles.xpCardBody}>
+                <div className={styles.xpCardTopLine}>
+                  <span className={styles.xpCardLevelLabel}>{t.achievements.level}</span>
+                  <span className={styles.xpCardLevelValue}>{xpData.level}</span>
+                </div>
+                <div className={styles.xpCardBar}>
+                  <div className={styles.xpCardBarFill} style={{ width: `${xpData.pctToNext}%` }} />
+                </div>
+                <span className={styles.xpCardRange}>{xpData.xpAtLevel} / {xpData.xpForNextLevel} XP</span>
+              </div>
+              <ArrowRight size={16} className={styles.xpCardArrow} />
+            </Link>
+          )}
+
+          {recentAchievements && recentAchievements.items.length > 0 && (
+            <div className={styles.recentCard}>
+              <div className={styles.recentHeader}>
+                <span className={styles.recentTitle}>{t.dashboard.recentAchievements}</span>
+                <Link to="/achievements" className={styles.recentMore}>
+                  {t.dashboard.viewAll} <ArrowRight size={12} />
+                </Link>
+              </div>
+              <div className={styles.recentBadges}>
+                {recentAchievements.items.map((item) => (
+                  <AchievementBadge key={item.id} item={item} lang={lang} size="sm" />
                 ))}
               </div>
             </div>
           )}
-
-          {/* Promotion hint */}
-          {promotionData?.status && promotionData.status.next && promotionData.status.ratio >= 0.4 && (
-            <div className={styles.promotionHint}>
-              <p className={styles.promotionHintText}>
-                {(promotionData.status.eligibleForPromotion
-                  ? t.profile.promotionHintReady
-                  : t.profile.promotionHintProgress)
-                  .replace('{current}', promotionData.status.current)
-                  .replace('{next}', promotionData.status.next ?? '')
-                  .replace('{pct}', Math.round(promotionData.status.ratio * 100).toString())
-                  .replace('{mastered}', promotionData.status.masteredCount.toString())
-                  .replace('{total}', promotionData.status.total.toString())
-                  .replace('{remaining}', Math.max(0, Math.ceil(promotionData.status.total * 0.8) - promotionData.status.masteredCount).toString())}
-              </p>
-              <Link to="/level-test" className={styles.promotionHintBtn}>
-                {t.profile.promotionHintCta.replace('{next}', promotionData.status.next ?? '')}
-              </Link>
-            </div>
-          )}
-
-          {/* XP + recent achievements row */}
-          {(xpData || (recentAchievements && recentAchievements.items.length > 0)) && (
-            <div className={styles.achievementsRow}>
-              {xpData && (
-                <Link to="/achievements" className={styles.xpCard}>
-                  <div className={styles.xpCardIcon}>
-                    <Trophy size={22} />
-                  </div>
-                  <div className={styles.xpCardBody}>
-                    <div className={styles.xpCardTopLine}>
-                      <span className={styles.xpCardLevelLabel}>{t.achievements.level}</span>
-                      <span className={styles.xpCardLevelValue}>{xpData.level}</span>
-                    </div>
-                    <div className={styles.xpCardBar}>
-                      <div className={styles.xpCardBarFill} style={{ width: `${xpData.pctToNext}%` }} />
-                    </div>
-                    <span className={styles.xpCardRange}>{xpData.xpAtLevel} / {xpData.xpForNextLevel} XP</span>
-                  </div>
-                  <ArrowRight size={16} className={styles.xpCardArrow} />
-                </Link>
-              )}
-
-              {recentAchievements && recentAchievements.items.length > 0 && (
-                <div className={styles.recentCard}>
-                  <div className={styles.recentHeader}>
-                    <span className={styles.recentTitle}>{t.dashboard.recentAchievements}</span>
-                    <Link to="/achievements" className={styles.recentMore}>
-                      {t.dashboard.viewAll} <ArrowRight size={12} />
-                    </Link>
-                  </div>
-                  <div className={styles.recentBadges}>
-                    {recentAchievements.items.map((item) => (
-                      <AchievementBadge key={item.id} item={item} lang={lang} size="sm" />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Tools (quick links) */}
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>{t.dashboard.tools}</h2>
-            <div className={styles.quickGrid}>
-              <QuickLink to="/reading"      icon={<BookMarked size={20} />}    label={t.nav.reading} />
-              <QuickLink to="/writing"      icon={<PenLine size={20} />}       label={t.nav.writing} />
-              <QuickLink to="/drills"       icon={<Dumbbell size={20} />}      label={t.nav.drills} />
-              <QuickLink to="/conversation" icon={<MessageCircle size={20} />} label={t.nav.conversations} />
-              <QuickLink to="/dictionary"   icon={<Book size={20} />}          label={t.nav.dictionary} />
-              <QuickLink to="/explore"      icon={<Compass size={20} />}       label={t.explore.title} />
-            </div>
-          </section>
         </div>
-      </details>
+      )}
+
+      {/* Tools (quick links) */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t.dashboard.tools}</h2>
+        <div className={styles.quickGrid}>
+          <QuickLink to="/reading"      icon={<BookMarked size={20} />}    label={t.nav.reading} />
+          <QuickLink to="/writing"      icon={<PenLine size={20} />}       label={t.nav.writing} />
+          <QuickLink to="/drills"       icon={<Dumbbell size={20} />}      label={t.nav.drills} />
+          <QuickLink to="/conversation" icon={<MessageCircle size={20} />} label={t.nav.conversations} />
+          <QuickLink to="/dictionary"   icon={<Book size={20} />}          label={t.nav.dictionary} />
+          <QuickLink to="/explore"      icon={<Compass size={20} />}       label={t.explore.title} />
+        </div>
+      </section>
     </div>
   );
 }

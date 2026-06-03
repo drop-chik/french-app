@@ -111,8 +111,10 @@
 
 .badgeA1 { background: #dcfce7; color: #15803d; }
 .badgeA2 { background: #dbeafe; color: #1d4ed8; }
-.badgeB1 { background: #fef9c3; color: #a16207; }
-.badgeB2 { background: #fce7f3; color: #be185d; }
+.badgeB1 { background: #ffedd5; color: #c2410c; }
+.badgeB2 { background: #f3e8ff; color: #7e22ce; }
+.badgeC1 { background: #fce7f3; color: #be185d; }
+.badgeC2 { background: #fee2e2; color: #b91c1c; }
 
 .cardType {
   font-size: var(--text-xs);

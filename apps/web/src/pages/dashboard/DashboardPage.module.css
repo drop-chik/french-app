@@ -175,53 +175,6 @@
   flex-shrink: 0;
 }
 
-/* ── Below-the-fold disclosure ── */
-.fold {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.foldSummary {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: fit-content;
-}
-
-.foldSummary::-webkit-details-marker { display: none; }
-
-.foldSummary::after {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-  transition: transform 0.2s ease;
-  margin-bottom: 3px;
-}
-
-.fold[open] .foldSummary::after {
-  transform: rotate(-135deg);
-  margin-top: 3px;
-  margin-bottom: 0;
-}
-
-.foldContent {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
 /* Progress card */
 .progressCard {
   background: var(--color-bg-secondary);
