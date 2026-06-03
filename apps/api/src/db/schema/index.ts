@@ -545,6 +545,37 @@ export const readingProgress = pgTable(
   (t) => [unique().on(t.userId, t.textId)],
 );
 
+// Mock-test attempts for reading (DELF-style: 3 texts, ~45 min, 25 pts).
+// The DELF reading test trains the timer as much as it tests comprehension.
+// A mock pulls 3 active texts at the chosen level, hides correct answers
+// until finalize, and stores attempts in history. Server-authoritative
+// timing: started_at + time_limit_seconds is the deadline; the server
+// rejects late submissions and auto-finalizes overdue attempts.
+export const readingMockAttempts = pgTable(
+  'reading_mock_attempts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    level: languageLevelEnum('level').notNull(),
+    // Array<string> — text UUIDs in the order presented to the user.
+    textIds: jsonb('text_ids').notNull(),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    finalizedAt: timestamp('finalized_at'),
+    timeLimitSeconds: integer('time_limit_seconds').notNull().default(2700),
+    // Array<{textId, questionId, answer}> — the user's chosen option per
+    // question, accumulated as they progress. Stored as text (the option
+    // string itself) so we never need to re-fetch the question to interpret it.
+    answers: jsonb('answers').notNull().default([]),
+    score: integer('score'),
+    maxScore: integer('max_score'),
+  },
+  (t) => [
+    index('idx_reading_mock_user_finalized').on(t.userId, t.finalizedAt),
+  ],
+);
+
 // Aggregated writing progress per user
 export const writingProgress = pgTable('writing_progress', {
   id: uuid('id').primaryKey().defaultRandom(),
