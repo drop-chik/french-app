@@ -16,8 +16,7 @@ import styles from './LandingPage.module.css';
 import confetti from 'canvas-confetti';
 import { Preloader } from './Preloader';
 import { OutcomeSection } from './OutcomeSection';
-import { HonestAISection } from './HonestAISection';
-import { ResourcesSection } from './ResourcesSection';
+import { OnePlaceSection } from './OnePlaceSection';
 
 /* ── Variants ── */
 const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } };
@@ -972,11 +971,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ HONEST AI — trust through limits ═══ */}
-      <HonestAISection />
-
-      {/* ═══ EXTERNAL RESOURCES — confidence through curation ═══ */}
-      <ResourcesSection />
+      {/* ═══ ONE PLACE — anti-fragmentation pitch ═══ */}
+      <OnePlaceSection />
 
       {/* ═══ CTA BLOCK ═══ */}
       <section className={styles.ctaBlock}>

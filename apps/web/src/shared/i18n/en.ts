@@ -1385,37 +1385,33 @@ export const en: Translations = {
         },
       ],
     },
-    honestAI: {
-      eyebrow: 'What AI does and doesn\'t',
-      title: 'We don\'t sell AI magic. We use it where it actually works.',
-      lead: 'AI grades your essays fast, explains mistakes, and keeps a dialogue going. But in three areas it misses — we say so up front so you know when to trust it and when to bring a native speaker.',
-      good: {
-        title: 'Where AI is strong',
+    onePlace: {
+      eyebrow: 'One app instead of ten',
+      title: 'Stop juggling eight tabs',
+      lead: 'A typical French setup is five to eight services, each doing one thing. FrenchUp replaces them all — the tasks are the same, and the context is one.',
+      messy: {
+        title: 'Typical stack',
         items: [
-          'Instant essay scoring across 4 DELF-style rubrics',
-          'On-the-fly grammar and vocabulary corrections in chat',
-          'Endless conversation practice without the fear of mistakes',
+          { name: 'Anki', role: 'SRS flashcards for vocabulary' },
+          { name: 'Duolingo', role: 'Motivation and streak' },
+          { name: 'YouTube', role: 'Grammar explanations' },
+          { name: 'Reverso', role: 'Phrase translation in context' },
+          { name: 'Forvo', role: 'Pronunciation and audio' },
+          { name: 'italki', role: 'Conversation practice' },
         ],
       },
-      limits: {
-        title: 'Where AI misses',
+      clean: {
+        title: 'FrenchUp',
+        tagline: 'All of the above — in one app, one progress track',
         items: [
-          'Subtle cultural context and idioms',
-          'Intentional stylistic rule-breaking flagged as errors',
-          'Regional variants (Québécois, Belgian)',
+          'SRS vocabulary A1–C2, 17,000+ words on FLELex/Beacco',
+          'Full grammar theory + conjugations + drills',
+          'Listening exercises with synced transcripts',
+          'AI chat for endless conversation practice',
+          'Essay scoring across 4 DELF-style rubrics',
+          'One progress track from A1 all the way to C2',
         ],
       },
-    },
-    resources: {
-      eyebrow: 'Where else to learn',
-      title: 'FrenchUp is the core — these tools are supplements',
-      lead: 'We recommend these resources not because we\'re weaker — but because we\'re confident in what we do ourselves.',
-      items: [
-        { name: 'RFI · Journal en français facile', desc: 'A2–B1 radio at slow pace, transcript synced to audio', url: 'https://francaisfacile.rfi.fr/' },
-        { name: 'TV5MONDE · 7 jours sur la planète', desc: 'News with exercises for B2 and above', url: 'https://enseigner.tv5monde.com/' },
-        { name: 'WordReference', desc: 'The most accurate bilingual dictionary', url: 'https://www.wordreference.com/' },
-        { name: 'Reverso Context', desc: 'Phrase translation in context — real examples', url: 'https://context.reverso.net/' },
-      ],
     },
     proof: {
       levels: 'A1 → C2',
