@@ -1300,10 +1300,70 @@ export const en: Translations = {
   landing: {
     nav: { login: 'Log in', cta: 'Start free' },
     hero: {
-      title: 'French that finally sticks',
-      subtitle: 'SRS flashcards, AI conversations, grammar, conjugations, listening and reading — from your first phrases all the way to native-level mastery.',
+      title: 'French from A1 to C2 — no gaps',
+      subtitle: '17,000 words benchmarked against the FLELex/Beacco academic reference. Grammar, listening, reading, AI conversations — one route from your first "bonjour" to native-level mastery.',
       cta: 'Start free',
-      note: 'Free · No ads · 17,000+ words · A1–C2',
+      note: 'Free · No ads · verify email — full content unlocks',
+    },
+    outcomes: {
+      eyebrow: 'Why learn with FrenchUp',
+      title: 'One product, three clear goals',
+      lead: 'Pick what you\'re learning for. Content, modes, and drills adapt to your goal.',
+      cards: [
+        {
+          tag: 'Certification',
+          title: 'Pass DELF / DALF',
+          body: '110 grammar topics, reading mock tests, DELF-style essay rubrics, vocabulary keyed to every level.',
+          cta: 'Prepare for the exam',
+          to: '/level/B2',
+        },
+        {
+          tag: 'Immigration',
+          title: 'TCF Canada / NCLC',
+          body: 'Listening with varied accents, Canadian reading contexts, AI speaking practice — targeted Express Entry prep.',
+          cta: 'Canadian path',
+          to: '/level/B1',
+        },
+        {
+          tag: 'Career / studies',
+          title: 'Work and study abroad',
+          body: 'Professional vocabulary, formal-register essays and letters, work-context dialogues. From B2 through C2.',
+          cta: 'Advanced track',
+          to: '/level/C1',
+        },
+      ],
+    },
+    honestAI: {
+      eyebrow: 'What AI does and doesn\'t',
+      title: 'We don\'t sell AI magic. We use it where it actually works.',
+      lead: 'AI grades your essays fast, explains mistakes, and keeps a dialogue going. But in three areas it misses — we say so up front so you know when to trust it and when to bring a native speaker.',
+      good: {
+        title: 'Where AI is strong',
+        items: [
+          'Instant essay scoring across 4 DELF-style rubrics',
+          'On-the-fly grammar and vocabulary corrections in chat',
+          'Endless conversation practice without the fear of mistakes',
+        ],
+      },
+      limits: {
+        title: 'Where AI misses',
+        items: [
+          'Subtle cultural context and idioms',
+          'Intentional stylistic rule-breaking flagged as errors',
+          'Regional variants (Québécois, Belgian)',
+        ],
+      },
+    },
+    resources: {
+      eyebrow: 'Where else to learn',
+      title: 'FrenchUp is the core — these tools are supplements',
+      lead: 'We recommend these resources not because we\'re weaker — but because we\'re confident in what we do ourselves.',
+      items: [
+        { name: 'RFI · Journal en français facile', desc: 'A2–B1 radio at slow pace, transcript synced to audio', url: 'https://francaisfacile.rfi.fr/' },
+        { name: 'TV5MONDE · 7 jours sur la planète', desc: 'News with exercises for B2 and above', url: 'https://enseigner.tv5monde.com/' },
+        { name: 'WordReference', desc: 'The most accurate bilingual dictionary', url: 'https://www.wordreference.com/' },
+        { name: 'Reverso Context', desc: 'Phrase translation in context — real examples', url: 'https://context.reverso.net/' },
+      ],
     },
     proof: {
       levels: 'A1 → C2',

@@ -15,6 +15,9 @@ import foxIcon from './fox-icon.webp';
 import styles from './LandingPage.module.css';
 import confetti from 'canvas-confetti';
 import { Preloader } from './Preloader';
+import { OutcomeSection } from './OutcomeSection';
+import { HonestAISection } from './HonestAISection';
+import { ResourcesSection } from './ResourcesSection';
 
 /* ── Variants ── */
 const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } };
@@ -454,6 +457,9 @@ export function LandingPage() {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* ═══ OUTCOMES — SavoirX-style three-goals fork ═══ */}
+      <OutcomeSection />
 
       {/* ═══ MARQUEE ═══ */}
       <div className={styles.marqueeSection} aria-hidden>
@@ -965,6 +971,12 @@ export function LandingPage() {
           </AnimatedSection>
         </div>
       </section>
+
+      {/* ═══ HONEST AI — trust through limits ═══ */}
+      <HonestAISection />
+
+      {/* ═══ EXTERNAL RESOURCES — confidence through curation ═══ */}
+      <ResourcesSection />
 
       {/* ═══ CTA BLOCK ═══ */}
       <section className={styles.ctaBlock}>

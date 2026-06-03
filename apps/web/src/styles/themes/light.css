@@ -44,11 +44,14 @@
   --color-illustration: #111111;
   --filter-illustration: none;
 
-  /* Progress levels */
-  --color-level-a1: #6d28d9;
-  --color-level-a2: #1d4ed8;
-  --color-level-b1: #047857;
-  --color-level-b2: #b45309;
+  /* Progress levels — kept as identity (chips/progress bars only,
+     not as primary action colours; see savoirx-style guide). */
+  --color-level-a1: #22c55e;
+  --color-level-a2: #3b82f6;
+  --color-level-b1: #f97316;
+  --color-level-b2: #a855f7;
+  --color-level-c1: #ec4899;
+  --color-level-c2: #ef4444;
 
   /* Session button gradient */
   --color-btn-session-end: #2563eb;

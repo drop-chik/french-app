@@ -63,6 +63,47 @@
   --z-overlay: 100;
   --z-modal: 200;
   --z-toast: 300;
+
+  /* ─── Type scale primitives (SavoirX-style hierarchy via weight) ───
+     Use these for marketing / level / dashboard headings. The principle:
+     size jumps stay restrained, weight does the lifting. */
+  --type-hero-size: clamp(2rem, 5vw, 3rem);     /* 32 → 48 */
+  --type-hero-weight: 700;
+  --type-hero-leading: 1.1;
+  --type-hero-tracking: -0.02em;
+
+  --type-section-size: clamp(1.5rem, 3.5vw, 2rem); /* 24 → 32 */
+  --type-section-weight: 600;
+  --type-section-leading: 1.2;
+  --type-section-tracking: -0.01em;
+
+  --type-eyebrow-size: 0.8125rem;
+  --type-eyebrow-weight: 600;
+  --type-eyebrow-tracking: 0.08em;
+  --type-eyebrow-transform: uppercase;
+
+  --type-body-size: 1.0625rem;
+  --type-body-weight: 400;
+  --type-body-leading: 1.6;
+
+  --type-meta-size: 0.875rem;
+  --type-meta-weight: 500;
+  --type-meta-leading: 1.5;
+
+  /* ─── Marketing / linear-narrative spacing ───
+     Section rhythm: big breathing room between, tight inside. */
+  --section-pad-y: clamp(4rem, 9vw, 6rem);
+  --section-pad-x: clamp(1.25rem, 4vw, 3rem);
+  --section-max-w: 64rem;        /* 1024px — single-column narrative */
+  --section-narrow-w: 48rem;     /* 768px  — copy-dense blocks */
+  --section-stack-gap: clamp(0.75rem, 1.5vw, 1rem);
+
+  /* ─── Tier / status pill (badge style for "BEST VALUE", "NEW", etc.) ─ */
+  --pill-pad: 0.25rem 0.625rem;
+  --pill-radius: var(--radius-full);
+  --pill-size: 0.6875rem;
+  --pill-weight: 700;
+  --pill-tracking: 0.06em;
 }
 
 /* ─── Keyframes ─────────────────────────────────────────────────── */

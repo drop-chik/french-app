@@ -1,0 +1,46 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: var(--pill-pad);
+  border-radius: var(--pill-radius);
+  font-size: var(--pill-size);
+  font-weight: var(--pill-weight);
+  letter-spacing: var(--pill-tracking);
+  text-transform: uppercase;
+  line-height: 1;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.neutral {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.brand {
+  background: var(--color-brand-light);
+  color: var(--color-brand-text);
+  border-color: rgba(var(--color-brand-rgb) / 0.2);
+}
+
+.accent {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.success {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+/* CEFR level chips — share the same shape, vary only the colour.
+   Kept as the rainbow identity per design plan; used ONLY on chips
+   and progress bars, not on action buttons. */
+.levelA1 { background: rgba(34, 197, 94, 0.12); color: var(--color-level-a1); }
+.levelA2 { background: rgba(59, 130, 246, 0.12); color: var(--color-level-a2); }
+.levelB1 { background: rgba(249, 115, 22, 0.12); color: var(--color-level-b1); }
+.levelB2 { background: rgba(168, 85, 247, 0.12); color: var(--color-level-b2); }
+.levelC1 { background: rgba(236, 72, 153, 0.12); color: var(--color-level-c1); }
+.levelC2 { background: rgba(239, 68, 68, 0.12); color: var(--color-level-c2); }

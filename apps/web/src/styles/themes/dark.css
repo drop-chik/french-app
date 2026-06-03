@@ -48,11 +48,14 @@
   --color-illustration: #f5f5f5;
   --filter-illustration: invert(1);
 
-  /* Progress levels */
-  --color-level-a1: #a78bfa;
-  --color-level-a2: #60a5fa;
-  --color-level-b1: #34d399;
-  --color-level-b2: #fbbf24;
+  /* Progress levels — identity colours, matched across themes. Used on
+     chips/progress bars, not as primary action colours. */
+  --color-level-a1: #22c55e;
+  --color-level-a2: #3b82f6;
+  --color-level-b1: #f97316;
+  --color-level-b2: #a855f7;
+  --color-level-c1: #ec4899;
+  --color-level-c2: #ef4444;
 
   /* Session button gradient */
   --color-btn-session-end: #f59e0b;
