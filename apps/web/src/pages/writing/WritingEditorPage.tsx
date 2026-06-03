@@ -5,7 +5,10 @@ import { Lightbulb, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { writingApi, type WritingSubmission } from './api';
 import { useI18n } from '../../shared/i18n';
 import { useToast } from '../../shared/components/Toast';
+import { Pill } from '../../shared/components/ui';
 import styles from './WritingEditorPage.module.css';
+
+type CefrLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
 interface Props {
   slug: string;
@@ -145,9 +148,7 @@ export function WritingEditorPage({ slug }: Props) {
         <aside className={styles.sidebar}>
           <div className={styles.promptCard}>
             <div className={styles.promptHeader}>
-              <span className={`${styles.badge} ${styles[`badge${prompt.level}`]}`}>
-                {prompt.level}
-              </span>
+              <Pill tone="level" level={prompt.level as CefrLevel}>{prompt.level}</Pill>
               <span className={styles.promptType}>
                 {(tw.types as Record<string, string>)[prompt.writingType] ?? prompt.writingType}
               </span>

@@ -5,13 +5,16 @@ import { Clock, CheckCircle2, ChevronRight, Sparkles, X, Plus } from 'lucide-rea
 import { writingApi, type WritingSubmission, type WritingTypeId } from './api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
+import { Pill } from '../../shared/components/ui';
 import styles from './WritingPage.module.css';
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 const TYPES: WritingTypeId[] = ['postcard', 'message', 'letter_informal', 'letter_formal', 'email', 'description', 'blog_article', 'essay', 'narrative'];
 
+type CefrLevel = (typeof LEVELS)[number];
+
 function LevelBadge({ level }: { level: string }) {
-  return <span className={`${styles.badge} ${styles[`badge${level}`]}`}>{level}</span>;
+  return <Pill tone="level" level={level as CefrLevel}>{level}</Pill>;
 }
 
 // ── AI prompt generation modal ────────────────────────────────────────────────
