@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { writingApi, type WritingCorrection } from './api';
 import { useI18n } from '../../shared/i18n';
+import { RubricGrid } from './RubricGrid';
 import styles from './WritingResultPage.module.css';
 
 interface Props {
@@ -11,24 +12,6 @@ interface Props {
 }
 
 const SEVERITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
-
-function ScoreBar({ label, score, max }: { label: string; score: number; max: number }) {
-  const pct = max > 0 ? Math.round((score / max) * 100) : 0;
-  return (
-    <div className={styles.scoreRow}>
-      <div className={styles.scoreLabel}>
-        <span>{label}</span>
-        <span className={styles.scoreValue}>{score}/{max}</span>
-      </div>
-      <div className={styles.barTrack}>
-        <div
-          className={`${styles.barFill} ${pct >= 70 ? styles.barGood : pct >= 50 ? styles.barMed : styles.barLow}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
 
 function CorrectionCard({ c, labels }: { c: WritingCorrection; labels: { yourText: string; correction: string; explanation: string } }) {
   const [open, setOpen] = useState(false);
@@ -104,10 +87,6 @@ export function WritingResultPage({ id }: Props) {
     ? [...feedback.corrections].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 2) - (SEVERITY_ORDER[b.severity] ?? 2))
     : [];
 
-  const totalPct = feedback
-    ? Math.round((feedback.scores.total / feedback.scores.maxTotal) * 100)
-    : 0;
-
   return (
     <div className={styles.page}>
       <div className={styles.topBar}>
@@ -121,16 +100,6 @@ export function WritingResultPage({ id }: Props) {
           <h1 className={styles.title}>{tw.resultTitle}</h1>
           {prompt && <p className={styles.subtitle}>{getTitle()}</p>}
         </div>
-        {feedback && (
-          <div className={styles.totalScore}>
-            <span className={`${styles.totalPct} ${totalPct >= 70 ? styles.pctGood : totalPct >= 50 ? styles.pctMed : styles.pctLow}`}>
-              {totalPct}%
-            </span>
-            <span className={styles.totalRaw}>
-              {tw.scoreTotal.replace('{score}', String(feedback.scores.total)).replace('{max}', String(feedback.scores.maxTotal))}
-            </span>
-          </div>
-        )}
       </div>
 
       {!feedback && submission.status === 'submitted' && (
@@ -154,32 +123,16 @@ export function WritingResultPage({ id }: Props) {
 
       {feedback && (
         <div className={styles.content}>
-          {/* Scores */}
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>{tw.sectionScores}</h2>
-            <div className={styles.scoresGrid}>
-              <ScoreBar
-                label={tw.taskCompletion}
-                score={feedback.scores.taskCompletion}
-                max={feedback.scores.taskMax ?? Math.round(feedback.scores.maxTotal * 0.4)}
-              />
-              <ScoreBar
-                label={tw.coherence}
-                score={feedback.scores.coherence}
-                max={feedback.scores.cohMax ?? Math.round(feedback.scores.maxTotal * 0.3)}
-              />
-              <ScoreBar
-                label={tw.vocabulary}
-                score={feedback.scores.vocabulary}
-                max={feedback.scores.vocMax ?? Math.round(feedback.scores.maxTotal * 0.2)}
-              />
-              <ScoreBar
-                label={tw.grammar}
-                score={feedback.scores.grammar}
-                max={feedback.scores.gramMax ?? Math.round(feedback.scores.maxTotal * 0.1)}
-              />
-            </div>
-          </section>
+          <RubricGrid
+            scores={feedback.scores}
+            labels={{
+              task: tw.taskCompletion,
+              coherence: tw.coherence,
+              vocabulary: tw.vocabulary,
+              grammar: tw.grammar,
+              overallLabel: tw.overallLabel,
+            }}
+          />
 
           {/* Overall comment */}
           {feedback.overallComment && (

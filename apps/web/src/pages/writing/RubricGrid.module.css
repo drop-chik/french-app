@@ -1,0 +1,161 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Overall card — like a graded exam header */
+.overall {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.overall::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 6px;
+  background: var(--rubric-accent, var(--color-brand));
+}
+
+.overallGrade {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--rubric-accent, var(--color-brand));
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  min-width: 4rem;
+  text-align: center;
+}
+
+.overallText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.overallLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+}
+
+.overallScore {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Grid of 4 cells */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.cell {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  position: relative;
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  min-height: 1.5rem;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rubric-accent, var(--color-text-tertiary));
+}
+
+.label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  line-height: 1.2;
+}
+
+.grade {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--rubric-accent, var(--color-text-primary));
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.score {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--rubric-accent, var(--color-brand));
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+/* Tone variants — set the accent variable, all coloured elements follow */
+.good {
+  --rubric-accent: #22c55e;
+}
+
+.mid {
+  --rubric-accent: #f59e0b;
+}
+
+.low {
+  --rubric-accent: #ef4444;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .overall {
+    padding: var(--space-4) var(--space-5);
+    gap: var(--space-4);
+  }
+  .overallGrade {
+    font-size: 2.75rem;
+    min-width: 3rem;
+  }
+  .grade {
+    font-size: 1.875rem;
+  }
+}
