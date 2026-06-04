@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Lock } from 'lucide-react';
 import type { LevelProgressData } from '../../features/profile/api';
 import { useI18n } from '../../shared/i18n';
@@ -27,6 +27,7 @@ interface LevelTierGridProps {
  */
 export function LevelTierGrid({ levels, currentLevel }: LevelTierGridProps) {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const tn = t.vocabulary.tier as {
     title: string;
     lead: string;
@@ -102,14 +103,14 @@ export function LevelTierGrid({ levels, currentLevel }: LevelTierGridProps) {
             return <div key={lv} className={className} aria-disabled="true">{body}</div>;
           }
           return (
-            <Link
+            <button
               key={lv}
-              to="/vocabulary/level/$level"
-              params={{ level: lv }}
+              type="button"
               className={className}
+              onClick={() => navigate({ to: '/vocabulary/level/$level', params: { level: lv } })}
             >
               {body}
-            </Link>
+            </button>
           );
         })}
       </div>
