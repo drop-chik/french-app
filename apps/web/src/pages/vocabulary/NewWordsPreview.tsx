@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Check, X as XMark, ArrowRight, Volume2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Check, X as XMark, ArrowRight, Volume2, Loader2 } from 'lucide-react';
 import { wordsApi, type BrowseWord } from '../../features/words/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './NewWordsPreview.module.css';
@@ -42,6 +42,7 @@ export function NewWordsPreview({ level, onClose, onStartQuiz }: NewWordsPreview
 
   const [idx, setIdx] = useState(0);
   const [decisions, setDecisions] = useState<Record<string, 'know' | 'dont'>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['new-words-preview', level],
@@ -53,6 +54,24 @@ export function NewWordsPreview({ level, onClose, onStartQuiz }: NewWordsPreview
   const total = words.length;
   const current = words[idx];
 
+  // Auto-pronounce the French word every time a new card lands. Browser
+  // TTS needs at least one user-gesture per page session — the "click on
+  // 'New words' to open the overlay" already covers that, so subsequent
+  // utterances inside the overlay fire freely.
+  useEffect(() => {
+    if (current) speak(current.french);
+  }, [current?.id]);
+
+  // Cancel any in-flight speech when the overlay unmounts so it doesn't
+  // keep talking after the user closes it.
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   const next = () => setIdx((i) => Math.min(i + 1, total - 1));
   const prev = () => setIdx((i) => Math.max(i - 1, 0));
 
@@ -60,6 +79,34 @@ export function NewWordsPreview({ level, onClose, onStartQuiz }: NewWordsPreview
     if (!current) return;
     setDecisions((d) => ({ ...d, [current.id]: verdict }));
     if (idx < total - 1) next();
+  };
+
+  /**
+   * "Start practice" — before handing off to the SRS session, mark every
+   * word the user flagged as "I know this" with a perfect-recall grade=5
+   * answer. SM-2 then schedules them with a ~6 day interval, so they fall
+   * out of today's pool but stay in the long-term review queue. Words the
+   * user marked "Don't know" or didn't decide on stay untouched and will
+   * surface in the upcoming session as new.
+   */
+  const handleStartQuiz = async () => {
+    const knownIds = Object.entries(decisions)
+      .filter(([, v]) => v === 'know')
+      .map(([id]) => id);
+    if (knownIds.length === 0) {
+      onStartQuiz();
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await Promise.all(knownIds.map((id) => wordsApi.recordAnswer(id, 5)));
+    } catch {
+      // Best-effort: if some calls fail, still hand off to the session.
+      // The unmarked words will simply appear as 'new' again next time.
+    } finally {
+      setSubmitting(false);
+      onStartQuiz();
+    }
   };
 
   return (
@@ -75,10 +122,13 @@ export function NewWordsPreview({ level, onClose, onStartQuiz }: NewWordsPreview
         <button
           type="button"
           className={styles.startBtn}
-          onClick={onStartQuiz}
-          disabled={total === 0}
+          onClick={() => void handleStartQuiz()}
+          disabled={total === 0 || submitting}
         >
-          {tn.startQuiz} <ArrowRight size={14} />
+          {submitting
+            ? <Loader2 size={14} className={styles.spin} />
+            : <ArrowRight size={14} />}
+          {tn.startQuiz}
         </button>
       </header>
 

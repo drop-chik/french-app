@@ -77,6 +77,15 @@
 .startBtn:hover { opacity: 0.92; }
 .startBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ─── Stage ───────────────────────────────────────────────── */
 .stage {
   flex: 1;
