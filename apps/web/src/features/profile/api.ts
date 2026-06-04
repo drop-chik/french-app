@@ -73,6 +73,19 @@ export interface HomeData {
   };
 }
 
+export type ExamType = 'DELF' | 'DALF' | 'TCF' | 'TEF';
+
+export interface ExamPlan {
+  examDate: string;
+  examType: ExamType;
+  examTargetLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  daysRemaining: number;
+  wordsToLearn: number;
+  wordsPerDay: number;
+  grammarPerWeek: number;
+  status: 'plenty' | 'tight' | 'urgent';
+}
+
 export interface LevelProgressData {
   level: string;
   masteredWords: number;
@@ -130,6 +143,17 @@ export const profileApi = {
   getHomeData: () => apiRequest<HomeData>('/profile/home'),
 
   getLevelsProgress: () => apiRequest<{ levels: LevelProgressData[] }>('/profile/levels-progress'),
+
+  getExamPlan: () => apiRequest<{ plan: ExamPlan | null }>('/profile/exam-plan'),
+
+  setExamPlan: (data: { examDate: string; examType: ExamType; examTargetLevel: string }) =>
+    apiRequest<{ ok: boolean }>('/profile/exam-plan', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  clearExamPlan: () =>
+    apiRequest<{ ok: boolean }>('/profile/exam-plan', { method: 'DELETE' }),
 
   getPromotionStatus: () => apiRequest<{
     status: {

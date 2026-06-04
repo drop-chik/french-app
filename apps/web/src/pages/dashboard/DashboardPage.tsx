@@ -8,6 +8,7 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
 import { TodayHero, pickAction } from './TodayHero';
+import { ExamPlanCard } from './ExamPlanCard';
 import styles from './DashboardPage.module.css';
 
 export function DashboardPage() {
@@ -96,6 +97,9 @@ export function DashboardPage() {
 
       {/* Other tasks — only the ones NOT already in the hero */}
       <OtherTasks plan={plan} heroTone={heroAction.tone} t={t} />
+
+      {/* Exam-prep plan — countdown card OR a soft invite when no plan is set yet */}
+      <ExamPlanCard />
 
       {/* Level progress card */}
       <div className={styles.progressCard}>

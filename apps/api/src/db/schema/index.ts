@@ -77,6 +77,13 @@ export const users = pgTable('users', {
   failedLoginAttempts: integer('failed_login_attempts').default(0).notNull(),
   lastFailedLoginAt: timestamp('last_failed_login_at'),
   lockoutUntil: timestamp('lockout_until'),
+  // Optional exam-prep plan. When set, the dashboard surfaces a
+  // countdown card and the daily-pace recommendation adjusts so the
+  // user lands on the exam date with enough vocabulary mastered. Nullable
+  // because most users learn without a fixed deadline.
+  examDate: timestamp('exam_date'),
+  examType: varchar('exam_type', { length: 10 }), // DELF | DALF | TCF | TEF
+  examTargetLevel: languageLevelEnum('exam_target_level'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

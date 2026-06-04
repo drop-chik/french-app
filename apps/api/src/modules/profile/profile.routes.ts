@@ -14,6 +14,7 @@ import {
   deleteUserAccount,
 } from './profile.service.js';
 import { getCurrentLevelMastery } from './promotion.service.js';
+import { getExamPlan, setExamPlan, clearExamPlan } from './exam-plan.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
 import { logAuditEvent, AuditAction } from '../../lib/audit.js';
 
@@ -274,6 +275,87 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const levels = await getLevelsProgress(fastify.db, request.user.userId);
     reply.send({ levels });
+  });
+
+  // ─── Exam-prep plan ─────────────────────────────────────────────
+  // Tracks a user-set exam date + target level (DELF/DALF/TCF/TEF)
+  // and computes the live pace recommendation (words/day, grammar/week)
+  // so the dashboard countdown card can be both motivational and useful.
+
+  // GET /profile/exam-plan — returns the current plan + live computed
+  // pace, or 200 { plan: null } if the user hasn't set one yet.
+  fastify.get('/exam-plan', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Active exam-prep plan with live days-remaining + pace',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const userId = request.user.userId;
+    const levels = await getLevelsProgress(fastify.db, userId);
+    // Helper closure: look up learned-words at any CEFR level.
+    const findLearned = (level: string): number => {
+      const row = levels.find((l) => l.level === level);
+      return row?.learnedWords ?? 0;
+    };
+    // We need to peek at the user's target level first to read the right
+    // learned-count. The service handles the "no plan" case internally.
+    const peek = await fastify.db.query.users.findFirst({
+      where: (u, { eq }) => eq(u.id, userId),
+      columns: { examTargetLevel: true },
+    });
+    const targetLevel = peek?.examTargetLevel ?? null;
+    const learned = targetLevel ? findLearned(targetLevel) : 0;
+    const plan = await getExamPlan(fastify.db, userId, learned);
+    reply.send({ plan });
+  });
+
+  // POST /profile/exam-plan — set or replace the exam plan.
+  fastify.post('/exam-plan', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Set exam-prep plan (date, type, target CEFR level)',
+      security: authorizedSecurity,
+      body: {
+        type: 'object',
+        required: ['examDate', 'examType', 'examTargetLevel'],
+        properties: {
+          examDate:        { type: 'string', format: 'date-time' },
+          examType:        { type: 'string', enum: ['DELF', 'DALF', 'TCF', 'TEF'] },
+          examTargetLevel: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const body = request.body as {
+      examDate: string;
+      examType: 'DELF' | 'DALF' | 'TCF' | 'TEF';
+      examTargetLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+    };
+    try {
+      await setExamPlan(fastify.db, request.user.userId, body);
+      reply.send({ ok: true });
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (msg === 'INVALID_TYPE' || msg === 'INVALID_DATE') return reply.status(400).send({ error: msg });
+      if (msg === 'PAST_DATE' || msg === 'TOO_FAR')           return reply.status(422).send({ error: msg });
+      throw err;
+    }
+  });
+
+  // DELETE /profile/exam-plan — remove the plan (e.g. user took the exam).
+  fastify.delete('/exam-plan', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Clear exam-prep plan',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    await clearExamPlan(fastify.db, request.user.userId);
+    reply.send({ ok: true });
   });
 
   // GET /profile/promotion-status — cheap query for the dashboard hint
