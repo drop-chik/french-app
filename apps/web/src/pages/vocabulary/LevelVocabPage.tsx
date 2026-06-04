@@ -29,7 +29,7 @@ import styles from './LevelVocabPage.module.css';
  * lives below — added in stage 2b.
  */
 export function LevelVocabPage() {
-  const { level: rawLevel } = useParams({ from: '/_auth/vocabulary/level/$level' });
+  const { level: rawLevel } = useParams({ from: '/_auth/vocabulary_/level/$level' });
   const navigate = useNavigate();
   const { t, lang } = useI18n();
   const userLevel = useAuthStore((s) => s.user?.level);

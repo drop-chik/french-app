@@ -6,6 +6,6 @@ const LevelVocabPage = lazyPage(
   'LevelVocabPage',
 );
 
-export const Route = createFileRoute('/_auth/vocabulary/level/$level')({
+export const Route = createFileRoute('/_auth/vocabulary_/level/$level')({
   component: LevelVocabPage,
 });

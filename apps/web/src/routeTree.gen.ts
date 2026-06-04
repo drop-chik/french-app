@@ -43,7 +43,7 @@ import { Route as AuthListeningIdRouteImport } from './app/routes/_auth.listenin
 import { Route as AuthGrammarSlugRouteImport } from './app/routes/_auth.grammar.$slug'
 import { Route as AuthDrillsSlugRouteImport } from './app/routes/_auth.drills.$slug'
 import { Route as AuthWritingResultIdRouteImport } from './app/routes/_auth.writing.result.$id'
-import { Route as AuthVocabularyLevelLevelRouteImport } from './app/routes/_auth.vocabulary.level.$level'
+import { Route as AuthVocabularyLevelLevelRouteImport } from './app/routes/_auth.vocabulary_.level.$level'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -216,9 +216,9 @@ const AuthWritingResultIdRoute = AuthWritingResultIdRouteImport.update({
 } as any)
 const AuthVocabularyLevelLevelRoute =
   AuthVocabularyLevelLevelRouteImport.update({
-    id: '/level/$level',
-    path: '/level/$level',
-    getParentRoute: () => AuthVocabularyRoute,
+    id: '/vocabulary_/level/$level',
+    path: '/vocabulary/level/$level',
+    getParentRoute: () => AuthRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -245,7 +245,7 @@ export interface FileRoutesByFullPath {
   '/placement': typeof AuthPlacementRoute
   '/profile': typeof AuthProfileRoute
   '/reading': typeof AuthReadingRouteWithChildren
-  '/vocabulary': typeof AuthVocabularyRouteWithChildren
+  '/vocabulary': typeof AuthVocabularyRoute
   '/writing': typeof AuthWritingRouteWithChildren
   '/level/$level': typeof LevelLevelRoute
   '/drills/$slug': typeof AuthDrillsSlugRoute
@@ -281,7 +281,7 @@ export interface FileRoutesByTo {
   '/placement': typeof AuthPlacementRoute
   '/profile': typeof AuthProfileRoute
   '/reading': typeof AuthReadingRouteWithChildren
-  '/vocabulary': typeof AuthVocabularyRouteWithChildren
+  '/vocabulary': typeof AuthVocabularyRoute
   '/writing': typeof AuthWritingRouteWithChildren
   '/level/$level': typeof LevelLevelRoute
   '/drills/$slug': typeof AuthDrillsSlugRoute
@@ -319,7 +319,7 @@ export interface FileRoutesById {
   '/_auth/placement': typeof AuthPlacementRoute
   '/_auth/profile': typeof AuthProfileRoute
   '/_auth/reading': typeof AuthReadingRouteWithChildren
-  '/_auth/vocabulary': typeof AuthVocabularyRouteWithChildren
+  '/_auth/vocabulary': typeof AuthVocabularyRoute
   '/_auth/writing': typeof AuthWritingRouteWithChildren
   '/level/$level': typeof LevelLevelRoute
   '/_auth/drills/$slug': typeof AuthDrillsSlugRoute
@@ -328,7 +328,7 @@ export interface FileRoutesById {
   '/_auth/reading/$slug': typeof AuthReadingSlugRoute
   '/_auth/u/$tag': typeof AuthUTagRoute
   '/_auth/writing/$slug': typeof AuthWritingSlugRoute
-  '/_auth/vocabulary/level/$level': typeof AuthVocabularyLevelLevelRoute
+  '/_auth/vocabulary_/level/$level': typeof AuthVocabularyLevelLevelRoute
   '/_auth/writing/result/$id': typeof AuthWritingResultIdRoute
 }
 export interface FileRouteTypes {
@@ -439,7 +439,7 @@ export interface FileRouteTypes {
     | '/_auth/reading/$slug'
     | '/_auth/u/$tag'
     | '/_auth/writing/$slug'
-    | '/_auth/vocabulary/level/$level'
+    | '/_auth/vocabulary_/level/$level'
     | '/_auth/writing/result/$id'
   fileRoutesById: FileRoutesById
 }
@@ -695,12 +695,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthWritingResultIdRouteImport
       parentRoute: typeof AuthWritingRoute
     }
-    '/_auth/vocabulary/level/$level': {
-      id: '/_auth/vocabulary/level/$level'
-      path: '/level/$level'
+    '/_auth/vocabulary_/level/$level': {
+      id: '/_auth/vocabulary_/level/$level'
+      path: '/vocabulary/level/$level'
       fullPath: '/vocabulary/level/$level'
       preLoaderRoute: typeof AuthVocabularyLevelLevelRouteImport
-      parentRoute: typeof AuthVocabularyRoute
+      parentRoute: typeof AuthRoute
     }
   }
 }
@@ -753,18 +753,6 @@ const AuthReadingRouteWithChildren = AuthReadingRoute._addFileChildren(
   AuthReadingRouteChildren,
 )
 
-interface AuthVocabularyRouteChildren {
-  AuthVocabularyLevelLevelRoute: typeof AuthVocabularyLevelLevelRoute
-}
-
-const AuthVocabularyRouteChildren: AuthVocabularyRouteChildren = {
-  AuthVocabularyLevelLevelRoute: AuthVocabularyLevelLevelRoute,
-}
-
-const AuthVocabularyRouteWithChildren = AuthVocabularyRoute._addFileChildren(
-  AuthVocabularyRouteChildren,
-)
-
 interface AuthWritingRouteChildren {
   AuthWritingSlugRoute: typeof AuthWritingSlugRoute
   AuthWritingResultIdRoute: typeof AuthWritingResultIdRoute
@@ -796,9 +784,10 @@ interface AuthRouteChildren {
   AuthPlacementRoute: typeof AuthPlacementRoute
   AuthProfileRoute: typeof AuthProfileRoute
   AuthReadingRoute: typeof AuthReadingRouteWithChildren
-  AuthVocabularyRoute: typeof AuthVocabularyRouteWithChildren
+  AuthVocabularyRoute: typeof AuthVocabularyRoute
   AuthWritingRoute: typeof AuthWritingRouteWithChildren
   AuthUTagRoute: typeof AuthUTagRoute
+  AuthVocabularyLevelLevelRoute: typeof AuthVocabularyLevelLevelRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -818,9 +807,10 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthPlacementRoute: AuthPlacementRoute,
   AuthProfileRoute: AuthProfileRoute,
   AuthReadingRoute: AuthReadingRouteWithChildren,
-  AuthVocabularyRoute: AuthVocabularyRouteWithChildren,
+  AuthVocabularyRoute: AuthVocabularyRoute,
   AuthWritingRoute: AuthWritingRouteWithChildren,
   AuthUTagRoute: AuthUTagRoute,
+  AuthVocabularyLevelLevelRoute: AuthVocabularyLevelLevelRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
