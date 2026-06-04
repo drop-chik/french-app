@@ -26,6 +26,14 @@ export interface LevelData {
   /** Expected time to reach this level from scratch */
   durationRu: string;
   durationEn: string;
+  /**
+   * Vocabulary mastery target — how many words you actually need to learn
+   * at this level to count as fluent. The DB has more (extra enrichment
+   * stays available), but the marketing card and progress bars are keyed
+   * off this number so learners aren't faced with a 1859-word denominator.
+   * Mirrors the backend `LEVEL_TARGETS` constant; keep in sync.
+   */
+  targetWords: number;
   /** Live content counts at this level */
   content: {
     words: number;
@@ -73,6 +81,7 @@ export const LEVEL_DATA: Record<Level, LevelData> = {
     outcomeEn: 'From first phrases to simple conversations',
     durationRu: 'около 2 месяцев',
     durationEn: 'about 2 months',
+    targetWords: 1000,
     content: { words: 1859, grammar: 27, drills: 11, listening: 13, reading: 8, writing: 8 },
     canDoRu: [
       'Представиться и спросить базовое о собеседнике',
@@ -107,6 +116,7 @@ export const LEVEL_DATA: Record<Level, LevelData> = {
     outcomeEn: 'From everyday topics to past stories and future plans',
     durationRu: 'около 3 месяцев',
     durationEn: 'about 3 months',
+    targetWords: 1500,
     content: { words: 1819, grammar: 18, drills: 14, listening: 10, reading: 8, writing: 8 },
     canDoRu: [
       'Рассказывать о прошлом — passé composé и imparfait',
@@ -141,6 +151,7 @@ export const LEVEL_DATA: Record<Level, LevelData> = {
     outcomeEn: 'From work and study talks to retelling and arguing',
     durationRu: 'около 4 месяцев',
     durationEn: 'about 4 months',
+    targetWords: 2500,
     content: { words: 4699, grammar: 20, drills: 14, listening: 12, reading: 8, writing: 8 },
     canDoRu: [
       'Понимать новости, подкасты и фильмы на типичные темы',
@@ -175,6 +186,7 @@ export const LEVEL_DATA: Record<Level, LevelData> = {
     outcomeEn: 'From fluent speech to complex argumentation in any topic',
     durationRu: 'около 5 месяцев',
     durationEn: 'about 5 months',
+    targetWords: 4500,
     content: { words: 5923, grammar: 16, drills: 7, listening: 8, reading: 8, writing: 9 },
     canDoRu: [
       'Свободно общаться с носителями без напряжения для обеих сторон',
@@ -209,6 +221,7 @@ export const LEVEL_DATA: Record<Level, LevelData> = {
     outcomeEn: 'From advanced speech to subtle literary and academic style',
     durationRu: 'около 6 месяцев',
     durationEn: 'about 6 months',
+    targetWords: 1800,
     content: { words: 2137, grammar: 19, drills: 6, listening: 10, reading: 8, writing: 9 },
     canDoRu: [
       'Свободно использовать французский в учёбе и работе',
@@ -243,6 +256,7 @@ export const LEVEL_DATA: Record<Level, LevelData> = {
     outcomeEn: 'From advanced fluency to mastery on par with a literary editor',
     durationRu: 'около 7 месяцев',
     durationEn: 'about 7 months',
+    targetWords: 2400,
     content: { words: 2684, grammar: 10, drills: 5, listening: 8, reading: 8, writing: 7 },
     canDoRu: [
       'Понимать любой текст и устную речь без затруднений',

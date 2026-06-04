@@ -61,8 +61,8 @@ export function LevelPage() {
   const grammarHl = isRu ? data.grammarHighlightsRu : data.grammarHighlightsEn;
 
   const myProgress = levelsProgress?.levels?.find((l) => l.level === level);
-  const ratio = myProgress && myProgress.totalWords > 0
-    ? Math.round((myProgress.learnedWords / myProgress.totalWords) * 100)
+  const ratio = myProgress && myProgress.targetWords > 0
+    ? Math.min(Math.round((myProgress.learnedWords / myProgress.targetWords) * 100), 100)
     : null;
 
   const examSpec = data.examSpec;
@@ -72,7 +72,7 @@ export function LevelPage() {
   const examFocus    = isRu ? examSpec.focusRu    : examSpec.focusEn;
 
   const skills = [
-    { icon: <BookOpen size={20} />, label: t.levelPage.skills.vocab, count: data.content.words, suffix: t.levelPage.skills.wordsSuffix },
+    { icon: <BookOpen size={20} />, label: t.levelPage.skills.vocab, count: data.targetWords, suffix: t.levelPage.skills.wordsSuffix },
     { icon: <GraduationCap size={20} />, label: t.levelPage.skills.grammar, count: data.content.grammar, suffix: t.levelPage.skills.topicsSuffix },
     { icon: <Dumbbell size={20} />, label: t.levelPage.skills.drills, count: data.content.drills, suffix: t.levelPage.skills.setsSuffix },
     { icon: <Headphones size={20} />, label: t.levelPage.skills.listening, count: data.content.listening, suffix: t.levelPage.skills.exercisesSuffix },
@@ -94,7 +94,7 @@ export function LevelPage() {
               <div className={styles.myProgressFill} style={{ width: `${ratio}%` }} />
             </div>
             <p className={styles.myProgressText}>
-              {t.levelPage.myProgress.replace('{pct}', String(ratio)).replace('{learned}', String(myProgress!.learnedWords)).replace('{total}', String(myProgress!.totalWords))}
+              {t.levelPage.myProgress.replace('{pct}', String(ratio)).replace('{learned}', String(myProgress!.learnedWords)).replace('{total}', String(myProgress!.targetWords))}
             </p>
           </div>
         )}

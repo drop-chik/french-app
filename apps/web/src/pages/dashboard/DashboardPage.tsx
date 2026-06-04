@@ -109,7 +109,7 @@ export function DashboardPage() {
           <div className={styles.progressFill} style={{ width: `${lp.percent}%` }} />
         </div>
         <div className={styles.progressMeta}>
-          <span>{t.dashboard.masteredWords.replace('{n}', String(lp.learnedWords ?? lp.masteredWords))} / {lp.totalWords}</span>
+          <span>{t.dashboard.masteredWords.replace('{n}', String(lp.learnedWords ?? lp.masteredWords))} / {lp.targetWords}</span>
           <span>{t.dashboard.completedGrammar.replace('{n}', String(lp.completedGrammar))} / {lp.totalGrammar}</span>
           <span>{t.dashboard.completedListening.replace('{n}', String(lp.completedListening))} / {lp.totalListening}</span>
         </div>
@@ -313,7 +313,7 @@ function LevelItem({ lv }: { lv: LevelProgressData }) {
       <div className={styles.levelBar}>
         <div className={styles.levelFill} style={{ width: `${lv.percent}%`, background: color }} />
       </div>
-      <span className={styles.levelMeta}>{lv.learnedWords} / {lv.totalWords}</span>
+      <span className={styles.levelMeta}>{lv.learnedWords} / {lv.targetWords}</span>
     </div>
   );
 }

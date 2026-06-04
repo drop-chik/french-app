@@ -20,6 +20,8 @@
  * To activate in production: create a PostHog project → put the
  * "Project API Key" into VITE_POSTHOG_KEY on Vercel → redeploy.
  */
+import { hasConsent } from './consent';
+
 type PostHog = {
   init: (key: string, opts: Record<string, unknown>) => void;
   capture: (eventName: string, props?: Record<string, unknown>) => void;
@@ -34,6 +36,8 @@ let initializing: Promise<void> | null = null;
 async function ensureInit(): Promise<void> {
   if (initialized) return;
   if (initializing) return initializing;
+  // Gate on cookie consent — without explicit opt-in we never load the SDK.
+  if (!hasConsent()) return;
   const key = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
   if (!key) {
     initialized = true;

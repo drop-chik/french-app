@@ -7,6 +7,7 @@ interface LevelData {
   masteredWords: number;
   learnedWords?: number;
   totalWords: number;
+  targetWords?: number;
   percent: number;
 }
 
@@ -36,8 +37,10 @@ export function LevelJourney(props: LevelJourneyProps) {
           const percent = data?.percent ?? 0;
           // Fast metric for the visible "X/Y" — falls back to mastered for
           // legacy API responses that don't yet carry learnedWords.
+          // The denominator is the mastery target, not the raw DB count,
+          // so the bar isn't dragged by enrichment-word inventory.
           const learned = data?.learnedWords ?? data?.masteredWords ?? 0;
-          const total = data?.totalWords ?? 0;
+          const total = data?.targetWords ?? data?.totalWords ?? 0;
           const isCurrent = lvl === props.currentLevel;
 
           // Status logic — previous levels are always at least "available"

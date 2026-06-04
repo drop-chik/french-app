@@ -1343,6 +1343,14 @@ export const en: Translations = {
     cancel: 'Cancel',
     delete: 'Delete',
   },
+  cookie: {
+    label: 'Cookies',
+    title: 'We use cookies',
+    text: 'Helps us see where the site breaks and which features matter. Your call.',
+    accept: 'Accept',
+    reject: 'Reject',
+    dismiss: 'Close',
+  },
   levelPage: {
     notFound: 'Level not found',
     backHome: 'Back home',

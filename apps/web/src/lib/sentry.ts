@@ -7,12 +7,16 @@
  * events/month) is plenty for the current user base.
  */
 import * as Sentry from '@sentry/react';
+import { hasConsent, onConsentChange } from './consent';
 
 const DSN = import.meta.env['VITE_SENTRY_DSN'] as string | undefined;
 const ENV = import.meta.env['MODE'] ?? 'development';
 
-export function initSentry(): void {
-  if (!DSN) return;
+let initialized = false;
+
+function doInit(): void {
+  if (initialized || !DSN) return;
+  initialized = true;
   Sentry.init({
     dsn: DSN,
     environment: ENV,
@@ -37,11 +41,30 @@ export function initSentry(): void {
 }
 
 /**
+ * Boot Sentry — gated on cookie consent. If the user hasn't accepted yet,
+ * subscribe so we init the moment they click Accept (no reload needed).
+ */
+export function initSentry(): void {
+  if (!DSN) return;
+  if (hasConsent()) {
+    doInit();
+    return;
+  }
+  // Wait for consent. Subscriber detaches itself once init fires.
+  const unsubscribe = onConsentChange((value) => {
+    if (value === 'accepted') {
+      doInit();
+      unsubscribe();
+    }
+  });
+}
+
+/**
  * Attach an authenticated user to subsequent Sentry events so we can
  * correlate errors with specific accounts. Drop on logout.
  */
 export function setSentryUser(user: { id: string; email: string } | null): void {
-  if (!DSN) return;
+  if (!initialized) return;
   if (user) {
     Sentry.setUser({ id: user.id, email: user.email });
   } else {
@@ -54,7 +77,7 @@ export function setSentryUser(user: { id: string; email: string } | null): void 
  * showed the user a friendly message but still want telemetry).
  */
 export function reportError(err: unknown, context?: Record<string, unknown>): void {
-  if (!DSN) {
+  if (!initialized) {
     console.error('[reportError]', err, context);
     return;
   }

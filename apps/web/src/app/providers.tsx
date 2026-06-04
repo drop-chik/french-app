@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider, MutationCache } from '@tanstack/react
 import { useMemo, type ReactNode } from 'react';
 import { ToastProvider, useToast } from '../shared/components/Toast';
 import { PWAUpdater } from '../shared/components/PWAUpdater';
+import { CookieConsent } from '../shared/components/CookieConsent';
 import { useI18n } from '../shared/i18n';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -15,6 +16,10 @@ export function Providers({ children }: { children: ReactNode }) {
           a fixed-position element only when a new SW is waiting. Place it
           outside the route tree so it survives navigations. */}
       <PWAUpdater />
+      {/* GDPR/CNIL cookie consent — gates Sentry + PostHog SDKs. Auto-hides
+          after the user makes a choice. Strictly necessary cookies (auth,
+          theme, language) are not gated. */}
+      <CookieConsent />
     </ToastProvider>
   );
 }

@@ -1183,6 +1183,14 @@ export const ru: DeepRecord = {
     cancel: 'Отмена',
     delete: 'Удалить',
   },
+  cookie: {
+    label: 'Cookies',
+    title: 'Мы используем cookies',
+    text: 'Помогают понять, где сайт ломается и какие функции нужны. Решаешь ты.',
+    accept: 'Принять',
+    reject: 'Отклонить',
+    dismiss: 'Закрыть',
+  },
   levelPage: {
     notFound: 'Уровень не найден',
     backHome: 'На главную',

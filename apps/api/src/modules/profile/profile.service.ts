@@ -9,6 +9,7 @@ import {
   follows, activityEvents, activityReactions,
 } from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
+import { targetForLevel } from '../../lib/level-targets.js';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -482,9 +483,13 @@ export async function getHomeData(db: DB, userId: string, level: LanguageLevel, 
     _getListeningData(db, userId, level),
   ]);
 
-  // Level-progress bar uses the fast "Выучено" metric so the bar moves on
-  // Day 1 instead of waiting 3 weeks for the strict SRS mastered status.
-  const wordPct = wordStats.totalWords > 0 ? wordStats.learnedWords / wordStats.totalWords : 0;
+  // Level-progress bar uses the fast "Выучено" metric and is scaled against
+  // the mastery target, not the raw DB total. With ~1859 A1 words, dividing
+  // by total gave learners glacial bar movement; the target (1000 for A1)
+  // is the real fluency threshold — extra words remain as enrichment but
+  // don't gate progression.
+  const wordTarget = targetForLevel(level);
+  const wordPct = wordTarget > 0 ? Math.min(wordStats.learnedWords / wordTarget, 1) : 0;
   const grammarPct = grammarData.total > 0 ? grammarData.completed / grammarData.total : 0;
   const listeningPct = listeningData.total > 0 ? listeningData.completed / listeningData.total : 0;
   const levelPercent = Math.round((wordPct * 0.5 + grammarPct * 0.3 + listeningPct * 0.2) * 100);
@@ -498,6 +503,7 @@ export async function getHomeData(db: DB, userId: string, level: LanguageLevel, 
       masteredWords: wordStats.masteredWords,
       learnedWords: wordStats.learnedWords,
       totalWords: wordStats.totalWords,
+      targetWords: wordTarget,
       completedGrammar: grammarData.completed,
       totalGrammar: grammarData.total,
       completedListening: listeningData.completed,
@@ -677,14 +683,17 @@ export async function getLevelsProgress(db: DB, userId: string) {
     const total = totalMap[level] ?? 0;
     const m = masteredMap[level] ?? 0;
     const l = learnedMap[level] ?? 0;
+    const target = targetForLevel(level);
     return {
       level,
       masteredWords: m,
       learnedWords: l,
       totalWords: total,
-      // Percent is keyed off "learned" (the fast metric) so the bar reflects
-      // visible progress; "освоено K" can be shown separately.
-      percent: total > 0 ? Math.round((l / total) * 100) : 0,
+      targetWords: target,
+      // Percent is keyed off "learned" (the fast metric) against the mastery
+      // target, not the raw total. Extra words past the target stay in the
+      // pool as enrichment but don't slow the bar.
+      percent: target > 0 ? Math.min(Math.round((l / target) * 100), 100) : 0,
     };
   });
 }

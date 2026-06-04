@@ -58,6 +58,8 @@ export interface HomeData {
     masteredWords: number;
     learnedWords: number;
     totalWords: number;
+    /** Mastery threshold to reach 100% on the progress bar. Extra words past this stay in the pool but don't gate progression. */
+    targetWords: number;
     completedGrammar: number;
     totalGrammar: number;
     completedListening: number;
@@ -76,6 +78,7 @@ export interface LevelProgressData {
   masteredWords: number;
   learnedWords: number;
   totalWords: number;
+  targetWords: number;
   percent: number;
 }
 
