@@ -53,15 +53,19 @@
   transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
 
+a.card,
 button.card {
   cursor: pointer;
 }
 
+a.card:hover,
 button.card:hover {
   transform: translateY(-2px);
   border-color: var(--tier-accent);
+  text-decoration: none;
 }
 
+a.card:focus-visible,
 button.card:focus-visible {
   outline: 2px solid var(--tier-accent);
   outline-offset: 2px;
@@ -217,6 +221,7 @@ button.card:focus-visible {
   transition: transform var(--transition-fast), color var(--transition-fast);
 }
 
+a.card:hover .cardArrow,
 button.card:hover .cardArrow {
   color: var(--tier-accent);
   transform: translateX(2px);

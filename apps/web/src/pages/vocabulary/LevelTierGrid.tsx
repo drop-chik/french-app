@@ -1,4 +1,3 @@
-import { useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Lock } from 'lucide-react';
 import type { LevelProgressData } from '../../features/profile/api';
 import { useI18n } from '../../shared/i18n';
@@ -27,7 +26,6 @@ interface LevelTierGridProps {
  */
 export function LevelTierGrid({ levels, currentLevel }: LevelTierGridProps) {
   const { t } = useI18n();
-  const navigate = useNavigate();
   const tn = t.vocabulary.tier as {
     title: string;
     lead: string;
@@ -102,15 +100,13 @@ export function LevelTierGrid({ levels, currentLevel }: LevelTierGridProps) {
           if (isLocked) {
             return <div key={lv} className={className} aria-disabled="true">{body}</div>;
           }
+          // Native anchor — survives stale service workers + missing
+          // routeTree entries on the old cached bundle. Browser-level
+          // navigation reloads onto the new build either way.
           return (
-            <button
-              key={lv}
-              type="button"
-              className={className}
-              onClick={() => navigate({ to: '/vocabulary/level/$level', params: { level: lv } })}
-            >
+            <a key={lv} href={`/vocabulary/level/${lv}`} className={className}>
               {body}
-            </button>
+            </a>
           );
         })}
       </div>
