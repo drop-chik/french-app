@@ -61,8 +61,10 @@ export interface WordCategory {
 }
 
 export const wordsApi = {
-  getSession: () =>
-    apiRequest<{ words: WordData[]; total: number }>(`/words/session?lang=${getLang()}`),
+  getSession: (level?: string) =>
+    apiRequest<{ words: WordData[]; total: number }>(
+      `/words/session?lang=${getLang()}${level ? `&level=${encodeURIComponent(level)}` : ''}`,
+    ),
 
   // Words tagged with a specific grammar topic. Powers the
   // "practice this topic's vocabulary" CTA on GrammarTopicPage.

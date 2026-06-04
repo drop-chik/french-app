@@ -57,7 +57,16 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
       });
       if (!user) return reply.status(404).send({ error: 'User not found' });
 
-      const session = await getStudySession(fastify.db, userId, user.level as LanguageLevel, lang);
+      // Optional ?level=A1 override — drives the per-level "Start smart
+      // practice" CTA from /vocabulary/level/{X}. Validated against the
+      // CEFR whitelist; falls back to user's profile level otherwise.
+      const allowedLevels: LanguageLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+      const requested = typeof query['level'] === 'string' ? (query['level'] as string).toUpperCase() : null;
+      const sessionLevel: LanguageLevel = requested && (allowedLevels as string[]).includes(requested)
+        ? (requested as LanguageLevel)
+        : (user.level as LanguageLevel);
+
+      const session = await getStudySession(fastify.db, userId, sessionLevel, lang);
       reply.send({ words: session, total: session.length });
     },
   );

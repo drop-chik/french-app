@@ -234,11 +234,12 @@ export function VocabularyPage() {
   // category=… is a vocabulary category (e.g. "food", "verbs_basic")
   // startSmart=1 jumps straight into Smart session — used by the
   // /vocabulary/level/{X} 'Start smart practice' CTA.
-  const search = useSearch({ strict: false }) as { filter?: string; tag?: string; category?: string; startSmart?: string };
+  const search = useSearch({ strict: false }) as { filter?: string; tag?: string; category?: string; startSmart?: string; level?: string };
   const statusFilter = search.filter as string | undefined;
   const grammarTag = search.tag as string | undefined;
   const category = search.category as string | undefined;
   const startSmart = search.startSmart === '1';
+  const levelOverride = search.level as string | undefined;
 
   // Auto-launch smart session when arrived with ?startSmart=1. We only
   // honour it once per mount so re-renders don't kick the user back into
@@ -255,11 +256,11 @@ export function VocabularyPage() {
       ? ['words-by-tag', grammarTag, lang]
       : category
         ? ['words-by-category', category, lang]
-        : ['words-session', lang],
+        : ['words-session', lang, levelOverride ?? ''],
     queryFn: () => {
       if (grammarTag) return wordsApi.getByGrammarTag(grammarTag);
       if (category) return wordsApi.getByCategory(category);
-      return wordsApi.getSession();
+      return wordsApi.getSession(levelOverride);
     },
     staleTime: 0,
   });

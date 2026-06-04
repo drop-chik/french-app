@@ -121,7 +121,7 @@ export function LevelVocabPage() {
           <button
             type="button"
             className={styles.ctaPrimary}
-            onClick={() => navigate({ to: '/vocabulary', search: { startSmart: '1' } })}
+            onClick={() => navigate({ to: '/vocabulary', search: { startSmart: '1', level } })}
           >
             {tn.cta} <ArrowRight size={16} />
           </button>
@@ -145,7 +145,7 @@ export function LevelVocabPage() {
           onClose={() => setShowPreview(false)}
           onStartQuiz={() => {
             setShowPreview(false);
-            navigate({ to: '/vocabulary', search: { startSmart: '1' } });
+            navigate({ to: '/vocabulary', search: { startSmart: '1', level } });
           }}
         />
       )}

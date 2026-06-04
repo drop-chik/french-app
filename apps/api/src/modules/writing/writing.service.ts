@@ -170,6 +170,9 @@ Réponds UNIQUEMENT avec ce JSON (sans markdown, sans texte avant/après) :
 }
 
 RÈGLES STRICTES :
+- TU DOIS retourner TOUS les 7 scores (taskCompletion, coherence, vocabulary, grammar, sociolinguistic, spelling, presentation). Aucun ne peut manquer. Aucun ne peut être null.
+- Si un critère ne s'applique vraiment pas, mets quand même une note (minimum 50% du max si la production est moyenne).
+- "total" = la somme exacte des 7 scores. Vérifie l'addition avant de répondre.
 - Maximum 8 corrections (les plus importantes seulement)
 - Maximum 3 suggestions
 - Sois précis et bienveillant
