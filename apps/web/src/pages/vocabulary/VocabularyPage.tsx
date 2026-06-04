@@ -232,10 +232,23 @@ export function VocabularyPage() {
   // filter=learning|review|mastered comes from Dictionary "Повторить" button
   // tag=… is a grammar topic slug (e.g. "verbes-pronominaux")
   // category=… is a vocabulary category (e.g. "food", "verbs_basic")
-  const search = useSearch({ strict: false }) as { filter?: string; tag?: string; category?: string };
+  // startSmart=1 jumps straight into Smart session — used by the
+  // /vocabulary/level/{X} 'Start smart practice' CTA.
+  const search = useSearch({ strict: false }) as { filter?: string; tag?: string; category?: string; startSmart?: string };
   const statusFilter = search.filter as string | undefined;
   const grammarTag = search.tag as string | undefined;
   const category = search.category as string | undefined;
+  const startSmart = search.startSmart === '1';
+
+  // Auto-launch smart session when arrived with ?startSmart=1. We only
+  // honour it once per mount so re-renders don't kick the user back into
+  // a session they already finished.
+  useEffect(() => {
+    if (startSmart && activeMode === 'menu') {
+      setActiveMode('smart');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: grammarTag

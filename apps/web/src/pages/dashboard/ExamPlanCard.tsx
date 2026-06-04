@@ -183,8 +183,12 @@ function ExamPlanForm({
     onSuccess: onSaved,
     onError: (err: Error) => {
       const m = (err.message ?? '').toUpperCase();
-      if (m.includes('PAST')) setError(tn.formPastDate);
-      else setError(tn.formInvalidDate);
+      if (m.includes('PAST'))     return setError(tn.formPastDate);
+      if (m.includes('INVALID'))  return setError(tn.formInvalidDate);
+      // Real server errors (route missing during deploy gap, 5xx, network)
+      // surface verbatim instead of being mis-labelled as a date validation
+      // problem. Plain message so the user can screenshot it.
+      setError(err.message || 'Server error');
     },
   });
 
