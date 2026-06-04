@@ -32,12 +32,21 @@ export interface WritingScores {
   coherence: number;
   vocabulary: number;
   grammar: number;
+  /** Register / tone / sociolinguistic appropriateness. New in the 7-category rubric. */
+  sociolinguistic?: number;
+  /** Orthography — spelling + punctuation. New in the 7-category rubric. */
+  spelling?: number;
+  /** Presentation — paragraphing + layout. New in the 7-category rubric. */
+  presentation?: number;
   total: number;
   maxTotal: number;
   taskMax: number;
   cohMax: number;
   vocMax: number;
   gramMax: number;
+  socioMax?: number;
+  spellMax?: number;
+  presMax?: number;
 }
 
 export interface WritingFeedbackData {
@@ -87,11 +96,22 @@ function computeMetrics(content: string): WritingMetrics {
 
 // ── Score ranges per DELF level ──────────────────────────────────────────────
 
-const SCORE_RANGES: Record<string, { max: number; taskMax: number; cohMax: number; vocMax: number; gramMax: number }> = {
-  A1: { max: 20, taskMax: 8, cohMax: 6, vocMax: 4, gramMax: 2 },
-  A2: { max: 25, taskMax: 8, cohMax: 8, vocMax: 5, gramMax: 4 },
-  B1: { max: 25, taskMax: 8, cohMax: 8, vocMax: 5, gramMax: 4 },
-  B2: { max: 50, taskMax: 16, cohMax: 16, vocMax: 10, gramMax: 8 },
+/**
+ * 7-category rubric, deeper than the canonical DELF 4-5 grille — extra
+ * weight on sociolinguistic register, spelling, and presentation gives
+ * the marketing surface a real "we grade on 7 dimensions" claim and
+ * gives the learner a more granular diagnostic. Sums match the original
+ * max totals to keep historical scores comparable.
+ */
+const SCORE_RANGES: Record<string, {
+  max: number;
+  taskMax: number; cohMax: number; vocMax: number; gramMax: number;
+  socioMax: number; spellMax: number; presMax: number;
+}> = {
+  A1: { max: 20, taskMax: 6,  cohMax: 4,  vocMax: 3,  gramMax: 2, socioMax: 2, spellMax: 2, presMax: 1 },
+  A2: { max: 25, taskMax: 7,  cohMax: 6,  vocMax: 4,  gramMax: 3, socioMax: 2, spellMax: 2, presMax: 1 },
+  B1: { max: 25, taskMax: 6,  cohMax: 6,  vocMax: 4,  gramMax: 3, socioMax: 2, spellMax: 2, presMax: 2 },
+  B2: { max: 50, taskMax: 12, cohMax: 12, vocMax: 8,  gramMax: 8, socioMax: 4, spellMax: 4, presMax: 2 },
 };
 
 // ── AI system prompt ──────────────────────────────────────────────────────────
@@ -106,20 +126,26 @@ TÂCHE D'ÉCRITURE : ${writingType}
 CONSIGNE ORIGINALE : ${promptFr}
 LONGUEUR ATTENDUE : ${minWords}-${maxWords} mots
 
-Évalue la production de l'étudiant STRICTEMENT selon la grille DELF :
-- Réalisation de la tâche (0-${s.taskMax}) : tous les éléments demandés présents ? registre approprié ?
+Évalue la production de l'étudiant STRICTEMENT selon la grille en 7 critères :
+- Réalisation de la tâche (0-${s.taskMax}) : tous les éléments demandés présents ?
 - Cohérence et cohésion (0-${s.cohMax}) : organisation, connecteurs logiques, progression ?
 - Étendue du vocabulaire (0-${s.vocMax}) : richesse, précision, diversité ?
 - Maîtrise grammaticale (0-${s.gramMax}) : conjugaison, accords, syntaxe ?
+- Sociolinguistique (0-${s.socioMax}) : registre, ton, politesse, adaptation au destinataire ?
+- Orthographe (0-${s.spellMax}) : justesse orthographique, ponctuation, accents ?
+- Mise en forme (0-${s.presMax}) : paragraphes, mise en page, structure visuelle du texte ?
 
 Réponds UNIQUEMENT avec ce JSON (sans markdown, sans texte avant/après) :
 {
   "scores": {
-    "taskCompletion": <0-${s.taskMax}>,
-    "coherence": <0-${s.cohMax}>,
-    "vocabulary": <0-${s.vocMax}>,
-    "grammar": <0-${s.gramMax}>,
-    "total": <somme>,
+    "taskCompletion":   <0-${s.taskMax}>,
+    "coherence":        <0-${s.cohMax}>,
+    "vocabulary":       <0-${s.vocMax}>,
+    "grammar":          <0-${s.gramMax}>,
+    "sociolinguistic":  <0-${s.socioMax}>,
+    "spelling":         <0-${s.spellMax}>,
+    "presentation":     <0-${s.presMax}>,
+    "total": <somme des 7>,
     "maxTotal": ${s.max}
   },
   "corrections": [
@@ -305,10 +331,13 @@ export async function generateFeedback(
   const feedbackData: WritingFeedbackData = {
     scores: {
       ...parsed.scores,
-      taskMax: s.taskMax,
-      cohMax: s.cohMax,
-      vocMax: s.vocMax,
-      gramMax: s.gramMax,
+      taskMax:  s.taskMax,
+      cohMax:   s.cohMax,
+      vocMax:   s.vocMax,
+      gramMax:  s.gramMax,
+      socioMax: s.socioMax,
+      spellMax: s.spellMax,
+      presMax:  s.presMax,
     },
     corrections: parsed.corrections ?? [],
     metrics,

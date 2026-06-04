@@ -53,12 +53,19 @@ export interface WritingScores {
   coherence: number;
   vocabulary: number;
   grammar: number;
+  /** New in the 7-category rubric. Optional for backward compat with old saved feedback. */
+  sociolinguistic?: number | null;
+  spelling?: number | null;
+  presentation?: number | null;
   total: number;
   maxTotal: number;
   taskMax: number;
   cohMax: number;
   vocMax: number;
   gramMax: number;
+  socioMax?: number;
+  spellMax?: number;
+  presMax?: number;
 }
 
 export interface WritingMetrics {

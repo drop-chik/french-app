@@ -130,6 +130,9 @@ export function WritingResultPage({ id }: Props) {
               coherence: tw.coherence,
               vocabulary: tw.vocabulary,
               grammar: tw.grammar,
+              sociolinguistic: tw.sociolinguistic,
+              spelling: tw.spelling,
+              presentation: tw.presentation,
               overallLabel: tw.overallLabel,
             }}
           />

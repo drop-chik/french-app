@@ -1,21 +1,21 @@
-import { CheckCheck, BookOpen, GraduationCap, MessageSquare } from 'lucide-react';
+import { CheckCheck, BookOpen, GraduationCap, MessageSquare, Users, Pencil, AlignLeft } from 'lucide-react';
 import styles from './RubricGrid.module.css';
 
 /**
- * SavoirX-style writing rubric card.
+ * SavoirX-style writing rubric card — now 7 dimensions, deeper than the
+ * canonical DELF 4-5 grid. The extra three (sociolinguistic register,
+ * spelling, presentation) make the grading both more granular for the
+ * learner and a stronger trust signal on the marketing surfaces ("we
+ * grade on 7 dimensions, they grade on 5").
  *
- * Renders the four DELF-style criteria as a flat grid of cards. Each
- * card shows: criterion name, big letter grade, raw score, slim bar.
- * The previous ScoreBar component was just bars — readable but it
- * looked like a settings panel, not a graded essay. This reads like
- * a real exam rubric.
- *
- * Letter-grade scale matches typical academic rubrics:
- *   ≥90% A · 85% A− · 80% B+ · 75% B · 70% B− · 65% C+ · 60% C ·
- *   55% C− · 50% D+ · below D
+ * Legacy submissions saved before this rollout don't carry the new
+ * fields — sociolinguistic/spelling/presentation render as null/skipped
+ * via the `?? null` guards below, so old results don't crash.
  */
 
-export type RubricCriterion = 'task' | 'coherence' | 'vocabulary' | 'grammar';
+export type RubricCriterion =
+  | 'task' | 'coherence' | 'vocabulary' | 'grammar'
+  | 'sociolinguistic' | 'spelling' | 'presentation';
 
 interface RubricGridProps {
   scores: {
@@ -23,10 +23,16 @@ interface RubricGridProps {
     coherence: number;
     vocabulary: number;
     grammar: number;
+    sociolinguistic?: number | null;
+    spelling?: number | null;
+    presentation?: number | null;
     taskMax?: number;
     cohMax?: number;
     vocMax?: number;
     gramMax?: number;
+    socioMax?: number;
+    spellMax?: number;
+    presMax?: number;
     total: number;
     maxTotal: number;
   };
@@ -35,6 +41,9 @@ interface RubricGridProps {
     coherence: string;
     vocabulary: string;
     grammar: string;
+    sociolinguistic: string;
+    spelling: string;
+    presentation: string;
     overallLabel: string;
   };
 }
@@ -85,14 +94,25 @@ function Cell({ icon, label, score, max }: CellProps) {
 }
 
 export function RubricGrid({ scores, labels }: RubricGridProps) {
-  const taskMax = scores.taskMax ?? Math.round(scores.maxTotal * 0.4);
-  const cohMax = scores.cohMax ?? Math.round(scores.maxTotal * 0.3);
-  const vocMax = scores.vocMax ?? Math.round(scores.maxTotal * 0.2);
-  const gramMax = scores.gramMax ?? Math.round(scores.maxTotal * 0.1);
+  const taskMax  = scores.taskMax  ?? Math.round(scores.maxTotal * 0.32);
+  const cohMax   = scores.cohMax   ?? Math.round(scores.maxTotal * 0.24);
+  const vocMax   = scores.vocMax   ?? Math.round(scores.maxTotal * 0.16);
+  const gramMax  = scores.gramMax  ?? Math.round(scores.maxTotal * 0.12);
+  const socioMax = scores.socioMax ?? Math.round(scores.maxTotal * 0.08);
+  const spellMax = scores.spellMax ?? Math.round(scores.maxTotal * 0.08);
+  const presMax  = scores.presMax  ?? Math.max(1, Math.round(scores.maxTotal * 0.04));
 
   const overallPct = scores.maxTotal > 0 ? Math.round((scores.total / scores.maxTotal) * 100) : 0;
   const overallGrade = letterGrade(overallPct);
   const overallTone = gradeTone(overallPct);
+
+  // Legacy submissions (4-category, before the rubric extension) won't
+  // carry the new score fields. Render only the four core cells in
+  // that case to avoid showing empty / wrong-zero new dimensions.
+  const hasExtended =
+    scores.sociolinguistic != null
+    || scores.spelling != null
+    || scores.presentation != null;
 
   return (
     <div className={styles.wrap}>
@@ -104,10 +124,17 @@ export function RubricGrid({ scores, labels }: RubricGridProps) {
         </div>
       </div>
       <div className={styles.grid}>
-        <Cell icon={<CheckCheck size={18} />} label={labels.task} score={scores.taskCompletion} max={taskMax} />
-        <Cell icon={<MessageSquare size={18} />} label={labels.coherence} score={scores.coherence} max={cohMax} />
-        <Cell icon={<BookOpen size={18} />} label={labels.vocabulary} score={scores.vocabulary} max={vocMax} />
-        <Cell icon={<GraduationCap size={18} />} label={labels.grammar} score={scores.grammar} max={gramMax} />
+        <Cell icon={<CheckCheck size={18} />}     label={labels.task}        score={scores.taskCompletion}        max={taskMax}  />
+        <Cell icon={<MessageSquare size={18} />}  label={labels.coherence}   score={scores.coherence}             max={cohMax}   />
+        <Cell icon={<BookOpen size={18} />}       label={labels.vocabulary}  score={scores.vocabulary}            max={vocMax}   />
+        <Cell icon={<GraduationCap size={18} />}  label={labels.grammar}     score={scores.grammar}               max={gramMax}  />
+        {hasExtended && (
+          <>
+            <Cell icon={<Users size={18} />}      label={labels.sociolinguistic} score={scores.sociolinguistic ?? 0} max={socioMax} />
+            <Cell icon={<Pencil size={18} />}     label={labels.spelling}        score={scores.spelling ?? 0}        max={spellMax} />
+            <Cell icon={<AlignLeft size={18} />}  label={labels.presentation}    score={scores.presentation ?? 0}    max={presMax}  />
+          </>
+        )}
       </div>
     </div>
   );
