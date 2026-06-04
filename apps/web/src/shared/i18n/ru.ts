@@ -1221,6 +1221,25 @@ export const ru: DeepRecord = {
     notFound: 'Уровень не найден',
     recommended: 'Рекомендуем сегодня',
   },
+  wordList: {
+    countSuffix: 'слов',
+    tabs: {
+      all: 'Все',
+      inProgress: 'Изучаю',
+      mastered: 'Освоено',
+      new: 'Новые',
+    },
+    reveal: 'Показать переводы',
+    hide: 'Скрыть переводы',
+    sortLabel: 'Сорт.',
+    sort: {
+      recent: 'Недавние',
+      alphabet: 'По алфавиту',
+      frequency: 'По частоте',
+    },
+    empty: 'Нет слов в этой выборке',
+    loading: 'Загружаем…',
+  },
   levelPage: {
     notFound: 'Уровень не найден',
     backHome: 'На главную',

@@ -39,9 +39,11 @@ export interface BrowseWord {
   id: string;
   french: string;
   translation: string;
+  ipa: string | null;
   level: string;
   category: string;
   partOfSpeech: string;
+  gender: string | null;
   exampleFr: string | null;
   exampleRu: string | null;
   progress: {

@@ -1381,6 +1381,25 @@ export const en: Translations = {
     notFound: 'Level not found',
     recommended: 'Recommended today',
   },
+  wordList: {
+    countSuffix: 'words',
+    tabs: {
+      all: 'All',
+      inProgress: 'Learning',
+      mastered: 'Mastered',
+      new: 'New',
+    },
+    reveal: 'Show translations',
+    hide: 'Hide translations',
+    sortLabel: 'Sort',
+    sort: {
+      recent: 'Recent',
+      alphabet: 'A–Z',
+      frequency: 'By frequency',
+    },
+    empty: 'No words match this filter',
+    loading: 'Loading…',
+  },
   levelPage: {
     notFound: 'Level not found',
     backHome: 'Back home',

@@ -6,6 +6,7 @@ import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { Pill } from '../../shared/components/ui';
 import { LEVEL_DATA, type Level } from '../level/levelData';
+import { WordList } from './WordList';
 import styles from './LevelVocabPage.module.css';
 
 /**
@@ -133,7 +134,7 @@ export function LevelVocabPage() {
         </div>
       </article>
 
-      {/* Stage 2b: word list goes below this divider. */}
+      <WordList level={level} />
     </div>
   );
 }
