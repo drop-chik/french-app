@@ -65,6 +65,12 @@ export function LevelPage() {
     ? Math.round((myProgress.learnedWords / myProgress.totalWords) * 100)
     : null;
 
+  const examSpec = data.examSpec;
+  const examWords    = isRu ? examSpec.wordsRu    : examSpec.wordsEn;
+  const examDuration = isRu ? examSpec.durationRu : examSpec.durationEn;
+  const examPoints   = isRu ? examSpec.pointsRu   : examSpec.pointsEn;
+  const examFocus    = isRu ? examSpec.focusRu    : examSpec.focusEn;
+
   const skills = [
     { icon: <BookOpen size={20} />, label: t.levelPage.skills.vocab, count: data.content.words, suffix: t.levelPage.skills.wordsSuffix },
     { icon: <GraduationCap size={20} />, label: t.levelPage.skills.grammar, count: data.content.grammar, suffix: t.levelPage.skills.topicsSuffix },
@@ -109,6 +115,33 @@ export function LevelPage() {
             </li>
           ))}
         </ul>
+      </Section>
+
+      {/* EXAM SPEC — concrete numbers from the real DELF/DALF guides */}
+      <Section
+        eyebrow={t.levelPage.examEyebrow}
+        title={t.levelPage.examTitle.replace('{exam}', examSpec.name)}
+        lead={t.levelPage.examLead}
+        narrow
+      >
+        <div className={styles.examGrid}>
+          <div className={styles.examCard}>
+            <div className={styles.examLabel}>{t.levelPage.examWords}</div>
+            <div className={styles.examValue}>{examWords}</div>
+          </div>
+          <div className={styles.examCard}>
+            <div className={styles.examLabel}>{t.levelPage.examDuration}</div>
+            <div className={styles.examValue}>{examDuration}</div>
+          </div>
+          <div className={styles.examCard}>
+            <div className={styles.examLabel}>{t.levelPage.examPoints}</div>
+            <div className={styles.examValue}>{examPoints}</div>
+          </div>
+          <div className={styles.examCard}>
+            <div className={styles.examLabel}>{t.levelPage.examFocus}</div>
+            <div className={styles.examValue}>{examFocus}</div>
+          </div>
+        </div>
       </Section>
 
       {/* SKILLS BREAKDOWN */}

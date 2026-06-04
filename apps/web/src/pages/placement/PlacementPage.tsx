@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BookOpen, Library, Headphones, Bot, GraduationCap, MessageCircle } from 'lucide-react';
 import { placementApi, type PlacementQuestion } from '../../features/placement/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import styles from './PlacementPage.module.css';
+
+type LucideIcon = ComponentType<{ size?: number | string; strokeWidth?: number }>;
+const PLAN_ICONS: LucideIcon[] = [BookOpen, GraduationCap, MessageCircle];
 
 type Phase = 'intro' | 'self-select' | 'test' | 'result' | 'onboarding';
 type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
@@ -238,7 +242,7 @@ export function PlacementPage() {
 
   /* ── Result ─────────────────────────────────────────────────────── */
   if (phase === 'result' && resultLevel) {
-    const planItems = t.placement.planItems as never as Array<{ icon: string; text: string }>;
+    const planItems = t.placement.planItems as never as Array<{ text: string }>;
     return (
       <div className={styles.page}>
         <Confetti />
@@ -280,12 +284,15 @@ export function PlacementPage() {
           >
             <p className={styles.planIntro}>{t.placement.planIntro}</p>
             <ul className={styles.planList}>
-              {planItems.map((item, i) => (
-                <li key={i} className={styles.planItem}>
-                  <span className={styles.planIcon}>{item.icon}</span>
-                  <span>{item.text}</span>
-                </li>
-              ))}
+              {planItems.map((item, i) => {
+                const Icon = PLAN_ICONS[i] ?? BookOpen;
+                return (
+                  <li key={i} className={styles.planItem}>
+                    <span className={styles.planIcon}><Icon size={18} strokeWidth={1.8} /></span>
+                    <span>{item.text}</span>
+                  </li>
+                );
+              })}
             </ul>
           </motion.div>
           <motion.button
@@ -305,12 +312,12 @@ export function PlacementPage() {
   /* ── Onboarding ─────────────────────────────────────────────────── */
   if (phase === 'onboarding' && resultLevel) {
     const content = LEVEL_CONTENT[resultLevel] ?? { words: 0, grammar: 0, listening: 0 };
-    const statRows = [
-      { icon: '📚', value: content.words,     label: t.placement.wordsLabel },
-      ...(content.grammar   > 0 ? [{ icon: '📖', value: content.grammar,   label: t.placement.grammarLabel }]   : []),
-      ...(content.listening > 0 ? [{ icon: '🎧', value: content.listening, label: t.placement.listeningLabel }] : []),
-      { icon: '🤖', value: '∞', label: t.placement.aiLabel },
-    ] as Array<{ icon: string; value: number | string; label: string }>;
+    const statRows: Array<{ Icon: LucideIcon; value: number | string; label: string }> = [
+      { Icon: BookOpen, value: content.words,     label: t.placement.wordsLabel },
+      ...(content.grammar   > 0 ? [{ Icon: Library    as LucideIcon, value: content.grammar,   label: t.placement.grammarLabel }]   : []),
+      ...(content.listening > 0 ? [{ Icon: Headphones as LucideIcon, value: content.listening, label: t.placement.listeningLabel }] : []),
+      { Icon: Bot, value: '∞', label: t.placement.aiLabel },
+    ];
 
     return (
       <div className={styles.page}>
@@ -330,7 +337,7 @@ export function PlacementPage() {
           <motion.div className={styles.statsGrid} variants={stagger} initial="hidden" animate="show">
             {statRows.map((s, i) => (
               <motion.div key={i} className={styles.statItem} variants={statItem}>
-                <span className={styles.statItemIcon}>{s.icon}</span>
+                <span className={styles.statItemIcon}><s.Icon size={22} strokeWidth={1.8} /></span>
                 <span className={styles.statItemValue}>{String(s.value)}</span>
                 <span className={styles.statItemLabel}>{s.label}</span>
               </motion.div>

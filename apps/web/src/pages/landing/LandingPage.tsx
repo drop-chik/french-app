@@ -732,15 +732,15 @@ export function LandingPage() {
             </motion.h2>
             <motion.div className={styles.journeySteps} variants={stagger}>
               {[
-                { num: 1, icon: '📚', title: t.landing.journey.step1, desc: t.landing.journey.step1desc },
-                { num: 2, icon: '🧠', title: t.landing.journey.step2, desc: t.landing.journey.step2desc },
-                { num: 3, icon: '🗣️', title: t.landing.journey.step3, desc: t.landing.journey.step3desc },
+                { num: 1, Icon: BookOpen,       title: t.landing.journey.step1, desc: t.landing.journey.step1desc },
+                { num: 2, Icon: Brain,          title: t.landing.journey.step2, desc: t.landing.journey.step2desc },
+                { num: 3, Icon: MessageCircle,  title: t.landing.journey.step3, desc: t.landing.journey.step3desc },
               ].map(s => (
                 <motion.div key={s.num} className={styles.step} variants={fadeUp} transition={{ duration: 0.5 }}>
                   <motion.div className={styles.stepNumber} whileHover={{ scale: 1.12, rotate: 6 }}>
                     {s.num}
                   </motion.div>
-                  <div className={styles.stepEmoji}>{s.icon}</div>
+                  <div className={styles.stepIcon}><s.Icon size={28} strokeWidth={1.8} /></div>
                   <div>
                     <h3 className={styles.stepTitle}>{s.title}</h3>
                     <p className={styles.stepDesc}>{s.desc}</p>

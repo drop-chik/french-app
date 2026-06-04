@@ -1005,7 +1005,16 @@
   cursor: default;
 }
 
-.stepEmoji { font-size: 2rem; }
+.stepIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: var(--color-brand-light);
+  color: var(--color-brand);
+}
 
 .stepTitle {
   font-size: var(--text-base);
@@ -1237,7 +1246,7 @@
   .journeySteps::before { top: 0; bottom: 0; left: 26px; right: auto; width: 2px; height: auto; }
   .step { flex-direction: row; text-align: left; gap: var(--space-4); }
   .stepNumber { flex-shrink: 0; }
-  .stepEmoji { display: none; }
+  .stepIcon { display: none; }
 
   .modesGrid { grid-template-columns: repeat(2, 1fr); }
 

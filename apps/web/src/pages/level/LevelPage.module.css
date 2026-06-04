@@ -93,6 +93,43 @@
   margin-top: 1px;
 }
 
+/* ── Exam spec card (DELF/DALF written-production block) ── */
+.examGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+@media (max-width: 760px) {
+  .examGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.examCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.examLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+}
+
+.examValue {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Skills grid ── */
 .skillsGrid {
   display: grid;
