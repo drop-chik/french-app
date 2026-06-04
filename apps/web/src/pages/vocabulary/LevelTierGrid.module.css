@@ -45,6 +45,15 @@
   border-radius: var(--radius-xl);
   overflow: hidden;
   min-height: 152px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+a.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--tier-accent);
+  text-decoration: none;
 }
 
 /* Coloured left edge — the only thing carrying level identity now. */
@@ -180,10 +189,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+.cardFootEnd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .cardFootPct {
   font-weight: 700;
   color: var(--tier-accent);
   font-variant-numeric: tabular-nums;
+}
+
+.cardArrow {
+  color: var(--color-text-tertiary);
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+a.card:hover .cardArrow {
+  color: var(--tier-accent);
+  transform: translateX(2px);
 }
 
 @media (max-width: 760px) {

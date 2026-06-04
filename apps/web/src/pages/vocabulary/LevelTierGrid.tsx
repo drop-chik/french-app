@@ -1,4 +1,5 @@
-import { Lock } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { ArrowRight, Lock } from 'lucide-react';
 import type { LevelProgressData } from '../../features/profile/api';
 import { useI18n } from '../../shared/i18n';
 import styles from './LevelTierGrid.module.css';
@@ -53,16 +54,8 @@ export function LevelTierGrid({ levels, currentLevel }: LevelTierGridProps) {
           const pct = data?.percent ?? 0;
           const isCurrent = lv === currentLevel;
           const isLocked = i > currentIdx + 1;
-          return (
-            <div
-              key={lv}
-              className={[
-                styles.card,
-                styles[`card${lv}`],
-                isCurrent ? styles.cardCurrent : '',
-                isLocked ? styles.cardLocked : '',
-              ].filter(Boolean).join(' ')}
-            >
+          const body = (
+            <>
               <span className={styles.accentBar} />
 
               <header className={styles.cardHead}>
@@ -90,9 +83,33 @@ export function LevelTierGrid({ levels, currentLevel }: LevelTierGridProps) {
                 <span className={styles.cardFootLearned}>
                   {learned.toLocaleString('ru-RU')} {tn.learnedShort}
                 </span>
-                {pct > 0 && <span className={styles.cardFootPct}>{pct}%</span>}
+                <span className={styles.cardFootEnd}>
+                  {pct > 0 && <span className={styles.cardFootPct}>{pct}%</span>}
+                  {!isLocked && <ArrowRight size={14} className={styles.cardArrow} />}
+                </span>
               </footer>
-            </div>
+            </>
+          );
+
+          const className = [
+            styles.card,
+            styles[`card${lv}`],
+            isCurrent ? styles.cardCurrent : '',
+            isLocked ? styles.cardLocked : '',
+          ].filter(Boolean).join(' ');
+
+          if (isLocked) {
+            return <div key={lv} className={className} aria-disabled="true">{body}</div>;
+          }
+          return (
+            <Link
+              key={lv}
+              to="/vocabulary/level/$level"
+              params={{ level: lv }}
+              className={className}
+            >
+              {body}
+            </Link>
           );
         })}
       </div>
