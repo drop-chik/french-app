@@ -25,6 +25,7 @@ import { SmartLearnFlow } from './SmartLearnFlow/SmartLearnFlow';
 import { AdaptiveLearnFlow } from './AdaptiveLearnFlow/AdaptiveLearnFlow';
 import { SessionComplete } from './SessionComplete/SessionComplete';
 import type { SessionResult } from './FlashcardMode/FlashcardMode';
+import { LevelTierGrid } from './LevelTierGrid';
 import styles from './VocabularyPage.module.css';
 
 type ActiveMode =
@@ -264,6 +265,13 @@ export function VocabularyPage() {
   const { data: streakData } = useQuery({
     queryKey: ['streak'],
     queryFn: profileApi.getStreak,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Per-CEFR-level progress, drives the new tier grid below the hero.
+  const { data: levelsProgress } = useQuery({
+    queryKey: ['levels-progress'],
+    queryFn: profileApi.getLevelsProgress,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -650,6 +658,16 @@ export function VocabularyPage() {
         <div className={styles.allDoneCard}>
           <p className={styles.allDoneTitle}>{t.dictionary.noWords}</p>
         </div>
+      )}
+
+      {/* SavoirX-style tier grid — primary navigation across CEFR levels.
+          Renders only on the menu screen; in-session views hide it so the
+          user isn't tempted to bail mid-session. */}
+      {!isLoading && activeMode === 'menu' && levelsProgress && levelsProgress.levels.length > 0 && (
+        <LevelTierGrid
+          levels={levelsProgress.levels}
+          currentLevel={useAuthStore.getState().user?.level ?? 'B1'}
+        />
       )}
 
       {/* Streak card — flame + 7-day dots. Replaces the old separate weekBlock

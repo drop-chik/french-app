@@ -1,0 +1,191 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.lead {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.card {
+  --tier-accent: var(--color-brand);
+  --tier-accent-strong: var(--color-brand-hover);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  text-decoration: none;
+  background: linear-gradient(
+    135deg,
+    var(--tier-accent) 0%,
+    var(--tier-accent-strong) 100%
+  );
+  color: var(--color-text-inverse);
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 168px;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+}
+
+.locked {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Rainbow accents — matches our level palette + Pill tone='level' tints. */
+.cardA1 { --tier-accent: #22c55e; --tier-accent-strong: #15803d; }
+.cardA2 { --tier-accent: #3b82f6; --tier-accent-strong: #1d4ed8; }
+.cardB1 { --tier-accent: #f97316; --tier-accent-strong: #c2410c; }
+.cardB2 { --tier-accent: #a855f7; --tier-accent-strong: #7c3aed; }
+.cardC1 { --tier-accent: #ec4899; --tier-accent-strong: #be185d; }
+.cardC2 { --tier-accent: #ef4444; --tier-accent-strong: #b91c1c; }
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cardLevel {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.currentChip,
+.lockChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
+}
+
+.locked .lockChip {
+  background: var(--color-bg);
+}
+
+.cardTitle {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: inherit;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cardCount {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.cardCountValue {
+  font-size: 1.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.cardCountSuffix {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.progressTrack {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.locked .progressTrack {
+  background: var(--color-bg);
+}
+
+.progressFill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+.locked .progressFill {
+  background: var(--color-text-tertiary);
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  opacity: 0.9;
+}
+
+.cardFootLearned {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.cardFootArrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 760px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 460px) {
+  .grid { grid-template-columns: 1fr; }
+}
