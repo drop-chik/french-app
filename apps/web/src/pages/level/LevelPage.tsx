@@ -61,8 +61,11 @@ export function LevelPage() {
   const grammarHl = isRu ? data.grammarHighlightsRu : data.grammarHighlightsEn;
 
   const myProgress = levelsProgress?.levels?.find((l) => l.level === level);
-  const ratio = myProgress && myProgress.targetWords > 0
-    ? Math.min(Math.round((myProgress.learnedWords / myProgress.targetWords) * 100), 100)
+  // Fall back to the static target from levelData if the API hasn't rolled
+  // out targetWords yet (Vercel deploys faster than Railway during a release).
+  const myTarget = myProgress?.targetWords ?? data.targetWords;
+  const ratio = myProgress && myTarget > 0
+    ? Math.min(Math.round((myProgress.learnedWords / myTarget) * 100), 100)
     : null;
 
   const examSpec = data.examSpec;
@@ -94,7 +97,7 @@ export function LevelPage() {
               <div className={styles.myProgressFill} style={{ width: `${ratio}%` }} />
             </div>
             <p className={styles.myProgressText}>
-              {t.levelPage.myProgress.replace('{pct}', String(ratio)).replace('{learned}', String(myProgress!.learnedWords)).replace('{total}', String(myProgress!.targetWords))}
+              {t.levelPage.myProgress.replace('{pct}', String(ratio)).replace('{learned}', String(myProgress!.learnedWords)).replace('{total}', String(myTarget))}
             </p>
           </div>
         )}

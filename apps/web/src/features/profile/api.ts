@@ -58,8 +58,8 @@ export interface HomeData {
     masteredWords: number;
     learnedWords: number;
     totalWords: number;
-    /** Mastery threshold to reach 100% on the progress bar. Extra words past this stay in the pool but don't gate progression. */
-    targetWords: number;
+    /** Mastery threshold to reach 100% on the progress bar. Extra words past this stay in the pool but don't gate progression. Optional in the type because legacy API responses from before the targets rollout don't carry it — fall back to totalWords at the call site. */
+    targetWords?: number;
     completedGrammar: number;
     totalGrammar: number;
     completedListening: number;
@@ -78,7 +78,8 @@ export interface LevelProgressData {
   masteredWords: number;
   learnedWords: number;
   totalWords: number;
-  targetWords: number;
+  /** See levelProgress.targetWords above — same semantics. Optional for legacy compat. */
+  targetWords?: number;
   percent: number;
 }
 
