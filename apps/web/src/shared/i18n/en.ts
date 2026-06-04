@@ -1400,6 +1400,17 @@ export const en: Translations = {
     empty: 'No words match this filter',
     loading: 'Loading…',
   },
+  newWordsPreview: {
+    title: 'Preview {n} new words',
+    subtitle: 'Scroll through and decide which you already know.',
+    startQuiz: 'Start practice',
+    dontKnow: "Don't know",
+    iKnow: 'I know this',
+    close: 'Close',
+    empty: 'No new words — all in progress.',
+    loading: 'Loading…',
+    counter: '{i} of {n}',
+  },
   levelPage: {
     notFound: 'Level not found',
     backHome: 'Back home',

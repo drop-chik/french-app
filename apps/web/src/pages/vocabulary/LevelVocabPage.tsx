@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Sparkles, Target, RefreshCw, CheckCircle2 } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useI18n } from '../../shared/i18n';
 import { Pill } from '../../shared/components/ui';
 import { LEVEL_DATA, type Level } from '../level/levelData';
 import { WordList } from './WordList';
+import { NewWordsPreview } from './NewWordsPreview';
 import styles from './LevelVocabPage.module.css';
 
 /**
@@ -31,6 +33,7 @@ export function LevelVocabPage() {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
   const userLevel = useAuthStore((s) => s.user?.level);
+  const [showPreview, setShowPreview] = useState(false);
 
   const level = (rawLevel ?? '').toUpperCase() as Level;
   const data = LEVEL_DATA[level];
@@ -124,7 +127,7 @@ export function LevelVocabPage() {
           </button>
 
           <div className={styles.ctaSecondaryRow}>
-            <button type="button" className={styles.ctaSecondary} onClick={() => navigate({ to: '/vocabulary' })}>
+            <button type="button" className={styles.ctaSecondary} onClick={() => setShowPreview(true)}>
               <Sparkles size={14} /> {tn.ctaNew}
             </button>
             <button type="button" className={styles.ctaSecondary} onClick={() => navigate({ to: '/dictionary' })}>
@@ -135,6 +138,17 @@ export function LevelVocabPage() {
       </article>
 
       <WordList level={level} />
+
+      {showPreview && (
+        <NewWordsPreview
+          level={level}
+          onClose={() => setShowPreview(false)}
+          onStartQuiz={() => {
+            setShowPreview(false);
+            navigate({ to: '/vocabulary' });
+          }}
+        />
+      )}
     </div>
   );
 }

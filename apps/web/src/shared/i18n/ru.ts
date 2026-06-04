@@ -1240,6 +1240,17 @@ export const ru: DeepRecord = {
     empty: 'Нет слов в этой выборке',
     loading: 'Загружаем…',
   },
+  newWordsPreview: {
+    title: 'Знакомство с {n} новыми словами',
+    subtitle: 'Пролистай и реши, что уже знаешь, а что — нет.',
+    startQuiz: 'Начать практику',
+    dontKnow: 'Не знаю',
+    iKnow: 'Знаю',
+    close: 'Закрыть',
+    empty: 'Новых слов нет — все уже в работе.',
+    loading: 'Загружаем…',
+    counter: '{i} из {n}',
+  },
   levelPage: {
     notFound: 'Уровень не найден',
     backHome: 'На главную',
