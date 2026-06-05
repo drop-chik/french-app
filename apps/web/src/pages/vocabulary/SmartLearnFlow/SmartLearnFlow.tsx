@@ -226,33 +226,55 @@ function AudioBtn({ word }: { word: WordData }) {
   );
 }
 
-/* ── Intro: first encounter, both sides visible. No grading — just absorb ── */
+/* ── Intro: first encounter, both sides visible. SavoirX-style: big French
+   centered, IPA badge, audio, colour-coded POS chip, translation, one
+   example with FR + tr, single CTA. Visually matches NewWordsPreview so
+   the user feels continuity from the pre-quiz preview into the session. ── */
 
 function IntroStage({ word, onAdvance }: { word: WordData; onAdvance: () => void }) {
   const { t } = useI18n();
   return (
     <div className={`${styles.card} ${styles.cardIntro}`}>
       <div className={styles.introBadge}>{t.learn.newWord}</div>
-      <AudioBtn word={word} />
+
       <h2 className={styles.bigFrench}>{word.french}</h2>
-      {(word.partOfSpeech || word.gender) && (
-        <p className={styles.posLine}>
-          {word.partOfSpeech}
-          {word.gender ? ` · ${word.gender === 'm' ? 'm.' : 'f.'}` : ''}
-        </p>
-      )}
-      <p className={styles.bigTranslation}>{word.translation}</p>
+
+      <div className={styles.introMetaRow}>
+        {word.ipa && <span className={styles.introIpa}>/{word.ipa}/</span>}
+        <AudioBtn word={word} />
+      </div>
+
+      <div className={styles.introPosRow}>
+        <span className={`${styles.introPos} ${styles[`pos_${word.partOfSpeech}`] ?? ''}`}>
+          {posLabel(word.partOfSpeech, word.gender)}
+        </span>
+        <span className={styles.introTranslation}>{word.translation}</span>
+      </div>
+
       {word.exampleFr && (
         <div className={styles.exampleBlock}>
           <p className={styles.exampleFr}>«{word.exampleFr}»</p>
           {word.exampleRu && <p className={styles.exampleRu}>{word.exampleRu}</p>}
         </div>
       )}
+
       <button type="button" className={styles.btnPrimary} onClick={onAdvance}>
         {t.learn.gotIt} <ArrowRight size={18} />
       </button>
     </div>
   );
+}
+
+function posLabel(pos: string, gender: string | null): string {
+  if (pos === 'noun' && gender) return `n(${gender})`;
+  if (pos === 'verb') return 'v';
+  if (pos === 'adjective') return 'adj';
+  if (pos === 'adverb') return 'adv';
+  if (pos === 'preposition') return 'prep';
+  if (pos === 'conjunction') return 'conj';
+  if (pos === 'pronoun') return 'pron';
+  if (pos === 'determiner') return 'det';
+  return pos;
 }
 
 /* ── Multiple-Choice: recognition test ── */
