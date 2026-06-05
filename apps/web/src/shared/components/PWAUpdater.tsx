@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { RefreshCw, X } from 'lucide-react';
+import { RefreshCw, X, Loader2 } from 'lucide-react';
 import { useI18n } from '../i18n';
 import styles from './PWAUpdater.module.css';
 
@@ -31,6 +31,7 @@ export function PWAUpdater() {
     try { return sessionStorage.getItem(DISMISS_KEY) === '1'; }
     catch { return false; }
   });
+  const [reloading, setReloading] = useState(false);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -50,9 +51,30 @@ export function PWAUpdater() {
   if (!needRefresh || dismissed) return null;
 
   function handleReload() {
-    // Pass true so the helper sends SKIP_WAITING + reloads the page.
-    // We don't await — the reload will tear down this component.
-    void updateServiceWorker(true);
+    // Instant visual feedback — flip the button into a spinner the moment
+    // the click lands. Previously the click could feel unresponsive while
+    // waitForControllerChange was negotiating with the waiting SW.
+    setReloading(true);
+
+    // Best path: updateServiceWorker(true) sends SKIP_WAITING and reloads
+    // on controllerchange. But that can hang silently if the SW thread is
+    // busy or postMessage is dropped — we've seen 5-10 s waits in the
+    // wild. Set a hard fallback that just nukes the page after 1.2 s,
+    // and if updateServiceWorker beats us to it, our reload becomes a
+    // no-op (the page is already tearing down).
+    const hardFallback = window.setTimeout(() => {
+      window.location.reload();
+    }, 1200);
+
+    void Promise.resolve(updateServiceWorker(true))
+      .catch(() => { /* swallow — fallback will fire */ })
+      .finally(() => {
+        // If updateServiceWorker resolved without reloading (rare path),
+        // clear the timer; the next tick is going to reload anyway via
+        // controllerchange.
+        window.clearTimeout(hardFallback);
+        window.location.reload();
+      });
   }
 
   function handleDismiss() {
@@ -75,7 +97,11 @@ export function PWAUpdater() {
           type="button"
           className={styles.reloadBtn}
           onClick={handleReload}
+          disabled={reloading}
         >
+          {reloading
+            ? <Loader2 size={14} className={styles.spin} />
+            : null}
           {t.pwa.updateReload}
         </button>
         <button

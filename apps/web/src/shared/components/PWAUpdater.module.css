@@ -59,6 +59,9 @@
 }
 
 .reloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px var(--space-3);
   background: var(--color-brand);
   color: #fff;
@@ -68,11 +71,20 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: filter var(--transition-fast);
+  transition: filter var(--transition-fast), transform 80ms ease;
 }
 
-.reloadBtn:hover {
-  filter: brightness(1.08);
+.reloadBtn:hover { filter: brightness(1.08); }
+.reloadBtn:active { transform: scale(0.96); }
+.reloadBtn:disabled { opacity: 0.7; cursor: default; }
+
+.spin {
+  animation: pwa-spin 0.9s linear infinite;
+}
+
+@keyframes pwa-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 .dismissBtn {
