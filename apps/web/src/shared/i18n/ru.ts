@@ -1330,6 +1330,14 @@ export const ru: DeepRecord = {
       cta: 'Начать бесплатно',
       note: 'Без карты · бесплатно навсегда · без рекламы',
     },
+    /** SavoirX-style negative-frame hero. Toggled via ?neg=1 / ?neg=0
+        URL param (persisted to localStorage). Reframes the value-prop
+        from 'learn faster' to 'fix what's broken' — works better with
+        intermediate learners who already know they have weak spots. */
+    heroAlt: {
+      title: 'Перестань тренировать свои ошибки',
+      subtitle: 'Половина студентов проваливает DELF B2, потому что годами повторяют одни и те же ошибки и не знают об этом. AI замечает их сразу — и больше не даст вылезти.',
+    },
     outcomes: {
       eyebrow: 'Зачем учить через FrenchUp',
       title: 'Один продукт — три понятных цели',

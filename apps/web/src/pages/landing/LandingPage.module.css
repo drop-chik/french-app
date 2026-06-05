@@ -1005,6 +1005,9 @@
   cursor: default;
 }
 
+/* On the dark teal/blue gradient strip, --color-brand-light is too close
+   to the background — icons disappear. Use a white tile with the brand
+   colour as the foreground so the icon reads instantly. */
 .stepIcon {
   display: inline-flex;
   align-items: center;
@@ -1012,8 +1015,9 @@
   width: 56px;
   height: 56px;
   border-radius: var(--radius-lg);
-  background: var(--color-brand-light);
-  color: var(--color-brand);
+  background: #ffffff;
+  color: var(--brand-blue);
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.35);
 }
 
 .stepTitle {

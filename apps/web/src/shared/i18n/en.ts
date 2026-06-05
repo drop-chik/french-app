@@ -1487,6 +1487,10 @@ export const en: Translations = {
       cta: 'Start free',
       note: 'No card · Free forever · No ads',
     },
+    heroAlt: {
+      title: 'Stop practicing your French mistakes',
+      subtitle: 'Half of DELF B2 candidates fail because they\'ve been drilling the same mistakes for years without noticing. AI catches them on contact — and won\'t let them resurface.',
+    },
     outcomes: {
       eyebrow: 'Why learn with FrenchUp',
       title: 'One product, three clear goals',

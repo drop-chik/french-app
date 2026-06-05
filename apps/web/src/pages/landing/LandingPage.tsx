@@ -10,6 +10,7 @@ import {
   Dumbbell, Check, Minus, X as XIcon,
 } from 'lucide-react';
 import { useI18n } from '../../shared/i18n';
+import { useHeroVariant } from '../../shared/useHeroVariant';
 import foxHero from './fox-hero.webp';
 import foxIcon from './fox-icon.webp';
 import styles from './LandingPage.module.css';
@@ -229,6 +230,10 @@ const AI_TEXTS = [
 export function LandingPage() {
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
+  // SavoirX-style A/B: negative-frame hero variant is opt-in via ?neg=1
+  const heroVariant = useHeroVariant();
+  const heroTitle    = heroVariant === 'neg' ? t.landing.heroAlt.title    : t.landing.hero.title;
+  const heroSubtitle = heroVariant === 'neg' ? t.landing.heroAlt.subtitle : t.landing.hero.subtitle;
 
   const marqueeWords = (t.landing.marqueeWords as string[]);
   const demoCards = (t.landing.demoCards as Array<{ translation: string; hint: string }>);
@@ -388,7 +393,7 @@ export function LandingPage() {
             </motion.div>
 
             <h1 className={styles.heroTitle}>
-              <SplitText text={t.landing.hero.title} />
+              <SplitText text={heroTitle} />
             </h1>
 
             <motion.p
@@ -397,7 +402,7 @@ export function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.8 }}
             >
-              {t.landing.hero.subtitle}
+              {heroSubtitle}
             </motion.p>
 
             <motion.div
