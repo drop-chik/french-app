@@ -1478,11 +1478,14 @@ export const en: Translations = {
   },
   landing: {
     nav: { login: 'Log in', cta: 'Start free' },
+    microcopy: {
+      noCardEver: 'No card · Free forever · No ads',
+    },
     hero: {
       title: 'French from A1 to C2 — no gaps',
       subtitle: '17,000 words benchmarked against the FLELex/Beacco academic reference. Grammar, listening, reading, AI conversations — one route from your first "bonjour" to native-level mastery.',
       cta: 'Start free',
-      note: 'Free · No ads · verify email — full content unlocks',
+      note: 'No card · Free forever · No ads',
     },
     outcomes: {
       eyebrow: 'Why learn with FrenchUp',

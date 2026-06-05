@@ -1318,11 +1318,17 @@ export const ru: DeepRecord = {
   },
   landing: {
     nav: { login: 'Войти', cta: 'Начать бесплатно' },
+    /** Reusable friction-reducer under every primary CTA on landing.
+        SavoirX-style 7-word copy: removes the #1 conversion blocker
+        (fear of being charged) without selling anything. */
+    microcopy: {
+      noCardEver: 'Без карты · бесплатно навсегда · без рекламы',
+    },
     hero: {
       title: 'Французский от A1 до C2 — без пробелов',
       subtitle: '17 000 слов, привязанных к академическому корпусу FLELex/Beacco. Грамматика, аудирование, чтение, диалоги с AI — один маршрут от первого «bonjour» до уровня носителя.',
       cta: 'Начать бесплатно',
-      note: 'Бесплатно · без рекламы · подтверди email — и весь контент доступен',
+      note: 'Без карты · бесплатно навсегда · без рекламы',
     },
     outcomes: {
       eyebrow: 'Зачем учить через FrenchUp',

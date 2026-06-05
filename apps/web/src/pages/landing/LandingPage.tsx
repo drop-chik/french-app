@@ -717,6 +717,9 @@ export function LandingPage() {
                     <RotateCcw size={15} /> {t.landing.demo.retry}
                   </button>
                 </div>
+                <p className={styles.heroNote} style={{ marginTop: 12 }}>
+                  {t.landing.microcopy.noCardEver}
+                </p>
               </motion.div>
             )}
           </AnimatedSection>
@@ -1004,6 +1007,7 @@ export function LandingPage() {
             >
               {t.landing.cta.button}
             </MagneticButton>
+            <p className={styles.ctaMicrocopy}>{t.landing.microcopy.noCardEver}</p>
           </motion.div>
         </AnimatedSection>
       </section>
