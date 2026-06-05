@@ -84,6 +84,11 @@ export const users = pgTable('users', {
   examDate: timestamp('exam_date'),
   examType: varchar('exam_type', { length: 10 }), // DELF | DALF | TCF | TEF
   examTargetLevel: languageLevelEnum('exam_target_level'),
+  // Smart Credits — universal AI quota across writing/conversation/translation.
+  // Single number shown to the user, simpler than per-feature limits.
+  // Resets daily; refresh on first read after aiCreditsResetAt < now.
+  aiCreditsUsed: integer('ai_credits_used').default(0).notNull(),
+  aiCreditsResetAt: timestamp('ai_credits_reset_at').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

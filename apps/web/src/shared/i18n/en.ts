@@ -1362,6 +1362,9 @@ export const en: Translations = {
     cancel: 'Cancel',
     delete: 'Delete',
   },
+  smartCredits: {
+    tooltip: 'Smart Credits — universal daily AI quota. {remaining} of {total} left. Resets in ~{hours} h. Costs: 25 essay scoring, 3 chat message, 1 translation.',
+  },
   cookie: {
     label: 'Cookies',
     title: 'We use cookies',

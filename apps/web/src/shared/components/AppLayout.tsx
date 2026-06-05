@@ -9,6 +9,7 @@ import { profileApi } from '../../features/profile/api';
 import { achievementsApi } from '../../features/achievements/api';
 import { HUBS, hubForPath, hubEntryRoute, hubAllLocked } from '../nav/navConfig';
 import { HubTabs } from './HubTabs';
+import { SmartCreditsBadge } from './SmartCreditsBadge';
 import foxIcon from '../../pages/landing/fox-icon.webp';
 import styles from './AppLayout.module.css';
 
@@ -85,6 +86,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <div className={styles.statsBar} role="progressbar" aria-valuenow={xpPct} aria-valuemin={0} aria-valuemax={100}>
             <div className={styles.statsBarFill} style={{ width: `${xpPct}%` }} />
+          </div>
+          <div className={styles.statsCreditsRow}>
+            <SmartCreditsBadge />
           </div>
         </div>
 

@@ -241,6 +241,10 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
         reply.send({ feedback });
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error';
+        if (msg === 'OUT_OF_CREDITS') {
+          const resetAt = (err as Error & { resetAt?: string }).resetAt;
+          return reply.status(402).send({ error: 'OUT_OF_CREDITS', resetAt });
+        }
         reply.status(500).send({ error: msg });
       }
     },

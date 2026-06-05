@@ -306,6 +306,17 @@ export async function generateFeedback(
   if (!submission) throw new Error('Submission not found');
   if (!submission.prompt) throw new Error('Prompt not found');
 
+  // Charge Smart Credits BEFORE the AI call so a depleted user can't bleed
+  // OpenAI dollars. The thrown error bubbles to the route handler, which
+  // maps OUT_OF_CREDITS to HTTP 402.
+  const { tryConsume } = await import('../profile/ai-credits.service.js');
+  const charge = await tryConsume(db, userId, 'writingFeedback');
+  if (!charge.ok) {
+    const err = new Error('OUT_OF_CREDITS');
+    (err as Error & { resetAt?: string }).resetAt = charge.state.resetAt;
+    throw err;
+  }
+
   const metrics = computeMetrics(submission.content);
 
   const systemPrompt = buildSystemPrompt(

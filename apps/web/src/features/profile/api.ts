@@ -144,6 +144,16 @@ export const profileApi = {
 
   getLevelsProgress: () => apiRequest<{ levels: LevelProgressData[] }>('/profile/levels-progress'),
 
+  getAiCredits: () => apiRequest<{
+    credits: {
+      used: number;
+      total: number;
+      remaining: number;
+      resetAt: string;
+      hoursUntilReset: number;
+    };
+  }>('/profile/ai-credits'),
+
   getExamPlan: () => apiRequest<{ plan: ExamPlan | null }>('/profile/exam-plan'),
 
   setExamPlan: (data: { examDate: string; examType: ExamType; examTargetLevel: string }) =>

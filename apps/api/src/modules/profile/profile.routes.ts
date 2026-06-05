@@ -15,6 +15,7 @@ import {
 } from './profile.service.js';
 import { getCurrentLevelMastery } from './promotion.service.js';
 import { getExamPlan, setExamPlan, clearExamPlan } from './exam-plan.service.js';
+import { getCredits } from './ai-credits.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
 import { logAuditEvent, AuditAction } from '../../lib/audit.js';
 
@@ -356,6 +357,21 @@ const profileRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     await clearExamPlan(fastify.db, request.user.userId);
     reply.send({ ok: true });
+  });
+
+  // GET /profile/ai-credits — Smart Credits balance for the header badge.
+  // Lazy-resets at midnight UTC on first read.
+  fastify.get('/ai-credits', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['profile'],
+      summary: 'Smart Credits balance (Universal AI quota)',
+      security: authorizedSecurity,
+    },
+  }, async (request, reply) => {
+    const credits = await getCredits(fastify.db, request.user.userId);
+    if (!credits) return reply.status(404).send({ error: 'User not found' });
+    reply.send({ credits });
   });
 
   // GET /profile/promotion-status — cheap query for the dashboard hint

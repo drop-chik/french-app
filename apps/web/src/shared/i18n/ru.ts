@@ -1202,6 +1202,9 @@ export const ru: DeepRecord = {
     cancel: 'Отмена',
     delete: 'Удалить',
   },
+  smartCredits: {
+    tooltip: 'Smart Credits — общий лимит AI-действий на день. Осталось {remaining} из {total}. Обновится через ~{hours} ч. Списания: 25 за проверку эссе, 3 за реплику в чате, 1 за перевод.',
+  },
   cookie: {
     label: 'Cookies',
     title: 'Мы используем cookies',

@@ -135,6 +135,14 @@
   overflow: hidden;
 }
 
+/* Smart Credits row — sits at the bottom of the stats card under the
+   XP bar. Centered so the single-pill badge doesn't look orphaned. */
+.statsCreditsRow {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
 .statsBarFill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-brand), #a855f7);
