@@ -154,11 +154,15 @@ export function ConversationPage() {
         setStreamingText('');
         setIsStreaming(false);
         queryClient.invalidateQueries({ queryKey: ['conversation-session', activeSessionId] });
+        // Smart Credits — 3 burned per message. Refetch so the sidebar
+        // badge moves immediately instead of waiting on its 30 s stale.
+        queryClient.invalidateQueries({ queryKey: ['ai-credits'] });
         inputRef.current?.focus();
       },
       (err) => {
         setStreamingText('');
         setIsStreaming(false);
+        queryClient.invalidateQueries({ queryKey: ['ai-credits'] });
         console.error('Stream error:', err);
         // Без toast'а юзер вообще не видит почему AI «не отвечает» — текст
         // сообщения отправлен, но ответа нет. Раньше уходило только в console.

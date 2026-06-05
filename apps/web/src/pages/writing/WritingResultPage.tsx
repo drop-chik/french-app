@@ -51,6 +51,9 @@ export function WritingResultPage({ id }: Props) {
   const feedbackMutation = useMutation({
     mutationFn: () => writingApi.generateFeedback(id),
     onSuccess: () => {
+      // Smart Credits — 25 burned per essay. window.location.reload
+      // triggers a fresh fetch anyway, but invalidating first keeps
+      // navigations without a full reload (e.g. SPA back/forward) honest.
       void window.location.reload();
     },
   });
