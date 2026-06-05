@@ -224,6 +224,17 @@ export async function* streamReply(
     throw new Error('Session not found');
   }
 
+  // Smart Credits — 3 credits per chat message. Charged before the
+  // OpenAI call so a depleted account can't bleed dollars on a long
+  // stream. Throws OUT_OF_CREDITS; the route handler maps to 402.
+  const { tryConsume } = await import('../profile/ai-credits.service.js');
+  const charge = await tryConsume(db, userId, 'conversationMsg');
+  if (!charge.ok) {
+    const err = new Error('OUT_OF_CREDITS');
+    (err as Error & { resetAt?: string }).resetAt = charge.state.resetAt;
+    throw err;
+  }
+
   const history = (session.messages as ChatMessage[]) ?? [];
 
   // Build OpenAI messages

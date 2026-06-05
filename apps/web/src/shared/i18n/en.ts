@@ -1364,6 +1364,7 @@ export const en: Translations = {
   },
   smartCredits: {
     tooltip: 'Smart Credits — universal daily AI quota. {remaining} of {total} left. Resets in ~{hours} h. Costs: 25 essay scoring, 3 chat message, 1 translation.',
+    outOfCredits: 'Out of Smart Credits today. Refreshes at midnight (UTC).',
   },
   cookie: {
     label: 'Cookies',

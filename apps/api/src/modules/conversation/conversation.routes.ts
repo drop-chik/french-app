@@ -217,8 +217,17 @@ const conversationRoutes: FastifyPluginAsync = async (fastify) => {
 
         reply.raw.write(`data: ${JSON.stringify({ done: true })}\n\n`);
       } catch (err) {
-        fastify.log.error(err);
-        reply.raw.write(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`);
+        const msg = err instanceof Error ? err.message : 'Stream failed';
+        // Smart Credits exhausted — surface the error code + resetAt so the
+        // client can show a friendly "your AI quota refreshes in N hours"
+        // banner instead of a generic stream failure.
+        if (msg === 'OUT_OF_CREDITS') {
+          const resetAt = (err as Error & { resetAt?: string }).resetAt;
+          reply.raw.write(`data: ${JSON.stringify({ error: 'OUT_OF_CREDITS', resetAt })}\n\n`);
+        } else {
+          fastify.log.error(err);
+          reply.raw.write(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`);
+        }
       } finally {
         reply.raw.end();
       }

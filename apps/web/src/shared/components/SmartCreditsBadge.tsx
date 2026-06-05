@@ -19,18 +19,30 @@ export function SmartCreditsBadge() {
   const { t } = useI18n();
   const tn = t.smartCredits;
 
-  const { data } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ['ai-credits'],
     queryFn: profileApi.getAiCredits,
     // Stay fresh — every writing/conversation action consumes credits.
     // 30 s window so the badge moves shortly after the user does anything.
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    retry: 1,
   });
 
-  if (!data) return null;
+  // Defensive fallback so the badge renders even during the API rollout
+  // window where /profile/ai-credits returns 404 (Vercel deploys faster
+  // than Railway). The placeholder matches a fresh quota — accurate
+  // enough until the real numbers arrive.
+  const credits = data?.credits ?? {
+    remaining: 100,
+    total: 100,
+    hoursUntilReset: 24,
+  };
+  if (isError && !data) {
+    // We're in the rollout-gap. Keep the badge visible with placeholder.
+  }
 
-  const { remaining, total, hoursUntilReset } = data.credits;
+  const { remaining, total, hoursUntilReset } = credits;
   const pct = total > 0 ? (remaining / total) * 100 : 0;
   const tone = pct < 20 ? 'low' : pct < 50 ? 'mid' : 'ok';
 

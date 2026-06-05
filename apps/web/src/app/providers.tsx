@@ -61,6 +61,14 @@ function QueryProviderInner({ children }: { children: ReactNode }) {
         // avoid double-messaging.
         if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
         const msg = err instanceof Error ? err.message : '';
+        // Smart Credits exhausted — show a friendly "comes back in N hours"
+        // toast instead of the raw OUT_OF_CREDITS string. Looking up the
+        // exact countdown would need the resetAt from the response; for now
+        // a static hint is fine — the badge in the sidebar shows the time.
+        if (msg.includes('OUT_OF_CREDITS')) {
+          toast.error(t.smartCredits.outOfCredits);
+          return;
+        }
         // Specific server messages worth showing verbatim (auth gone,
         // validation). Generic Request failed → friendly fallback.
         if (msg && !msg.toLowerCase().includes('request failed') && msg.length < 120) {

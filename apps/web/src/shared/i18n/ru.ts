@@ -1204,6 +1204,7 @@ export const ru: DeepRecord = {
   },
   smartCredits: {
     tooltip: 'Smart Credits — общий лимит AI-действий на день. Осталось {remaining} из {total}. Обновится через ~{hours} ч. Списания: 25 за проверку эссе, 3 за реплику в чате, 1 за перевод.',
+    outOfCredits: 'Smart Credits на сегодня закончились. Лимит обновится в полночь (UTC).',
   },
   cookie: {
     label: 'Cookies',
