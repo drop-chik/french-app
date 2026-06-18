@@ -24,6 +24,41 @@ type Level = typeof ORDER[number];
 const THRESHOLD = 0.8;
 const MIN_TOTAL = 50; // require at least 50 words on the level to even consider promotion
 
+export type PromotionReason =
+  | 'unknown-level' | 'already-c2' | 'too-few-words' | 'below-threshold' | 'eligible';
+
+/**
+ * Pure promotion decision — given the user's level index and their mastered /
+ * total word counts on that level, decide whether to advance. Extracted so the
+ * threshold + MIN_TOTAL boundaries are unit-testable without a DB (the SQL
+ * around it just supplies the counts). Mirrors the inline logic in
+ * checkAndPromote one-to-one.
+ */
+export function _evaluatePromotion(
+  currentIdx: number,
+  masteredCount: number,
+  total: number,
+): { promote: boolean; reason: PromotionReason } {
+  if (currentIdx < 0) return { promote: false, reason: 'unknown-level' };
+  if (currentIdx >= ORDER.length - 1) return { promote: false, reason: 'already-c2' };
+  if (total < MIN_TOTAL) return { promote: false, reason: 'too-few-words' };
+  const ratio = total > 0 ? masteredCount / total : 0;
+  if (ratio < THRESHOLD) return { promote: false, reason: 'below-threshold' };
+  return { promote: true, reason: 'eligible' };
+}
+
+/**
+ * The anti-cheat rule, as a pure predicate. Mirrors the SQL filter
+ * `mastered_via IS DISTINCT FROM 'manual'` used in the mastered-count queries:
+ * SRS-earned ('srs') and legacy (NULL) mastery count toward promotion; mastery
+ * set via the manual mark/bulk button does NOT (else a user self-promotes by
+ * tapping "known" on everything). If you change this rule, update BOTH this
+ * predicate and the SQL WHERE clauses below.
+ */
+export function _masteryCountsTowardPromotion(masteredVia: string | null): boolean {
+  return masteredVia !== 'manual';
+}
+
 export async function checkAndPromote(db: DB, userId: string): Promise<Level | null> {
   const [user] = await db.select({ id: users.id, level: users.level }).from(users).where(eq(users.id, userId));
   if (!user) return null;
@@ -44,7 +79,7 @@ export async function checkAndPromote(db: DB, userId: string): Promise<Level | n
     .from(words)
     .where(and(eq(words.level, currentLevel), eq(words.isActive, true)));
   const total = Number(totals?.n ?? 0);
-  if (total < MIN_TOTAL) return null;
+  if (total < MIN_TOTAL) return null; // skip the mastered-count query entirely
 
   const [mastered] = await db
     .select({ n: count() })
@@ -62,8 +97,8 @@ export async function checkAndPromote(db: DB, userId: string): Promise<Level | n
     ));
   const masteredCount = Number(mastered?.n ?? 0);
 
-  const ratio = masteredCount / total;
-  if (ratio < THRESHOLD) return null;
+  if (!_evaluatePromotion(currentIdx, masteredCount, total).promote) return null;
+  const ratio = masteredCount / total; // for the placement-history log below
 
   // Promote
   await db.update(users).set({ level: nextLevel }).where(eq(users.id, userId));

@@ -44,10 +44,24 @@ export interface CreditState {
   hoursUntilReset: number;
 }
 
-function nextMidnightUtc(): Date {
-  const d = new Date();
+// ── Pure quota math (unit-tested in ai-credits.service.test.ts) ──────────────
+/** Next 00:00:00 UTC strictly after `now`. The daily reset boundary. */
+export function _nextMidnightUtc(now: Date): Date {
+  const d = new Date(now.getTime());
   d.setUTCHours(24, 0, 0, 0); // tomorrow 00:00:00 UTC
   return d;
+}
+/** Whether the stored reset timestamp has been reached (counter should zero). */
+export function _isResetDue(resetAt: Date, now: Date): boolean {
+  return resetAt.getTime() <= now.getTime();
+}
+/** Whole hours until reset, never negative. */
+export function _hoursUntilReset(resetAt: Date, now: Date): number {
+  return Math.max(0, Math.ceil((resetAt.getTime() - now.getTime()) / (1000 * 60 * 60)));
+}
+/** Credits left in the daily budget, never negative. */
+export function _remaining(used: number, limit: number): number {
+  return Math.max(0, limit - used);
 }
 
 async function readWithReset(db: DB, userId: string) {
@@ -60,8 +74,8 @@ async function readWithReset(db: DB, userId: string) {
   const now = new Date();
   // If we crossed the reset boundary while the user was idle, zero the
   // counter and push resetAt to the next midnight. One round-trip update.
-  if (user.aiCreditsResetAt.getTime() <= now.getTime()) {
-    const newReset = nextMidnightUtc();
+  if (_isResetDue(user.aiCreditsResetAt, now)) {
+    const newReset = _nextMidnightUtc(now);
     await db
       .update(users)
       .set({ aiCreditsUsed: 0, aiCreditsResetAt: newReset })
@@ -74,14 +88,12 @@ async function readWithReset(db: DB, userId: string) {
 export async function getCredits(db: DB, userId: string): Promise<CreditState | null> {
   const row = await readWithReset(db, userId);
   if (!row) return null;
-  const remaining = Math.max(0, DAILY_LIMIT - row.used);
-  const hours = Math.max(0, Math.ceil((row.resetAt.getTime() - Date.now()) / (1000 * 60 * 60)));
   return {
     used: row.used,
     total: DAILY_LIMIT,
-    remaining,
+    remaining: _remaining(row.used, DAILY_LIMIT),
     resetAt: row.resetAt.toISOString(),
-    hoursUntilReset: hours,
+    hoursUntilReset: _hoursUntilReset(row.resetAt, new Date()),
   };
 }
 
@@ -106,7 +118,7 @@ export async function tryConsume(
   if (!row) throw new Error('USER_NOT_FOUND');
 
   const resetAtIso = row.resetAt.toISOString();
-  const hoursUntilReset = Math.max(0, Math.ceil((row.resetAt.getTime() - Date.now()) / (1000 * 60 * 60)));
+  const hoursUntilReset = _hoursUntilReset(row.resetAt, new Date());
 
   // Atomic check-and-debit. WHERE enforces the limit; RETURNING gives the
   // post-increment value. 0 rows back ⇒ the increment would exceed the cap.
@@ -122,7 +134,7 @@ export async function tryConsume(
       state: {
         used: row.used,
         total: DAILY_LIMIT,
-        remaining: Math.max(0, DAILY_LIMIT - row.used),
+        remaining: _remaining(row.used, DAILY_LIMIT),
         resetAt: resetAtIso,
         hoursUntilReset,
       },
@@ -135,7 +147,7 @@ export async function tryConsume(
     state: {
       used: newUsed,
       total: DAILY_LIMIT,
-      remaining: Math.max(0, DAILY_LIMIT - newUsed),
+      remaining: _remaining(newUsed, DAILY_LIMIT),
       resetAt: resetAtIso,
       hoursUntilReset,
     },
