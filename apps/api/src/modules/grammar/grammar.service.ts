@@ -137,10 +137,17 @@ export async function checkAnswer(
     const correctStr = JSON.stringify(answer['order']);
     correct = userStr === correctStr;
   } else if (exercise.type === 'translate') {
-    // Simple exact match (could be improved with fuzzy matching)
-    const u = String(userAnswer).trim().toLowerCase();
-    const c = String(answer['text']).trim().toLowerCase();
-    correct = u === c;
+    // The seed uses BOTH conventions: answer.text (single string, 54 cases)
+    // and answer.values (array of acceptable answers, 8 cases). Accept
+    // either, and match against any value. Normalisation is case/space
+    // insensitive and tolerates a trailing sentence period so "J'ai un
+    // chien" matches "J'ai un chien.".
+    const norm = (s: unknown) => String(s ?? '').trim().toLowerCase().replace(/[.!?]+$/, '');
+    const u = norm(userAnswer);
+    const accepted = Array.isArray(answer['values'])
+      ? (answer['values'] as unknown[]).map(norm)
+      : [norm(answer['text'])];
+    correct = u.length > 0 && accepted.some((c) => c.length > 0 && c === u);
   }
 
   const explanation =
@@ -151,7 +158,10 @@ export async function checkAnswer(
   return {
     correct,
     explanation,
-    correctAnswer: answer['correct'] ?? answer['values'] ?? answer,
+    // `text` joins the chain so translate (text-shaped) answers display as
+    // the sentence, not "[object Object]". Order: MC correct → translate
+    // text → fill_blank/translate values array → raw fallback.
+    correctAnswer: answer['correct'] ?? answer['text'] ?? answer['values'] ?? answer,
   };
 }
 

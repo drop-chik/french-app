@@ -778,6 +778,7 @@ export const ru: DeepRecord = {
     backToList: 'К списку тем',
     wordPlaceholder: 'Слово {n}',
     answerPlaceholder: 'Ваш ответ...',
+    translatePlaceholder: 'Переведи на французский...',
     correct: 'Правильно!',
     incorrect: 'Неправильно',
     correctAnswer: 'Правильный ответ:',

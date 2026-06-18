@@ -49,6 +49,11 @@ export function ExercisePlayer({ exercises, topicSlug, onComplete }: Props) {
       const filled = Array.from({ length: blanks }, (_, i) => fillInputs[i] ?? '');
       if (filled.some((v) => !v.trim())) return;
       answer = blanks === 1 ? filled[0] : filled;
+    } else if (exercise.type === 'translate') {
+      // Free-text translation — single input, reuses fillInputs[0].
+      const typed = (fillInputs[0] ?? '').trim();
+      if (!typed) return;
+      answer = typed;
     } else {
       return;
     }
@@ -151,6 +156,20 @@ export function ExercisePlayer({ exercises, topicSlug, onComplete }: Props) {
         </div>
       )}
 
+      {exercise.type === 'translate' && (
+        <div className={styles.fillBlanks}>
+          <input
+            className={`${styles.fillInput} ${result ? (result.correct ? styles.inputCorrect : styles.inputWrong) : ''}`}
+            value={fillInputs[0] ?? ''}
+            onChange={(e) => handleFillChange(0, e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !result && handleCheck()}
+            placeholder={t.grammar.translatePlaceholder}
+            disabled={!!result}
+            autoFocus
+          />
+        </div>
+      )}
+
       {/* Result feedback */}
       {result && (
         <div className={`${styles.feedback} ${result.correct ? styles.feedbackCorrect : styles.feedbackWrong}`}>
@@ -182,7 +201,8 @@ export function ExercisePlayer({ exercises, topicSlug, onComplete }: Props) {
             disabled={
               checking ||
               (exercise.type === 'multiple_choice' && answers.length === 0) ||
-              (exercise.type === 'fill_blank' && fillInputs.slice(0, blanksCount).some((v) => !v?.trim()))
+              (exercise.type === 'fill_blank' && fillInputs.slice(0, blanksCount).some((v) => !v?.trim())) ||
+              (exercise.type === 'translate' && !fillInputs[0]?.trim())
             }
           >
             {checking ? t.grammar.checking : t.grammar.check}

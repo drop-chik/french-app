@@ -938,6 +938,7 @@ export const en: Translations = {
     backToList: 'Back to topics',
     wordPlaceholder: 'Word {n}',
     answerPlaceholder: 'Your answer...',
+    translatePlaceholder: 'Translate into French...',
     correct: 'Correct!',
     incorrect: 'Incorrect',
     correctAnswer: 'Correct answer:',
