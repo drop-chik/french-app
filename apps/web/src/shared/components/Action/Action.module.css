@@ -25,12 +25,16 @@
 
 .fullWidth { width: 100%; }
 
+/* Universal tactile press on every Action variant — one consistent feel. */
+.action:active:not(:disabled):not([aria-disabled='true']) {
+  transform: scale(0.97);
+}
+
 .primary {
   background: var(--color-brand);
   color: var(--color-text-inverse);
 }
 .primary:hover { background: var(--color-brand-hover); }
-.primary:active { transform: translateY(1px); }
 
 .secondary {
   background: transparent;
