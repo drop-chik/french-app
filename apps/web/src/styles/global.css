@@ -54,6 +54,14 @@ button {
   font-family: inherit;
 }
 
+/* Universal tactile press — every button scales down briefly on :active,
+   so the whole app feels consistently responsive to touch/click. Component
+   :active rules (higher specificity) override this where a custom press is
+   wanted. Disabled buttons and reduced-motion users are excluded. */
+button:active:not(:disabled):not([aria-disabled='true']) {
+  transform: scale(0.97);
+}
+
 img {
   max-width: 100%;
   height: auto;
