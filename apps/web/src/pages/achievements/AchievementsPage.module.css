@@ -51,7 +51,7 @@
 
 .title {
   font-size: var(--text-2xl);
-  font-weight: 800;
+  font-weight: var(--font-bold);
   color: var(--color-text-primary);
   margin: 0 0 2px;
   line-height: 1.1;

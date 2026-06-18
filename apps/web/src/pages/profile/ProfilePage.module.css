@@ -16,7 +16,9 @@
 }
 
 .title {
-  font-size: var(--text-3xl);
+  /* Page <h1> standard: text-2xl/700 (CLAUDE.md). Was text-3xl — the
+     documented old drift. */
+  font-size: var(--text-2xl);
   font-weight: var(--font-bold);
   color: var(--color-text-primary);
   margin: 0;

@@ -10,7 +10,7 @@
 
 .title {
   font-size: var(--text-2xl);
-  font-weight: 800;
+  font-weight: var(--font-bold);
   color: var(--color-text-primary);
   margin: 0;
 }
