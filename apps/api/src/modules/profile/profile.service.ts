@@ -126,7 +126,14 @@ export async function updatePassword(
   if (!valid) throw new Error('INVALID_CREDENTIALS');
 
   const hashed = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
-  await db.update(users).set({ password: hashed, updatedAt: new Date() }).where(eq(users.id, userId));
+  // Bump token_version to revoke all other sessions' refresh tokens. The acting
+  // device keeps its (still-valid) access token until it expires (≤1h), then
+  // re-logs in — a deliberate trade of a one-time re-login for "changing my
+  // password logs out everyone else".
+  await db
+    .update(users)
+    .set({ password: hashed, updatedAt: new Date(), tokenVersion: sql`${users.tokenVersion} + 1` })
+    .where(eq(users.id, userId));
 }
 
 export async function updateAvatar(db: DB, userId: string, avatarDataUrl: string) {

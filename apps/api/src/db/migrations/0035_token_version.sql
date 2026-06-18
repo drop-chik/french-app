@@ -1,0 +1,13 @@
+-- Refresh-token revocation (review finding #4, the remaining medium).
+--
+-- Refresh tokens are stateless JWTs with a 30-day life. Without a server-side
+-- handle there was no way to kill them: a password change did NOT invalidate
+-- existing sessions, and "logout everywhere" was impossible.
+--
+-- token_version is that handle. It is embedded in every refresh token as `tv`;
+-- the /auth/refresh endpoint rejects a token whose tv != the user's current
+-- token_version. Bumping the column (on password reset / change) instantly
+-- invalidates every outstanding refresh token for that user. Legacy tokens
+-- minted before this column carry no tv and are treated as tv=0, so existing
+-- sessions keep working (default is 0) until the next password change.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version integer NOT NULL DEFAULT 0;

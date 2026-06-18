@@ -13,6 +13,8 @@ import {
   verifyEmailWithToken,
 } from './auth.service.js';
 import { authorizedSecurity, errorSchema, userSchema } from '../../openapi/schemas.js';
+import { eq } from 'drizzle-orm';
+import { users } from '../../db/schema/index.js';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email().max(255),
@@ -85,7 +87,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       const accessToken = fastify.jwt.sign({ userId: user.id, email: user.email });
       const { default: jwt } = await import('jsonwebtoken');
       const refreshToken = jwt.sign(
-        { userId: user.id, email: user.email },
+        { userId: user.id, email: user.email, tv: 0 }, // fresh user → token_version 0
         process.env['JWT_REFRESH_SECRET'] ?? 'refresh_secret',
         { expiresIn: '30d' },
       );
@@ -220,7 +222,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       const accessToken = fastify.jwt.sign({ userId: user.id, email: user.email });
       const { default: jwt } = await import('jsonwebtoken');
       const refreshToken = jwt.sign(
-        { userId: user.id, email: user.email },
+        { userId: user.id, email: user.email, tv: user.tokenVersion },
         process.env['JWT_REFRESH_SECRET'] ?? 'refresh_secret',
         { expiresIn: '30d' },
       );
@@ -275,7 +277,21 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       const payload = jwt.verify(
         refreshToken,
         process.env['JWT_REFRESH_SECRET'] ?? 'refresh_secret',
-      ) as { userId: string; email: string };
+      ) as { userId: string; email: string; tv?: number };
+
+      // Revocation check: the token's version must still match the user's.
+      // A password reset/change bumps token_version, instantly invalidating
+      // every outstanding refresh token. Legacy tokens predating this carry no
+      // `tv` → treated as 0, matching the column default so they keep working.
+      const [u] = await fastify.db
+        .select({ tokenVersion: users.tokenVersion })
+        .from(users)
+        .where(eq(users.id, payload.userId));
+      if (!u || (payload.tv ?? 0) !== u.tokenVersion) {
+        reply.clearCookie('refreshToken', { path: '/auth' });
+        return reply.status(401).send({ error: 'Refresh token revoked' });
+      }
+
       const accessToken = fastify.jwt.sign({ userId: payload.userId, email: payload.email });
       reply.send({ accessToken });
     } catch {

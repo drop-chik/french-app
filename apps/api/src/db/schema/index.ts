@@ -89,6 +89,9 @@ export const users = pgTable('users', {
   // Resets daily; refresh on first read after aiCreditsResetAt < now.
   aiCreditsUsed: integer('ai_credits_used').default(0).notNull(),
   aiCreditsResetAt: timestamp('ai_credits_reset_at').defaultNow().notNull(),
+  // Bumped to invalidate all outstanding refresh tokens (password reset/change).
+  // Embedded in refresh JWTs as `tv`; /auth/refresh rejects tv != this.
+  tokenVersion: integer('token_version').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

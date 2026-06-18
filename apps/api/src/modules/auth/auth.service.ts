@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { randomBytes, createHash } from 'node:crypto';
-import { eq, and, isNull, gt } from 'drizzle-orm';
+import { eq, and, isNull, gt, sql } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users, passwordResetTokens, emailVerificationTokens } from '../../db/schema/index.js';
 import type { RegisterInput, LoginInput } from './auth.schema.js';
@@ -119,6 +119,7 @@ export async function loginUser(db: DB, input: LoginInput) {
     placementTestDone: user.placementTestDone,
     role: user.role,
     tag: user.tag,
+    tokenVersion: user.tokenVersion,
   };
 }
 
@@ -206,7 +207,12 @@ export async function resetPasswordWithToken(
   // layer, but the order is safe: even if the second write fails, the user
   // still has their old password and the token will expire shortly. Worst
   // case is they request a new reset.
-  await db.update(users).set({ password: hashed }).where(eq(users.id, row.userId));
+  // Bump token_version too: a password reset must kill every outstanding
+  // refresh token (the reset usually means "my account was compromised").
+  await db
+    .update(users)
+    .set({ password: hashed, tokenVersion: sql`${users.tokenVersion} + 1` })
+    .where(eq(users.id, row.userId));
   await db
     .update(passwordResetTokens)
     .set({ usedAt: now })
