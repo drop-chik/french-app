@@ -248,6 +248,10 @@ export const wordProgress = pgTable(
     lastReviewed: timestamp('last_reviewed'),
     correctCount: integer('correct_count').default(0).notNull(),
     incorrectCount: integer('incorrect_count').default(0).notNull(),
+    // How the word reached 'mastered': 'srs' (earned via answers), 'manual'
+    // (mark/bulk button — excluded from CEFR auto-promotion to stop self-
+    // promotion), or NULL (not mastered / legacy rows treated as earned).
+    masteredVia: varchar('mastered_via', { length: 10 }),
   },
   (t) => [
     unique().on(t.userId, t.wordId),

@@ -1,0 +1,14 @@
+-- Anti-cheat for CEFR auto-promotion.
+--
+-- Promotion (profile/promotion.service.ts) counts words with
+-- status='mastered' on the user's current level. But the manual
+-- "mark as mastered" action (words/:id/mark, /words/bulk) ALSO sets
+-- status='mastered' unconditionally — so a user could mark 80% of a
+-- level mastered and jump CEFR levels without any real learning.
+--
+-- This column records HOW a word reached mastery:
+--   'srs'    — earned through the SRS answer flow (genuine)
+--   'manual' — set by the mark/bulk button (does NOT count toward promotion)
+--   NULL     — not mastered, or legacy rows from before this column existed
+--              (treated as earned, since historically mastery came via SRS)
+ALTER TABLE word_progress ADD COLUMN IF NOT EXISTS mastered_via varchar(10);

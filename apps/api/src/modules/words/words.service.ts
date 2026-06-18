@@ -231,6 +231,8 @@ export async function recordAnswer(
       lastReviewed: new Date(),
       correctCount: result.wasCorrect ? 1 : 0,
       incorrectCount: result.wasCorrect ? 0 : 1,
+      // Mastery earned through the answer flow — counts toward promotion.
+      masteredVia: status === 'mastered' ? 'srs' : null,
     });
   } else {
     await db
@@ -248,6 +250,9 @@ export async function recordAnswer(
         incorrectCount: !result.wasCorrect
           ? sql`${wordProgress.incorrectCount} + 1`
           : wordProgress.incorrectCount,
+        // Reaching mastery via answers tags it 'srs' (upgrading a prior
+        // 'manual' mark); dropping out of mastery clears the tag.
+        masteredVia: status === 'mastered' ? 'srs' : null,
       })
       .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
   }
@@ -552,11 +557,14 @@ export async function markWord(
         lastReviewed: now,
         correctCount: 10,
         incorrectCount: 0,
+        // Manual mark — masters the word for SRS/UI, but tagged so CEFR
+        // auto-promotion does NOT count it (anti self-promotion).
+        masteredVia: 'manual',
       });
     } else {
       await db
         .update(wordProgress)
-        .set({ status: 'mastered', interval: 365, repetitions: 10, nextReview: farFuture, lastReviewed: now })
+        .set({ status: 'mastered', interval: 365, repetitions: 10, nextReview: farFuture, lastReviewed: now, masteredVia: 'manual' })
         .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
     }
   }
@@ -727,6 +735,7 @@ export async function restartWord(db: DB, userId: string, wordId: string) {
       interval: 1,
       repetitions: 0,
       nextReview: now,
+      masteredVia: null, // no longer mastered — clear the source tag
     })
     .where(and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId)));
 }

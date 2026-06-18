@@ -53,6 +53,10 @@ export async function checkAndPromote(db: DB, userId: string): Promise<Level | n
     .where(and(
       eq(wordProgress.userId, userId),
       eq(wordProgress.status, 'mastered'),
+      // Only mastery earned via SRS (or legacy NULL) counts. Words marked
+      // 'mastered' through the manual mark/bulk button are excluded so a user
+      // can't self-promote their CEFR level by tapping "known" on everything.
+      sql`${wordProgress.masteredVia} IS DISTINCT FROM 'manual'`,
       eq(words.level, currentLevel),
       eq(words.isActive, true),
     ));
@@ -104,6 +108,9 @@ export async function getCurrentLevelMastery(db: DB, userId: string) {
     .where(and(
       eq(wordProgress.userId, userId),
       eq(wordProgress.status, 'mastered'),
+      // Mirror checkAndPromote: manual marks don't count toward the
+      // "ready to advance" hint either, so the UI stays honest.
+      sql`${wordProgress.masteredVia} IS DISTINCT FROM 'manual'`,
       eq(words.level, user.level as Level),
       eq(words.isActive, true),
     ));
