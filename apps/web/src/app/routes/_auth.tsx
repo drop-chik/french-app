@@ -8,6 +8,7 @@ import { HelpButton } from '../../shared/help/HelpButton';
 import { NetworkBanner } from '../../shared/components/NetworkBanner';
 import { EmailVerifyBanner } from '../../shared/components/EmailVerifyBanner';
 import { PromotionBanner } from '../../shared/components/PromotionBanner';
+import { XpLevelUpListener } from '../../shared/components/XpLevelUpListener';
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: () => {
@@ -33,6 +34,7 @@ export const Route = createFileRoute('/_auth')({
         <InstallPrompt />
         <HelpButton />
         <PromotionBanner />
+        <XpLevelUpListener />
       </AppLayout>
     </HelpProvider>
   ),

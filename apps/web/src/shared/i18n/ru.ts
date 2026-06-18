@@ -108,6 +108,7 @@ export const ru: DeepRecord = {
     title: 'Достижения',
     unlockedOf: 'Открыто {n} из {total}',
     level: 'Уровень',
+    levelUpToast: '🎉 Уровень {level}! Так держать',
   },
   pwa: {
     title: 'Установить FrenchUp',

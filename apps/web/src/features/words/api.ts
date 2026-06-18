@@ -94,6 +94,11 @@ export const wordsApi = {
     if (res.promotedToLevel && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('cefr-promoted', { detail: { to: res.promotedToLevel } }));
     }
+    // Account XP level-up (Уровень 3 → 4). Frequent, so a global listener
+    // shows a light toast + confetti rather than a blocking modal.
+    if (res.xp?.leveledUp && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('xp-leveled-up', { detail: { level: res.xp.level } }));
+    }
     return res;
   },
 

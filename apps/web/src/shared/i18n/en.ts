@@ -268,6 +268,7 @@ export const en: Translations = {
     title: 'Achievements',
     unlockedOf: 'Unlocked {n} of {total}',
     level: 'Level',
+    levelUpToast: '🎉 Level {level}! Keep it up',
   },
   pwa: {
     title: 'Install FrenchUp',
