@@ -7,6 +7,7 @@ import {
   getDistractors,
   requestWordImage,
   getCategories,
+  getPosCategories,
   browseWords,
   markWord,
   getWordsByGrammarTag,
@@ -215,6 +216,35 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  // GET /words/pos-categories?level=B2 — parts of speech (nouns excluded) with
+  // counts + progress for the Dictionary "Части речи" view. Same shape as
+  // /categories so the UI reuses the card component.
+  fastify.get(
+    '/pos-categories',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['words'],
+        summary: 'Parts of speech (excluding nouns) with counts + progress for the level',
+        security: authorizedSecurity,
+        querystring: {
+          type: 'object',
+          properties: { level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] } },
+        },
+      },
+    },
+    async (request, reply) => {
+      const query = request.query as Record<string, unknown>;
+      const user = await fastify.db.query.users.findFirst({
+        where: (u, { eq }) => eq(u.id, request.user.userId),
+        columns: { level: true },
+      });
+      const level = (String(query.level ?? user?.level ?? 'B2')) as LanguageLevel;
+      const categories = await getPosCategories(fastify.db, request.user.userId, level);
+      reply.send({ categories });
+    },
+  );
+
   // GET /words/browse?level=B2&category=&q=&lang=ru&offset=0&limit=100
   fastify.get(
     '/browse',
@@ -237,6 +267,7 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
             limit:    { type: 'integer', minimum: 1, maximum: 500, default: 100 },
             sortBy:   { type: 'string', enum: ['alphabet', 'level', 'frequency', 'status', 'recent'], default: 'frequency' },
             statusFilter: { type: 'string', enum: ['all', 'not-started', 'in-progress', 'mastered', 'mine'], default: 'all' },
+            pos:      { type: 'string', description: 'Filter by part of speech slug (verb, adjective, adverb…)' },
           },
         },
       },
@@ -261,8 +292,9 @@ const wordsRoutes: FastifyPluginAsync = async (fastify) => {
         'alphabet' | 'level' | 'frequency' | 'status' | 'recent';
       const statusFilter = (query.statusFilter ? String(query.statusFilter) : 'all') as
         'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine';
+      const pos = query.pos ? String(query.pos) : null;
       const result = await browseWords(
-        fastify.db, request.user.userId, level, category, lang, limit, offset, q, tag, sortBy, statusFilter,
+        fastify.db, request.user.userId, level, category, lang, limit, offset, q, tag, sortBy, statusFilter, pos,
       );
       reply.send(result);
     },

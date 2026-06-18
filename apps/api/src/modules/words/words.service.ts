@@ -411,6 +411,56 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
   return mapped;
 }
 
+// Parts-of-speech grid for the Dictionary "Части речи" view. Same shape as
+// getCategories (name/count/mastered/learned) so the UI reuses the card, but
+// grouped by part_of_speech and EXCLUDING nouns (nouns live in the thematic
+// category grid). Display order is pedagogical, frequent types first.
+const POS_DISPLAY_ORDER: string[] = [
+  'verb', 'adjective', 'adverb', 'expression', 'pronoun',
+  'preposition', 'conjunction', 'number', 'determiner', 'interjection',
+];
+const POS_ORDER_INDEX = new Map(POS_DISPLAY_ORDER.map((p, i) => [p, i]));
+
+export async function getPosCategories(db: DB, userId: string, level: LanguageLevel) {
+  const rows = await db
+    .select({
+      pos: words.partOfSpeech,
+      cnt: count(),
+      masteredCnt: sql<number>`count(case when ${wordProgress.status} = 'mastered' then 1 end)`,
+      learnedCnt: sql<number>`count(case when ${wordProgress.repetitions} >= 1 then 1 end)`,
+    })
+    .from(words)
+    .leftJoin(
+      wordProgress,
+      and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId)),
+    )
+    .where(and(
+      eq(words.level, level),
+      eq(words.isActive, true),
+      visibleToUser(userId),
+      sql`${words.partOfSpeech} <> 'noun'`,
+    ))
+    .groupBy(words.partOfSpeech);
+
+  const mapped = rows
+    .map((r) => ({
+      name: r.pos ?? 'other',
+      count: Number(r.cnt),
+      masteredCount: Number(r.masteredCnt),
+      learnedCount: Number(r.learnedCnt),
+    }))
+    .filter((r) => r.count > 0);
+
+  const lastIdx = POS_DISPLAY_ORDER.length;
+  mapped.sort((a, b) => {
+    const ia = POS_ORDER_INDEX.get(a.name) ?? lastIdx;
+    const ib = POS_ORDER_INDEX.get(b.name) ?? lastIdx;
+    if (ia !== ib) return ia - ib;
+    return a.name.localeCompare(b.name);
+  });
+  return mapped;
+}
+
 // Browse all words for a level with optional category filter + user's progress status
 export type BrowseSortBy = 'alphabet' | 'level' | 'frequency' | 'status' | 'recent';
 export type BrowseStatusFilter = 'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine';
@@ -427,6 +477,7 @@ export async function browseWords(
   grammarTag: string | null = null,
   sortBy: BrowseSortBy = 'frequency',
   statusFilter: BrowseStatusFilter = 'all',
+  partOfSpeech: string | null = null,
 ) {
   const pattern = q ? `%${q.toLowerCase()}%` : null;
 
@@ -447,6 +498,7 @@ export async function browseWords(
     eq(words.isActive, true),
     visibleToUser(userId),
     category ? eq(words.category, category) : undefined,
+    partOfSpeech ? eq(words.partOfSpeech, partOfSpeech) : undefined,
     grammarTag ? eq(words.grammarTag, grammarTag) : undefined,
     pattern
       ? or(
