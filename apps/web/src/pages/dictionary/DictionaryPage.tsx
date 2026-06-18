@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Search, X, List, LayoutGrid, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, RotateCcw, ArrowUpDown } from 'lucide-react';
+import { Search, X, List, LayoutGrid, Shapes, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, RotateCcw, ArrowUpDown } from 'lucide-react';
 import { wordsApi, type BrowseWord, type WordCategory, type WordData } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
@@ -58,6 +58,20 @@ function categoryEmoji(name: string): string {
     if (CATEGORY_EMOJI[candidate]) return CATEGORY_EMOJI[candidate]!;
   }
   return '📚';
+}
+
+// Parts-of-speech grid (Dictionary "Части речи" view). Emoji keyed by the
+// canonical part_of_speech slug; label comes from i18n (dictionary.posNames).
+const POS_EMOJI: Record<string, string> = {
+  verb: '🏃', adjective: '🎨', adverb: '✨', expression: '💬',
+  pronoun: '👉', preposition: '🧭', conjunction: '🔗', number: '🔢',
+  determiner: '🔖', interjection: '❗',
+};
+function posEmoji(slug: string): string {
+  return POS_EMOJI[slug] ?? '🔤';
+}
+function posLabel(slug: string, posNames: Record<string, string>): string {
+  return posNames[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1);
 }
 
 function getCategoryName(name: string, categoryNames: Record<string, string>): string {
@@ -293,9 +307,10 @@ interface CategoryCardProps {
   color: string;
   label: string;
   onClick: () => void;
+  emoji?: string; // override the category-derived emoji (used by the POS grid)
 }
 
-function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
+function CategoryCard({ cat, color, label, onClick, emoji }: CategoryCardProps) {
   // Cards reflect the fast "Выучено" metric so they move with the user's
   // visible Profile/Dashboard progress (mastered is the strict long-term stat).
   const learned = cat.learnedCount ?? cat.masteredCount;
@@ -308,7 +323,7 @@ function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
       style={{ '--cat-color': color } as React.CSSProperties}
     >
       <span className={styles.catCardEmoji} aria-hidden>
-        {categoryEmoji(cat.name)}
+        {emoji ?? categoryEmoji(cat.name)}
       </span>
       <div className={styles.catCardBody}>
         <div className={styles.catCardTop}>
@@ -332,7 +347,9 @@ function CategoryCard({ cat, color, label, onClick }: CategoryCardProps) {
 // ── Drawer (bottom sheet with category word list) ─────────────────────────────
 
 interface DrawerProps {
-  category: WordCategory | null;
+  item: WordCategory | null;
+  kind: 'category' | 'pos';
+  title: string;
   level: Level;
   lang: string;
   t: Translations;
@@ -343,16 +360,19 @@ interface DrawerProps {
   navigate: ReturnType<typeof useNavigate>;
 }
 
-function Drawer({ category, level, lang, t, onClose, onMark, onOpen, markingId, navigate }: DrawerProps) {
+function Drawer({ item, kind, title, level, lang, t, onClose, onMark, onOpen, markingId, navigate }: DrawerProps) {
+  const name = item?.name ?? null;
   const { data, isLoading } = useQuery({
-    queryKey: ['browse-words', level, category?.name ?? null, lang, ''],
-    queryFn: () => wordsApi.browse(level, category?.name ?? null, 0, 200),
-    enabled: !!category,
+    queryKey: ['browse-words', level, kind, name, lang, ''],
+    queryFn: () => kind === 'pos'
+      ? wordsApi.browse(level, null, 0, 200, undefined, undefined, undefined, name ?? undefined)
+      : wordsApi.browse(level, name, 0, 200),
+    enabled: !!item,
     staleTime: 60_000,
   });
 
   const words = data?.words ?? [];
-  const color = category ? categoryColor(category.name) : '#3b82f6';
+  const color = item ? categoryColor(item.name) : '#3b82f6';
 
   // Lock body scroll while open
   useEffect(() => {
@@ -360,8 +380,7 @@ function Drawer({ category, level, lang, t, onClose, onMark, onOpen, markingId, 
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  if (!category) return null;
-  const label = getCategoryName(category.name, (t.dictionary.categoryNames ?? {}) as Record<string, string>);
+  if (!item) return null;
 
   return (
     <div className={styles.drawerOverlay} onClick={onClose}>
@@ -369,24 +388,28 @@ function Drawer({ category, level, lang, t, onClose, onMark, onOpen, markingId, 
         <div className={styles.drawerHandle} />
         <div className={styles.drawerHeader} style={{ borderColor: color }}>
           <div className={styles.drawerHeaderLeft}>
-            <span className={styles.drawerTitle}>{label}</span>
+            <span className={styles.drawerTitle}>{title}</span>
             <span className={styles.drawerSubtitle}>
               {t.dictionary.masteredOf
-                .replace('{mastered}', String(category.masteredCount))
-                .replace('{total}', String(category.count))}
+                .replace('{mastered}', String(item.masteredCount))
+                .replace('{total}', String(item.count))}
             </span>
           </div>
           <div className={styles.drawerHeaderRight}>
-            <button
-              className={styles.drawerPracticeBtn}
-              style={{ background: color }}
-              onClick={() => {
-                onClose();
-                navigate({ to: '/vocabulary', search: { category: category.name } as never });
-              }}
-            >
-              {t.dictionary.drawerPractice}
-            </button>
+            {/* "Practice" jumps into a vocab session filtered by category.
+                /vocabulary has no part-of-speech filter, so it's category-only. */}
+            {kind === 'category' && (
+              <button
+                className={styles.drawerPracticeBtn}
+                style={{ background: color }}
+                onClick={() => {
+                  onClose();
+                  navigate({ to: '/vocabulary', search: { category: item.name } as never });
+                }}
+              >
+                {t.dictionary.drawerPractice}
+              </button>
+            )}
             <button className={styles.drawerCloseBtn} onClick={onClose}><X size={18} /></button>
           </div>
         </div>
@@ -506,7 +529,7 @@ export function DictionaryPage() {
   const queryClient = useQueryClient();
   const userLevel = useAuthStore((s) => s.user?.level);
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'pos' | 'list'>('grid');
   // Default to the user's CEFR level so first-time visitors see their own
   // vocab, not B2. Falls back to A1 if level is somehow missing.
   const initialLevel: Level = (userLevel && (ALL_LEVELS as readonly string[]).includes(userLevel))
@@ -517,6 +540,7 @@ export function DictionaryPage() {
   const [query, setQuery] = useState('');
   const [searchScope, setSearchScope] = useState<'level' | 'all'>('level');
   const [selectedCat, setSelectedCat] = useState<WordCategory | null>(null);
+  const [selectedPos, setSelectedPos] = useState<WordCategory | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
   const [showAddWord, setShowAddWord] = useState(false);
@@ -551,6 +575,13 @@ export function DictionaryPage() {
   const { data: catsData, isLoading: catsLoading } = useQuery({
     queryKey: ['word-categories', level, lang],
     queryFn: () => wordsApi.getCategories(level),
+    staleTime: 2 * 60_000,
+  });
+
+  const { data: posCatsData, isLoading: posCatsLoading } = useQuery({
+    queryKey: ['pos-categories', level, lang],
+    queryFn: () => wordsApi.getPosCategories(level),
+    enabled: viewMode === 'pos',
     staleTime: 2 * 60_000,
   });
 
@@ -622,6 +653,7 @@ export function DictionaryPage() {
   function handleLevelChange(l: Level) {
     setLevel(l);
     setSelectedCat(null);
+    setSelectedPos(null);
   }
 
   const listWords = listData?.words ?? [];
@@ -655,6 +687,13 @@ export function DictionaryPage() {
                 title={t.dictionary.gridView}
               >
                 <LayoutGrid size={17} />
+              </button>
+              <button
+                className={`${styles.iconBtn} ${viewMode === 'pos' ? styles.iconBtnActive ?? '' : ''}`}
+                onClick={() => { setViewMode('pos'); clearSelection(); }}
+                title={t.dictionary.posView}
+              >
+                <Shapes size={17} />
               </button>
               <button
                 className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive ?? '' : ''}`}
@@ -820,6 +859,30 @@ export function DictionaryPage() {
         </>
       )}
 
+      {/* ── Parts-of-speech view ── */}
+      {!showSearch && viewMode === 'pos' && (
+        <>
+          {posCatsLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
+          {!posCatsLoading && (
+            <div className={styles.catGrid}>
+              {(posCatsData?.categories ?? []).map((pos) => (
+                <CategoryCard
+                  key={pos.name}
+                  cat={pos}
+                  color={categoryColor(pos.name)}
+                  label={posLabel(pos.name, (t.dictionary.posNames ?? {}) as Record<string, string>)}
+                  emoji={posEmoji(pos.name)}
+                  onClick={() => setSelectedPos(pos)}
+                />
+              ))}
+              {(posCatsData?.categories ?? []).length === 0 && (
+                <p className={styles.emptyText}>{t.dictionary.emptySearch}</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
       {/* ── List view ── */}
       {!showSearch && viewMode === 'list' && (
         <div className={styles.wordListCard}>
@@ -846,11 +909,30 @@ export function DictionaryPage() {
       {/* ── Category drawer ── */}
       {selectedCat && (
         <Drawer
-          category={selectedCat}
+          item={selectedCat}
+          kind="category"
+          title={getCategoryName(selectedCat.name, (t.dictionary.categoryNames ?? {}) as Record<string, string>)}
           level={level}
           lang={lang}
           t={t}
           onClose={() => setSelectedCat(null)}
+          onMark={handleMark}
+          onOpen={setSelectedWordId}
+          markingId={markingId}
+          navigate={navigate}
+        />
+      )}
+
+      {/* ── Parts-of-speech drawer ── */}
+      {selectedPos && (
+        <Drawer
+          item={selectedPos}
+          kind="pos"
+          title={posLabel(selectedPos.name, (t.dictionary.posNames ?? {}) as Record<string, string>)}
+          level={level}
+          lang={lang}
+          t={t}
+          onClose={() => setSelectedPos(null)}
           onMark={handleMark}
           onOpen={setSelectedWordId}
           markingId={markingId}

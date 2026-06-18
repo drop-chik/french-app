@@ -116,6 +116,11 @@ export const wordsApi = {
   getCategories: (level: string) =>
     apiRequest<{ categories: WordCategory[] }>(`/words/categories?level=${level}`),
 
+  // Parts of speech (nouns excluded) for the level — powers the Dictionary
+  // "Части речи" grid. Same WordCategory shape as getCategories.
+  getPosCategories: (level: string) =>
+    apiRequest<{ categories: WordCategory[] }>(`/words/pos-categories?level=${level}`),
+
   browse: (
     level: string | 'all',
     category: string | null,
@@ -124,13 +129,15 @@ export const wordsApi = {
     q?: string,
     sortBy?: 'alphabet' | 'level' | 'frequency' | 'status' | 'recent',
     statusFilter?: 'all' | 'not-started' | 'in-progress' | 'mastered' | 'mine',
+    pos?: string,
   ) => {
     const cat = category ? `&category=${encodeURIComponent(category)}` : '';
     const search = q ? `&q=${encodeURIComponent(q)}` : '';
     const sort = sortBy ? `&sortBy=${sortBy}` : '';
     const filter = statusFilter ? `&statusFilter=${statusFilter}` : '';
+    const posParam = pos ? `&pos=${encodeURIComponent(pos)}` : '';
     return apiRequest<{ words: BrowseWord[]; total: number }>(
-      `/words/browse?level=${level}&lang=${getLang()}${cat}${search}${sort}${filter}&offset=${offset}&limit=${limit}`,
+      `/words/browse?level=${level}&lang=${getLang()}${cat}${search}${sort}${filter}${posParam}&offset=${offset}&limit=${limit}`,
     );
   },
 
