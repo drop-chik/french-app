@@ -9,6 +9,7 @@ import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
 import { TodayHero, pickAction } from './TodayHero';
 import { ExamPlanCard } from './ExamPlanCard';
+import { CountUp } from '../../shared/components/CountUp';
 import styles from './DashboardPage.module.css';
 
 export function DashboardPage() {
@@ -107,7 +108,7 @@ export function DashboardPage() {
           <span className={styles.progressTitle}>
             {t.dashboard.levelProgress.replace('{level}', lp.level)}
           </span>
-          <span className={styles.progressPct}>{lp.percent}%</span>
+          <span className={styles.progressPct}><CountUp value={lp.percent} suffix="%" /></span>
         </div>
         <div className={styles.progressBar}>
           <div className={styles.progressFill} style={{ width: `${lp.percent}%` }} />

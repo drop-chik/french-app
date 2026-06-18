@@ -151,6 +151,15 @@ img {
   100% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
 }
 
+/* Progress-bar fill-in on mount. scaleX from the left fills from empty to
+   the bar's target width regardless of what that width is — no per-bar
+   custom property needed. Pair with a count-up number for the "stats come
+   alive on load" feel. Add transform-origin:left on the fill element. */
+@keyframes bar-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
 /* Utility classes — opt in from anywhere. */
 .u-pop-in  { animation: pop-in 0.32s var(--ease-spring) both; }
 .u-rise-in { animation: rise-in 0.35s var(--ease-out) both; }

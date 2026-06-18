@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Coins } from 'lucide-react';
 import { profileApi } from '../../features/profile/api';
 import { useI18n } from '../i18n';
+import { useCountUp } from '../useCountUp';
 import styles from './SmartCreditsBadge.module.css';
 
 /**
@@ -43,6 +44,9 @@ export function SmartCreditsBadge() {
   }
 
   const { remaining, total, hoursUntilReset } = credits;
+  // Animate the visible number so spending credits ticks down satisfyingly.
+  // Tooltip keeps the real value.
+  const displayRemaining = useCountUp(remaining);
   const pct = total > 0 ? (remaining / total) * 100 : 0;
   const tone = pct < 20 ? 'low' : pct < 50 ? 'mid' : 'ok';
 
@@ -58,7 +62,7 @@ export function SmartCreditsBadge() {
       aria-label={title}
     >
       <Coins size={12} className={styles.icon} />
-      <span className={styles.value}>{remaining}</span>
+      <span className={styles.value}>{displayRemaining}</span>
       <span className={styles.suffix}>/ {total}</span>
     </div>
   );
