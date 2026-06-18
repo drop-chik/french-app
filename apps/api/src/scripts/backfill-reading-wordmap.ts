@@ -35,6 +35,9 @@ const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
 // the few chunks that keep failing at 15 due to the model adding N+1 items.
 const CHUNK = Number(process.env['CHUNK']) || 15;
 const SLEEP_MS = 200;
+// --report: measure gaps only (no words-table lookup, no AI, no writes).
+// Used to verify coverage before/after a real run.
+const REPORT_ONLY = process.argv.includes('--report');
 
 // Mirror SKIP_TOKEN + cleanWord from ReadingTextPage.tsx exactly.
 const SKIP_TOKEN = /^[\d\s.,!?;:()\[\]«»""''—–\-]+$/;
@@ -131,17 +134,28 @@ async function main() {
       if (!existingKeys.has(key)) missing.push(key);
     }
 
-    // incomplete — entries present but missing tr, tr_en, or ipa
+    // incomplete — entries present but missing a TRANSLATION (tr or tr_en).
+    // Deliberately NOT triggered by a missing `ipa`: IPA is optional, runtime
+    // already tops it up from the words table (getTextBySlug), and for
+    // acronyms / brands / proper names (IA, Instagram, Alain) the model
+    // legitimately returns no IPA — flagging those would re-call AI on every
+    // run and break idempotency.
     const incomplete: string[] = [];
     for (const [k, v] of Object.entries(wm)) {
       const needsTr   = !v.tr    || v.tr.trim() === '';
       const needsTrEn = !v.tr_en || v.tr_en.trim() === '';
-      const needsIpa  = !v.ipa;
-      if (needsTr || needsTrEn || needsIpa) incomplete.push(k);
+      if (needsTr || needsTrEn) incomplete.push(k);
     }
 
     if (missing.length === 0 && incomplete.length === 0) {
-      console.log(`  ${t.slug}: ok (nothing to do)`);
+      if (!REPORT_ONLY) console.log(`  ${t.slug}: ok (nothing to do)`);
+      continue;
+    }
+
+    if (REPORT_ONLY) {
+      totalFromDb += missing.length;       // reuse counter as "missing" tally
+      totalTopped += incomplete.length;    // reuse counter as "incomplete" tally
+      console.log(`  ${t.slug.padEnd(36)} missing ${String(missing.length).padStart(4)}   incomplete ${String(incomplete.length).padStart(4)}`);
       continue;
     }
 
@@ -233,6 +247,11 @@ async function main() {
       `  ${t.slug}: missing=${missing.length} (db ${fromDb}, ai ${fromAi}) ` +
       `+ incomplete topped ${topped}`,
     );
+  }
+
+  if (REPORT_ONLY) {
+    console.log(`\n--report: missing entries ${totalFromDb}, incomplete entries ${totalTopped}. No writes, no AI.`);
+    return;
   }
 
   console.log(
