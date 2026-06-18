@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { getExercises, getExercise, submitAnswers } from './listening.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
-import { generateTTS } from './tts.service.js';
+import { getCachedTTS, synthesizeTTS } from './tts.service.js';
+import { tryConsume } from '../profile/ai-credits.service.js';
 import { getAudioData } from '../../services/audio.service.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
 import { ensureLevelAllowed } from '../../lib/level-gate.js';
@@ -133,7 +134,10 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/tts',
     {
-      preHandler: [fastify.authenticate],
+      // Paid OpenAI endpoint. Gate it: requireEmailVerified blocks throwaway
+      // accounts; the credit charge below (on cache-miss only) blocks scripted
+      // bulk synthesis of novel text. Rate-limit is the outer guard.
+      preHandler: [fastify.authenticate, fastify.requireEmailVerified],
       // TTS-1-HD is $30/1M chars, ~$0.0002 per word. Heavily cached in
       // tts_cache table so most calls are free. 200/hour fits a 20-word
       // vocab session × 10 sessions, blocks scripted bulk synthesis.
@@ -160,7 +164,16 @@ const listeningRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const audio = await generateTTS(body.text);
+        // Cache hit → free. Cache miss → charge 1 credit BEFORE the paid
+        // OpenAI call so an out-of-quota user can't trigger synthesis.
+        let audio = await getCachedTTS(body.text);
+        if (!audio) {
+          const consume = await tryConsume(fastify.db, request.user.userId, 'wordTts');
+          if (!consume.ok) {
+            return reply.status(402).send({ error: 'OUT_OF_CREDITS', credits: consume.state });
+          }
+          audio = await synthesizeTTS(body.text);
+        }
         reply
           .header('Content-Type', 'audio/mpeg')
           .header('Content-Length', audio.length)

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import type { DB } from '../../db/index.js';
 import { users } from '../../db/schema/index.js';
 
@@ -31,6 +31,7 @@ export const COST = {
   promptGeneration:    5,
   imageGeneration:    10,  // DALL-E 3 standard ~$0.04/image
   drillGeneration:     5,  // gpt-4o batch of fresh drill questions
+  wordTts:             1,  // tts-1-hd, charged only on cache-miss (novel word)
 } as const;
 
 export type CreditAction = keyof typeof COST;
@@ -89,10 +90,10 @@ export async function getCredits(db: DB, userId: string): Promise<CreditState | 
  * (counter advanced), false when the user is out of quota. Throws on
  * missing user — same convention as the rest of the profile module.
  *
- * Race-safe-enough: the SET reads the column with the latest committed
- * value, so two concurrent calls don't double-debit; if the second slips
- * in before the first commits, we'd over-debit by at most one cost
- * (acceptable for a daily quota counter).
+ * Atomic: the debit is a single conditional UPDATE guarded in its WHERE
+ * clause, so concurrent calls (e.g. parallel SSE streams) can't both pass
+ * when only one fits under the limit, and none are silently dropped. The
+ * old read-then-write with an absolute SET lost debits under concurrency.
  */
 export async function tryConsume(
   db: DB,
@@ -100,33 +101,43 @@ export async function tryConsume(
   action: CreditAction,
 ): Promise<{ ok: boolean; state: CreditState }> {
   const cost = COST[action];
+  // Lazy daily reset first (low-contention — only fires at the day boundary).
   const row = await readWithReset(db, userId);
   if (!row) throw new Error('USER_NOT_FOUND');
 
-  if (row.used + cost > DAILY_LIMIT) {
+  const resetAtIso = row.resetAt.toISOString();
+  const hoursUntilReset = Math.max(0, Math.ceil((row.resetAt.getTime() - Date.now()) / (1000 * 60 * 60)));
+
+  // Atomic check-and-debit. WHERE enforces the limit; RETURNING gives the
+  // post-increment value. 0 rows back ⇒ the increment would exceed the cap.
+  const updated = await db
+    .update(users)
+    .set({ aiCreditsUsed: sql`${users.aiCreditsUsed} + ${cost}` })
+    .where(and(eq(users.id, userId), sql`${users.aiCreditsUsed} + ${cost} <= ${DAILY_LIMIT}`))
+    .returning({ used: users.aiCreditsUsed });
+
+  if (updated.length === 0) {
     return {
       ok: false,
       state: {
         used: row.used,
         total: DAILY_LIMIT,
         remaining: Math.max(0, DAILY_LIMIT - row.used),
-        resetAt: row.resetAt.toISOString(),
-        hoursUntilReset: Math.max(0, Math.ceil((row.resetAt.getTime() - Date.now()) / (1000 * 60 * 60))),
+        resetAt: resetAtIso,
+        hoursUntilReset,
       },
     };
   }
 
-  const newUsed = row.used + cost;
-  await db.update(users).set({ aiCreditsUsed: newUsed }).where(eq(users.id, userId));
-
+  const newUsed = updated[0]!.used;
   return {
     ok: true,
     state: {
       used: newUsed,
       total: DAILY_LIMIT,
-      remaining: DAILY_LIMIT - newUsed,
-      resetAt: row.resetAt.toISOString(),
-      hoursUntilReset: Math.max(0, Math.ceil((row.resetAt.getTime() - Date.now()) / (1000 * 60 * 60))),
+      remaining: Math.max(0, DAILY_LIMIT - newUsed),
+      resetAt: resetAtIso,
+      hoursUntilReset,
     },
   };
 }

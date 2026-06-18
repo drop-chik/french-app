@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import Fastify from 'fastify';
+import type { FastifyError } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
@@ -184,6 +185,34 @@ await fastify.register(authPlugin);
 // Attach Sentry's onError hook AFTER auth so request.user is populated and
 // gets correlated into reports.
 attachToFastify(fastify);
+
+// Global error handler. Without one, Fastify's default serialises the thrown
+// error's `message` on 5xx — which can leak a DB column / constraint name or
+// other internal detail. Client errors (validation 400, auth 401, 404,
+// rate-limit 429, any explicit 4xx) carry safe, intentional messages, so we
+// pass those through in Fastify's default shape. Anything 5xx (or an
+// uncaught throw with no statusCode) is logged — and also captured by the
+// onError→Sentry hook above — then returned to the client as a generic
+// message. Note: in-route `reply.status().send()` calls bypass this entirely;
+// it only shapes errors that propagate as thrown.
+fastify.setErrorHandler((error: FastifyError, request, reply) => {
+  const statusCode = error.statusCode ?? 500;
+  if (statusCode < 500) {
+    reply.status(statusCode).send({
+      statusCode,
+      error: error.name && error.name !== 'Error' ? error.name : 'Bad Request',
+      message: error.message,
+      ...(error.validation ? { validation: error.validation } : {}),
+    });
+    return;
+  }
+  request.log.error({ err: error }, 'unhandled server error');
+  reply.status(500).send({
+    statusCode: 500,
+    error: 'Internal Server Error',
+    message: 'An unexpected error occurred.',
+  });
+});
 
 // Routes
 await fastify.register(authRoutes, { prefix: '/auth' });

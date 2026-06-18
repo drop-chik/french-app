@@ -33,7 +33,11 @@ const verifyEmailSchema = z.object({
   token: z.string().min(32).max(128),
 });
 
-const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
+// @fastify/cookie maxAge is in SECONDS, not milliseconds. The old value
+// (… * 1000) produced Max-Age ≈ 82 years. The JWT inside still expires in
+// 30 days, so the practical blast radius was limited — but the cookie must
+// match the token lifetime.
+const REFRESH_COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days, in seconds
 
 const authTokenResponse = {
   type: 'object',
@@ -91,7 +95,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           httpOnly: true,
           secure: process.env['NODE_ENV'] === 'production',
           sameSite: 'strict',
-          maxAge: REFRESH_TOKEN_EXPIRY,
+          maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,
           path: '/auth',
         })
         .status(201)
@@ -226,7 +230,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           httpOnly: true,
           secure: process.env['NODE_ENV'] === 'production',
           sameSite: 'strict',
-          maxAge: REFRESH_TOKEN_EXPIRY,
+          maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,
           path: '/auth',
         })
         .send({ accessToken, user });
