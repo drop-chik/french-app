@@ -7,6 +7,7 @@ import {
   readingProgress, writingSubmissions, writingFeedback, writingPrompts,
   drillProgress, placementTests, userAchievements, pushSubscriptions,
   follows, activityEvents, activityReactions,
+  readingMockAttempts, writingProgress,
 } from '../../db/schema/index.js';
 import type { LanguageLevel } from '@french-app/shared-types';
 import { targetForLevel } from '../../lib/level-targets.js';
@@ -720,12 +721,24 @@ export async function exportUserData(db: DB, userId: string) {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
     // Explicit columns — never accidentally include the password hash.
+    // GDPR Art. 15 (right of access): every personal-data column on the
+    // users row except the password must appear here. Keep in sync when
+    // adding new user columns.
     columns: {
-      id: true, email: true, name: true, level: true, avatarUrl: true,
+      id: true, email: true, emailVerifiedAt: true, name: true,
+      level: true, avatarUrl: true,
       uiLanguage: true, placementTestDone: true, role: true, tag: true,
       dailyNewWordsLimit: true, dailyDueWordsLimit: true,
       xp: true,
       streakRepairUsedAt: true, streakRepairSavedValue: true,
+      // Exam-prep plan
+      examDate: true, examType: true, examTargetLevel: true,
+      // Smart Credits quota state
+      aiCreditsUsed: true, aiCreditsResetAt: true,
+      // Email digest preferences
+      digestEnabled: true, lastDigestSentAt: true,
+      // Account-security / lockout state
+      failedLoginAttempts: true, lastFailedLoginAt: true, lockoutUntil: true,
       createdAt: true, updatedAt: true,
     },
   });
@@ -750,6 +763,8 @@ export async function exportUserData(db: DB, userId: string) {
     reactionRows,
     customWordRows,
     conversationRows,
+    readingMockRows,
+    writingProgressRows,
   ] = await Promise.all([
     db.select().from(wordProgress).where(eq(wordProgress.userId, userId)),
     db.select().from(grammarProgress).where(eq(grammarProgress.userId, userId)),
@@ -786,6 +801,8 @@ export async function exportUserData(db: DB, userId: string) {
       startedAt: conversationSessions.startedAt,
       endedAt: conversationSessions.endedAt,
     }).from(conversationSessions).where(eq(conversationSessions.userId, userId)),
+    db.select().from(readingMockAttempts).where(eq(readingMockAttempts.userId, userId)),
+    db.select().from(writingProgress).where(eq(writingProgress.userId, userId)),
   ]);
 
   return {
@@ -803,7 +820,9 @@ export async function exportUserData(db: DB, userId: string) {
       submissions: writingSubmissionRows,
       feedback: writingFeedbackRows.map((r) => r.writing_feedback),
       customPrompts: writingPromptRows,
+      progress: writingProgressRows,
     },
+    readingMockAttempts: readingMockRows,
     placementHistory: placementHistoryRows,
     achievements: achievementRows,
     pushSubscriptions: pushRows,

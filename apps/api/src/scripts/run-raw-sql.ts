@@ -32,9 +32,16 @@ for (const stmt of statements) {
   try {
     await db.execute(sql.raw(stmt));
   } catch (err) {
-    const msg = (err as Error).message;
-    if (/already exists|duplicate column/i.test(msg)) {
-      console.log(`    skipped (already applied)`);
+    // Only swallow the specific "already applied" Postgres error codes, not
+    // any message containing "already exists" — a broad text match could
+    // mask a genuinely failed migration as skipped. Codes:
+    //   42P07 duplicate_table, 42701 duplicate_column,
+    //   42710 duplicate_object (constraint/index), 42P06 duplicate_schema,
+    //   42723 duplicate_function, 42P16 invalid_table_definition (rare dup)
+    const code = (err as { code?: string }).code;
+    const APPLIED_CODES = new Set(['42P07', '42701', '42710', '42P06', '42723']);
+    if (code && APPLIED_CODES.has(code)) {
+      console.log(`    skipped (already applied — ${code})`);
     } else {
       throw err;
     }

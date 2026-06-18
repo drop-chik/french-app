@@ -38,7 +38,7 @@ const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
 const authTokenResponse = {
   type: 'object',
   properties: {
-    accessToken: { type: 'string', description: 'JWT access token, valid for 15 minutes' },
+    accessToken: { type: 'string', description: 'JWT access token, valid for 1 hour; refreshed silently via the 30-day refresh cookie' },
     user: userSchema,
   },
   required: ['accessToken', 'user'],

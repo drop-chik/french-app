@@ -11,6 +11,31 @@ const subscribeBody = z.object({
   }),
 });
 
+// Web-push endpoints only ever come from these provider hosts. Restricting
+// the accepted endpoint to this allowlist closes a blind-SSRF hole: without
+// it, an attacker could register an internal address (cloud metadata,
+// internal service) and /push/test would make the server POST to it.
+const ALLOWED_PUSH_HOST_SUFFIXES = [
+  '.googleapis.com',          // FCM (Chrome/Edge): fcm.googleapis.com, android.googleapis.com
+  '.push.services.mozilla.com', // Firefox: updates.push.services.mozilla.com
+  '.push.apple.com',          // Safari/Apple: web.push.apple.com
+  '.notify.windows.com',      // legacy WNS
+];
+
+function isAllowedPushEndpoint(endpoint: string): boolean {
+  let host: string;
+  try {
+    const u = new URL(endpoint);
+    if (u.protocol !== 'https:') return false;
+    host = u.hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return ALLOWED_PUSH_HOST_SUFFIXES.some(
+    (s) => host === s.slice(1) || host.endsWith(s),
+  );
+}
+
 const pushRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /push/public-key — VAPID public key the client needs to subscribe
   fastify.get('/public-key', {
@@ -55,6 +80,9 @@ const pushRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const parsed = subscribeBody.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ error: 'Invalid subscription body' });
+    if (!isAllowedPushEndpoint(parsed.data.endpoint)) {
+      return reply.status(400).send({ error: 'Endpoint host not allowed' });
+    }
 
     const result = await saveSubscription(
       fastify.db,

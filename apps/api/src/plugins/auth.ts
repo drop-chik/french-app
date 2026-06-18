@@ -17,7 +17,14 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
 
   await fastify.register(fastifyJwt, {
     secret: process.env['JWT_SECRET'] ?? 'dev_secret_change_me',
-    sign: { expiresIn: '7d' },
+    // Access token kept short — a stolen token is only useful for 1h, then
+    // the apiClient silently refreshes via the 30-day refresh cookie. 1h
+    // (not 15min) leaves margin for the few request paths that don't
+    // auto-refresh on 401 (TTS blob fetch, conversation SSE stream), which
+    // complete well within an hour of a fresh token. The refresh token is
+    // signed separately (jsonwebtoken + JWT_REFRESH_SECRET, 30d) and is
+    // unaffected by this default.
+    sign: { expiresIn: '1h' },
   });
 
   fastify.decorate(
