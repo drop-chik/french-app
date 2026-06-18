@@ -284,12 +284,12 @@
   align-items: center;
   justify-content: space-between;
   margin-top: var(--space-4);
-  background: #f0fdf4;
-  border: 1px solid #86efac;
+  background: var(--color-success-light);
+  border: 1px solid var(--color-success);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   font-size: var(--text-sm);
-  color: #166534;
+  color: var(--color-success);
 }
 
 @media (max-width: 768px) {

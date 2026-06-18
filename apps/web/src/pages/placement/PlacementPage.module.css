@@ -502,15 +502,15 @@
 
 /* Answer feedback states */
 .optionCorrect {
-  border-color: #22c55e !important;
-  background-color: #f0fdf4 !important;
-  color: #166534 !important;
+  border-color: var(--color-success) !important;
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success) !important;
 }
 
 .optionWrong {
-  border-color: #ef4444 !important;
-  background-color: #fef2f2 !important;
-  color: #991b1b !important;
+  border-color: var(--color-error) !important;
+  background-color: var(--color-error-light) !important;
+  color: var(--color-error) !important;
 }
 
 @keyframes confettiFall {

@@ -174,15 +174,15 @@
 }
 
 .bulletGood {
-  background: #f0fdf4;
-  color: #166534;
-  border-left: 3px solid #22c55e;
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border-left: 3px solid var(--color-success);
 }
 
 .bulletWarn {
-  background: #fff7ed;
-  color: #92400e;
-  border-left: 3px solid #f59e0b;
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  border-left: 3px solid var(--color-warning);
 }
 
 /* Corrections */
