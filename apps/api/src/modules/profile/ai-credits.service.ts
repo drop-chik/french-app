@@ -30,6 +30,7 @@ export const COST = {
   translationFallback: 1,
   promptGeneration:    5,
   imageGeneration:    10,  // DALL-E 3 standard ~$0.04/image
+  drillGeneration:     5,  // gpt-4o batch of fresh drill questions
 } as const;
 
 export type CreditAction = keyof typeof COST;

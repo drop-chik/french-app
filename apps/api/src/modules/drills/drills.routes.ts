@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { getDrills, getDrillSession, submitDrillSession, generateInfiniteQuestions } from './drills.service.js';
 import { recordAction } from '../achievements/achievements.service.js';
 import { XP_REWARDS } from '../achievements/xp.js';
+import { tryConsume } from '../profile/ai-credits.service.js';
 import { authorizedSecurity, langQuery } from '../../openapi/schemas.js';
 
 function parseLang(query: Record<string, unknown>): 'ru' | 'en' {
@@ -47,11 +48,15 @@ const drillsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // POST /drills/:slug/infinite — generate AI questions
+  // POST /drills/:slug/infinite — generate AI questions.
+  // Paid OpenAI call (gpt-4o batch). Same guard stack as the other costly
+  // AI endpoints: email gate + rate limit + Smart Credits charge, so a
+  // scripted caller can't burn the OpenAI budget unbounded.
   fastify.post<{ Params: { slug: string } }>(
     '/:slug/infinite',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [fastify.authenticate, fastify.requireEmailVerified],
+      config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
       schema: {
         tags: ['drills'],
         summary: 'Generate fresh AI-generated questions for the same drill set',
@@ -60,6 +65,10 @@ const drillsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
+      const charge = await tryConsume(fastify.db, request.user.userId, 'drillGeneration');
+      if (!charge.ok) {
+        return reply.status(402).send({ error: 'OUT_OF_CREDITS', resetAt: charge.state.resetAt });
+      }
       const questions = await generateInfiniteQuestions(fastify.db, request.params.slug);
       if (!questions) return reply.status(404).send({ error: 'Drill not found or generation failed' });
       reply.send({ questions });

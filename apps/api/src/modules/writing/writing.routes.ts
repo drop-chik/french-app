@@ -15,6 +15,7 @@ import {
 } from './writing.service.js';
 import { authorizedSecurity } from '../../openapi/schemas.js';
 import { safePrompt } from '../../lib/sanitize-ai-input.js';
+import { tryConsume } from '../profile/ai-credits.service.js';
 
 const saveSchema = z.object({
   promptId: z.string().uuid(),
@@ -122,6 +123,13 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
           return reply.status(400).send({ error: 'Topic hint invalid' });
         }
         cleanedHint = value || undefined;
+      }
+      // Charge Smart Credits for the paid GPT-4o prompt generation. The
+      // promptGeneration cost existed in the table but was never consumed —
+      // this is the missing charge that makes the quota actually universal.
+      const charge = await tryConsume(fastify.db, request.user.userId, 'promptGeneration');
+      if (!charge.ok) {
+        return reply.status(402).send({ error: 'OUT_OF_CREDITS', resetAt: charge.state.resetAt });
       }
       try {
         const prompt = await generateAiPrompt(fastify.db, request.user.userId, {
