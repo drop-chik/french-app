@@ -6,6 +6,7 @@ import { wordsApi } from '../../../features/words/api';
 import { listeningApi } from '../../../features/listening/api';
 import { useI18n } from '../../../shared/i18n';
 import type { Translations } from '../../../shared/i18n/ru';
+import { formatPos } from '../../../shared/pos';
 import type { SessionResult } from '../FlashcardMode/FlashcardMode';
 import styles from './SmartLearnFlow.module.css';
 
@@ -246,7 +247,7 @@ function IntroStage({ word, onAdvance }: { word: WordData; onAdvance: () => void
 
       <div className={styles.introPosRow}>
         <span className={`${styles.introPos} ${styles[`pos_${word.partOfSpeech}`] ?? ''}`}>
-          {posLabel(word.partOfSpeech, word.gender)}
+          {formatPos(word.partOfSpeech, word.gender)}
         </span>
         <span className={styles.introTranslation}>{word.translation}</span>
       </div>
@@ -263,18 +264,6 @@ function IntroStage({ word, onAdvance }: { word: WordData; onAdvance: () => void
       </button>
     </div>
   );
-}
-
-function posLabel(pos: string, gender: string | null): string {
-  if (pos === 'noun' && gender) return `n(${gender})`;
-  if (pos === 'verb') return 'v';
-  if (pos === 'adjective') return 'adj';
-  if (pos === 'adverb') return 'adv';
-  if (pos === 'preposition') return 'prep';
-  if (pos === 'conjunction') return 'conj';
-  if (pos === 'pronoun') return 'pron';
-  if (pos === 'determiner') return 'det';
-  return pos;
 }
 
 /* ── Multiple-Choice: recognition test ── */

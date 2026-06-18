@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { wordsApi, type BrowseWord } from '../../features/words/api';
 import { useI18n } from '../../shared/i18n';
+import { formatPos } from '../../shared/pos';
 import styles from './WordList.module.css';
 
 const PAGE_SIZE = 50;
@@ -138,7 +139,7 @@ function WordRow({ word, reveal }: { word: BrowseWord; reveal: boolean }) {
         </div>
         <div className={styles.rowMeta}>
           <span className={`${styles.pos} ${styles[`pos_${word.partOfSpeech}`] ?? ''}`}>
-            {posShort(word.partOfSpeech, word.gender)}
+            {formatPos(word.partOfSpeech, word.gender)}
           </span>
           <button
             type="button"
@@ -164,15 +165,3 @@ function strengthPct(w: BrowseWord): number {
   return Math.min(100, Math.round(intervalScore + repsScore));
 }
 
-function posShort(pos: string, gender: string | null): string {
-  const base = pos.charAt(0); // v, n, a, d, ...
-  if (pos === 'noun' && gender) return `n(${gender})`;
-  if (pos === 'verb') return 'v';
-  if (pos === 'adjective') return 'adj';
-  if (pos === 'adverb') return 'adv';
-  if (pos === 'preposition') return 'prep';
-  if (pos === 'conjunction') return 'conj';
-  if (pos === 'pronoun') return 'pron';
-  if (pos === 'determiner') return 'det';
-  return base || pos;
-}

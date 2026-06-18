@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Check, X as XMark, ArrowRight, Volume2, Loader2 } from 'lucide-react';
 import { wordsApi, type BrowseWord } from '../../features/words/api';
 import { useI18n } from '../../shared/i18n';
+import { formatPos } from '../../shared/pos';
 import styles from './NewWordsPreview.module.css';
 
 interface NewWordsPreviewProps {
@@ -175,7 +176,7 @@ export function NewWordsPreview({ level, onClose, onStartQuiz }: NewWordsPreview
 
                 <div className={styles.posRow}>
                   <span className={`${styles.pos} ${styles[`pos_${current.partOfSpeech}`] ?? ''}`}>
-                    {posLabel(current.partOfSpeech, current.gender)}
+                    {formatPos(current.partOfSpeech, current.gender)}
                   </span>
                   <span className={styles.translation}>{current.translation}</span>
                 </div>
@@ -236,18 +237,6 @@ export function NewWordsPreview({ level, onClose, onStartQuiz }: NewWordsPreview
       )}
     </div>
   );
-}
-
-function posLabel(pos: string, gender: string | null): string {
-  if (pos === 'noun' && gender) return `n(${gender})`;
-  if (pos === 'verb') return 'v';
-  if (pos === 'adjective') return 'adj';
-  if (pos === 'adverb') return 'adv';
-  if (pos === 'preposition') return 'prep';
-  if (pos === 'conjunction') return 'conj';
-  if (pos === 'pronoun') return 'pron';
-  if (pos === 'determiner') return 'det';
-  return pos;
 }
 
 // Browser speechSynthesis fallback — speaks the French word so the
