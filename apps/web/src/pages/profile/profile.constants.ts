@@ -1,18 +1,15 @@
-export const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
+// LEVEL_ORDER + LEVEL_COLORS now come from the canonical shared source
+// (mirrors the CSS --color-level-* tokens). Re-exported so existing
+// importers of this module keep working.
+export { LEVEL_ORDER, LEVEL_COLORS } from '../../shared/levels';
 
-export const LEVEL_COLORS: Record<string, string> = {
-  A1: '#22c55e',
-  A2: '#3b82f6',
-  B1: '#f59e0b',
-  B2: '#8b5cf6',
-  C1: '#ec4899',
-  C2: '#ef4444',
-};
-
+// Darker shades + gradients are profile-specific visual treatments, aligned
+// to the canonical orange/purple hues (B1 orange, B2 purple) so they match
+// the rest of the app instead of the old amber/violet.
 export const LEVEL_COLORS_DARK: Record<string, string> = {
   A1: '#16a34a',
   A2: '#2563eb',
-  B1: '#d97706',
+  B1: '#c2410c',
   B2: '#7c3aed',
   C1: '#db2777',
   C2: '#dc2626',
@@ -21,8 +18,8 @@ export const LEVEL_COLORS_DARK: Record<string, string> = {
 export const LEVEL_GRADIENTS: Record<string, string> = {
   A1: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
   A2: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-  B1: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-  B2: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+  B1: 'linear-gradient(135deg, #f97316 0%, #c2410c 100%)',
+  B2: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
   C1: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
   C2: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
 };

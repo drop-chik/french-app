@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Search, BookOpen, AlertCircle, Sparkles } from 'lucide-react';
 import { conjugationApi } from '../../features/conjugation/api';
 import { useI18n } from '../../shared/i18n';
+import { LEVEL_COLORS } from '../../shared/levels';
 import styles from './ConjugationPage.module.css';
 
 // French personal pronouns for the conjugation table
@@ -197,12 +198,6 @@ function TenseCard({
   isSubjonctif?: boolean;
   isImperative?: boolean;
 }) {
-  const LEVEL_COLORS: Record<string, string> = {
-    A1: '#22c55e',
-    A2: '#3b82f6',
-    B1: '#f59e0b',
-    B2: '#8b5cf6',
-  };
   return (
     <div className={styles.tenseCard}>
       <div className={styles.tenseHeader}>

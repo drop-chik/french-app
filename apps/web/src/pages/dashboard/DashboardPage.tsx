@@ -10,6 +10,7 @@ import type { Translations } from '../../shared/i18n/ru';
 import { TodayHero, pickAction } from './TodayHero';
 import { ExamPlanCard } from './ExamPlanCard';
 import { CountUp } from '../../shared/components/CountUp';
+import { LEVEL_COLORS } from '../../shared/levels';
 import styles from './DashboardPage.module.css';
 
 export function DashboardPage() {
@@ -297,15 +298,6 @@ function SecondaryTask({
     <Link to={to} className={styles.secondaryTask}>{body}</Link>
   );
 }
-
-const LEVEL_COLORS: Record<string, string> = {
-  A1: '#22c55e',
-  A2: '#3b82f6',
-  B1: '#f97316',
-  B2: '#a855f7',
-  C1: '#ec4899',
-  C2: '#ef4444',
-};
 
 function LevelItem({ lv }: { lv: LevelProgressData }) {
   const color = LEVEL_COLORS[lv.level] ?? '#6b7280';
