@@ -5,6 +5,8 @@ import { CheckCircle2, XCircle, ChevronRight, ArrowLeft } from 'lucide-react';
 import { progressionApi, type LevelTestQuestion, type LevelTestResult } from '../../features/progression/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { trackEvent } from '../../lib/analytics';
+import { fireConfetti } from '../../shared/celebrate';
+import { LEVEL_COLORS } from '../../shared/levels';
 import { useI18n } from '../../shared/i18n';
 import styles from './LevelTestPage.module.css';
 
@@ -30,7 +32,10 @@ export function LevelTestPage() {
     onSuccess: (r) => {
       setResult(r);
       trackEvent('level_test_submit', { passed: r.passed, score: r.score, fromLevel: r.fromLevel });
-      if (r.promoted && r.toLevel) updateUser({ level: r.toLevel as 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' });
+      if (r.promoted && r.toLevel) {
+        updateUser({ level: r.toLevel as 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' });
+        fireConfetti(LEVEL_COLORS[r.toLevel] ?? '#22c55e');
+      }
     },
   });
 

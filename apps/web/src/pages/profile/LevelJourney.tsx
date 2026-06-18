@@ -117,8 +117,11 @@ function LevelNode({
   const filled = Math.max(0, Math.min(1, percent / 100)) * C;
   const isLocked = state === 'locked';
   const isMastered = state === 'mastered';
-  const isAvailable = state === 'available';
-  const isDim = isLocked || isAvailable;
+  const hasProgressRing = !isLocked && !isMastered && percent > 0;
+  // Levels with no tracked progress (available / next) still show their
+  // identity colour as a faint outline + coloured code, so the journey
+  // reads as a coloured path rather than grey blanks. Only locked stays grey.
+  const showFaintRing = !isLocked && !isMastered && percent === 0;
 
   return (
     <div
@@ -134,7 +137,7 @@ function LevelNode({
           strokeWidth={strokeWidth}
           fill="var(--color-bg-secondary)"
         />
-        {!isDim && percent > 0 && !isMastered && (
+        {hasProgressRing && (
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -162,6 +165,17 @@ function LevelNode({
             opacity="0.5"
           />
         )}
+        {showFaintRing && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={R}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="none"
+            opacity="0.32"
+          />
+        )}
       </svg>
       <div className={styles.nodeContent}>
         {isLocked ? (
@@ -173,10 +187,7 @@ function LevelNode({
           </>
         ) : (
           <>
-            <span
-              className={styles.nodeLevel}
-              style={{ color: isAvailable ? 'var(--color-text-secondary)' : color }}
-            >
+            <span className={styles.nodeLevel} style={{ color }}>
               {level}
             </span>
             {percent > 0 && (
