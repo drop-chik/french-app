@@ -864,6 +864,14 @@
   padding-bottom: env(safe-area-inset-bottom, var(--space-4));
 }
 
+/* Infinite-scroll sentinel at the end of the word list. */
+.drawerSentinel {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ── Mobile ── */
 @media (max-width: 480px) {
   .catGrid { grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }

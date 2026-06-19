@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Search, X, List, LayoutGrid, Shapes, BookOpen, RefreshCw, Star, ChevronRight, Plus, Check, Volume2, CheckSquare, Square, RotateCcw, ArrowUpDown } from 'lucide-react';
 import { wordsApi, type BrowseWord, type WordCategory, type WordData } from '../../features/words/api';
@@ -360,25 +360,54 @@ interface DrawerProps {
   navigate: ReturnType<typeof useNavigate>;
 }
 
+const DRAWER_PAGE = 100;
+
 function Drawer({ item, kind, title, level, lang, t, onClose, onMark, onOpen, markingId, navigate }: DrawerProps) {
   const name = item?.name ?? null;
-  const { data, isLoading } = useQuery({
-    queryKey: ['browse-words', level, kind, name, lang, ''],
-    queryFn: () => kind === 'pos'
-      ? wordsApi.browse(level, null, 0, 200, undefined, undefined, undefined, name ?? undefined)
-      : wordsApi.browse(level, name, 0, 200),
+  // Infinite scroll: load words a page at a time as the user scrolls, so even
+  // a huge bucket (e.g. 3500+ nouns) shows everything without fetching or
+  // rendering it all up front. The backend paginates via offset/limit.
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['browse-words-inf', level, kind, name, lang],
+    queryFn: ({ pageParam }) => kind === 'pos'
+      ? wordsApi.browse(level, null, pageParam, DRAWER_PAGE, undefined, undefined, undefined, name ?? undefined)
+      : wordsApi.browse(level, name, pageParam, DRAWER_PAGE),
     enabled: !!item,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((s, p) => s + p.words.length, 0);
+      return loaded < lastPage.total ? loaded : undefined;
+    },
     staleTime: 60_000,
   });
 
-  const words = data?.words ?? [];
+  const words = data?.pages.flatMap((p) => p.words) ?? [];
   const color = item ? categoryColor(item.name) : '#3b82f6';
+
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Lock body scroll while open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
+
+  // Load the next page when the sentinel nears the bottom of the drawer's own
+  // scroll container (root = the drawer body, not the viewport).
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const root = bodyRef.current;
+    if (!sentinel || !root) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage();
+      },
+      { root, rootMargin: '300px' },
+    );
+    obs.observe(sentinel);
+    return () => obs.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, words.length]);
 
   if (!item) return null;
 
@@ -413,12 +442,19 @@ function Drawer({ item, kind, title, level, lang, t, onClose, onMark, onOpen, ma
             <button className={styles.drawerCloseBtn} onClick={onClose}><X size={18} /></button>
           </div>
         </div>
-        <div className={styles.drawerBody}>
+        <div className={styles.drawerBody} ref={bodyRef}>
           {isLoading && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
           {!isLoading && words.length === 0 && <p className={styles.loadingText}>{t.dictionary.noWordsInCategory}</p>}
           {words.map((w) => (
             <WordRow key={w.id} word={w} t={t} onMark={onMark} onOpen={onOpen} markingId={markingId} />
           ))}
+          {/* Infinite-scroll sentinel — loads the next page ~300px before the
+              user reaches the bottom, so scrolling feels seamless. */}
+          {hasNextPage && (
+            <div ref={sentinelRef} className={styles.drawerSentinel}>
+              {isFetchingNextPage && <p className={styles.loadingText}>{t.dictionary.loading}</p>}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -609,8 +645,10 @@ export function DictionaryPage() {
     onSettled: (_data, _err, { action }) => {
       setMarkingId(null);
       queryClient.invalidateQueries({ queryKey: ['browse-words', level] });
+      queryClient.invalidateQueries({ queryKey: ['browse-words-inf'] });
       queryClient.invalidateQueries({ queryKey: ['browse-search', level] });
       queryClient.invalidateQueries({ queryKey: ['word-categories', level] });
+      queryClient.invalidateQueries({ queryKey: ['pos-categories', level] });
       queryClient.invalidateQueries({ queryKey: ['dictionary'] });
       if (action === 'study') queryClient.invalidateQueries({ queryKey: ['home'] });
     },
@@ -626,8 +664,10 @@ export function DictionaryPage() {
     onSettled: () => {
       clearSelection();
       queryClient.invalidateQueries({ queryKey: ['browse-words'] });
+      queryClient.invalidateQueries({ queryKey: ['browse-words-inf'] });
       queryClient.invalidateQueries({ queryKey: ['browse-search'] });
       queryClient.invalidateQueries({ queryKey: ['word-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['pos-categories'] });
     },
   });
 
@@ -947,8 +987,10 @@ export function DictionaryPage() {
           onClose={() => setSelectedWordId(null)}
           onMutated={() => {
             queryClient.invalidateQueries({ queryKey: ['browse-words'] });
+            queryClient.invalidateQueries({ queryKey: ['browse-words-inf'] });
             queryClient.invalidateQueries({ queryKey: ['browse-search'] });
             queryClient.invalidateQueries({ queryKey: ['word-categories'] });
+            queryClient.invalidateQueries({ queryKey: ['pos-categories'] });
           }}
           onEdit={(word) => {
             setSelectedWordId(null);
