@@ -633,6 +633,7 @@ export const ru: DeepRecord = {
     posView: 'Части речи',
     listView: 'Список',
     posNames: {
+      noun: 'Существительные',
       verb: 'Глаголы',
       adjective: 'Прилагательные',
       adverb: 'Наречия',

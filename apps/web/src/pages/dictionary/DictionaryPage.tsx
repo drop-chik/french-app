@@ -63,7 +63,7 @@ function categoryEmoji(name: string): string {
 // Parts-of-speech grid (Dictionary "Части речи" view). Emoji keyed by the
 // canonical part_of_speech slug; label comes from i18n (dictionary.posNames).
 const POS_EMOJI: Record<string, string> = {
-  verb: '🏃', adjective: '🎨', adverb: '✨', expression: '💬',
+  noun: '📦', verb: '🏃', adjective: '🎨', adverb: '✨', expression: '💬',
   pronoun: '👉', preposition: '🧭', conjunction: '🔗', number: '🔢',
   determiner: '🔖', interjection: '❗',
 };

@@ -375,6 +375,15 @@ const CATEGORY_ORDER_INDEX = new Map(
   CATEGORY_DISPLAY_ORDER.map((c, i) => [c, i]),
 );
 
+// Categories that are really parts of speech, not themes. They are hidden from
+// the thematic ("По темам") grid so it stays purely thematic — those words are
+// browsed in the "Части речи" (parts of speech) view instead. 'colors' is kept
+// here: it is a semantic theme that happens to be adjectives.
+const POS_NAMED_CATEGORIES = new Set([
+  'verbs', 'adjectives', 'adverbs', 'pronouns', 'prepositions',
+  'conjunctions', 'determiners', 'numbers', 'expressions', 'interjections',
+]);
+
 export async function getCategories(db: DB, userId: string, level: LanguageLevel) {
   const rows = await db
     .select({
@@ -391,12 +400,16 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
     .where(and(eq(words.level, level), eq(words.isActive, true), visibleToUser(userId)))
     .groupBy(words.category);
 
-  const mapped = rows.map((r) => ({
-    name: r.category ?? 'other',
-    count: Number(r.cnt),
-    masteredCount: Number(r.masteredCnt),
-    learnedCount: Number(r.learnedCnt),
-  }));
+  const mapped = rows
+    .map((r) => ({
+      name: r.category ?? 'other',
+      count: Number(r.cnt),
+      masteredCount: Number(r.masteredCnt),
+      learnedCount: Number(r.learnedCnt),
+    }))
+    // Keep the thematic grid purely thematic — POS-named buckets live in the
+    // "Части речи" view now.
+    .filter((r) => !POS_NAMED_CATEGORIES.has(r.name));
 
   // Sort by the explicit display order; anything unknown bubbles to the end
   // alphabetically.
@@ -412,11 +425,12 @@ export async function getCategories(db: DB, userId: string, level: LanguageLevel
 }
 
 // Parts-of-speech grid for the Dictionary "Части речи" view. Same shape as
-// getCategories (name/count/mastered/learned) so the UI reuses the card, but
-// grouped by part_of_speech and EXCLUDING nouns (nouns live in the thematic
-// category grid). Display order is pedagogical, frequent types first.
+// getCategories (name/count/mastered/learned) so the UI reuses the card,
+// grouped by part_of_speech. Every word is covered (nouns included), so this
+// view is a complete split by POS — complementing the thematic ("По темам")
+// grid. Display order is the conventional grammar order, noun first.
 const POS_DISPLAY_ORDER: string[] = [
-  'verb', 'adjective', 'adverb', 'expression', 'pronoun',
+  'noun', 'verb', 'adjective', 'adverb', 'expression', 'pronoun',
   'preposition', 'conjunction', 'number', 'determiner', 'interjection',
 ];
 const POS_ORDER_INDEX = new Map(POS_DISPLAY_ORDER.map((p, i) => [p, i]));
@@ -438,7 +452,6 @@ export async function getPosCategories(db: DB, userId: string, level: LanguageLe
       eq(words.level, level),
       eq(words.isActive, true),
       visibleToUser(userId),
-      sql`${words.partOfSpeech} <> 'noun'`,
     ))
     .groupBy(words.partOfSpeech);
 

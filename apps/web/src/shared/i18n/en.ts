@@ -793,6 +793,7 @@ export const en: Translations = {
     posView: 'Parts of speech',
     listView: 'List',
     posNames: {
+      noun: 'Nouns',
       verb: 'Verbs',
       adjective: 'Adjectives',
       adverb: 'Adverbs',
