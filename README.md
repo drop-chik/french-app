@@ -1,8 +1,18 @@
-# FrenchUp
+# FrenchUp 🇫🇷
 
 A full-stack French language learning web app built around spaced repetition, grammar progression, and AI-powered conversation practice.
 
-**Live**: [frenchup.vercel.app](https://frenchup.vercel.app)
+![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Fastify](https://img.shields.io/badge/Fastify-5-000000?logo=fastify&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Drizzle_ORM-4169E1?logo=postgresql&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Turborepo](https://img.shields.io/badge/Turborepo-pnpm-EF4444?logo=turborepo&logoColor=white)
+
+**🔗 Live demo**: [french-web-two.vercel.app](https://french-web-two.vercel.app)
+
+> **Try it without signing up** — log in with the demo account:
+> `demo@frenchup.app` / `FrenchUp2026` (A2 level, content unlocked).
 
 ---
 
@@ -168,4 +178,5 @@ The UI supports Russian and English. Language can be toggled on the landing page
 
 ## License
 
-Private project.
+Personal portfolio project. The source is public for demonstration and review;
+it is not licensed for redistribution or commercial reuse.
