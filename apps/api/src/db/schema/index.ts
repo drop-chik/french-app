@@ -595,6 +595,30 @@ export const readingMockAttempts = pgTable(
   ],
 );
 
+// Listening mock exam (DELF CO) — mirrors reading_mock_attempts.
+export const listeningMockAttempts = pgTable(
+  'listening_mock_attempts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    level: languageLevelEnum('level').notNull(),
+    // Array<string> — listening-exercise UUIDs in presentation order.
+    exerciseIds: jsonb('exercise_ids').notNull(),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    finalizedAt: timestamp('finalized_at'),
+    timeLimitSeconds: integer('time_limit_seconds').notNull().default(1500),
+    // Array<{exerciseId, questionId, answer}> — chosen option per question.
+    answers: jsonb('answers').notNull().default([]),
+    score: integer('score'),
+    maxScore: integer('max_score'),
+  },
+  (t) => [
+    index('idx_listening_mock_user_finalized').on(t.userId, t.finalizedAt),
+  ],
+);
+
 // Aggregated writing progress per user
 export const writingProgress = pgTable('writing_progress', {
   id: uuid('id').primaryKey().defaultRandom(),
