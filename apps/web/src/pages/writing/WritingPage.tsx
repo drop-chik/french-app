@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Clock, CheckCircle2, ChevronRight, Sparkles, X, Plus } from 'lucide-react';
+import { Clock, CheckCircle2, ChevronRight, Sparkles, X, Plus, Timer } from 'lucide-react';
 import { writingApi, type WritingSubmission, type WritingTypeId } from './api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import { Pill } from '../../shared/components/ui';
+import { WritingMockTab } from './WritingMockTab';
 import styles from './WritingPage.module.css';
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
@@ -140,7 +141,7 @@ export function WritingPage() {
   const { t, lang } = useI18n();
   const tw = t.writing;
   const userLevel = useAuthStore((s) => s.user?.level);
-  const [tab, setTab] = useState<'prompts' | 'ai' | 'history'>('prompts');
+  const [tab, setTab] = useState<'prompts' | 'ai' | 'history' | 'mock'>('prompts');
   const [filterLevel, setFilterLevel] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
   const [showGenerate, setShowGenerate] = useState(false);
@@ -214,7 +215,15 @@ export function WritingPage() {
         >
           {tw.tabHistory}
         </button>
+        <button
+          className={`${styles.tab} ${tab === 'mock' ? styles.tabActive : ''}`}
+          onClick={() => setTab('mock')}
+        >
+          <Timer size={13} className={styles.tabIcon} /> {tw.tabMock}
+        </button>
       </div>
+
+      {tab === 'mock' && <WritingMockTab />}
 
       {tab === 'prompts' && (
         <>

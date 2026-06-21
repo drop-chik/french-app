@@ -101,6 +101,38 @@ export interface WritingProgress {
   lastWritingAt: string;
 }
 
+// ── Mock exam (DELF PE) ─────────────────────────────────────────────────────
+export type CefrLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+
+export interface WritingMockPrompt {
+  id: string; level: CefrLevel; writingType: string;
+  titleRu: string; titleEn: string;
+  promptRu: string; promptEn: string; promptFr: string;
+  tipsRu: string[]; tipsEn: string[];
+  minWords: number; maxWords: number;
+}
+export interface WritingMockAttempt {
+  id: string; level: CefrLevel; startedAt: string;
+  timeLimitSeconds: number; remainingSeconds: number; prompt: WritingMockPrompt;
+}
+export interface WritingMockHistoryItem {
+  id: string; level: CefrLevel; score: number; maxScore: number;
+  submittedAt: string; durationSeconds: number; submissionId: string | null;
+}
+
+export const writingMockApi = {
+  start: (level: CefrLevel) =>
+    apiRequest<{ attempt: WritingMockAttempt }>(`/writing/mock/start`, { method: 'POST', body: JSON.stringify({ level }) }),
+  active: () =>
+    apiRequest<{ active: WritingMockAttempt | null }>(`/writing/mock/active`),
+  submit: (attemptId: string, text: string) =>
+    apiRequest<{ feedback: WritingFeedback; submissionId: string }>(`/writing/mock/${attemptId}/submit`, { method: 'POST', body: JSON.stringify({ text }) }),
+  cancel: (attemptId: string) =>
+    apiRequest<{ ok: true }>(`/writing/mock/${attemptId}`, { method: 'DELETE' }),
+  history: () =>
+    apiRequest<{ history: WritingMockHistoryItem[] }>(`/writing/mock/history`),
+};
+
 export const writingApi = {
   getPrompts: (level?: string, type?: string) => {
     const params = new URLSearchParams();
