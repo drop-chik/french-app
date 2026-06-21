@@ -16,6 +16,11 @@ import {
 import { authorizedSecurity } from '../../openapi/schemas.js';
 import { safePrompt } from '../../lib/sanitize-ai-input.js';
 import { tryConsume } from '../profile/ai-credits.service.js';
+import {
+  startMock as startWritingMock, getActiveAttempt as getActiveWritingMock,
+  submitMock as submitWritingMock, cancelAttempt as cancelWritingMock,
+  getMockHistory as getWritingMockHistory,
+} from './writing-mock.service.js';
 
 const saveSchema = z.object({
   promptId: z.string().uuid(),
@@ -274,6 +279,81 @@ const writingRoutes: FastifyPluginAsync = async (fastify) => {
       reply.send(stats);
     },
   );
+
+  // ──────────────────────────────────────────────────────────────
+  // Mock test — DELF PE (Production Écrite): one timed prompt, AI rubric
+  // ──────────────────────────────────────────────────────────────
+
+  fastify.post('/mock/start', {
+    preHandler: [fastify.authenticate],
+    schema: {
+      tags: ['writing'], summary: 'Start a new mock writing test (DELF PE)', security: authorizedSecurity,
+      body: { type: 'object', required: ['level'], properties: { level: { type: 'string', enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] } } },
+    },
+  }, async (request, reply) => {
+    const body = request.body as { level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' };
+    try {
+      const attempt = await startWritingMock(fastify.db, request.user.userId, body.level);
+      reply.send({ attempt });
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (msg === 'ACTIVE_ATTEMPT_EXISTS') return reply.status(409).send({ error: 'ACTIVE_ATTEMPT_EXISTS' });
+      if (msg === 'NO_PROMPTS') return reply.status(422).send({ error: 'NO_PROMPTS' });
+      throw err;
+    }
+  });
+
+  fastify.get('/mock/active', {
+    preHandler: [fastify.authenticate],
+    schema: { tags: ['writing'], summary: 'Get the active mock attempt (or null)', security: authorizedSecurity },
+  }, async (request, reply) => {
+    const active = await getActiveWritingMock(fastify.db, request.user.userId);
+    reply.send({ active });
+  });
+
+  fastify.post('/mock/:id/submit', {
+    // Generates AI feedback → email-gated + rate-limited like normal feedback.
+    preHandler: [fastify.authenticate, fastify.requireEmailVerified],
+    config: { rateLimit: { max: 20, timeWindow: '1 hour' } },
+    schema: {
+      tags: ['writing'], summary: 'Submit a mock essay — scores it with the rubric', security: authorizedSecurity,
+      params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } },
+      body: { type: 'object', required: ['text'], properties: { text: { type: 'string', minLength: 1, maxLength: 5000 } } },
+    },
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { text: string };
+    try {
+      const result = await submitWritingMock(fastify.db, request.user.userId, id, body.text);
+      reply.send(result);
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (msg === 'NOT_FOUND') return reply.status(404).send({ error: 'NOT_FOUND' });
+      if (msg === 'ALREADY_SUBMITTED') return reply.status(409).send({ error: 'ALREADY_SUBMITTED' });
+      if (msg === 'OUT_OF_CREDITS') {
+        const resetAt = (err as Error & { resetAt?: string }).resetAt;
+        return reply.status(402).send({ error: 'OUT_OF_CREDITS', resetAt });
+      }
+      reply.status(500).send({ error: msg });
+    }
+  });
+
+  fastify.delete('/mock/:id', {
+    preHandler: [fastify.authenticate],
+    schema: { tags: ['writing'], summary: 'Cancel an active mock attempt', security: authorizedSecurity, params: { type: 'object', properties: { id: { type: 'string', format: 'uuid' } } } },
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    await cancelWritingMock(fastify.db, request.user.userId, id);
+    reply.send({ ok: true });
+  });
+
+  fastify.get('/mock/history', {
+    preHandler: [fastify.authenticate],
+    schema: { tags: ['writing'], summary: 'Recent finalized mock attempts', security: authorizedSecurity },
+  }, async (request, reply) => {
+    const history = await getWritingMockHistory(fastify.db, request.user.userId);
+    reply.send({ history });
+  });
 };
 
 export default writingRoutes;

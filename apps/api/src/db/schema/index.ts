@@ -619,6 +619,30 @@ export const listeningMockAttempts = pgTable(
   ],
 );
 
+// Writing mock exam (DELF PE) — one timed prompt; on submit it links to a
+// normal writing_submissions row (+ its AI feedback) and stores the score.
+export const writingMockAttempts = pgTable(
+  'writing_mock_attempts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    level: languageLevelEnum('level').notNull(),
+    promptId: uuid('prompt_id').notNull(),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    timeLimitSeconds: integer('time_limit_seconds').notNull(),
+    // The writing_submissions row created on submit; NULL while the attempt is open.
+    submissionId: uuid('submission_id'),
+    submittedAt: timestamp('submitted_at'),
+    score: integer('score'),
+    maxScore: integer('max_score'),
+  },
+  (t) => [
+    index('idx_writing_mock_user_submitted').on(t.userId, t.submittedAt),
+  ],
+);
+
 // Aggregated writing progress per user
 export const writingProgress = pgTable('writing_progress', {
   id: uuid('id').primaryKey().defaultRandom(),
