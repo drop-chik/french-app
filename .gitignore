@@ -45,3 +45,7 @@ playwright/.cache
 
 # API tmp artifacts (audit caches, generated JSON, downloaded TSVs)
 apps/api/tmp/
+
+# AI-tooling files — local only, not tracked
+CLAUDE.md
+.claude/
