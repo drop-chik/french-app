@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Headphones, Clock, CheckCircle2, Play, HelpCircle, TrendingUp } from 'lucide-react';
+import { Headphones, Clock, CheckCircle2, Play, HelpCircle, TrendingUp, Timer } from 'lucide-react';
 import { listeningApi, type ListeningExerciseListItem } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
+import { MockTab } from './MockTab';
 import styles from './ListeningPage.module.css';
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
@@ -45,6 +46,7 @@ const LEVEL_COLORS: Record<Level, { from: string; to: string; tint: string }> = 
 export function ListeningPage() {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
+  const [tab, setTab] = useState<'library' | 'mock'>('library');
   const [selectedLevel, setSelectedLevel] = useState<Level>('A1');
 
   const { data, isLoading } = useQuery({
@@ -87,7 +89,23 @@ export function ListeningPage() {
           </h1>
           <p className={styles.subtitle}>{t.listening.subtitle}</p>
         </div>
+      </div>
 
+      {/* Hub tabs */}
+      <div className={styles.hubTabs} role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'library'}
+          className={`${styles.hubTab} ${tab === 'library' ? styles.hubTabActive : ''}`} onClick={() => setTab('library')}>
+          <Headphones size={16} /> {t.listening.tabLibrary}
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'mock'}
+          className={`${styles.hubTab} ${tab === 'mock' ? styles.hubTabActive : ''}`} onClick={() => setTab('mock')}>
+          <Timer size={16} /> {t.listening.tabMock}
+        </button>
+      </div>
+
+      {tab === 'mock' && <MockTab />}
+
+      {tab === 'library' && (<>
         {/* Level chips — colored per level */}
         <div className={styles.levelChips} data-tour="listening-levels">
           {LEVELS.map((lvl) => {
@@ -107,7 +125,6 @@ export function ListeningPage() {
             );
           })}
         </div>
-      </div>
 
       {/* Stats strip */}
       {!isLoading && stats.total > 0 && (
@@ -217,6 +234,7 @@ export function ListeningPage() {
           )}
         </div>
       )}
+      </>)}
     </div>
   );
 }

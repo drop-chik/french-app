@@ -7,6 +7,34 @@
   gap: var(--space-5);
 }
 
+/* Hub tabs (Exercises / DELF Mock) */
+.hubTabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  margin-top: calc(var(--space-5) * -1 + var(--space-1));
+}
+.hubTab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+.hubTab:hover { color: var(--color-text-primary); }
+.hubTabActive {
+  color: var(--color-brand);
+  border-bottom-color: var(--color-brand);
+}
+
 /* ── Header ── */
 .header {
   display: flex;
