@@ -12,6 +12,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 import { initSentry, attachToFastify } from './lib/sentry.js';
 import { db } from './db/index.js';
+import { syncRawSchema } from './db/sync-schema.js';
 
 // Init Sentry before any route registration so import-time crashes get sent.
 // No-op when SENTRY_DSN is unset (dev, previews).
@@ -45,6 +46,10 @@ const isSmoke = process.env['SMOKE_TEST'] === '1';
 if (!isSmoke) {
   const migrationsFolder = join(__dirname, '../src/db/migrations');
   await migrate(db, { migrationsFolder });
+  // Apply the hand-written raw-SQL tail (0030+) that drizzle's journal doesn't
+  // track. Idempotent + tracked, so existing prod is a no-op and a fresh DB
+  // self-heals to the full schema.
+  await syncRawSchema(migrationsFolder);
   // Safety net: ensure audio_data column exists regardless of migrator state
   await db.execute(sql`ALTER TABLE listening_exercises ADD COLUMN IF NOT EXISTS audio_data bytea`);
 }
