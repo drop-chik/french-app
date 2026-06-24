@@ -7,6 +7,7 @@ import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
 import type { Translations } from '../../shared/i18n/ru';
+import { LEVEL_COLORS } from '../../shared/levels';
 import { WordDetailsModal } from './WordDetailsModal';
 import { AddWordModal } from './AddWordModal';
 import styles from './DictionaryPage.module.css';
@@ -172,13 +173,6 @@ async function playTts(text: string) {
   new Audio(url).play().catch(() => null);
 }
 
-const LEVEL_TINT: Record<string, string> = {
-  A1: '#22c55e',
-  A2: '#3b82f6',
-  B1: '#f59e0b',
-  B2: '#8b5cf6',
-};
-
 function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSelected, onToggleSelect }: WordRowProps) {
   const status = word.progress?.status ?? null;
   const isBusy = markingId === word.id;
@@ -233,7 +227,7 @@ function WordRow({ word, t, onMark, onOpen, markingId, showLevel, bulkMode, isSe
           {showLevel && word.level && (
             <span
               className={styles.wordLevelChip}
-              style={{ color: LEVEL_TINT[word.level], background: `${LEVEL_TINT[word.level]}1a` }}
+              style={{ color: LEVEL_COLORS[word.level] ?? '#3b82f6', background: `${LEVEL_COLORS[word.level] ?? '#3b82f6'}1a` }}
             >
               {word.level}
             </span>

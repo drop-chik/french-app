@@ -20,3 +20,18 @@ export const LEVEL_COLORS: Record<string, string> = {
   C1: '#ec4899', // pink
   C2: '#ef4444', // red
 };
+
+/**
+ * Gradient + tint variants of the canonical palette, for level hero cards and
+ * stat strips. `from` mirrors LEVEL_COLORS, `to` is a darker shade of the same
+ * hue, and `tint` is a ~12% wash for subtle backgrounds. Single source for the
+ * grammar/listening level pages (previously two near-identical local copies).
+ */
+export const LEVEL_GRADIENTS: Record<Level, { from: string; to: string; tint: string }> = {
+  A1: { from: '#22c55e', to: '#15803d', tint: 'rgba(34, 197, 94, 0.12)' },
+  A2: { from: '#3b82f6', to: '#1d4ed8', tint: 'rgba(59, 130, 246, 0.12)' },
+  B1: { from: '#f97316', to: '#c2410c', tint: 'rgba(249, 115, 22, 0.12)' },
+  B2: { from: '#a855f7', to: '#7c3aed', tint: 'rgba(168, 85, 247, 0.12)' },
+  C1: { from: '#ec4899', to: '#be185d', tint: 'rgba(236, 72, 153, 0.12)' },
+  C2: { from: '#ef4444', to: '#b91c1c', tint: 'rgba(239, 68, 68, 0.12)' },
+};

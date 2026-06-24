@@ -6,6 +6,7 @@ import { wordsApi, type WordData } from '../../features/words/api';
 import { listeningApi } from '../../features/listening/api';
 import { useAuthStore } from '../../features/auth/authStore';
 import { useI18n } from '../../shared/i18n';
+import { LEVEL_COLORS } from '../../shared/levels';
 import styles from './WordDetailsModal.module.css';
 
 interface Props {
@@ -27,13 +28,6 @@ const STATUS_COLOR: Record<string, string> = {
   learning: '#f59e0b',
   review: '#3b82f6',
   mastered: '#22c55e',
-};
-
-const LEVEL_COLOR: Record<string, string> = {
-  A1: '#22c55e',
-  A2: '#3b82f6',
-  B1: '#f97316',
-  B2: '#a855f7',
 };
 
 export function WordDetailsModal({ wordId, onClose, onMutated, onEdit }: Props) {
@@ -181,8 +175,8 @@ export function WordDetailsModal({ wordId, onClose, onMutated, onEdit }: Props) 
                 <span
                   className={styles.levelChip}
                   style={{
-                    color: LEVEL_COLOR[word.level] ?? '#3b82f6',
-                    background: `${LEVEL_COLOR[word.level] ?? '#3b82f6'}1a`,
+                    color: LEVEL_COLORS[word.level] ?? '#3b82f6',
+                    background: `${LEVEL_COLORS[word.level] ?? '#3b82f6'}1a`,
                   }}
                 >
                   {word.level}

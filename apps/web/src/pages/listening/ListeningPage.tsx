@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Headphones, Clock, CheckCircle2, Play, HelpCircle, TrendingUp, Timer } from 'lucide-react';
 import { listeningApi, type ListeningExerciseListItem } from '../../features/listening/api';
 import { useI18n } from '../../shared/i18n';
+import { LEVEL_GRADIENTS as LEVEL_COLORS } from '../../shared/levels';
 import { MockTab } from './MockTab';
 import styles from './ListeningPage.module.css';
 
@@ -33,15 +34,6 @@ function emojiForTitle(title: string): string {
   return '🎧';
 }
 
-// Each CEFR level gets a colour, used for the gradient strip + chip border.
-const LEVEL_COLORS: Record<Level, { from: string; to: string; tint: string }> = {
-  A1: { from: '#22c55e', to: '#15803d', tint: 'rgba(34, 197, 94, 0.12)' },
-  A2: { from: '#3b82f6', to: '#1d4ed8', tint: 'rgba(59, 130, 246, 0.12)' },
-  B1: { from: '#f97316', to: '#c2410c', tint: 'rgba(249, 115, 22, 0.12)' },
-  B2: { from: '#a855f7', to: '#7c3aed', tint: 'rgba(168, 85, 247, 0.12)' },
-  C1: { from: '#ec4899', to: '#be185d', tint: 'rgba(236, 72, 153, 0.12)' },
-  C2: { from: '#ef4444', to: '#b91c1c', tint: 'rgba(239, 68, 68, 0.12)' },
-};
 
 export function ListeningPage() {
   const navigate = useNavigate();
